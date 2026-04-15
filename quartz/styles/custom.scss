@@ -1,9 +1,8 @@
 @use "./base.scss";
 
 /* ==========================================================================
-   Jack's Brain — Color Palette
+   Jack's Brain — Full Custom Theme
    Hunter green base, warm stone neutrals, brass/slate/oxblood accents.
-   Drop this into quartz/styles/custom.scss
    ========================================================================== */
 
 /* ---------- Hunter green ---------- */
@@ -47,114 +46,654 @@ $oxblood-800: #6B2020;
 
 
 /* ==========================================================================
-   Light mode
+   Light mode — soft green canvas, dark green + stone text
    ========================================================================== */
 
 :root {
-  /* Page */
-  --light:            #{$stone-50};
-  --lightgray:        #{$stone-100};
-  --gray:             #{$stone-500};
+  --light:            #{$green-50};
+  --lightgray:        #{$green-100};
+  --gray:             #{$green-500};
   --darkgray:         #{$stone-800};
-  --dark:             #{$stone-900};
+  --dark:             #{$green-900};
+  --secondary:        #{$green-600};
+  --tertiary:         #{$brass-500};
+  --highlight:        rgba(193, 223, 204, 0.4);
+  --textHighlight:    #{$brass-100};
 
-  /* Brand */
-  --secondary:        #{$green-600};    /* headings, active nav */
-  --tertiary:         #{$slate-500};    /* links */
-  --highlight:        #{$green-50};     /* search highlight, hover bg */
-
-  /* Graph */
-  --graph-node:       #{$green-500};
+  --graph-node:       #{$green-600};
   --graph-node-active:#{$brass-300};
-  --graph-link:       #{$stone-300};
-  --graph-link-active:#{$green-300};
-}
-
-
-/* ==========================================================================
-   Dark mode
-   ========================================================================== */
-
-:root[saved-theme="dark"] {
-  /* Page */
-  --light:            #{$stone-900};
-  --lightgray:        #{$stone-800};
-  --gray:             #{$stone-500};
-  --darkgray:         #{$stone-300};
-  --dark:             #{$stone-50};
-
-  /* Brand */
-  --secondary:        #{$green-300};
-  --tertiary:         #{$slate-300};
-  --highlight:        #{$green-900};
-
-  /* Graph */
-  --graph-node:       #{$green-300};
-  --graph-node-active:#{$brass-300};
-  --graph-link:       #{$stone-600};
+  --graph-link:       #{$green-300};
   --graph-link-active:#{$green-500};
 }
 
 
 /* ==========================================================================
-   Component overrides
+   Dark mode — deep forest green, warm cream + brass text
    ========================================================================== */
 
-/* Tag pills */
+:root[saved-theme="dark"] {
+  --light:            #{$green-900};
+  --lightgray:        #{$green-800};
+  --gray:             #{$green-300};
+  --darkgray:         #{$stone-100};
+  --dark:             #{$brass-100};
+  --secondary:        #{$brass-300};
+  --tertiary:         #{$green-300};
+  --highlight:        rgba(27, 63, 41, 0.5);
+  --textHighlight:    #{$brass-800};
+
+  --graph-node:       #{$brass-300};
+  --graph-node-active:#{$green-300};
+  --graph-link:       #{$green-800};
+  --graph-link-active:#{$green-500};
+}
+
+
+/* ==========================================================================
+   Page title
+   ========================================================================== */
+
+.page-title {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+:root[saved-theme="dark"] .page-title {
+  color: $brass-100;
+  text-shadow: 0 0 40px rgba($brass-300, 0.15);
+}
+
+
+/* ==========================================================================
+   Article titles & headings
+   ========================================================================== */
+
+.article-title {
+  letter-spacing: -0.01em;
+}
+
+article {
+  h2, h3, h4, h5, h6 {
+    margin-top: 1.8em;
+  }
+}
+
+:root[saved-theme="dark"] article {
+  h2 { color: $brass-100; }
+  h3 { color: $stone-50; }
+  h4 { color: $green-300; }
+}
+
+:root:not([saved-theme="dark"]) article {
+  h2 { color: $green-900; }
+  h3 { color: $green-800; }
+  h4 { color: $green-600; }
+}
+
+
+/* ==========================================================================
+   Links
+   ========================================================================== */
+
+a.internal {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+a.internal:hover {
+  text-decoration-thickness: 2px;
+}
+
+:root[saved-theme="dark"] a.internal {
+  color: $green-300;
+  text-decoration-color: rgba($green-300, 0.3);
+  &:hover {
+    color: $green-100;
+    text-decoration-color: $green-100;
+  }
+}
+:root:not([saved-theme="dark"]) a.internal {
+  color: $brass-500;
+  text-decoration-color: rgba($brass-500, 0.3);
+  &:hover {
+    color: $brass-800;
+    text-decoration-color: $brass-800;
+  }
+}
+
+a.external {
+  text-decoration-style: dashed;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+:root[saved-theme="dark"] a.external {
+  color: $slate-300;
+  &:hover { color: $slate-100; }
+}
+:root:not([saved-theme="dark"]) a.external {
+  color: $slate-500;
+  &:hover { color: $slate-800; }
+}
+
+
+/* ==========================================================================
+   Tag pills
+   ========================================================================== */
+
 a.tag-link {
-  background: $green-50;
-  color: $green-800;
   border: none;
   border-radius: 12px;
   padding: 2px 10px;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+:root:not([saved-theme="dark"]) a.tag-link {
+  background: $green-100;
+  color: $green-800;
+  &:hover { background: $green-300; color: $green-900; }
 }
 :root[saved-theme="dark"] a.tag-link {
-  background: $green-900;
+  background: $green-800;
+  color: $brass-100;
+  &:hover { background: $green-600; color: $brass-50; }
+}
+
+
+/* ==========================================================================
+   Content meta (dates, reading time)
+   ========================================================================== */
+
+.content-meta {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+:root[saved-theme="dark"] .content-meta {
   color: $green-300;
 }
 
-/* Search box */
-.search-bar input {
-  background: $stone-50;
-  border: 1px solid $stone-100;
-  color: $stone-900;
+
+/* ==========================================================================
+   Breadcrumbs
+   ========================================================================== */
+
+.breadcrumb-container {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+  &:hover { opacity: 1; }
 }
-:root[saved-theme="dark"] .search-bar input {
-  background: $stone-800;
-  border: 1px solid $stone-600;
+:root[saved-theme="dark"] .breadcrumb-element a {
+  color: $green-300;
+}
+
+
+/* ==========================================================================
+   Blockquotes
+   ========================================================================== */
+
+blockquote {
+  border-radius: 0 6px 6px 0;
+  padding: 0.6rem 1rem;
+}
+:root:not([saved-theme="dark"]) blockquote {
+  border-left: 3px solid $green-500;
+  background: rgba($green-100, 0.4);
+  color: $stone-800;
+}
+:root[saved-theme="dark"] blockquote {
+  border-left: 3px solid $brass-300;
+  background: rgba($green-800, 0.6);
   color: $stone-100;
 }
 
-/* Sidebar / explorer */
-.left-sidebar {
-  border-right: 1px solid $stone-100;
+
+/* ==========================================================================
+   Code — inline and blocks
+   ========================================================================== */
+
+code {
+  font-size: 0.88em;
+  border-radius: 4px;
+  padding: 0.15em 0.35em;
 }
-:root[saved-theme="dark"] .left-sidebar {
-  border-right: 1px solid $stone-800;
+:root:not([saved-theme="dark"]) code {
+  background: rgba($green-100, 0.6);
+  color: $green-800;
+}
+:root[saved-theme="dark"] code {
+  background: rgba($green-800, 0.8);
+  color: $green-100;
 }
 
-/* Backlinks section */
+pre {
+  border-radius: 8px !important;
+  border: 1px solid transparent;
+}
+:root:not([saved-theme="dark"]) pre {
+  border-color: $green-100;
+}
+:root[saved-theme="dark"] pre {
+  border-color: $green-800;
+}
+
+figure[data-rehype-pretty-code-figure] {
+  [data-rehype-pretty-code-title] {
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px 8px 0 0;
+  }
+}
+:root:not([saved-theme="dark"]) [data-rehype-pretty-code-title] {
+  background: $green-100;
+  color: $green-800;
+}
+:root[saved-theme="dark"] [data-rehype-pretty-code-title] {
+  background: $green-800;
+  color: $brass-100;
+}
+
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+.table-container > table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+:root:not([saved-theme="dark"]) .table-container > table {
+  th {
+    background: $green-600;
+    color: $stone-50;
+    font-weight: 600;
+  }
+  tr:nth-child(even) td {
+    background: rgba($green-100, 0.3);
+  }
+}
+:root[saved-theme="dark"] .table-container > table {
+  th {
+    background: $green-800;
+    color: $brass-100;
+    font-weight: 600;
+  }
+  tr:nth-child(even) td {
+    background: rgba($green-800, 0.4);
+  }
+}
+
+
+/* ==========================================================================
+   Horizontal rules
+   ========================================================================== */
+
+hr {
+  border: none;
+  height: 1px;
+  margin: 2rem 0;
+}
+:root:not([saved-theme="dark"]) hr {
+  background: linear-gradient(to right, transparent, $green-300, transparent);
+}
+:root[saved-theme="dark"] hr {
+  background: linear-gradient(to right, transparent, $green-600, transparent);
+}
+
+
+/* ==========================================================================
+   Search
+   ========================================================================== */
+
+.search-button {
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+:root:not([saved-theme="dark"]) .search-button {
+  background: $green-100;
+  border: 1px solid $green-300;
+  &:hover { background: $green-300; }
+}
+:root[saved-theme="dark"] .search-button {
+  background: $green-800;
+  border: 1px solid $green-600;
+  &:hover { background: $green-600; }
+}
+
+input.search-bar {
+  border-radius: 8px !important;
+}
+:root:not([saved-theme="dark"]) input.search-bar {
+  background: $green-50;
+  border: 1px solid $green-300;
+  color: $green-900;
+}
+:root[saved-theme="dark"] input.search-bar {
+  background: $green-800;
+  border: 1px solid $green-600;
+  color: $stone-100;
+}
+
+.result-card {
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+:root[saved-theme="dark"] .result-card {
+  &:hover, &:focus, &.focus {
+    background: $green-800;
+  }
+}
+
+
+/* ==========================================================================
+   Explorer
+   ========================================================================== */
+
+.explorer {
+  button {
+    font-weight: 600;
+  }
+}
+
+.explorer-content {
+  ul.explorer-ul li > a {
+    transition: color 0.15s ease;
+    border-radius: 4px;
+  }
+}
+:root:not([saved-theme="dark"]) .explorer-content {
+  ul.explorer-ul li > a:hover { color: $green-800; }
+  ul.explorer-ul li > a.active { color: $green-600; font-weight: 600; }
+  .folder-outer ul { border-left-color: $green-100; }
+}
+:root[saved-theme="dark"] .explorer-content {
+  ul.explorer-ul li > a:hover { color: $brass-100; }
+  ul.explorer-ul li > a.active { color: $brass-300; font-weight: 600; }
+  .folder-outer ul { border-left-color: $green-800; }
+}
+
+.folder-container {
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+:root[saved-theme="dark"] .folder-container:hover {
+  background: rgba($green-800, 0.5);
+}
+
+
+/* ==========================================================================
+   Left sidebar
+   ========================================================================== */
+
+.left-sidebar {
+  border-right: 1px solid transparent;
+}
+:root:not([saved-theme="dark"]) .left-sidebar {
+  border-right-color: $green-100;
+}
+:root[saved-theme="dark"] .left-sidebar {
+  border-right-color: $green-800;
+}
+
+
+/* ==========================================================================
+   Graph
+   ========================================================================== */
+
+.graph {
+  border-radius: 8px;
+  overflow: hidden;
+}
+.graph-outer {
+  border-radius: 8px;
+}
+:root:not([saved-theme="dark"]) .graph-outer {
+  border: 1px solid $green-100;
+  background: rgba($green-100, 0.2);
+}
+:root[saved-theme="dark"] .graph-outer {
+  border: 1px solid $green-800;
+  background: rgba($green-800, 0.3);
+}
+
+.global-graph-outer {
+  backdrop-filter: blur(4px);
+}
+:root[saved-theme="dark"] .global-graph-outer.active {
+  background: rgba($green-900, 0.85);
+}
+
+
+/* ==========================================================================
+   Table of contents
+   ========================================================================== */
+
+.toc {
+  button.toc-header h3 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+}
+:root[saved-theme="dark"] .toc {
+  button.toc-header h3 { color: $brass-300; }
+  ul.toc-content li > a {
+    color: $stone-300;
+    transition: color 0.15s ease;
+    &:hover { color: $stone-50; }
+    &.in-view { color: $green-300; font-weight: 500; }
+  }
+}
+:root:not([saved-theme="dark"]) .toc {
+  button.toc-header h3 { color: $green-600; }
+  ul.toc-content li > a {
+    color: $stone-500;
+    transition: color 0.15s ease;
+    &:hover { color: $green-800; }
+    &.in-view { color: $green-600; font-weight: 500; }
+  }
+}
+
+
+/* ==========================================================================
+   Backlinks
+   ========================================================================== */
+
 .backlinks {
-  background: $stone-50;
-  border: 1px solid $stone-100;
   border-radius: 8px;
   padding: 1rem;
 }
+:root:not([saved-theme="dark"]) .backlinks {
+  background: rgba($green-100, 0.4);
+  border: 1px solid $green-100;
+  & > h3 { color: $green-600; }
+}
 :root[saved-theme="dark"] .backlinks {
-  background: $stone-900;
-  border: 1px solid $stone-800;
+  background: rgba($green-800, 0.4);
+  border: 1px solid $green-800;
+  & > h3 { color: $brass-300; }
 }
 
-/* Frontmatter confidence badges */
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+
+footer {
+  padding-top: 1.5rem;
+  font-size: 0.85rem;
+}
+:root:not([saved-theme="dark"]) footer {
+  border-top: 1px solid $green-100;
+  color: $green-500;
+  a { color: $brass-500; &:hover { color: $brass-800; } }
+}
+:root[saved-theme="dark"] footer {
+  border-top: 1px solid $green-800;
+  color: $green-300;
+  a { color: $brass-300; &:hover { color: $brass-100; } }
+}
+
+
+/* ==========================================================================
+   Callouts — use the full palette
+   ========================================================================== */
+
+:root:not([saved-theme="dark"]) {
+  .callout[data-callout="tip"],
+  .callout[data-callout="success"] {
+    --callout-color: #{$green-600};
+    background: rgba($green-100, 0.5);
+  }
+  .callout[data-callout="info"],
+  .callout[data-callout="abstract"] {
+    --callout-color: #{$slate-500};
+    background: rgba($slate-50, 0.5);
+  }
+  .callout[data-callout="warning"],
+  .callout[data-callout="todo"],
+  .callout[data-callout="question"] {
+    --callout-color: #{$brass-500};
+    background: rgba($brass-50, 0.5);
+  }
+  .callout[data-callout="danger"],
+  .callout[data-callout="failure"],
+  .callout[data-callout="bug"] {
+    --callout-color: #{$oxblood-500};
+    background: rgba($oxblood-50, 0.5);
+  }
+  .callout[data-callout="example"] {
+    --callout-color: #{$slate-500};
+    background: rgba($slate-50, 0.5);
+  }
+  .callout[data-callout="quote"] {
+    --callout-color: #{$stone-500};
+    background: rgba($stone-50, 0.5);
+  }
+}
+
+:root[saved-theme="dark"] {
+  .callout[data-callout="tip"],
+  .callout[data-callout="success"] {
+    --callout-color: #{$green-300};
+    background: rgba($green-800, 0.4);
+  }
+  .callout[data-callout="info"],
+  .callout[data-callout="abstract"] {
+    --callout-color: #{$slate-300};
+    background: rgba($slate-800, 0.3);
+  }
+  .callout[data-callout="warning"],
+  .callout[data-callout="todo"],
+  .callout[data-callout="question"] {
+    --callout-color: #{$brass-300};
+    background: rgba($brass-800, 0.3);
+  }
+  .callout[data-callout="danger"],
+  .callout[data-callout="failure"],
+  .callout[data-callout="bug"] {
+    --callout-color: #{$oxblood-300};
+    background: rgba($oxblood-800, 0.3);
+  }
+  .callout[data-callout="example"] {
+    --callout-color: #{$slate-300};
+    background: rgba($slate-800, 0.3);
+  }
+  .callout[data-callout="quote"] {
+    --callout-color: #{$stone-300};
+    background: rgba($stone-800, 0.3);
+  }
+}
+
+
+/* ==========================================================================
+   Darkmode & readermode toggle buttons
+   ========================================================================== */
+
+.darkmode, .readermode {
+  border-radius: 6px;
+  padding: 4px;
+  transition: background 0.15s ease;
+}
+:root:not([saved-theme="dark"]) {
+  .darkmode:hover, .readermode:hover { background: $green-100; }
+}
+:root[saved-theme="dark"] {
+  .darkmode:hover, .readermode:hover { background: $green-800; }
+}
+
+
+/* ==========================================================================
+   Popover previews
+   ========================================================================== */
+
+.popover .popover-inner {
+  border-radius: 8px;
+}
+:root:not([saved-theme="dark"]) .popover .popover-inner {
+  border: 1px solid $green-100;
+  box-shadow: 0 4px 16px rgba($green-900, 0.08);
+}
+:root[saved-theme="dark"] .popover .popover-inner {
+  border: 1px solid $green-800;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+
+/* ==========================================================================
+   Scroll progress bar
+   ========================================================================== */
+
+.navigation-progress {
+  transition: width 0.1s ease;
+}
+:root:not([saved-theme="dark"]) .navigation-progress {
+  background: $green-500;
+}
+:root[saved-theme="dark"] .navigation-progress {
+  background: $brass-300;
+}
+
+
+/* ==========================================================================
+   Clipboard (copy code) button
+   ========================================================================== */
+
+.clipboard-button {
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+:root[saved-theme="dark"] .clipboard-button:hover {
+  background: $green-600;
+}
+
+
+/* ==========================================================================
+   Confidence badges
+   ========================================================================== */
+
 .confidence-high   { background: $green-50;    color: $green-800; }
 .confidence-medium { background: $brass-50;    color: $brass-800; }
 .confidence-low    { background: $slate-50;    color: $slate-800; }
 .confidence-speculative { background: $oxblood-50; color: $oxblood-800; }
 
 :root[saved-theme="dark"] {
-  .confidence-high   { background: $green-900;    color: $green-300; }
-  .confidence-medium { background: $brass-800;    color: $brass-300; }
-  .confidence-low    { background: $slate-800;    color: $slate-300; }
+  .confidence-high   { background: $green-800;   color: $green-300; }
+  .confidence-medium { background: $brass-800;   color: $brass-300; }
+  .confidence-low    { background: $slate-800;   color: $slate-300; }
   .confidence-speculative { background: $oxblood-800; color: $oxblood-300; }
+}
+
+
+/* ==========================================================================
+   Selection highlight
+   ========================================================================== */
+
+::selection {
+  background: rgba($brass-300, 0.3);
+}
+:root[saved-theme="dark"] ::selection {
+  background: rgba($brass-300, 0.25);
 }
