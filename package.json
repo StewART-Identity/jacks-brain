@@ -17,7 +17,9 @@
     "check": "tsc --noEmit && npx prettier . --check",
     "format": "npx prettier . --write",
     "test": "tsx --test",
-    "profile": "0x -D prof ./quartz/bootstrap-cli.mjs build --concurrency=1"
+    "profile": "0x -D prof ./quartz/bootstrap-cli.mjs build --concurrency=1",
+    "yt": "node scripts/youtube-transcript.mjs",
+    "ingest": "node scripts/ingest.mjs"
   },
   "engines": {
     "npm": ">=10.9.2",
@@ -95,7 +97,9 @@
     "vfile": "^6.0.3",
     "workerpool": "^10.0.1",
     "ws": "^8.19.0",
-    "yargs": "^18.0.0"
+    "yargs": "^18.0.0",
+    "youtube-transcript": "^1.2.1",
+    "@anthropic-ai/sdk": "^0.39.0"
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",
