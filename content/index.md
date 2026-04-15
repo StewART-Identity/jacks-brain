@@ -8,7 +8,7 @@ Master catalog of all pages in this knowledge base.
 
 ## Sources
 
-*No sources ingested yet. Use `ingest [source]` to add the first one.*
+*No sources ingested yet. [[upload|Upload & ingest]] a file or YouTube video to get started.*
 
 ## Entities
 
