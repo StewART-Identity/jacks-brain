@@ -5,7 +5,12 @@ import * as Component from "./quartz/components"
 export const sharedPageComponents: SharedLayout = {
   head: Component.Head(),
   header: [],
-  afterBody: [],
+  afterBody: [
+    Component.ConditionalRender({
+      component: Component.UploadZone(),
+      condition: (page) => page.fileData.slug === "upload",
+    }),
+  ],
   footer: Component.Footer({
     links: {
       GitHub: "https://github.com/StewartIdentity",
