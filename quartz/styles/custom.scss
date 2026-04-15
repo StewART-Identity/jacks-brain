@@ -1,3 +1,158 @@
-@use "./base.scss";
+/* ==========================================================================
+   Jack's Brain — Color Palette
+   Hunter green base, warm stone neutrals, brass/slate/oxblood accents.
+   Drop this into quartz/styles/custom.scss
+   ========================================================================== */
 
-// put your custom CSS here!
+/* ---------- Hunter green ---------- */
+$green-50:  #EBF5EE;
+$green-100: #C1DFCC;
+$green-300: #7BBF95;
+$green-500: #3A7D53;
+$green-600: #2B5E3E;
+$green-800: #1B3F29;
+$green-900: #0F2418;
+
+/* ---------- Warm stone ---------- */
+$stone-50:  #F5F3F0;
+$stone-100: #E3E0DB;
+$stone-300: #B8B3AC;
+$stone-500: #8A857E;
+$stone-600: #5C5851;
+$stone-800: #3D3A36;
+$stone-900: #2A2825;
+
+/* ---------- Brass ---------- */
+$brass-50:  #FBF4E4;
+$brass-100: #F0DDB3;
+$brass-300: #D4AD5A;
+$brass-500: #A8842A;
+$brass-800: #6B4D1A;
+
+/* ---------- Slate blue ---------- */
+$slate-50:  #EEF1F6;
+$slate-100: #C5D0E0;
+$slate-300: #7B8FAD;
+$slate-500: #4A6182;
+$slate-800: #2E3D55;
+
+/* ---------- Oxblood ---------- */
+$oxblood-50:  #F9EDED;
+$oxblood-100: #E8BFBF;
+$oxblood-300: #C46B6B;
+$oxblood-500: #8B3232;
+$oxblood-800: #6B2020;
+
+
+/* ==========================================================================
+   Light mode
+   ========================================================================== */
+
+:root {
+  /* Page */
+  --light:            #{$stone-50};
+  --lightgray:        #{$stone-100};
+  --gray:             #{$stone-500};
+  --darkgray:         #{$stone-800};
+  --dark:             #{$stone-900};
+
+  /* Brand */
+  --secondary:        #{$green-600};    /* headings, active nav */
+  --tertiary:         #{$slate-500};    /* links */
+  --highlight:        #{$green-50};     /* search highlight, hover bg */
+
+  /* Graph */
+  --graph-node:       #{$green-500};
+  --graph-node-active:#{$brass-300};
+  --graph-link:       #{$stone-300};
+  --graph-link-active:#{$green-300};
+}
+
+
+/* ==========================================================================
+   Dark mode
+   ========================================================================== */
+
+:root[saved-theme="dark"] {
+  /* Page */
+  --light:            #{$stone-900};
+  --lightgray:        #{$stone-800};
+  --gray:             #{$stone-500};
+  --darkgray:         #{$stone-300};
+  --dark:             #{$stone-50};
+
+  /* Brand */
+  --secondary:        #{$green-300};
+  --tertiary:         #{$slate-300};
+  --highlight:        #{$green-900};
+
+  /* Graph */
+  --graph-node:       #{$green-300};
+  --graph-node-active:#{$brass-300};
+  --graph-link:       #{$stone-600};
+  --graph-link-active:#{$green-500};
+}
+
+
+/* ==========================================================================
+   Component overrides
+   ========================================================================== */
+
+/* Tag pills */
+a.tag-link {
+  background: $green-50;
+  color: $green-800;
+  border: none;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 0.85rem;
+}
+:root[saved-theme="dark"] a.tag-link {
+  background: $green-900;
+  color: $green-300;
+}
+
+/* Search box */
+.search-bar input {
+  background: $stone-50;
+  border: 1px solid $stone-100;
+  color: $stone-900;
+}
+:root[saved-theme="dark"] .search-bar input {
+  background: $stone-800;
+  border: 1px solid $stone-600;
+  color: $stone-100;
+}
+
+/* Sidebar / explorer */
+.left-sidebar {
+  border-right: 1px solid $stone-100;
+}
+:root[saved-theme="dark"] .left-sidebar {
+  border-right: 1px solid $stone-800;
+}
+
+/* Backlinks section */
+.backlinks {
+  background: $stone-50;
+  border: 1px solid $stone-100;
+  border-radius: 8px;
+  padding: 1rem;
+}
+:root[saved-theme="dark"] .backlinks {
+  background: $stone-900;
+  border: 1px solid $stone-800;
+}
+
+/* Frontmatter confidence badges */
+.confidence-high   { background: $green-50;    color: $green-800; }
+.confidence-medium { background: $brass-50;    color: $brass-800; }
+.confidence-low    { background: $slate-50;    color: $slate-800; }
+.confidence-speculative { background: $oxblood-50; color: $oxblood-800; }
+
+:root[saved-theme="dark"] {
+  .confidence-high   { background: $green-900;    color: $green-300; }
+  .confidence-medium { background: $brass-800;    color: $brass-300; }
+  .confidence-low    { background: $slate-800;    color: $slate-300; }
+  .confidence-speculative { background: $oxblood-800; color: $oxblood-300; }
+}
