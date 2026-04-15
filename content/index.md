@@ -8,20 +8,16 @@ Master catalog of all pages in this knowledge base.
 
 ## Sources
 
-| Page | Summary | Date |
-|------|---------|------|
+*No sources ingested yet. Use `ingest [source]` to add the first one.*
 
 ## Entities
 
-| Page | Summary |
-|------|---------|
+*No entities cataloged yet. Entities are created during source ingestion.*
 
 ## Concepts
 
-| Page | Summary |
-|------|---------|
+*No concepts filed yet. Concepts emerge as sources are ingested.*
 
 ## Synthesis
 
-| Page | Summary | Date |
-|------|---------|------|
+*No synthesis pages yet. These are created from cross-cutting analysis.*
