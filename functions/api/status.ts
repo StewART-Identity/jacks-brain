@@ -1,7 +1,7 @@
 /**
  * GET /api/status
  *
- * Returns recent ingest workflow runs so the UI can show progress.
+ * Returns recent document processing workflow runs.
  *
  * Requires env vars (set in Cloudflare Pages dashboard):
  *   GITHUB_TOKEN  — fine-grained PAT with actions:read
@@ -16,15 +16,41 @@ interface Env {
 interface WorkflowRun {
   id: number
   name: string
+  display_title: string
   status: string
   conclusion: string | null
   html_url: string
   created_at: string
   updated_at: string
+  head_commit: {
+    message: string
+  } | null
 }
 
 interface GitHubRunsResponse {
   workflow_runs: WorkflowRun[]
+}
+
+function extractDocumentName(run: WorkflowRun): string {
+  // Try display_title first (shows commit message for push-triggered runs)
+  const title = run.display_title || ""
+
+  // "upload: 2026-04-16-MyDocument.docx" → "MyDocument.docx"
+  const uploadMatch = title.match(/upload:\s*(.+)/)
+  if (uploadMatch) {
+    // Strip date prefix if present
+    return uploadMatch[1].replace(/^\d{4}-\d{2}-\d{2}-/, "").trim()
+  }
+
+  // Check head_commit message
+  const commitMsg = run.head_commit?.message || ""
+  const commitMatch = commitMsg.match(/upload:\s*(.+)/)
+  if (commitMatch) {
+    return commitMatch[1].replace(/^\d{4}-\d{2}-\d{2}-/, "").trim()
+  }
+
+  // Fallback to workflow name
+  return run.name
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -35,19 +61,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    // Fetch recent runs for both ingest workflows
     const [ingestRuns, youtubeRuns] = await Promise.all([
       fetchRuns(GITHUB_TOKEN, GITHUB_REPO, "ingest.yml"),
       fetchRuns(GITHUB_TOKEN, GITHUB_REPO, "youtube-ingest.yml"),
     ])
 
-    // Merge and sort by date, take 20 most recent
     const allRuns = [...ingestRuns, ...youtubeRuns]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 20)
       .map((run) => ({
         id: run.id,
-        name: run.name,
+        document: extractDocumentName(run),
         status: run.status,
         conclusion: run.conclusion,
         url: run.html_url,

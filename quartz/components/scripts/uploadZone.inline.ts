@@ -174,22 +174,28 @@ document.addEventListener("nav", () => {
   const refreshRunsBtn = document.getElementById("refresh-runs-btn") as HTMLButtonElement | null
   if (refreshRunsBtn) {
     refreshRunsBtn.addEventListener("click", () => {
+      sessionStorage.removeItem("runsCleared")
       if (runsList) runsList.innerHTML = '<p class="muted">Loading...</p>'
       loadRuns()
     })
   }
 
-  // Clear runs button
+  // Clear runs button — persists for the session
   const clearRunsBtn = document.getElementById("clear-runs-btn") as HTMLButtonElement | null
   if (clearRunsBtn && runsList) {
     clearRunsBtn.addEventListener("click", () => {
-      runsList.innerHTML = '<p class="muted">No recent ingestion runs.</p>'
+      sessionStorage.setItem("runsCleared", "true")
+      runsList.innerHTML = '<p class="muted">Cleared.</p>'
     })
   }
 
   // Load recent runs
   async function loadRuns() {
     if (!runsList) return
+    if (sessionStorage.getItem("runsCleared") === "true") {
+      runsList.innerHTML = '<p class="muted">Cleared.</p>'
+      return
+    }
     try {
       const response = await fetch("/api/status")
       const data = await response.json()
@@ -199,13 +205,13 @@ document.addEventListener("nav", () => {
             (run: any) =>
               `<div class="run-item">
                 <span class="run-badge ${run.conclusion || run.status}">${run.conclusion || run.status}</span>
-                <span class="run-name"><a href="${run.url}" target="_blank">${run.name}</a></span>
+                <span class="run-doc">${run.document || run.name}</span>
                 <span class="run-time">${new Date(run.created).toLocaleString()}</span>
               </div>`,
           )
           .join("")
       } else {
-        runsList.innerHTML = '<p class="muted">No recent ingestion runs.</p>'
+        runsList.innerHTML = '<p class="muted">No documents processing.</p>'
       }
     } catch {
       runsList.innerHTML = '<p class="muted">Could not load status.</p>'
