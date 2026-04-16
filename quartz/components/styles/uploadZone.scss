@@ -6,11 +6,16 @@
 .upload-zone {
   border: 2px dashed var(--gray);
   border-radius: 12px;
-  padding: 3rem 2rem;
+  padding: 1.5rem 2rem 3rem;
   text-align: center;
   cursor: pointer;
   transition: border-color 0.2s ease, background 0.2s ease;
   position: relative;
+}
+.upload-zone .upload-section-label {
+  text-align: left;
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
 }
 .upload-zone:hover,
 .upload-zone.drag-over {
@@ -189,8 +194,32 @@
 .recent-runs {
   margin-top: 2rem;
 }
-.recent-runs h3 {
+.recent-runs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 0.75rem;
+}
+.recent-runs-header h3 {
+  margin: 0;
+}
+.recent-runs-actions {
+  display: flex;
+  gap: 0.3rem;
+}
+.runs-action-btn {
+  background: transparent;
+  border: 1px solid var(--lightgray);
+  border-radius: 6px;
+  color: var(--gray);
+  font-size: 1rem;
+  padding: 0.1rem 0.5rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  line-height: 1;
+}
+.runs-action-btn:hover {
+  opacity: 0.7;
 }
 .run-item {
   display: flex;

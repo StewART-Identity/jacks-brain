@@ -170,6 +170,23 @@ document.addEventListener("nav", () => {
     })
   }
 
+  // Refresh runs button
+  const refreshRunsBtn = document.getElementById("refresh-runs-btn") as HTMLButtonElement | null
+  if (refreshRunsBtn) {
+    refreshRunsBtn.addEventListener("click", () => {
+      if (runsList) runsList.innerHTML = '<p class="muted">Loading...</p>'
+      loadRuns()
+    })
+  }
+
+  // Clear runs button
+  const clearRunsBtn = document.getElementById("clear-runs-btn") as HTMLButtonElement | null
+  if (clearRunsBtn && runsList) {
+    clearRunsBtn.addEventListener("click", () => {
+      runsList.innerHTML = '<p class="muted">No recent ingestion runs.</p>'
+    })
+  }
+
   // Load recent runs
   async function loadRuns() {
     if (!runsList) return

@@ -1,8 +1,9 @@
 /**
  * POST /api/upload
  *
- * Accepts a file via multipart form data, commits it to raw/ in the GitHub
- * repo, then triggers the ingest workflow.
+ * Accepts a file via multipart form data, commits the original to
+ * static/originals/ in the GitHub repo. The ingest workflow triggers
+ * automatically on push.
  *
  * Requires env vars (set in Cloudflare Pages dashboard):
  *   GITHUB_TOKEN  — fine-grained PAT with contents:write + actions:write
@@ -39,7 +40,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const today = new Date().toISOString().slice(0, 10)
     const originalName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-")
     const filename = originalName.startsWith(today) ? originalName : `${today}-${originalName}`
-    const path = `raw/${filename}`
+    const path = `static/originals/${filename}`
 
     // Commit the file to the repo via GitHub Contents API
     const commitResponse = await fetch(
@@ -65,24 +66,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return Response.json({ error: "GitHub commit failed", details: err }, { status: 502 })
     }
 
-    // The ingest workflow triggers automatically on push to raw/**
-    // But also trigger it explicitly to be safe
-    await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/ingest.yml/dispatches`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
-          Accept: "application/vnd.github.v3+json",
-          "Content-Type": "application/json",
-          "User-Agent": "jacks-brain-upload",
-        },
-        body: JSON.stringify({
-          ref: "main",
-          inputs: { file_path: path },
-        }),
-      }
-    )
+    // The ingest workflow triggers automatically on push to static/originals/**
 
     return Response.json({
       success: true,

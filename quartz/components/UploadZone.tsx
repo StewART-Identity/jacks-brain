@@ -7,8 +7,9 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
   return (
     <div class={displayClass} id="upload-app">
       <div class="upload-zone" id="drop-zone">
+        <h3 class="upload-section-label">Upload File</h3>
         <div class="upload-icon">&#8693;</div>
-        <p class="upload-label">Drop a file here to ingest</p>
+        <p class="upload-label">Drop a file here</p>
         <p class="upload-sub">or click to browse — also supports paste (Ctrl+V) for images</p>
         <input
           type="file"
@@ -24,7 +25,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
       </div>
 
       <div class="paste-section">
-        <h3>Paste text to ingest</h3>
+        <h3>Paste Text</h3>
         <textarea
           id="paste-input"
           placeholder="Paste or type text here..."
@@ -47,7 +48,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
       </div>
 
       <div class="youtube-section">
-        <h3>Ingest a YouTube video</h3>
+        <h3>Paste YouTube URL</h3>
         <div class="youtube-row">
           <input type="url" id="youtube-input" placeholder="https://www.youtube.com/watch?v=..." />
           <button id="youtube-btn">Ingest</button>
@@ -60,7 +61,13 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
       </div>
 
       <div id="recent-runs" class="recent-runs">
-        <h3>Recent ingestions</h3>
+        <div class="recent-runs-header">
+          <h3>Recent ingestions</h3>
+          <div class="recent-runs-actions">
+            <button id="refresh-runs-btn" class="runs-action-btn" title="Refresh">&#8635;</button>
+            <button id="clear-runs-btn" class="runs-action-btn" title="Clear">&times;</button>
+          </div>
+        </div>
         <div id="runs-list">
           <p class="muted">Loading...</p>
         </div>

@@ -6,18 +6,21 @@
  * Uses Claude Code CLI to read source documents from raw/ and write structured
  * wiki pages directly to content/. Uses your Max plan via CLAUDE_CODE_OAUTH_TOKEN.
  *
+ * Binary files (.docx, .pdf) are converted to text first using pandoc/pdftotext.
+ *
  * Usage:
  *   node scripts/ingest.mjs [file-path]        # ingest a specific file
  *   node scripts/ingest.mjs                     # ingest all un-ingested files in raw/
  */
 
-import { readdirSync, existsSync, readFileSync } from "node:fs"
+import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs"
 import { join, resolve, basename, relative, extname } from "node:path"
 import { fileURLToPath } from "node:url"
-import { execFileSync } from "node:child_process"
+import { execFileSync, execSync } from "node:child_process"
+import { tmpdir } from "node:os"
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../..")
-const RAW_DIR = join(ROOT, "raw")
+const ORIGINALS_DIR = join(ROOT, "static", "originals")
 const CONTENT_DIR = join(ROOT, "content")
 
 const ALL_EXTENSIONS = new Set([
@@ -49,32 +52,110 @@ function findUningestedFiles() {
   })
 }
 
+/**
+ * Convert binary files to plain text so Claude Code doesn't waste turns
+ * trying to read them. Returns the path to a readable text file.
+ */
+function convertToText(sourcePath) {
+  const ext = extname(sourcePath).toLowerCase()
+
+  if ([".md", ".txt", ".html"].includes(ext)) {
+    return sourcePath // already text
+  }
+
+  const tmpPath = join(tmpdir(), basename(sourcePath) + ".md")
+
+  if ([".docx", ".doc"].includes(ext)) {
+    console.log(`  Converting ${ext} to markdown with pandoc...`)
+    try {
+      execSync(`pandoc -f docx -t markdown -o "${tmpPath}" "${sourcePath}"`, {
+        encoding: "utf-8",
+        timeout: 60_000,
+      })
+      return tmpPath
+    } catch (err) {
+      console.error(`  pandoc failed, trying raw text extraction...`)
+      // Fallback: extract raw text with strings
+      try {
+        const raw = execSync(`strings "${sourcePath}"`, { encoding: "utf-8", timeout: 30_000 })
+        writeFileSync(tmpPath, raw)
+        return tmpPath
+      } catch {
+        console.error(`  Could not extract text from ${ext} file`)
+        return sourcePath
+      }
+    }
+  }
+
+  if (ext === ".pdf") {
+    console.log(`  Converting PDF to text with pdftotext...`)
+    try {
+      execSync(`pdftotext "${sourcePath}" "${tmpPath}"`, {
+        encoding: "utf-8",
+        timeout: 60_000,
+      })
+      return tmpPath
+    } catch {
+      console.error(`  pdftotext failed, passing raw path to Claude Code`)
+      return sourcePath
+    }
+  }
+
+  // Images — pass directly, Claude Code can view them
+  return sourcePath
+}
+
 // ---------------------------------------------------------------------------
 // Claude Code CLI — let it read and write files directly
 // ---------------------------------------------------------------------------
 
 function ingestWithClaude(sourcePath) {
   const today = new Date().toISOString().slice(0, 10)
-  const relSource = relative(ROOT, sourcePath)
+  const originalName = basename(sourcePath)
+
+  // Convert binary formats to text
+  const readablePath = convertToText(sourcePath)
+  const relReadable = relative(ROOT, readablePath)
+  const isConverted = readablePath !== sourcePath
+
+  // If we converted the file, read it inline to avoid path issues
+  let sourceInstruction
+  if (isConverted || [".md", ".txt", ".html"].includes(extname(sourcePath).toLowerCase())) {
+    const content = readFileSync(readablePath, "utf-8")
+    sourceInstruction = `The source document content (originally "${originalName}") is below:
+
+<source-document>
+${content}
+</source-document>`
+  } else {
+    // Images — tell Claude Code to read the file
+    sourceInstruction = `The source document is an image file at: ${relative(ROOT, sourcePath)}
+Please read this file to extract its content. The original filename is: ${originalName}`
+  }
 
   const prompt = `You are ingesting a source document into a knowledge wiki.
 
 Read the following files to understand the wiki structure and current state:
 1. CLAUDE.md — the wiki schema and conventions
 2. content/index.md — the current wiki index
-3. ${relSource} — the source document to ingest
+3. content/learn/memory.md — the current memory/log
 
-Then follow the "Ingest" workflow from CLAUDE.md:
-1. Create a source summary page in content/sources/ named ${today}-${basename(sourcePath).replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md
+${sourceInstruction}
+
+Follow the "Ingest" workflow from CLAUDE.md:
+1. Create a source summary page in content/sources/ named ${today}-${originalName.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md
 2. Create or update entity pages in content/entities/ for significant entities mentioned
 3. Create or update concept pages in content/concepts/ for significant concepts
 4. Update content/index.md with the new pages added to the appropriate tables
 5. Update content/learn/memory.md with a log entry for this ingest operation (append at the top, below the frontmatter)
 
+The original document is available for download at: /originals/${originalName}
+Include a link to the original document in the source summary page (e.g., [Download original](/originals/${originalName})).
+
 Use wikilinks ([[path]]) aggressively. Today's date is ${today}.
 Write all files directly — do not ask for confirmation.`
 
-  console.log(`Calling Claude Code CLI for: ${relSource}`)
+  console.log(`Calling Claude Code CLI for: ${relative(ROOT, sourcePath)}`)
 
   try {
     const output = execFileSync("claude", [
@@ -117,10 +198,10 @@ function main() {
   } else {
     const uningestedNames = findUningestedFiles()
     if (uningestedNames.length === 0) {
-      console.log("No new files to ingest in raw/.")
+      console.log("No new files to ingest in static/originals/.")
       process.exit(0)
     }
-    filesToIngest = uningestedNames.map((f) => join(RAW_DIR, f))
+    filesToIngest = uningestedNames.map((f) => join(ORIGINALS_DIR, f))
     console.log(`Found ${filesToIngest.length} file(s) to ingest:`)
     filesToIngest.forEach((f) => console.log(`  - ${relative(ROOT, f)}`))
   }

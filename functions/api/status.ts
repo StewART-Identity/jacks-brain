@@ -41,10 +41,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       fetchRuns(GITHUB_TOKEN, GITHUB_REPO, "youtube-ingest.yml"),
     ])
 
-    // Merge and sort by date, take 10 most recent
+    // Merge and sort by date, take 20 most recent
     const allRuns = [...ingestRuns, ...youtubeRuns]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 10)
+      .slice(0, 20)
       .map((run) => ({
         id: run.id,
         name: run.name,
@@ -64,7 +64,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
 async function fetchRuns(token: string, repo: string, workflow: string): Promise<WorkflowRun[]> {
   const response = await fetch(
-    `https://api.github.com/repos/${repo}/actions/workflows/${workflow}/runs?per_page=5`,
+    `https://api.github.com/repos/${repo}/actions/workflows/${workflow}/runs?per_page=10`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
