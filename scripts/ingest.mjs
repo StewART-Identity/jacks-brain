@@ -147,7 +147,7 @@ Follow the "Ingest" workflow from CLAUDE.md:
 2. Create or update entity pages in content/entities/ for significant entities mentioned
 3. Create or update concept pages in content/concepts/ for significant concepts
 4. Update content/index.md with the new pages added to the appropriate tables
-5. Update content/learn/memory.md with a log entry for this ingest operation (append at the top, below the frontmatter)
+5. Update content/learn/memory.md — add an "**Ingested:**" entry under today's date heading (## ${today}). If today's date heading already exists, add the entry under it. If not, create a new date heading at the top (below the frontmatter and description). Format: \`- **Ingested:** document-name.ext\`. Do NOT include timestamps, only dates.
 
 The original document is available for download at: /originals/${originalName}
 Include a link to the original document in the source summary page (e.g., [Download original](/originals/${originalName})).
