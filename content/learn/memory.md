@@ -4,6 +4,8 @@ title: "Memory"
 
 Permanent record of knowledge added to the wiki, organized by date.
 
+---
+
 ## 2026-04-16
 
 - **Initialized:** Wiki UI and ingest pipeline finalized
