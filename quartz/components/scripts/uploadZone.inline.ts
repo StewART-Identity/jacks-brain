@@ -78,6 +78,10 @@ document.addEventListener("nav", () => {
   })
 
   async function uploadFile(file: File) {
+    // Show Document Processing section on new upload
+    localStorage.removeItem("docProcessingCleared")
+    const recentSection = document.getElementById("recent-runs")
+    if (recentSection) recentSection.style.display = ""
     showStatus("Uploading " + file.name + "...", "pending")
     try {
       const formData = new FormData()
@@ -170,48 +174,45 @@ document.addEventListener("nav", () => {
     })
   }
 
-  // Refresh runs button — resets clear and reloads
+  const recentRunsSection = document.getElementById("recent-runs") as HTMLElement | null
+
+  // Refresh runs button — shows the section and reloads
   const refreshRunsBtn = document.getElementById("refresh-runs-btn") as HTMLButtonElement | null
   if (refreshRunsBtn) {
     refreshRunsBtn.addEventListener("click", () => {
-      localStorage.removeItem("docProcessingHiddenIds")
+      localStorage.removeItem("docProcessingCleared")
+      if (recentRunsSection) recentRunsSection.style.display = ""
       if (runsList) runsList.innerHTML = '<p class="muted">Loading...</p>'
       loadRuns()
     })
   }
 
-  // Clear runs button — hides all currently visible runs by ID
+  // Clear runs button — hides the entire section
   const clearRunsBtn = document.getElementById("clear-runs-btn") as HTMLButtonElement | null
-  if (clearRunsBtn && runsList) {
+  if (clearRunsBtn) {
     clearRunsBtn.addEventListener("click", () => {
-      // Store IDs of all currently known runs to hide them
-      const existing = JSON.parse(localStorage.getItem("docProcessingHiddenIds") || "[]")
-      const currentIds = (window as any).__docProcessingRunIds || []
-      const merged = [...new Set([...existing, ...currentIds])]
-      localStorage.setItem("docProcessingHiddenIds", JSON.stringify(merged))
-      runsList.innerHTML = '<p class="muted">No active processing.</p>'
+      localStorage.setItem("docProcessingCleared", "true")
+      if (recentRunsSection) recentRunsSection.style.display = "none"
     })
   }
 
-  // Load runs — hides cleared runs, always shows in-progress
+  // Load runs — skip if cleared
   async function loadRuns() {
     if (!runsList) return
+    if (localStorage.getItem("docProcessingCleared") === "true") {
+      if (recentRunsSection) recentRunsSection.style.display = "none"
+      return
+    }
     try {
       const response = await fetch("/api/status")
       const data = await response.json()
-      const hiddenIds: number[] = JSON.parse(localStorage.getItem("docProcessingHiddenIds") || "[]")
-      const hiddenSet = new Set(hiddenIds)
 
       if (data.runs && data.runs.length > 0) {
-        // Store all run IDs so clear can reference them
-        ;(window as any).__docProcessingRunIds = data.runs.map((r: any) => r.id)
-
+        // Only show in-progress/queued, or runs from the last 24 hours
+        const cutoff = Date.now() - 24 * 60 * 60 * 1000
         const filtered = data.runs.filter((run: any) => {
-          // Always show in-progress/queued runs
           if (run.status === "in_progress" || run.status === "queued") return true
-          // Hide runs that were explicitly cleared
-          if (hiddenSet.has(run.id)) return false
-          return true
+          return new Date(run.created).getTime() > cutoff
         })
 
         if (filtered.length > 0) {
