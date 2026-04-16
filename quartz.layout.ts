@@ -46,7 +46,7 @@ export const defaultContentPageLayout: PageLayout = {
       ],
     }),
     Component.SidebarLink({
-      title: "Recall",
+      title: "Study",
       slug: "recall",
       defaultState: "open",
       links: [
@@ -91,7 +91,7 @@ export const defaultListPageLayout: PageLayout = {
       ],
     }),
     Component.SidebarLink({
-      title: "Recall",
+      title: "Study",
       slug: "recall",
       defaultState: "open",
       links: [
