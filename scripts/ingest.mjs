@@ -3,20 +3,15 @@
 /**
  * ingest.mjs
  *
- * Reads source documents from raw/, sends them to Claude Code CLI with CLAUDE.md
- * instructions, and writes the generated wiki pages to content/.
- *
- * Uses Claude Code CLI (Max plan) instead of the Anthropic API directly.
+ * Uses Claude Code CLI to read source documents from raw/ and write structured
+ * wiki pages directly to content/. Uses your Max plan via CLAUDE_CODE_OAUTH_TOKEN.
  *
  * Usage:
  *   node scripts/ingest.mjs [file-path]        # ingest a specific file
  *   node scripts/ingest.mjs                     # ingest all un-ingested files in raw/
- *   npm run ingest -- raw/2026-04-14-example.md
- *
- * Requires: claude CLI installed and authenticated (CLAUDE_CODE_OAUTH_TOKEN or logged in)
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from "node:fs"
+import { readdirSync, existsSync, readFileSync } from "node:fs"
 import { join, resolve, basename, relative, extname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { execFileSync } from "node:child_process"
@@ -24,43 +19,20 @@ import { execFileSync } from "node:child_process"
 const ROOT = resolve(fileURLToPath(import.meta.url), "../..")
 const RAW_DIR = join(ROOT, "raw")
 const CONTENT_DIR = join(ROOT, "content")
-const SCHEMA_PATH = join(ROOT, "CLAUDE.md")
-const INDEX_PATH = join(CONTENT_DIR, "index.md")
 
-// File types that can be read as text
-const TEXT_EXTENSIONS = new Set([".md", ".txt", ".html"])
-// File types that need vision/binary handling (passed as file paths to Claude)
-const BINARY_EXTENSIONS = new Set([".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".doc", ".docx"])
+const ALL_EXTENSIONS = new Set([
+  ".md", ".txt", ".html", ".pdf", ".png", ".jpg", ".jpeg",
+  ".gif", ".webp", ".doc", ".docx",
+])
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function readIfExists(path) {
-  if (existsSync(path)) return readFileSync(path, "utf-8")
-  return null
-}
-
-function listExistingPages() {
-  const pages = []
-  for (const subdir of ["sources", "entities", "concepts", "synthesis"]) {
-    const dir = join(CONTENT_DIR, subdir)
-    if (!existsSync(dir)) continue
-    for (const file of readdirSync(dir)) {
-      if (file === ".gitkeep") continue
-      if (file.endsWith(".md")) {
-        pages.push(`${subdir}/${file.replace(/\.md$/, "")}`)
-      }
-    }
-  }
-  return pages
-}
-
 function findUningestedFiles() {
   if (!existsSync(RAW_DIR)) return []
-  const allExts = new Set([...TEXT_EXTENSIONS, ...BINARY_EXTENSIONS])
   const rawFiles = readdirSync(RAW_DIR).filter(
-    (f) => f !== ".gitkeep" && allExts.has(extname(f).toLowerCase()),
+    (f) => f !== ".gitkeep" && ALL_EXTENSIONS.has(extname(f).toLowerCase()),
   )
 
   const existingSources = new Set()
@@ -71,7 +43,6 @@ function findUningestedFiles() {
     }
   }
 
-  // A raw file is "ingested" if a source page with a matching date-slug exists
   return rawFiles.filter((f) => {
     const stem = f.replace(/\.[^.]+$/, "")
     return !existingSources.has(stem)
@@ -79,115 +50,60 @@ function findUningestedFiles() {
 }
 
 // ---------------------------------------------------------------------------
-// Claude Code CLI call
+// Claude Code CLI — let it read and write files directly
 // ---------------------------------------------------------------------------
 
-async function ingestWithClaude(sourcePath, schema, indexContent, existingPages) {
+function ingestWithClaude(sourcePath) {
   const today = new Date().toISOString().slice(0, 10)
-  const sourceFilename = basename(sourcePath).replace(/\.[^.]+$/, "")
-  const ext = extname(sourcePath).toLowerCase()
-  const isText = TEXT_EXTENSIONS.has(ext)
+  const relSource = relative(ROOT, sourcePath)
 
-  const existingPagesStr =
-    existingPages.length > 0
-      ? `Existing wiki pages:\n${existingPages.map((p) => `- [[${p}]]`).join("\n")}`
-      : "The wiki has no existing pages yet."
+  const prompt = `You are ingesting a source document into a knowledge wiki.
 
-  let sourceSection
-  if (isText) {
-    const sourceContent = readFileSync(sourcePath, "utf-8")
-    sourceSection = `## Source document (from raw/${basename(sourcePath)})\n${sourceContent}`
-  } else {
-    sourceSection = `## Source document\nThe source document is located at: ${sourcePath}\nPlease read this file to extract its content. The filename is: ${basename(sourcePath)}`
-  }
+Read the following files to understand the wiki structure and current state:
+1. CLAUDE.md — the wiki schema and conventions
+2. content/index.md — the current wiki index
+3. ${relSource} — the source document to ingest
 
-  const prompt = `You are a knowledge wiki assistant. Your job is to ingest a source document and produce structured wiki pages following the schema below.
+Then follow the "Ingest" workflow from CLAUDE.md:
+1. Create a source summary page in content/sources/ named ${today}-${basename(sourcePath).replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md
+2. Create or update entity pages in content/entities/ for significant entities mentioned
+3. Create or update concept pages in content/concepts/ for significant concepts
+4. Update content/index.md with the new pages added to the appropriate tables
+5. Update content/learn/memory.md with a log entry for this ingest operation (append at the top, below the frontmatter)
 
-${schema}
+Use wikilinks ([[path]]) aggressively. Today's date is ${today}.
+Write all files directly — do not ask for confirmation.`
 
-IMPORTANT INSTRUCTIONS:
-- Output ONLY a JSON array of objects, each with "path" and "content" fields.
-- "path" is relative to the content/ directory (e.g., "sources/2026-04-14-example.md").
-- "content" is the full markdown content of the page including frontmatter.
-- Include the source summary page, any new or updated entity pages, any new or updated concept pages.
-- Include an updated index.md with the new pages added to the appropriate tables.
-- Include an updated learn/memory.md with the ingest operation appended at the top (below the frontmatter/heading).
-- Use wikilinks ([[path]]) aggressively to cross-reference pages.
-- Today's date is ${today}.
-- The source filename is "${sourceFilename}".
-- Do NOT wrap the JSON in markdown code fences. Output raw JSON only.
+  console.log(`Calling Claude Code CLI for: ${relSource}`)
 
-Please ingest the following source document.
-
-## Current index.md
-${indexContent || "(empty)"}
-
-## ${existingPagesStr}
-
-${sourceSection}`
-
-  console.log(`Calling Claude Code CLI...`)
-
-  let output
   try {
-    output = execFileSync("claude", ["-p", "--output-format", "text", "--max-turns", "15"], {
+    const output = execFileSync("claude", [
+      "-p",
+      "--output-format", "text",
+      "--max-turns", "25",
+    ], {
       input: prompt,
       encoding: "utf-8",
       maxBuffer: 50 * 1024 * 1024,
       cwd: ROOT,
       timeout: 600_000,
     })
+
+    console.log(output)
   } catch (err) {
     if (err.stdout) {
-      console.error("Claude Code stderr:", err.stderr?.slice(0, 1000))
-      output = err.stdout
-    } else {
-      throw new Error(`Claude Code CLI failed: ${err.message}`)
+      console.log(err.stdout)
+      console.error("Claude Code stderr:", err.stderr?.slice(0, 2000))
     }
+    throw new Error(`Claude Code CLI failed: ${err.message}`)
   }
-
-  // Parse JSON — handle cases where Claude wraps in code fences
-  let cleaned = output.trim()
-  if (cleaned.startsWith("```")) {
-    cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "")
-  }
-
-  // Sometimes the output has leading text before the JSON array
-  const jsonStart = cleaned.indexOf("[")
-  const jsonEnd = cleaned.lastIndexOf("]")
-  if (jsonStart !== -1 && jsonEnd !== -1 && jsonStart < jsonEnd) {
-    cleaned = cleaned.slice(jsonStart, jsonEnd + 1)
-  }
-
-  let files
-  try {
-    files = JSON.parse(cleaned)
-  } catch (err) {
-    console.error("Failed to parse Claude response as JSON:")
-    console.error(cleaned.slice(0, 500))
-    throw new Error(`JSON parse error: ${err.message}`)
-  }
-
-  if (!Array.isArray(files)) {
-    throw new Error("Expected JSON array from Claude, got: " + typeof files)
-  }
-
-  return files
 }
 
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
-async function main() {
-  // Read schema
-  const schema = readIfExists(SCHEMA_PATH)
-  if (!schema) {
-    console.error("Error: CLAUDE.md not found at project root.")
-    process.exit(1)
-  }
-
-  // Determine files to ingest
+function main() {
   let filesToIngest = []
   const explicitPath = process.argv[2]
 
@@ -209,46 +125,12 @@ async function main() {
     filesToIngest.forEach((f) => console.log(`  - ${relative(ROOT, f)}`))
   }
 
-  // Read current wiki state
-  const indexContent = readIfExists(INDEX_PATH)
-  const existingPages = listExistingPages()
-
-  // Process each file
   for (const filepath of filesToIngest) {
-    const relPath = relative(ROOT, filepath)
-    console.log(`\nIngesting: ${relPath}`)
-
-    const generatedFiles = await ingestWithClaude(filepath, schema, indexContent, existingPages)
-
-    // Write generated files
-    const created = []
-    const updated = []
-
-    for (const { path: filePath, content } of generatedFiles) {
-      const fullPath = join(CONTENT_DIR, filePath)
-      const dir = resolve(fullPath, "..")
-      mkdirSync(dir, { recursive: true })
-
-      const existed = existsSync(fullPath)
-      writeFileSync(fullPath, content, "utf-8")
-
-      if (existed) {
-        updated.push(filePath)
-      } else {
-        created.push(filePath)
-      }
-      console.log(`  ${existed ? "Updated" : "Created"}: content/${filePath}`)
-    }
-
-    console.log(`\nSummary for ${relPath}:`)
-    if (created.length) console.log(`  Created: ${created.length} page(s)`)
-    if (updated.length) console.log(`  Updated: ${updated.length} page(s)`)
+    console.log(`\nIngesting: ${relative(ROOT, filepath)}`)
+    ingestWithClaude(filepath)
   }
 
   console.log("\nIngest complete.")
 }
 
-main().catch((err) => {
-  console.error(err)
-  process.exit(1)
-})
+main()
