@@ -15,30 +15,79 @@ document.addEventListener("nav", () => {
   const container = document.getElementById("sources-list")
   if (!container) return
 
+  let allFiles = []
+  let sortField = "uploaded"
+  let sortAsc = false
+
+  function renderTable() {
+    if (allFiles.length === 0) {
+      container.innerHTML = '<p class="muted">No files uploaded yet.</p>'
+      return
+    }
+
+    const sorted = [...allFiles].sort(function(a, b) {
+      let valA, valB
+      if (sortField === "name") {
+        valA = a.name.toLowerCase()
+        valB = b.name.toLowerCase()
+      } else if (sortField === "uploaded") {
+        valA = a.uploaded || ""
+        valB = b.uploaded || ""
+      } else {
+        valA = a.ingested ? 1 : 0
+        valB = b.ingested ? 1 : 0
+      }
+      if (valA < valB) return sortAsc ? -1 : 1
+      if (valA > valB) return sortAsc ? 1 : -1
+      return 0
+    })
+
+    function arrow(field) {
+      if (sortField !== field) return ""
+      return sortAsc ? " \\u25B2" : " \\u25BC"
+    }
+
+    container.innerHTML = '<table class="sources-table">' +
+      '<thead><tr>' +
+      '<th class="sortable" data-sort="name">File' + arrow("name") + '</th>' +
+      '<th class="sortable" data-sort="uploaded">Uploaded' + arrow("uploaded") + '</th>' +
+      '<th class="sortable" data-sort="status">Status' + arrow("status") + '</th>' +
+      '</tr></thead>' +
+      '<tbody>' +
+      sorted.map(function(f) {
+        var status = f.ingested
+          ? '<span class="source-badge ingested">Ingested</span>'
+          : '<span class="source-badge pending">Pending</span>'
+        var date = f.uploaded || "Unknown"
+        return '<tr>' +
+          '<td><a href="' + f.downloadUrl + '" target="_blank">' + f.name + '</a></td>' +
+          '<td>' + date + '</td>' +
+          '<td>' + status + '</td>' +
+          '</tr>'
+      }).join("") +
+      '</tbody></table>'
+
+    container.querySelectorAll("th.sortable").forEach(function(th) {
+      th.addEventListener("click", function() {
+        var field = th.getAttribute("data-sort")
+        if (sortField === field) {
+          sortAsc = !sortAsc
+        } else {
+          sortField = field
+          sortAsc = true
+        }
+        renderTable()
+      })
+    })
+  }
+
   async function loadSources() {
     try {
-      const response = await fetch("/api/originals")
-      const data = await response.json()
-      if (data.files && data.files.length > 0) {
-        container.innerHTML = '<table class="sources-table">' +
-          '<thead><tr><th>File</th><th>Uploaded</th><th>Status</th></tr></thead>' +
-          '<tbody>' +
-          data.files.map(function(f) {
-            const status = f.ingested
-              ? '<span class="source-badge ingested">Ingested</span>'
-              : '<span class="source-badge pending">Pending</span>'
-            const date = f.uploaded || 'Unknown'
-            return '<tr>' +
-              '<td><a href="' + f.downloadUrl + '" target="_blank">' + f.name + '</a></td>' +
-              '<td>' + date + '</td>' +
-              '<td>' + status + '</td>' +
-              '</tr>'
-          }).join('') +
-          '</tbody></table>'
-      } else {
-        container.innerHTML = '<p class="muted">No files uploaded yet.</p>'
-      }
-    } catch {
+      var response = await fetch("/api/originals")
+      var data = await response.json()
+      allFiles = data.files || []
+      renderTable()
+    } catch (e) {
       container.innerHTML = '<p class="muted">Could not load sources.</p>'
     }
   }
@@ -62,6 +111,13 @@ SourcesList.css = `
   border-bottom: 2px solid var(--lightgray);
   font-weight: 600;
   color: var(--dark);
+}
+.sources-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.sources-table th.sortable:hover {
+  color: var(--secondary);
 }
 .sources-table td {
   padding: 0.4rem 0.75rem;
