@@ -9,8 +9,35 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
       <div class="upload-zone" id="drop-zone">
         <div class="upload-icon">&#8693;</div>
         <p class="upload-label">Drop a file here to ingest</p>
-        <p class="upload-sub">or click to browse</p>
-        <input type="file" id="file-input" accept=".md,.txt,.pdf,.html,.doc,.docx" />
+        <p class="upload-sub">or click to browse — also supports paste (Ctrl+V) for images</p>
+        <input
+          type="file"
+          id="file-input"
+          accept=".md,.txt,.pdf,.html,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp"
+        />
+      </div>
+
+      <div class="divider-row">
+        <hr class="divider-line" />
+        <span class="divider-text">or</span>
+        <hr class="divider-line" />
+      </div>
+
+      <div class="paste-section">
+        <h3>Paste text to ingest</h3>
+        <textarea
+          id="paste-input"
+          placeholder="Paste or type text here..."
+          rows={6}
+        ></textarea>
+        <div class="paste-row">
+          <input
+            type="text"
+            id="paste-title"
+            placeholder="Title (optional — used for filename)"
+          />
+          <button id="paste-btn">Ingest</button>
+        </div>
       </div>
 
       <div class="divider-row">

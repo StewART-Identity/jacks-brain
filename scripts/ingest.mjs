@@ -3,28 +3,34 @@
 /**
  * ingest.mjs
  *
- * Reads source documents from raw/, sends them to Claude API with CLAUDE.md
+ * Reads source documents from raw/, sends them to Claude Code CLI with CLAUDE.md
  * instructions, and writes the generated wiki pages to content/.
+ *
+ * Uses Claude Code CLI (Max plan) instead of the Anthropic API directly.
  *
  * Usage:
  *   node scripts/ingest.mjs [file-path]        # ingest a specific file
  *   node scripts/ingest.mjs                     # ingest all un-ingested files in raw/
  *   npm run ingest -- raw/2026-04-14-example.md
  *
- * Requires: ANTHROPIC_API_KEY environment variable
+ * Requires: claude CLI installed and authenticated (CLAUDE_CODE_OAUTH_TOKEN or logged in)
  */
 
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from "node:fs"
-import { join, resolve, basename, relative } from "node:path"
+import { join, resolve, basename, relative, extname } from "node:path"
 import { fileURLToPath } from "node:url"
-import Anthropic from "@anthropic-ai/sdk"
+import { execFileSync } from "node:child_process"
 
 const ROOT = resolve(fileURLToPath(import.meta.url), "../..")
 const RAW_DIR = join(ROOT, "raw")
 const CONTENT_DIR = join(ROOT, "content")
 const SCHEMA_PATH = join(ROOT, "CLAUDE.md")
 const INDEX_PATH = join(CONTENT_DIR, "index.md")
-const LOG_PATH = join(CONTENT_DIR, "learn", "memory.md")
+
+// File types that can be read as text
+const TEXT_EXTENSIONS = new Set([".md", ".txt", ".html"])
+// File types that need vision/binary handling (passed as file paths to Claude)
+const BINARY_EXTENSIONS = new Set([".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".doc", ".docx"])
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -52,33 +58,50 @@ function listExistingPages() {
 
 function findUningestedFiles() {
   if (!existsSync(RAW_DIR)) return []
-  const rawFiles = readdirSync(RAW_DIR).filter((f) => f !== ".gitkeep" && f.endsWith(".md"))
+  const allExts = new Set([...TEXT_EXTENSIONS, ...BINARY_EXTENSIONS])
+  const rawFiles = readdirSync(RAW_DIR).filter(
+    (f) => f !== ".gitkeep" && allExts.has(extname(f).toLowerCase()),
+  )
 
-  // Check which raw files already have a corresponding source page
   const existingSources = new Set()
   const sourcesDir = join(CONTENT_DIR, "sources")
   if (existsSync(sourcesDir)) {
     for (const f of readdirSync(sourcesDir)) {
-      if (f.endsWith(".md")) existingSources.add(f)
+      if (f.endsWith(".md")) existingSources.add(f.replace(/\.md$/, ""))
     }
   }
 
   // A raw file is "ingested" if a source page with a matching date-slug exists
-  // This is a heuristic — the source page name mirrors the raw file name
-  return rawFiles.filter((f) => !existingSources.has(f))
+  return rawFiles.filter((f) => {
+    const stem = f.replace(/\.[^.]+$/, "")
+    return !existingSources.has(stem)
+  })
 }
 
 // ---------------------------------------------------------------------------
-// Claude API call
+// Claude Code CLI call
 // ---------------------------------------------------------------------------
 
-async function ingestWithClaude(sourceContent, sourcePath, schema, indexContent, existingPages) {
-  const client = new Anthropic()
-
+async function ingestWithClaude(sourcePath, schema, indexContent, existingPages) {
   const today = new Date().toISOString().slice(0, 10)
-  const sourceFilename = basename(sourcePath, ".md")
+  const sourceFilename = basename(sourcePath).replace(/\.[^.]+$/, "")
+  const ext = extname(sourcePath).toLowerCase()
+  const isText = TEXT_EXTENSIONS.has(ext)
 
-  const systemPrompt = `You are a knowledge wiki assistant. Your job is to ingest a source document and produce structured wiki pages following the schema below.
+  const existingPagesStr =
+    existingPages.length > 0
+      ? `Existing wiki pages:\n${existingPages.map((p) => `- [[${p}]]`).join("\n")}`
+      : "The wiki has no existing pages yet."
+
+  let sourceSection
+  if (isText) {
+    const sourceContent = readFileSync(sourcePath, "utf-8")
+    sourceSection = `## Source document (from raw/${basename(sourcePath)})\n${sourceContent}`
+  } else {
+    sourceSection = `## Source document\nThe source document is located at: ${sourcePath}\nPlease read this file to extract its content. The filename is: ${basename(sourcePath)}`
+  }
+
+  const prompt = `You are a knowledge wiki assistant. Your job is to ingest a source document and produce structured wiki pages following the schema below.
 
 ${schema}
 
@@ -92,41 +115,48 @@ IMPORTANT INSTRUCTIONS:
 - Use wikilinks ([[path]]) aggressively to cross-reference pages.
 - Today's date is ${today}.
 - The source filename is "${sourceFilename}".
-- Do NOT wrap the JSON in markdown code fences. Output raw JSON only.`
+- Do NOT wrap the JSON in markdown code fences. Output raw JSON only.
 
-  const existingPagesStr =
-    existingPages.length > 0
-      ? `Existing wiki pages:\n${existingPages.map((p) => `- [[${p}]]`).join("\n")}`
-      : "The wiki has no existing pages yet."
-
-  const userMessage = `Please ingest the following source document.
+Please ingest the following source document.
 
 ## Current index.md
 ${indexContent || "(empty)"}
 
 ## ${existingPagesStr}
 
-## Source document (from raw/${basename(sourcePath)})
-${sourceContent}`
+${sourceSection}`
 
-  console.log(`Calling Claude API (claude-sonnet-4-20250514)...`)
+  console.log(`Calling Claude Code CLI...`)
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 16000,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
-  })
+  let output
+  try {
+    output = execFileSync("npx", ["--yes", "@anthropic-ai/claude-code", "-p", "--output-format", "text", "--max-turns", "3"], {
+      input: prompt,
+      encoding: "utf-8",
+      maxBuffer: 50 * 1024 * 1024,
+      cwd: ROOT,
+      timeout: 300_000,
+    })
+  } catch (err) {
+    if (err.stdout) {
+      console.error("Claude Code stderr:", err.stderr?.slice(0, 1000))
+      output = err.stdout
+    } else {
+      throw new Error(`Claude Code CLI failed: ${err.message}`)
+    }
+  }
 
-  const text = response.content
-    .filter((b) => b.type === "text")
-    .map((b) => b.text)
-    .join("")
-
-  // Parse JSON — handle cases where Claude wraps in code fences despite instructions
-  let cleaned = text.trim()
+  // Parse JSON — handle cases where Claude wraps in code fences
+  let cleaned = output.trim()
   if (cleaned.startsWith("```")) {
     cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "")
+  }
+
+  // Sometimes the output has leading text before the JSON array
+  const jsonStart = cleaned.indexOf("[")
+  const jsonEnd = cleaned.lastIndexOf("]")
+  if (jsonStart !== -1 && jsonEnd !== -1 && jsonStart < jsonEnd) {
+    cleaned = cleaned.slice(jsonStart, jsonEnd + 1)
   }
 
   let files
@@ -150,17 +180,10 @@ ${sourceContent}`
 // ---------------------------------------------------------------------------
 
 async function main() {
-  // Validate API key
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.error("Error: ANTHROPIC_API_KEY environment variable is not set.")
-    console.error("Set it with: export ANTHROPIC_API_KEY=sk-ant-...")
-    process.exit(1)
-  }
-
   // Read schema
   const schema = readIfExists(SCHEMA_PATH)
   if (!schema) {
-    console.error("Error: SCHEMA.md not found at project root.")
+    console.error("Error: CLAUDE.md not found at project root.")
     process.exit(1)
   }
 
@@ -192,17 +215,10 @@ async function main() {
 
   // Process each file
   for (const filepath of filesToIngest) {
-    const sourceContent = readFileSync(filepath, "utf-8")
     const relPath = relative(ROOT, filepath)
     console.log(`\nIngesting: ${relPath}`)
 
-    const generatedFiles = await ingestWithClaude(
-      sourceContent,
-      filepath,
-      schema,
-      indexContent,
-      existingPages,
-    )
+    const generatedFiles = await ingestWithClaude(filepath, schema, indexContent, existingPages)
 
     // Write generated files
     const created = []

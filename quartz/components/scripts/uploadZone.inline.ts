@@ -5,6 +5,9 @@ document.addEventListener("nav", () => {
   const statusMessages = document.getElementById("status-messages")
   const youtubeInput = document.getElementById("youtube-input") as HTMLInputElement | null
   const youtubeBtn = document.getElementById("youtube-btn") as HTMLButtonElement | null
+  const pasteInput = document.getElementById("paste-input") as HTMLTextAreaElement | null
+  const pasteTitle = document.getElementById("paste-title") as HTMLInputElement | null
+  const pasteBtn = document.getElementById("paste-btn") as HTMLButtonElement | null
   const runsList = document.getElementById("runs-list")
 
   if (!dropZone || !fileInput) return
@@ -46,6 +49,34 @@ document.addEventListener("nav", () => {
     }
   })
 
+  // Global paste handler for images
+  document.addEventListener("paste", (e) => {
+    // Only handle if we're on the upload page (drop zone exists)
+    if (!dropZone) return
+
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        e.preventDefault()
+        const file = item.getAsFile()
+        if (file) {
+          // Generate a meaningful filename
+          const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1]
+          const today = new Date().toISOString().slice(0, 10)
+          const timestamp = Date.now()
+          const namedFile = new File([file], `${today}-pasted-image-${timestamp}.${ext}`, {
+            type: file.type,
+          })
+          showStatus("Pasted image detected, uploading...", "pending")
+          uploadFile(namedFile)
+        }
+        return
+      }
+    }
+  })
+
   async function uploadFile(file: File) {
     showStatus("Uploading " + file.name + "...", "pending")
     try {
@@ -63,6 +94,50 @@ document.addEventListener("nav", () => {
       showStatus("Upload failed: " + err.message, "error")
     }
     fileInput.value = ""
+  }
+
+  // Text paste ingest
+  if (pasteBtn && pasteInput) {
+    pasteBtn.addEventListener("click", async () => {
+      const text = pasteInput.value.trim()
+      if (!text) return
+
+      pasteBtn.disabled = true
+      pasteBtn.textContent = "Uploading..."
+
+      // Build a markdown file from the pasted text
+      const today = new Date().toISOString().slice(0, 10)
+      const title = pasteTitle?.value.trim() || "pasted-text"
+      const slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+      const filename = `${today}-${slug}.md`
+      const content = `# ${pasteTitle?.value.trim() || "Pasted Text"}\n\n${text}`
+
+      const file = new File([content], filename, { type: "text/markdown" })
+      showStatus("Uploading pasted text as " + filename + "...", "pending")
+
+      try {
+        const formData = new FormData()
+        formData.append("file", file)
+        const response = await fetch("/api/upload", { method: "POST", body: formData })
+        const data = await response.json()
+        if (data.success) {
+          showStatus(data.message, "success")
+          pasteInput.value = ""
+          if (pasteTitle) pasteTitle.value = ""
+          setTimeout(loadRuns, 3000)
+        } else {
+          showStatus("Upload failed: " + (data.error || "Unknown error"), "error")
+        }
+      } catch (err: any) {
+        showStatus("Upload failed: " + err.message, "error")
+      }
+
+      pasteBtn.disabled = false
+      pasteBtn.textContent = "Ingest"
+    })
   }
 
   // YouTube ingest

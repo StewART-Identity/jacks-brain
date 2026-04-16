@@ -32,7 +32,7 @@ jobs:
 
       - name: Run ingest
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           if [ -n "${{ inputs.file_path }}" ]; then
             node scripts/ingest.mjs "${{ inputs.file_path }}"
