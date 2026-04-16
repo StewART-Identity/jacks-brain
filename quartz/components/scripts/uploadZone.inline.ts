@@ -170,39 +170,47 @@ document.addEventListener("nav", () => {
     })
   }
 
-  // Refresh runs button
+  // Refresh runs button — resets clear and reloads
   const refreshRunsBtn = document.getElementById("refresh-runs-btn") as HTMLButtonElement | null
   if (refreshRunsBtn) {
     refreshRunsBtn.addEventListener("click", () => {
-      localStorage.removeItem("runsClearedAt")
+      localStorage.removeItem("docProcessingHiddenIds")
       if (runsList) runsList.innerHTML = '<p class="muted">Loading...</p>'
       loadRuns()
     })
   }
 
-  // Clear runs button — hides all runs up to this point
+  // Clear runs button — hides all currently visible runs by ID
   const clearRunsBtn = document.getElementById("clear-runs-btn") as HTMLButtonElement | null
   if (clearRunsBtn && runsList) {
     clearRunsBtn.addEventListener("click", () => {
-      localStorage.setItem("runsClearedAt", new Date().toISOString())
+      // Store IDs of all currently known runs to hide them
+      const existing = JSON.parse(localStorage.getItem("docProcessingHiddenIds") || "[]")
+      const currentIds = (window as any).__docProcessingRunIds || []
+      const merged = [...new Set([...existing, ...currentIds])]
+      localStorage.setItem("docProcessingHiddenIds", JSON.stringify(merged))
       runsList.innerHTML = '<p class="muted">No active processing.</p>'
     })
   }
 
-  // Load runs — only shows items newer than the last clear, or in-progress items
+  // Load runs — hides cleared runs, always shows in-progress
   async function loadRuns() {
     if (!runsList) return
     try {
       const response = await fetch("/api/status")
       const data = await response.json()
-      const clearedAt = localStorage.getItem("runsClearedAt")
+      const hiddenIds: number[] = JSON.parse(localStorage.getItem("docProcessingHiddenIds") || "[]")
+      const hiddenSet = new Set(hiddenIds)
 
       if (data.runs && data.runs.length > 0) {
+        // Store all run IDs so clear can reference them
+        ;(window as any).__docProcessingRunIds = data.runs.map((r: any) => r.id)
+
         const filtered = data.runs.filter((run: any) => {
-          // Always show in-progress runs
+          // Always show in-progress/queued runs
           if (run.status === "in_progress" || run.status === "queued") return true
-          // Show runs created after the last clear
-          if (clearedAt && new Date(run.created) <= new Date(clearedAt)) return false
+          // Hide runs that were explicitly cleared
+          if (hiddenSet.has(run.id)) return false
           return true
         })
 
