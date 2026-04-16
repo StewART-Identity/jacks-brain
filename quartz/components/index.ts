@@ -26,6 +26,7 @@ import ConditionalRender from "./ConditionalRender"
 import UploadZone from "./UploadZone"
 import SidebarLink from "./SidebarLink"
 import FullGraph from "./FullGraph"
+import SourcesList from "./SourcesList"
 
 export {
   ArticleTitle,
@@ -56,4 +57,5 @@ export {
   UploadZone,
   SidebarLink,
   FullGraph,
+  SourcesList,
 }

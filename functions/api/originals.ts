@@ -1,0 +1,91 @@
+/**
+ * GET /api/originals
+ *
+ * Lists files in static/originals/ and cross-references with content/sources/
+ * to determine ingestion status.
+ */
+
+interface Env {
+  GITHUB_TOKEN: string
+  GITHUB_REPO: string
+}
+
+interface GitHubFile {
+  name: string
+  path: string
+  type: string
+  size: number
+  download_url: string
+}
+
+interface GitHubCommit {
+  commit: {
+    author: {
+      date: string
+    }
+    message: string
+  }
+}
+
+export const onRequestGet: PagesFunction<Env> = async (context) => {
+  const { GITHUB_TOKEN, GITHUB_REPO } = context.env
+
+  if (!GITHUB_TOKEN || !GITHUB_REPO) {
+    return Response.json({ error: "Server misconfigured" }, { status: 500 })
+  }
+
+  try {
+    // Fetch files in static/originals/
+    const [originalsRes, sourcesRes] = await Promise.all([
+      fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/static/originals`, {
+        headers: {
+          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": "jacks-brain",
+        },
+      }),
+      fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/content/sources`, {
+        headers: {
+          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": "jacks-brain",
+        },
+      }),
+    ])
+
+    const originals: GitHubFile[] = originalsRes.ok ? await originalsRes.json() : []
+    const sources: GitHubFile[] = sourcesRes.ok ? await sourcesRes.json() : []
+
+    // Build set of ingested file stems (source pages match original filenames)
+    const ingestedStems = new Set(
+      sources
+        .filter((f) => f.name.endsWith(".md") && f.name !== ".gitkeep")
+        .map((f) => f.name.replace(/\.md$/, ""))
+    )
+
+    // Filter out .gitkeep and build file list
+    const files = originals
+      .filter((f) => f.type === "file" && f.name !== ".gitkeep")
+      .map((f) => {
+        const stem = f.name.replace(/\.[^.]+$/, "")
+        // Extract date from filename (YYYY-MM-DD prefix)
+        const dateMatch = f.name.match(/^(\d{4}-\d{2}-\d{2})/)
+        const uploaded = dateMatch ? dateMatch[1] : null
+        const ingested = ingestedStems.has(stem)
+
+        return {
+          name: f.name,
+          downloadUrl: `/originals/${f.name}`,
+          size: f.size,
+          uploaded,
+          ingested,
+        }
+      })
+      .sort((a, b) => (b.uploaded || "").localeCompare(a.uploaded || ""))
+
+    return Response.json({ files })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error"
+    return Response.json({ error: message }, { status: 500 })
+  }
+}

@@ -2,6 +2,4 @@
 title: "Sources"
 ---
 
-Summaries of ingested documents, articles, and videos.
-
-*No sources ingested yet. [[learn/knowledge|Add knowledge]] to get started.*
+Uploaded documents and their ingestion status. Click a filename to download the original.

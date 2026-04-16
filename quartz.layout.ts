@@ -14,6 +14,10 @@ export const sharedPageComponents: SharedLayout = {
       component: Component.FullGraph(),
       condition: (page) => page.fileData.slug === "visualize/graph-view",
     }),
+    Component.ConditionalRender({
+      component: Component.SourcesList(),
+      condition: (page) => page.fileData.slug === "recall/sources",
+    }),
   ],
   footer: Component.Footer(),
 }
