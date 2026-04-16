@@ -33,8 +33,8 @@ const ALL_EXTENSIONS = new Set([
 // ---------------------------------------------------------------------------
 
 function findUningestedFiles() {
-  if (!existsSync(RAW_DIR)) return []
-  const rawFiles = readdirSync(RAW_DIR).filter(
+  if (!existsSync(ORIGINALS_DIR)) return []
+  const rawFiles = readdirSync(ORIGINALS_DIR).filter(
     (f) => f !== ".gitkeep" && ALL_EXTENSIONS.has(extname(f).toLowerCase()),
   )
 
