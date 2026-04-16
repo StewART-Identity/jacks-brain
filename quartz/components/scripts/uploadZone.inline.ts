@@ -174,44 +174,54 @@ document.addEventListener("nav", () => {
   const refreshRunsBtn = document.getElementById("refresh-runs-btn") as HTMLButtonElement | null
   if (refreshRunsBtn) {
     refreshRunsBtn.addEventListener("click", () => {
-      sessionStorage.removeItem("runsCleared")
+      localStorage.removeItem("runsClearedAt")
       if (runsList) runsList.innerHTML = '<p class="muted">Loading...</p>'
       loadRuns()
     })
   }
 
-  // Clear runs button — persists for the session
+  // Clear runs button — hides all runs up to this point
   const clearRunsBtn = document.getElementById("clear-runs-btn") as HTMLButtonElement | null
   if (clearRunsBtn && runsList) {
     clearRunsBtn.addEventListener("click", () => {
-      sessionStorage.setItem("runsCleared", "true")
-      runsList.innerHTML = '<p class="muted">Cleared.</p>'
+      localStorage.setItem("runsClearedAt", new Date().toISOString())
+      runsList.innerHTML = '<p class="muted">No active processing.</p>'
     })
   }
 
-  // Load recent runs
+  // Load runs — only shows items newer than the last clear, or in-progress items
   async function loadRuns() {
     if (!runsList) return
-    if (sessionStorage.getItem("runsCleared") === "true") {
-      runsList.innerHTML = '<p class="muted">Cleared.</p>'
-      return
-    }
     try {
       const response = await fetch("/api/status")
       const data = await response.json()
+      const clearedAt = localStorage.getItem("runsClearedAt")
+
       if (data.runs && data.runs.length > 0) {
-        runsList.innerHTML = data.runs
-          .map(
-            (run: any) =>
-              `<div class="run-item">
-                <span class="run-badge ${run.conclusion || run.status}">${run.conclusion || run.status}</span>
-                <span class="run-doc">${run.document || run.name}</span>
-                <span class="run-time">${new Date(run.created).toLocaleString()}</span>
-              </div>`,
-          )
-          .join("")
+        const filtered = data.runs.filter((run: any) => {
+          // Always show in-progress runs
+          if (run.status === "in_progress" || run.status === "queued") return true
+          // Show runs created after the last clear
+          if (clearedAt && new Date(run.created) <= new Date(clearedAt)) return false
+          return true
+        })
+
+        if (filtered.length > 0) {
+          runsList.innerHTML = filtered
+            .map(
+              (run: any) =>
+                `<div class="run-item">
+                  <span class="run-badge ${run.conclusion || run.status}">${run.conclusion || run.status}</span>
+                  <span class="run-doc">${run.document || run.name}</span>
+                  <span class="run-time">${new Date(run.created).toLocaleString()}</span>
+                </div>`,
+            )
+            .join("")
+        } else {
+          runsList.innerHTML = '<p class="muted">No active processing.</p>'
+        }
       } else {
-        runsList.innerHTML = '<p class="muted">No documents processing.</p>'
+        runsList.innerHTML = '<p class="muted">No active processing.</p>'
       }
     } catch {
       runsList.innerHTML = '<p class="muted">Could not load status.</p>'
