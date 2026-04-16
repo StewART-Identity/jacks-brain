@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
       - name: Install yt-dlp and whisper (for fallback)
         run: |
           pip install yt-dlp openai-whisper

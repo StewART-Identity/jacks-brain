@@ -130,12 +130,12 @@ ${sourceSection}`
 
   let output
   try {
-    output = execFileSync("npx", ["--yes", "@anthropic-ai/claude-code", "-p", "--output-format", "text", "--max-turns", "3"], {
+    output = execFileSync("claude", ["-p", "--output-format", "text", "--max-turns", "3"], {
       input: prompt,
       encoding: "utf-8",
       maxBuffer: 50 * 1024 * 1024,
       cwd: ROOT,
-      timeout: 300_000,
+      timeout: 600_000,
     })
   } catch (err) {
     if (err.stdout) {
