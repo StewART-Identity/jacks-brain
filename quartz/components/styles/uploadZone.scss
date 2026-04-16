@@ -3,19 +3,18 @@
 }
 
 /* Drop zone */
+.section-label {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
 .upload-zone {
   border: 2px dashed var(--gray);
   border-radius: 12px;
-  padding: 1.5rem 2rem 3rem;
+  padding: 2rem 2rem 3rem;
   text-align: center;
   cursor: pointer;
   transition: border-color 0.2s ease, background 0.2s ease;
   position: relative;
-}
-.upload-zone .upload-section-label {
-  text-align: left;
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
 }
 .upload-zone:hover,
 .upload-zone.drag-over {
@@ -72,6 +71,21 @@
 .paste-section h3 {
   margin-bottom: 0.75rem;
 }
+.paste-title-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  margin-bottom: 0.5rem;
+}
+.paste-title-input:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
 .paste-section textarea {
   width: 100%;
   padding: 0.6rem 0.8rem;
@@ -90,21 +104,8 @@
 }
 .paste-row {
   display: flex;
-  gap: 0.5rem;
+  justify-content: flex-end;
   margin-top: 0.5rem;
-}
-.paste-row input {
-  flex: 1;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid var(--lightgray);
-  border-radius: 8px;
-  background: var(--light);
-  color: var(--darkgray);
-  font-size: 0.95rem;
-}
-.paste-row input:focus {
-  outline: none;
-  border-color: var(--secondary);
 }
 .paste-row button {
   padding: 0.6rem 1.2rem;

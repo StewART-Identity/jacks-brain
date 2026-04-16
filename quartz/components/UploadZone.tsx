@@ -6,8 +6,8 @@ import styles from "./styles/uploadZone.scss"
 const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="upload-app">
+      <h3 class="section-label">Upload File</h3>
       <div class="upload-zone" id="drop-zone">
-        <h3 class="upload-section-label">Upload File</h3>
         <div class="upload-icon">&#8693;</div>
         <p class="upload-label">Drop a file here</p>
         <p class="upload-sub">or click to browse — also supports paste (Ctrl+V) for images</p>
@@ -26,17 +26,18 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
 
       <div class="paste-section">
         <h3>Paste Text</h3>
+        <input
+          type="text"
+          id="paste-title"
+          class="paste-title-input"
+          placeholder="Title (optional — used for filename)"
+        />
         <textarea
           id="paste-input"
           placeholder="Paste or type text here..."
           rows={6}
         ></textarea>
         <div class="paste-row">
-          <input
-            type="text"
-            id="paste-title"
-            placeholder="Title (optional — used for filename)"
-          />
           <button id="paste-btn">Ingest</button>
         </div>
       </div>
