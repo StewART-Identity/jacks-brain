@@ -537,4 +537,17 @@ document.addEventListener("nav", async (e: CustomEventMap["nav"]) => {
   for (const element of searchElement) {
     await setupSearch(element, currentSlug, data)
   }
+
+  const searchToggles = document.querySelectorAll(".search-toggle")
+  for (const toggle of searchToggles) {
+    toggle.addEventListener("click", () => {
+      toggle.classList.toggle("collapsed")
+      const collapsible = toggle.nextElementSibling
+      if (collapsible) collapsible.classList.toggle("collapsed")
+      toggle.setAttribute(
+        "aria-expanded",
+        toggle.getAttribute("aria-expanded") === "true" ? "false" : "true",
+      )
+    })
+  }
 })

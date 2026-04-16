@@ -1,23 +1,13 @@
 ---
-title: "Wiki Index"
+title: "Jack's Brain"
 ---
 
-# Wiki Index
+Welcome to the knowledge wiki. Use the sidebar to navigate.
 
-Master catalog of all pages in this knowledge base.
-
-## Sources
-
-*No sources ingested yet. [[upload|Upload & ingest]] a file or YouTube video to get started.*
-
-## Entities
-
-*No entities cataloged yet. Entities are created during source ingestion.*
-
-## Concepts
-
-*No concepts filed yet. Concepts emerge as sources are ingested.*
-
-## Synthesis
-
-*No synthesis pages yet. These are created from cross-cutting analysis.*
+- **[[learn/knowledge|Knowledge]]** — Upload files and videos to ingest
+- **[[learn/memory|Memory]]** — Chronological record of ingestions
+- **[[recall/sources|Sources]]** — Summaries of ingested documents
+- **[[recall/entities|Entities]]** — People, organizations, tools, systems
+- **[[recall/concepts|Concepts]]** — Ideas, theories, frameworks
+- **[[recall/synthesis|Synthesis]]** — Cross-cutting analysis
+- **[[visualize/graph-view|Graph View]]** — Interactive map of connections

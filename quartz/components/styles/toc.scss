@@ -3,9 +3,9 @@
 .toc {
   display: flex;
   flex-direction: column;
-  overflow-y: hidden;
+  overflow-y: auto;
   min-height: 1.4rem;
-  flex: 0 0.5 auto;
+  flex: 0 1 auto;
   &:has(button.toc-header.collapsed) {
     flex: 0 1 1.4rem;
   }

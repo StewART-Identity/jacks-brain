@@ -8,14 +8,14 @@ export const sharedPageComponents: SharedLayout = {
   afterBody: [
     Component.ConditionalRender({
       component: Component.UploadZone(),
-      condition: (page) => page.fileData.slug === "upload",
+      condition: (page) => page.fileData.slug === "learn/knowledge",
+    }),
+    Component.ConditionalRender({
+      component: Component.FullGraph(),
+      condition: (page) => page.fileData.slug === "visualize/graph-view",
     }),
   ],
-  footer: Component.Footer({
-    links: {
-      GitHub: "https://github.com/StewartIdentity",
-    },
-  }),
+  footer: Component.Footer(),
 }
 
 // components for pages that display a single page (e.g. a single note)
@@ -34,19 +34,41 @@ export const defaultContentPageLayout: PageLayout = {
     Component.MobileOnly(Component.Spacer()),
     Component.Flex({
       components: [
-        {
-          Component: Component.Search(),
-          grow: true,
-        },
         { Component: Component.Darkmode() },
         { Component: Component.ReaderMode() },
       ],
     }),
-    Component.Explorer(),
+    Component.SidebarLink({
+      title: "Learn",
+      slug: "learn",
+      defaultState: "open",
+      links: [
+        { title: "Knowledge", slug: "learn/knowledge" },
+        { title: "Memory", slug: "learn/memory" },
+      ],
+    }),
+    Component.SidebarLink({
+      title: "Recall",
+      slug: "recall",
+      defaultState: "open",
+      links: [
+        { title: "Sources", slug: "recall/sources" },
+        { title: "Entities", slug: "recall/entities" },
+        { title: "Concepts", slug: "recall/concepts" },
+        { title: "Synthesis", slug: "recall/synthesis" },
+      ],
+    }),
+    Component.SidebarLink({
+      title: "Visualize",
+      slug: "visualize",
+      defaultState: "open",
+      links: [
+        { title: "Graph View", slug: "visualize/graph-view" },
+      ],
+    }),
+    Component.Search(),
   ],
   right: [
-    Component.Graph(),
-    Component.DesktopOnly(Component.TableOfContents()),
     Component.Backlinks(),
   ],
 }
@@ -57,16 +79,36 @@ export const defaultListPageLayout: PageLayout = {
   left: [
     Component.PageTitle(),
     Component.MobileOnly(Component.Spacer()),
-    Component.Flex({
-      components: [
-        {
-          Component: Component.Search(),
-          grow: true,
-        },
-        { Component: Component.Darkmode() },
+    Component.Darkmode(),
+    Component.SidebarLink({
+      title: "Learn",
+      slug: "learn",
+      defaultState: "open",
+      links: [
+        { title: "Knowledge", slug: "learn/knowledge" },
+        { title: "Memory", slug: "learn/memory" },
       ],
     }),
-    Component.Explorer(),
+    Component.SidebarLink({
+      title: "Recall",
+      slug: "recall",
+      defaultState: "open",
+      links: [
+        { title: "Sources", slug: "recall/sources" },
+        { title: "Entities", slug: "recall/entities" },
+        { title: "Concepts", slug: "recall/concepts" },
+        { title: "Synthesis", slug: "recall/synthesis" },
+      ],
+    }),
+    Component.SidebarLink({
+      title: "Visualize",
+      slug: "visualize",
+      defaultState: "open",
+      links: [
+        { title: "Graph View", slug: "visualize/graph-view" },
+      ],
+    }),
+    Component.Search(),
   ],
   right: [],
 }

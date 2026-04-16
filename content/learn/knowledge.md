@@ -1,5 +1,5 @@
 ---
-title: "Upload & Ingest"
+title: "Knowledge"
 ---
 
 Drop a file or paste a YouTube URL below to ingest it into the wiki. Uploaded

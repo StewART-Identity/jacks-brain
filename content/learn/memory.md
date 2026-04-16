@@ -1,8 +1,6 @@
 ---
-title: "Wiki Log"
+title: "Memory"
 ---
-
-# Wiki Log
 
 Chronological record of wiki operations — ingests, queries, lint passes.
 

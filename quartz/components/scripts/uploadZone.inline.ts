@@ -1,12 +1,14 @@
-const dropZone = document.getElementById("drop-zone")
-const fileInput = document.getElementById("file-input") as HTMLInputElement | null
-const statusArea = document.getElementById("status-area") as HTMLElement | null
-const statusMessages = document.getElementById("status-messages")
-const youtubeInput = document.getElementById("youtube-input") as HTMLInputElement | null
-const youtubeBtn = document.getElementById("youtube-btn") as HTMLButtonElement | null
-const runsList = document.getElementById("runs-list")
+document.addEventListener("nav", () => {
+  const dropZone = document.getElementById("drop-zone")
+  const fileInput = document.getElementById("file-input") as HTMLInputElement | null
+  const statusArea = document.getElementById("status-area") as HTMLElement | null
+  const statusMessages = document.getElementById("status-messages")
+  const youtubeInput = document.getElementById("youtube-input") as HTMLInputElement | null
+  const youtubeBtn = document.getElementById("youtube-btn") as HTMLButtonElement | null
+  const runsList = document.getElementById("runs-list")
 
-if (dropZone && fileInput) {
+  if (!dropZone || !fileInput) return
+
   function showStatus(msg: string, type: string) {
     if (!statusArea || !statusMessages) return
     statusArea.style.display = "block"
@@ -34,7 +36,6 @@ if (dropZone && fileInput) {
 
   // Click to browse
   dropZone.addEventListener("click", (e) => {
-    // Don't double-trigger if they clicked the input itself
     if (e.target !== fileInput) {
       fileInput.click()
     }
@@ -120,4 +121,4 @@ if (dropZone && fileInput) {
   }
 
   loadRuns()
-}
+})

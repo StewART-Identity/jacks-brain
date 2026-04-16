@@ -24,6 +24,8 @@ import Comments from "./Comments"
 import Flex from "./Flex"
 import ConditionalRender from "./ConditionalRender"
 import UploadZone from "./UploadZone"
+import SidebarLink from "./SidebarLink"
+import FullGraph from "./FullGraph"
 
 export {
   ArticleTitle,
@@ -52,4 +54,6 @@ export {
   Flex,
   ConditionalRender,
   UploadZone,
+  SidebarLink,
+  FullGraph,
 }

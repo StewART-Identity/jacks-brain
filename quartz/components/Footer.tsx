@@ -10,19 +10,12 @@ interface Options {
 export default ((opts?: Options) => {
   const Footer: QuartzComponent = ({ displayClass, cfg }: QuartzComponentProps) => {
     const year = new Date().getFullYear()
-    const links = opts?.links ?? []
     return (
       <footer class={`${displayClass ?? ""}`}>
-        <ul>
-          {Object.entries(links).map(([text, link]) => (
-            <li>
-              <a href={link}>{text}</a>
-            </li>
-          ))}
-          <li>
-            <a href="https://quartz.jzhao.xyz/">Quartz v{version}</a>
-          </li>
-        </ul>
+        <p>
+          <a href="https://github.com/StewART-Identity">StewART-Identity</a>
+        </p>
+        <p class="copyright">&copy; {year} Jack Stewart</p>
       </footer>
     )
   }
