@@ -3,7 +3,7 @@
 /**
  * ingest.mjs
  *
- * Reads source documents from raw/, sends them to Claude API with SCHEMA.md
+ * Reads source documents from raw/, sends them to Claude API with CLAUDE.md
  * instructions, and writes the generated wiki pages to content/.
  *
  * Usage:
@@ -22,9 +22,9 @@ import Anthropic from "@anthropic-ai/sdk"
 const ROOT = resolve(fileURLToPath(import.meta.url), "../..")
 const RAW_DIR = join(ROOT, "raw")
 const CONTENT_DIR = join(ROOT, "content")
-const SCHEMA_PATH = join(ROOT, "SCHEMA.md")
+const SCHEMA_PATH = join(ROOT, "CLAUDE.md")
 const INDEX_PATH = join(CONTENT_DIR, "index.md")
-const LOG_PATH = join(CONTENT_DIR, "log.md")
+const LOG_PATH = join(CONTENT_DIR, "learn", "memory.md")
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -88,7 +88,7 @@ IMPORTANT INSTRUCTIONS:
 - "content" is the full markdown content of the page including frontmatter.
 - Include the source summary page, any new or updated entity pages, any new or updated concept pages.
 - Include an updated index.md with the new pages added to the appropriate tables.
-- Include an updated log.md with the ingest operation appended at the top (below the frontmatter/heading).
+- Include an updated learn/memory.md with the ingest operation appended at the top (below the frontmatter/heading).
 - Use wikilinks ([[path]]) aggressively to cross-reference pages.
 - Today's date is ${today}.
 - The source filename is "${sourceFilename}".
