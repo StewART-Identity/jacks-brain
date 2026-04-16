@@ -32,12 +32,6 @@ export const defaultContentPageLayout: PageLayout = {
   left: [
     Component.PageTitle(),
     Component.MobileOnly(Component.Spacer()),
-    Component.Flex({
-      components: [
-        { Component: Component.Darkmode() },
-        { Component: Component.ReaderMode() },
-      ],
-    }),
     Component.SidebarLink({
       title: "Learn",
       slug: "learn",
@@ -67,6 +61,12 @@ export const defaultContentPageLayout: PageLayout = {
       ],
     }),
     Component.Search(),
+    Component.Flex({
+      components: [
+        { Component: Component.Darkmode() },
+        { Component: Component.ReaderMode() },
+      ],
+    }),
   ],
   right: [
     Component.Backlinks(),
@@ -79,7 +79,6 @@ export const defaultListPageLayout: PageLayout = {
   left: [
     Component.PageTitle(),
     Component.MobileOnly(Component.Spacer()),
-    Component.Darkmode(),
     Component.SidebarLink({
       title: "Learn",
       slug: "learn",
@@ -109,6 +108,12 @@ export const defaultListPageLayout: PageLayout = {
       ],
     }),
     Component.Search(),
+    Component.Flex({
+      components: [
+        { Component: Component.Darkmode() },
+        { Component: Component.ReaderMode() },
+      ],
+    }),
   ],
   right: [],
 }
