@@ -14,6 +14,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: ingest-main
+  cancel-in-progress: false
+
 jobs:
   ingest:
     runs-on: ubuntu-latest
@@ -54,5 +58,12 @@ jobs:
             echo "No changes to commit."
           else
             git commit -m "ingest: auto-generated wiki pages from source documents"
-            git push origin main
+            # Pull any commits that landed while we were processing, then push
+            for i in 1 2 3 4; do
+              git pull --rebase origin main && git push origin main && exit 0
+              echo "Push attempt $i failed, retrying in $((i * 2))s..."
+              sleep $((i * 2))
+            done
+            echo "Failed to push after 4 attempts"
+            exit 1
           fi

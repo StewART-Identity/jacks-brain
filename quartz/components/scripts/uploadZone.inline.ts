@@ -110,11 +110,29 @@ document.addEventListener("nav", () => {
     }
   })
 
+  async function checkActiveIngest(): Promise<boolean> {
+    try {
+      const res = await fetch("/api/status")
+      const data = await res.json()
+      if (data.runs) {
+        return data.runs.some((r: any) => r.status === "in_progress" || r.status === "queued")
+      }
+    } catch {}
+    return false
+  }
+
   async function uploadFile(file: File) {
     // Show Document Processing section on new upload
     localStorage.removeItem("docProcessingCleared")
     const recentSection = document.getElementById("recent-runs")
     if (recentSection) recentSection.style.display = ""
+
+    // Warn if another ingest is running
+    const busy = await checkActiveIngest()
+    if (busy) {
+      showCardStatus(fileStatus, "Another document is currently being processed. Your upload will be queued.", "pending")
+    }
+
     showCardStatus(fileStatus, "Uploading " + file.name + "...", "pending")
     try {
       const formData = new FormData()
