@@ -11,6 +11,7 @@ tags:
   - cloud
 sources:
   - "[[sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
+  - "[[sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
 confidence: high
 ---
 
@@ -25,11 +26,19 @@ Microsoft's cloud identity and access management platform (formerly Azure Active
 - **[[concepts/system-preferred-mfa]]** — A setting that, when enabled, allows Entra ID to choose the MFA method it "prefers." At UNT, this was set to "Disabled" to prevent Entra from overriding Duo.
 - **Authentication Strengths** — Custom definitions of acceptable MFA method combinations. The "Entra Admin MFA" custom strength was updated to require Password + Authenticator (Push), removing SMS/Voice.
 - **Entra Connect** — Syncs on-premises AD groups to Entra ID (e.g., DuoUsers, ~90,000 members).
-- **PIM (Privileged Identity Management)** — Recommended for cloud-native admin accounts with eligible role assignments.
+- **[[concepts/privileged-identity-management|PIM (Privileged Identity Management)]]** — P2 feature for just-in-time privileged access. Recommended for cloud-native admin accounts with eligible role assignments; planned for full rollout at UNT.
 
-## Test Tenant
+## Tenant Environment Model
 
-`myunttest.onmicrosoft.com` — non-production Entra ID tenant used for pre-production validation. Requires P2 licensing.
+[[entities/unt-system]] operates (or plans to operate) three persistent Entra ID tenants per the [[concepts/entra-id-three-tenant-model]]:
+
+| Tenant | Domain | Role |
+|--------|--------|------|
+| Production | myunt.onmicrosoft.com | Live identity services for 72,000+ users |
+| Staging | myunttest.onmicrosoft.com | Pre-production validation; mirrors production config |
+| Greenfield | myuntsrc.onmicrosoft.com | Microsoft out-of-box defaults; read-only reference |
+
+All three require Entra ID P2 to test the full feature surface (Conditional Access, PIM, Identity Protection, access reviews).
 
 ## Related Entities
 
@@ -40,3 +49,4 @@ Microsoft's cloud identity and access management platform (formerly Azure Active
 ## Sources
 
 - [[sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
+- [[sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]

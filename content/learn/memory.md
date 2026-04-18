@@ -7,6 +7,7 @@ Permanent record of knowledge added to the wiki, organized by date.
 ## 2026-04-18
 
 - **Ingested:** 2026-04-18-Entra_Authentication_Methods-Rollout-Plan-FINAL.docx
+- **Ingested:** 2026-04-18-Entra_ID_Multi-Tenant_Environment_Proposal.docx
 
 ## 2026-04-16
 
