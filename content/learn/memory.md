@@ -6,6 +6,7 @@ Permanent record of knowledge added to the wiki, organized by date.
 
 | Date | Action | Details |
 |------|--------|---------|
+| 2026-04-18 | Ingested | neuron_transparent.png |
 | 2026-04-18 | Ingested | neuron_icon_1024.png |
 | 2026-04-18 | Ingested | 2026-04-18-CONTRACT.md |
 | 2026-04-18 | Ingested | 2026-04-18-Authentication-Methods-Migration-Executive-Brief--2-.docx |

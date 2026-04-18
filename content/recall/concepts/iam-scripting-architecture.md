@@ -105,6 +105,8 @@ Without this architecture, the 21+ scripts that once defined inline eDirectory c
 - [[recall/entities/iam-modules]]
 - [[recall/entities/edirectory]]
 - [[recall/entities/unt-system]]
+- [[recall/entities/oracle-peoplesoft]]
 - [[recall/concepts/dry-run-by-default]]
+- [[recall/concepts/graceful-interrupt-handling]]
 - [[recall/sources/2026-04-18-2026-04-18-contract]]
 - [[recall/synthesis/unt-iam-provisioning-layer]]

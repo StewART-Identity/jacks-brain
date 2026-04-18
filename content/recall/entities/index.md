@@ -16,3 +16,4 @@ People, organizations, tools, and systems referenced across sources.
 | [[recall/entities/citrix-horizon\|Citrix Horizon]] | VDI/app delivery platform at UNT System; subject of dedicated MFA Conditional Access policy |
 | [[recall/entities/parker-bush\|Parker Bush]] | Manager, Identity and Access Management at UNT System |
 | [[recall/entities/ryan-kane\|Ryan Kane]] | Director, Enterprise Collaboration Services at UNT System |
+| [[recall/entities/oracle-peoplesoft\|Oracle PeopleSoft (HRPD / LSPD)]] | Two Oracle database instances (PeopleSoft HR and LS) serving as source-of-truth for employee and student data that drives IAM provisioning |

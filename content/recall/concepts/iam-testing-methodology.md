@@ -53,6 +53,7 @@ The [[recall/sources/2026-04-18-2026-04-18-auth-methods-migration-case-study-1-|
 ## Related Pages
 
 - [[recall/concepts/entra-id-three-tenant-model]]
+- [[recall/concepts/go-no-go-gate]]
 - [[recall/entities/unt-system]]
 - [[recall/entities/microsoft-entra-id]]
 - [[recall/entities/jack-stewart]]

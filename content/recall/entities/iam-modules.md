@@ -66,7 +66,9 @@ All connections are produced with `raise_exceptions=True`, requiring scripts to 
 
 - [[recall/concepts/iam-scripting-architecture]]
 - [[recall/concepts/dry-run-by-default]]
+- [[recall/concepts/graceful-interrupt-handling]]
 - [[recall/entities/unt-system]]
+- [[recall/entities/oracle-peoplesoft]]
 - [[recall/entities/microsoft-entra-id]]
 - [[recall/entities/cisco-duo]]
 - [[recall/sources/2026-04-18-2026-04-18-contract]]

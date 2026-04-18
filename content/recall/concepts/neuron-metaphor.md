@@ -10,6 +10,7 @@ tags:
   - neuroscience
 sources:
   - "[[recall/sources/2026-04-18-neuron-icon-1024]]"
+  - "[[recall/sources/2026-04-18-neuron-transparent]]"
 confidence: medium
 ---
 
@@ -40,5 +41,6 @@ The metaphor is loose by design. Biological neurons don't store knowledge — th
 
 ## See Also
 
-- [[recall/sources/2026-04-18-neuron-icon-1024]] — the visual identity that instantiates this metaphor
+- [[recall/sources/2026-04-18-neuron-icon-1024]] — the opaque app-store icon that instantiates this metaphor
+- [[recall/sources/2026-04-18-neuron-transparent]] — the transparent-background variant for flexible deployment
 - [[recall/entities/jack-stewart]] — the wiki's author
