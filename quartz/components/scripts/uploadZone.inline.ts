@@ -114,9 +114,7 @@ document.addEventListener("nav", () => {
     try {
       const res = await fetch("/api/status")
       const data = await res.json()
-      if (data.runs) {
-        return data.runs.some((r: any) => r.status === "in_progress" || r.status === "queued")
-      }
+      return data.hasActive === true
     } catch {}
     return false
   }
@@ -244,44 +242,29 @@ document.addEventListener("nav", () => {
       const response = await fetch("/api/status")
       const data = await response.json()
 
-      let hasActive = false
-
-      if (data.runs && data.runs.length > 0) {
-        const cutoff = Date.now() - 24 * 60 * 60 * 1000
-        const filtered = data.runs.filter((run: any) => {
-          if (run.status === "in_progress" || run.status === "queued") return true
-          return new Date(run.created).getTime() > cutoff
-        })
-
-        hasActive = filtered.some((r: any) => r.status === "in_progress" || r.status === "queued")
-
-        if (filtered.length > 0) {
-          runsList.innerHTML =
-            `<div class="table-container"><table>
-              <thead><tr><th>Document</th><th>Date</th><th>Status</th></tr></thead>
-              <tbody>` +
-            filtered
-              .map(
-                (run: any) =>
-                  `<tr>
-                    <td>${run.document || run.name}</td>
-                    <td>${new Date(run.created).toLocaleString()}</td>
-                    <td><span class="run-badge ${run.conclusion || run.status}">${run.conclusion || run.status}</span></td>
-                  </tr>`,
-              )
-              .join("") +
-            `</tbody></table></div>`
-        } else {
-          runsList.innerHTML = '<p class="muted">No active processing.</p>'
-        }
+      if (data.documents && data.documents.length > 0) {
+        runsList.innerHTML =
+          `<div class="table-container"><table>
+            <thead><tr><th>Document</th><th>Uploaded</th><th>Status</th></tr></thead>
+            <tbody>` +
+          data.documents
+            .map(
+              (doc: any) =>
+                `<tr>
+                  <td>${doc.document}</td>
+                  <td>${doc.uploaded || "Unknown"}</td>
+                  <td><span class="run-badge ${doc.status}">${doc.status}</span></td>
+                </tr>`,
+            )
+            .join("") +
+          `</tbody></table></div>`
       } else {
-        runsList.innerHTML = '<p class="muted">No active processing.</p>'
+        runsList.innerHTML = '<p class="muted">No documents uploaded.</p>'
       }
 
-      // Auto-refresh every 10s while runs are active, stop when done
-      if (hasActive && !pollTimer) {
+      if (data.hasActive && !pollTimer) {
         pollTimer = setInterval(loadRuns, 10000)
-      } else if (!hasActive && pollTimer) {
+      } else if (!data.hasActive && pollTimer) {
         clearInterval(pollTimer)
         pollTimer = null
       }

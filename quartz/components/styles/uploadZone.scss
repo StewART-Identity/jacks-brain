@@ -238,12 +238,16 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
+.run-badge.ingested { background: #EBF5EE; color: #2B5E3E; }
 .run-badge.success { background: #EBF5EE; color: #2B5E3E; }
+.run-badge.failed { background: #F9EDED; color: #6B2020; }
 .run-badge.failure { background: #F9EDED; color: #6B2020; }
 .run-badge.in_progress { background: #FBF4E4; color: #6B4D1A; }
 .run-badge.queued { background: #EEF1F6; color: #2E3D55; }
 
+:root[saved-theme="dark"] .run-badge.ingested { background: #1B3F29; color: #7BBF95; }
 :root[saved-theme="dark"] .run-badge.success { background: #1B3F29; color: #7BBF95; }
+:root[saved-theme="dark"] .run-badge.failed { background: #6B2020; color: #C46B6B; }
 :root[saved-theme="dark"] .run-badge.failure { background: #6B2020; color: #C46B6B; }
 :root[saved-theme="dark"] .run-badge.in_progress { background: #6B4D1A; color: #D4AD5A; }
 :root[saved-theme="dark"] .run-badge.queued { background: #2E3D55; color: #7B8FAD; }

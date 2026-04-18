@@ -1,10 +1,18 @@
 /**
  * GET /api/status
  *
- * Returns recent document processing workflow runs.
+ * Returns the true ingestion state of each uploaded document by
+ * cross-referencing static/originals/ files, content/recall/sources/
+ * pages, and active workflow runs.
  *
- * Requires env vars (set in Cloudflare Pages dashboard):
- *   GITHUB_TOKEN  — fine-grained PAT with actions:read
+ * States:
+ *   INGESTED     — source page exists in the wiki
+ *   IN_PROGRESS  — a workflow is currently processing
+ *   QUEUED       — a workflow is queued to process
+ *   FAILED       — no source page and no active workflow
+ *
+ * Requires env vars:
+ *   GITHUB_TOKEN  — fine-grained PAT with contents:read + actions:read
  *   GITHUB_REPO   — e.g. "StewART-Identity/jacks-brain"
  */
 
@@ -13,44 +21,31 @@ interface Env {
   GITHUB_REPO: string
 }
 
+interface GitHubFile {
+  name: string
+  type: string
+}
+
 interface WorkflowRun {
   id: number
   name: string
   display_title: string
   status: string
   conclusion: string | null
-  html_url: string
   created_at: string
-  updated_at: string
-  head_commit: {
-    message: string
-  } | null
+  head_commit: { message: string } | null
 }
 
 interface GitHubRunsResponse {
   workflow_runs: WorkflowRun[]
 }
 
-function extractDocumentName(run: WorkflowRun): string {
-  // Try display_title first (shows commit message for push-triggered runs)
-  const title = run.display_title || ""
-
-  // "upload: 2026-04-16-MyDocument.docx" → "MyDocument.docx"
-  const uploadMatch = title.match(/upload:\s*(.+)/)
-  if (uploadMatch) {
-    // Strip date prefix if present
-    return uploadMatch[1].replace(/^\d{4}-\d{2}-\d{2}-/, "").trim()
+function ghHeaders(token: string) {
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github.v3+json",
+    "User-Agent": "jacks-brain",
   }
-
-  // Check head_commit message
-  const commitMsg = run.head_commit?.message || ""
-  const commitMatch = commitMsg.match(/upload:\s*(.+)/)
-  if (commitMatch) {
-    return commitMatch[1].replace(/^\d{4}-\d{2}-\d{2}-/, "").trim()
-  }
-
-  // Fallback to workflow name
-  return run.name
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -61,44 +56,101 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    const [ingestRuns, youtubeRuns] = await Promise.all([
-      fetchRuns(GITHUB_TOKEN, GITHUB_REPO, "ingest.yml"),
-      fetchRuns(GITHUB_TOKEN, GITHUB_REPO, "youtube-ingest.yml"),
+    const [originalsRes, sourcesRes, runsRes] = await Promise.all([
+      fetch(
+        `https://api.github.com/repos/${GITHUB_REPO}/contents/static/originals`,
+        { headers: ghHeaders(GITHUB_TOKEN) },
+      ),
+      fetch(
+        `https://api.github.com/repos/${GITHUB_REPO}/contents/content/recall/sources`,
+        { headers: ghHeaders(GITHUB_TOKEN) },
+      ),
+      fetch(
+        `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/ingest.yml/runs?per_page=10`,
+        { headers: ghHeaders(GITHUB_TOKEN) },
+      ),
     ])
 
-    const allRuns = [...ingestRuns, ...youtubeRuns]
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 20)
-      .map((run) => ({
-        id: run.id,
-        document: extractDocumentName(run),
-        status: run.status,
-        conclusion: run.conclusion,
-        url: run.html_url,
-        created: run.created_at,
-        updated: run.updated_at,
-      }))
+    const originals: GitHubFile[] = originalsRes.ok ? await originalsRes.json() : []
+    const sources: GitHubFile[] = sourcesRes.ok ? await sourcesRes.json() : []
+    const runsData: GitHubRunsResponse = runsRes.ok
+      ? await runsRes.json()
+      : { workflow_runs: [] }
 
-    return Response.json({ runs: allRuns })
+    // Build set of ingested source page stems
+    const ingestedStems = new Set(
+      sources
+        .filter((f) => f.name.endsWith(".md") && f.name !== "index.md")
+        .map((f) => f.name.replace(/\.md$/, "")),
+    )
+
+    // Check for any active workflows
+    const activeRuns = runsData.workflow_runs.filter(
+      (r) => r.status === "in_progress" || r.status === "queued",
+    )
+    const hasActiveRun = activeRuns.length > 0
+
+    // Extract document names from active runs
+    const activeDocNames = new Set<string>()
+    for (const run of activeRuns) {
+      const title = run.display_title || run.head_commit?.message || ""
+      const match = title.match(/upload:\s*(.+)/)
+      if (match) activeDocNames.add(match[1].trim())
+    }
+
+    // Build document status list
+    const documents = originals
+      .filter(
+        (f) =>
+          f.type === "file" &&
+          f.name !== ".gitkeep" &&
+          f.name !== ".ingest-trigger",
+      )
+      .map((f) => {
+        const stem = f.name.replace(/\.[^.]+$/, "")
+        const dateMatch = f.name.match(/^(\d{4}-\d{2}-\d{2})/)
+        const uploaded = dateMatch ? dateMatch[1] : null
+
+        // Check if this document has a source page (match by stem substring)
+        const isIngested = [...ingestedStems].some((s) => {
+          const normalizedStem = stem.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+          const normalizedSource = s.toLowerCase()
+          return normalizedSource.includes(normalizedStem) ||
+            normalizedStem.includes(normalizedSource.replace(/^\d{4}-\d{2}-\d{2}-/, ""))
+        })
+
+        // Check if an active workflow is processing this file
+        const isActive = activeDocNames.has(f.name) || (hasActiveRun && !isIngested)
+
+        let status: string
+        if (isIngested) {
+          status = "ingested"
+        } else if (activeRuns.some((r) => r.status === "in_progress") && isActive) {
+          status = "in_progress"
+        } else if (activeRuns.some((r) => r.status === "queued") && isActive) {
+          status = "queued"
+        } else if (!isIngested) {
+          status = "failed"
+        } else {
+          status = "ingested"
+        }
+
+        return {
+          document: f.name.replace(/^\d{4}-\d{2}-\d{2}-/, ""),
+          uploaded,
+          status,
+        }
+      })
+      .sort((a, b) => (b.uploaded || "").localeCompare(a.uploaded || ""))
+
+    // Also include active run info for auto-refresh detection
+    const hasActive = documents.some(
+      (d) => d.status === "in_progress" || d.status === "queued",
+    )
+
+    return Response.json({ documents, hasActive })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error"
     return Response.json({ error: message }, { status: 500 })
   }
-}
-
-async function fetchRuns(token: string, repo: string, workflow: string): Promise<WorkflowRun[]> {
-  const response = await fetch(
-    `https://api.github.com/repos/${repo}/actions/workflows/${workflow}/runs?per_page=10`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github.v3+json",
-        "User-Agent": "jacks-brain-upload",
-      },
-    }
-  )
-
-  if (!response.ok) return []
-  const data = (await response.json()) as GitHubRunsResponse
-  return data.workflow_runs || []
 }
