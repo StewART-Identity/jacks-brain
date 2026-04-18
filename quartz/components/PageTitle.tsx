@@ -22,6 +22,10 @@ PageTitle.css = `
 `
 
 PageTitle.afterDOMLoaded = `
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/static/sw.js").catch(function() {});
+}
+
 document.addEventListener("nav", function() {
   var toggle = document.querySelector(".mobile-menu-toggle");
   var content = document.querySelector(".sidebar-content");

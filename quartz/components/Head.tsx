@@ -83,6 +83,11 @@ export default (() => {
         )}
 
         <link rel="icon" href={iconPath} />
+        <link rel="manifest" href="/static/manifest.json" />
+        <link rel="apple-touch-icon" href="/static/apple-touch-icon.png" />
+        <meta name="theme-color" content="#1A3A2A" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="description" content={description} />
         <meta name="generator" content="Quartz" />
 
