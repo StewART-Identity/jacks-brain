@@ -217,7 +217,7 @@ document.addEventListener("nav", () => {
 
         if (filtered.length > 0) {
           runsList.innerHTML =
-            `<table>
+            `<div class="table-container"><table>
               <thead><tr><th>Document</th><th>Date</th><th>Status</th></tr></thead>
               <tbody>` +
             filtered
@@ -230,7 +230,7 @@ document.addEventListener("nav", () => {
                   </tr>`,
               )
               .join("") +
-            `</tbody></table>`
+            `</tbody></table></div>`
         } else {
           runsList.innerHTML = '<p class="muted">No active processing.</p>'
         }

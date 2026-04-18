@@ -29,6 +29,7 @@ import FullGraph from "./FullGraph"
 import SourcesList from "./SourcesList"
 import NukeButton from "./NukeButton"
 import ApplicationMenu from "./ApplicationMenu"
+import SearchPage from "./SearchPage"
 
 export {
   ArticleTitle,
@@ -62,4 +63,5 @@ export {
   SourcesList,
   NukeButton,
   ApplicationMenu,
+  SearchPage,
 }

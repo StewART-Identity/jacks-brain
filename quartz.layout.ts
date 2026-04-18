@@ -22,6 +22,10 @@ export const sharedPageComponents: SharedLayout = {
       component: Component.NukeButton(),
       condition: (page) => page.fileData.slug === "learn/nuke",
     }),
+    Component.ConditionalRender({
+      component: Component.SearchPage(),
+      condition: (page) => page.fileData.slug === "learn/search",
+    }),
   ],
   footer: Component.Footer(),
 }
@@ -36,6 +40,7 @@ const sidebarLeft = [
     links: [
       { title: "Knowledge", slug: "learn/knowledge" },
       { title: "Memory", slug: "learn/memory" },
+      { title: "Search", slug: "learn/search" },
     ],
   }),
   Component.SidebarLink({

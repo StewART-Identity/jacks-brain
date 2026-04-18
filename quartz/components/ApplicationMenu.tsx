@@ -49,18 +49,6 @@ ApplicationMenu.beforeDOMLoaded = darkmodeScript + "\n" + readermodeScript
 
 ApplicationMenu.afterDOMLoaded = `
 document.addEventListener("nav", () => {
-  const toggles = document.querySelectorAll(".sidebar-nav-toggle")
-  for (const toggle of toggles) {
-    toggle.addEventListener("click", () => {
-      toggle.classList.toggle("collapsed")
-      const list = toggle.nextElementSibling
-      if (list) list.classList.toggle("collapsed")
-      toggle.setAttribute("aria-expanded",
-        toggle.getAttribute("aria-expanded") === "true" ? "false" : "true"
-      )
-    })
-  }
-
   // Prevent app toggles from navigating
   for (const link of document.querySelectorAll(".app-toggle")) {
     link.addEventListener("click", (e) => {
