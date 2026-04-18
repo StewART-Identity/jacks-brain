@@ -47,7 +47,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
       </div>
 
       <div id="status-area" class="status-area" style="display:none">
-        <h3>Status</h3>
+        <h3>Upload Status</h3>
         <div id="status-messages"></div>
       </div>
 
