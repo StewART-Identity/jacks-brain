@@ -29,7 +29,7 @@ A Microsoft [[recall/entities/microsoft-entra-id]] P2 feature that provides just
 
 PIM rollout for administrative roles is a planned IAM project at [[recall/entities/unt-system]], anticipated to use the staging and greenfield tenants from [[recall/concepts/entra-id-three-tenant-model]] for pre-production testing.
 
-The Entra Authentication Methods Rollout Plan also recommended provisioning **dedicated cloud-native admin accounts** (`euid@myunt.onmicrosoft.com`) with minimum roles and PIM eligible assignments, as a mitigation for the incompatibility between [[recall/concepts/external-authentication-method|EAM (Cisco Duo)]] and custom authentication strengths.
+The Entra Authentication Methods Rollout Plan also recommended provisioning **[[recall/concepts/cloud-native-admin-accounts|dedicated cloud-native admin accounts]]** (`euid@myunt.onmicrosoft.com`) with minimum roles and PIM eligible assignments, as a mitigation for the incompatibility between [[recall/concepts/external-authentication-method|EAM (Cisco Duo)]] and [[recall/concepts/entra-id-authentication-strength|custom authentication strengths]].
 
 ## Why P2 Required
 
@@ -42,3 +42,5 @@ PIM is an Entra ID P2 feature. This is one reason the staging tenant in the [[re
 - [[recall/concepts/entra-id-three-tenant-model]]
 - [[recall/concepts/conditional-access-policy]]
 - [[recall/concepts/external-authentication-method]]
+- [[recall/concepts/cloud-native-admin-accounts]]
+- [[recall/concepts/entra-id-authentication-strength]]

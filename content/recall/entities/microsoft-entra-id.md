@@ -22,7 +22,7 @@ Microsoft's cloud identity and access management platform (formerly Azure Active
 - **[[recall/concepts/conditional-access-policy|Conditional Access]]** — Policy engine controlling authentication requirements based on user, device, app, and risk signals. UNT policies include `Logon-InternalUsers-CA`, `Logon-EntraAdminRoles-CA`, and `Logon-CitrixHorizon-CA`.
 - **[[recall/concepts/external-authentication-method]]** — Allows third-party MFA providers (e.g., [[recall/entities/cisco-duo]]) to handle the MFA challenge instead of Microsoft Authenticator.
 - **[[recall/concepts/system-preferred-mfa]]** — A setting that, when enabled, allows Entra ID to choose the MFA method it "prefers." At UNT, this was set to "Disabled" to prevent Entra from overriding Duo.
-- **Authentication Strengths** — Custom definitions of acceptable MFA method combinations. The "Entra Admin MFA" custom strength was updated to require Password + Authenticator (Push), removing SMS/Voice.
+- **[[recall/concepts/entra-id-authentication-strength|Authentication Strengths]]** — Custom definitions of acceptable MFA method combinations. The "Entra Admin MFA" custom strength was updated to require Password + Authenticator (Push), removing SMS/Voice. Note: custom strengths are incompatible with EAM — resolved via [[recall/concepts/cloud-native-admin-accounts]].
 - **Entra Connect** — Syncs on-premises AD groups to Entra ID (e.g., DuoUsers, ~90,000 members).
 - **[[recall/concepts/privileged-identity-management|PIM (Privileged Identity Management)]]** — P2 feature for just-in-time privileged access. Recommended for cloud-native admin accounts with eligible role assignments; planned for full rollout at UNT.
 
@@ -38,13 +38,19 @@ Microsoft's cloud identity and access management platform (formerly Azure Active
 
 All three require Entra ID P2 to test the full feature surface (Conditional Access, PIM, Identity Protection, access reviews).
 
+## Programmatic Management via Graph API
+
+In addition to portal-based configuration, Entra ID is managed programmatically by [[recall/entities/iam-modules]]'s `GraphAPIClient`. The `ENTRA_*` credentials (`tenant_id`, `client_id`, `client_secret`) in the `.env` file authorize scripts to perform group membership management and attribute synchronization via the Microsoft Graph API. This means some Entra ID state is managed through the portal (authentication policies, Conditional Access) and some through provisioning scripts — a coordination surface not formally documented in either layer's sources.
+
 ## Related Entities
 
 - [[recall/entities/cisco-duo]]
 - [[recall/entities/unt-system]]
 - [[recall/entities/citrix-horizon]]
+- [[recall/entities/iam-modules]]
 
 ## Sources
 
 - [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
 - [[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]
+- [[recall/sources/2026-04-18-2026-04-18-contract]]

@@ -80,13 +80,13 @@ All changes must be validated in the `myunttest.onmicrosoft.com` non-production 
 ## Known Considerations
 
 - **Unenrolled students** not in Duo are intentionally not covered by Citrix CA policy.
-- **Duo EAM + custom auth strengths** are incompatible — Microsoft platform limitation. Resolution: provision cloud-native admin accounts (`euid@myunt.onmicrosoft.com`).
-- **Federated admin accounts** may conflict with EAM routing — provision cloud-native accounts.
+- **[[recall/concepts/entra-id-authentication-strength|Duo EAM + custom auth strengths]]** are incompatible — Microsoft platform limitation. Resolution: provision [[recall/concepts/cloud-native-admin-accounts|cloud-native admin accounts]] (`euid@myunt.onmicrosoft.com`).
+- **Federated admin accounts** may conflict with EAM routing — provision [[recall/concepts/cloud-native-admin-accounts|cloud-native accounts]].
 - **App-specific sessions** (e.g., Infoblox 2-hr timeout) must be excluded from broader session controls.
 
 ## Recommendation
 
-Provision dedicated cloud-native admin accounts with minimum roles and PIM eligible assignments. Migrate users currently holding admin roles on federated accounts.
+Provision dedicated [[recall/concepts/cloud-native-admin-accounts]] with minimum roles and [[recall/concepts/privileged-identity-management|PIM eligible assignments]]. Migrate users currently holding admin roles on federated accounts.
 
 ## Sign-Off
 
