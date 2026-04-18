@@ -22,6 +22,38 @@ document.addEventListener("nav", () => {
     target.appendChild(div)
   }
 
+  function clearCardStatus(target: HTMLElement | null) {
+    if (!target) return
+    target.innerHTML = ""
+    target.style.display = "none"
+  }
+
+  // Clear file status when user initiates a new upload
+  dropZone.addEventListener("click", () => clearCardStatus(fileStatus))
+  dropZone.addEventListener("dragover", () => clearCardStatus(fileStatus))
+
+  // Clear paste status and fields when user clicks into them
+  if (pasteInput) {
+    pasteInput.addEventListener("focus", () => {
+      clearCardStatus(pasteStatus)
+      pasteInput.value = ""
+    })
+  }
+  if (pasteTitle) {
+    pasteTitle.addEventListener("focus", () => {
+      clearCardStatus(pasteStatus)
+      pasteTitle.value = ""
+    })
+  }
+
+  // Clear YouTube status and field when user clicks into it
+  if (youtubeInput) {
+    youtubeInput.addEventListener("focus", () => {
+      clearCardStatus(youtubeStatus)
+      youtubeInput.value = ""
+    })
+  }
+
   // Drag and drop
   dropZone.addEventListener("dragover", (e) => {
     e.preventDefault()
