@@ -6,25 +6,21 @@ import styles from "./styles/uploadZone.scss"
 const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="upload-app">
-      <h3 class="section-label">Upload File</h3>
-      <div class="upload-zone" id="drop-zone">
-        <div class="upload-icon">&#8693;</div>
-        <p class="upload-label">Drop a file here</p>
-        <p class="upload-sub">or click to browse — also supports paste (Ctrl+V) for images</p>
-        <input
-          type="file"
-          id="file-input"
-          accept=".md,.txt,.pdf,.html,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp"
-        />
+      <div class="ingest-card">
+        <h3 class="section-label">Upload File</h3>
+        <div class="upload-zone" id="drop-zone">
+          <div class="upload-icon">&#8693;</div>
+          <p class="upload-label">Drop a file here</p>
+          <p class="upload-sub">or click to browse — also supports paste (Ctrl+V) for images</p>
+          <input
+            type="file"
+            id="file-input"
+            accept=".md,.txt,.pdf,.html,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp"
+          />
+        </div>
       </div>
 
-      <div class="divider-row">
-        <hr class="divider-line" />
-        <span class="divider-text">or</span>
-        <hr class="divider-line" />
-      </div>
-
-      <div class="paste-section">
+      <div class="ingest-card paste-section">
         <h3>Paste Text</h3>
         <input
           type="text"
@@ -42,13 +38,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
         </div>
       </div>
 
-      <div class="divider-row">
-        <hr class="divider-line" />
-        <span class="divider-text">or</span>
-        <hr class="divider-line" />
-      </div>
-
-      <div class="youtube-section">
+      <div class="ingest-card youtube-section">
         <h3>Paste YouTube URL</h3>
         <div class="youtube-row">
           <input type="url" id="youtube-input" placeholder="https://www.youtube.com/watch?v=..." />
