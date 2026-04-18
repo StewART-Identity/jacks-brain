@@ -16,8 +16,10 @@ document.addEventListener("nav", () => {
   function showCardStatus(target: HTMLElement | null, msg: string, type: string) {
     if (!target) return
     target.style.display = "block"
-    target.className = "card-status " + type
-    target.textContent = msg
+    const div = document.createElement("div")
+    div.className = "card-status-msg " + type
+    div.textContent = msg
+    target.appendChild(div)
   }
 
   // Drag and drop

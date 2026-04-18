@@ -167,27 +167,32 @@
 /* In-card upload status */
 .card-status {
   margin-top: 0.75rem;
-  padding: 0.6rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.card-status-msg {
+  padding: 0.5rem 0.8rem;
   border-radius: 6px;
   font-size: 0.9rem;
 }
-.card-status.pending {
+.card-status-msg.pending {
   background: var(--highlight);
   color: var(--darkgray);
 }
-.card-status.success {
+.card-status-msg.success {
   color: #3A7D53;
   background: rgba(59, 125, 83, 0.08);
 }
-.card-status.error {
+.card-status-msg.error {
   color: #8B3232;
   background: rgba(139, 50, 50, 0.08);
 }
-:root[saved-theme="dark"] .card-status.success {
+:root[saved-theme="dark"] .card-status-msg.success {
   color: #7BBF95;
   background: rgba(59, 125, 83, 0.15);
 }
-:root[saved-theme="dark"] .card-status.error {
+:root[saved-theme="dark"] .card-status-msg.error {
   color: #C46B6B;
   background: rgba(139, 50, 50, 0.15);
 }
