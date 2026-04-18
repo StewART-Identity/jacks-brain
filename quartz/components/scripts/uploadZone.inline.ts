@@ -140,7 +140,7 @@ document.addEventListener("nav", () => {
       }
 
       pasteBtn.disabled = false
-      pasteBtn.textContent = "Ingest"
+      pasteBtn.textContent = "Upload"
     })
   }
 
@@ -170,7 +170,7 @@ document.addEventListener("nav", () => {
         showStatus("Failed: " + err.message, "error")
       }
       youtubeBtn.disabled = false
-      youtubeBtn.textContent = "Ingest"
+      youtubeBtn.textContent = "Upload"
     })
   }
 

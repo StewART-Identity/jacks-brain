@@ -34,7 +34,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
           rows={6}
         ></textarea>
         <div class="paste-row">
-          <button id="paste-btn">Ingest</button>
+          <button id="paste-btn">Upload</button>
         </div>
       </div>
 
@@ -42,7 +42,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
         <h3>Paste YouTube URL</h3>
         <div class="youtube-row">
           <input type="url" id="youtube-input" placeholder="https://www.youtube.com/watch?v=..." />
-          <button id="youtube-btn">Ingest</button>
+          <button id="youtube-btn">Upload</button>
         </div>
       </div>
 
