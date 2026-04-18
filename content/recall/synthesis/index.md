@@ -4,4 +4,6 @@ title: "Synthesis"
 
 Cross-cutting analysis, comparisons, and theses connecting multiple sources and concepts.
 
-*No synthesis pages yet. These are created from cross-cutting analysis.*
+| Page | Summary | Date |
+|------|---------|------|
+| [[recall/synthesis/adfs-migration-incident-driven-iam-maturation\|January 2026 ADFS Migration: Incident-Driven IAM Infrastructure Maturation]] | How the January 2026 ADFS → Entra ID migration incident drove simultaneous operational (Rollout Plan) and infrastructure (Multi-Tenant Proposal) responses at UNT System | 2026-04-18 |

@@ -11,6 +11,8 @@ tags:
   - iam
 sources:
   - "[[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]]"
 confidence: high
 ---
 
@@ -49,6 +51,10 @@ This model provides the physical infrastructure for the [[recall/concepts/iam-te
 1. **Greenfield** — planning phase comparison against known defaults
 2. **Staging** — smoke testing, functional testing, regression testing
 3. **Production** — receives changes only after documented staging validation
+
+## First Use in Practice
+
+The [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final|Entra Authentication Methods Rollout Plan]] (March 2026) is the first document to mandate pre-production testing in `myunttest.onmicrosoft.com` (the staging tenant) via its Part 0. It explicitly blocks all production changes until all Part 0 test cases pass. Note: P2 licensing for `myunttest` was still being procured at time of writing — the staging tenant exists but may not yet have full P2 feature parity. See [[recall/synthesis/adfs-migration-incident-driven-iam-maturation]] for the cross-cutting analysis.
 
 ## Origin
 

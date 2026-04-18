@@ -10,6 +10,7 @@ tags:
   - identity
 sources:
   - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
 confidence: high
 ---
 
@@ -36,3 +37,5 @@ A multi-factor authentication (MFA) platform integrated into [[recall/entities/u
 ## Sources
 
 - [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
+- [[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]] — cited for lacking pre-migration audit guidance for user-level EAM registration cleanup
+- [[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]] — cited as contributing to undocumented behaviors that required production troubleshooting in January 2026
