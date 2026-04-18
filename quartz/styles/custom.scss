@@ -458,6 +458,11 @@ input.search-bar {
 .left-sidebar {
   border-right: 1px solid transparent;
 }
+
+.sidebar.left {
+  overflow-y: auto;
+  justify-content: flex-start;
+}
 :root:not([saved-theme="dark"]) .left-sidebar {
   border-right-color: $green-100;
 }
