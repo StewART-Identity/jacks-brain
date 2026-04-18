@@ -13,6 +13,6 @@ Welcome to Jack's Brain, the repository for all his knowledge sources.
 - **[[learn/search|Search]]** — Search across all wiki content
 - **[[visualize/graph-view|Graph View]]** — Interactive map of connections
 
-<div style="text-align: center; margin-top: -3rem;">
+<div style="text-align: center; margin-top: -4.5rem;">
   <img src="/static/neuron-hero.png" alt="Jack's Brain" style="max-width: 625px; width: 100%;" />
 </div>
