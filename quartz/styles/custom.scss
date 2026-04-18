@@ -523,15 +523,15 @@ input.search-bar {
 
 footer {
   padding-top: 1.5rem;
-  font-size: 0.85rem;
+  border-top: 1px solid var(--lightgray);
 }
 :root:not([saved-theme="dark"]) footer {
-  border-top: 1px solid $green-100;
+  border-top-color: $green-100;
   color: $green-500;
   a { color: $brass-500; &:hover { color: $brass-800; } }
 }
 :root[saved-theme="dark"] footer {
-  border-top: 1px solid $green-800;
+  border-top-color: $green-800;
   color: $green-300;
   a { color: $brass-300; &:hover { color: $brass-100; } }
 }
@@ -609,19 +609,11 @@ footer {
 
 
 /* ==========================================================================
-   Darkmode & readermode toggle buttons
+   Application menu toggle links
    ========================================================================== */
 
-.darkmode, .readermode {
-  border-radius: 6px;
-  padding: 4px;
-  transition: background 0.15s ease;
-}
-:root:not([saved-theme="dark"]) {
-  .darkmode:hover, .readermode:hover { background: $green-100; }
-}
-:root[saved-theme="dark"] {
-  .darkmode:hover, .readermode:hover { background: $green-800; }
+a.app-toggle {
+  cursor: pointer;
 }
 
 

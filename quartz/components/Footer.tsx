@@ -12,10 +12,7 @@ export default ((opts?: Options) => {
     const year = new Date().getFullYear()
     return (
       <footer class={`${displayClass ?? ""}`}>
-        <p>
-          <a href="https://github.com/StewART-Identity">StewART-Identity</a>
-        </p>
-        <p class="copyright">&copy; {year} Jack Stewart</p>
+        <p>&copy; Jack Stewart @ <a href="https://github.com/StewART-Identity">StewART-Identity</a></p>
       </footer>
     )
   }

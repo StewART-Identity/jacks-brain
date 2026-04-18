@@ -26,6 +26,41 @@ export const sharedPageComponents: SharedLayout = {
   footer: Component.Footer(),
 }
 
+const sidebarLeft = [
+  Component.PageTitle(),
+  Component.MobileOnly(Component.Spacer()),
+  Component.SidebarLink({
+    title: "Learn",
+    slug: "learn",
+    defaultState: "open",
+    links: [
+      { title: "Knowledge", slug: "learn/knowledge" },
+      { title: "Memory", slug: "learn/memory" },
+    ],
+  }),
+  Component.SidebarLink({
+    title: "Study",
+    slug: "recall",
+    defaultState: "open",
+    links: [
+      { title: "Sources", slug: "recall/sources" },
+      { title: "Entities", slug: "recall/entities" },
+      { title: "Concepts", slug: "recall/concepts" },
+      { title: "Synthesis", slug: "recall/synthesis" },
+    ],
+  }),
+  Component.SidebarLink({
+    title: "Visualize",
+    slug: "visualize",
+    defaultState: "open",
+    links: [
+      { title: "Graph View", slug: "visualize/graph-view" },
+    ],
+  }),
+  Component.Search(),
+  Component.ApplicationMenu(),
+]
+
 // components for pages that display a single page (e.g. a single note)
 export const defaultContentPageLayout: PageLayout = {
   beforeBody: [
@@ -37,91 +72,13 @@ export const defaultContentPageLayout: PageLayout = {
     Component.ContentMeta(),
     Component.TagList(),
   ],
-  left: [
-    Component.PageTitle(),
-    Component.MobileOnly(Component.Spacer()),
-    Component.SidebarLink({
-      title: "Learn",
-      slug: "learn",
-      defaultState: "open",
-      links: [
-        { title: "Knowledge", slug: "learn/knowledge" },
-        { title: "Memory", slug: "learn/memory" },
-        { title: "Nuke It from Orbit", slug: "learn/nuke" },
-      ],
-    }),
-    Component.SidebarLink({
-      title: "Study",
-      slug: "recall",
-      defaultState: "open",
-      links: [
-        { title: "Sources", slug: "recall/sources" },
-        { title: "Entities", slug: "recall/entities" },
-        { title: "Concepts", slug: "recall/concepts" },
-        { title: "Synthesis", slug: "recall/synthesis" },
-      ],
-    }),
-    Component.SidebarLink({
-      title: "Visualize",
-      slug: "visualize",
-      defaultState: "open",
-      links: [
-        { title: "Graph View", slug: "visualize/graph-view" },
-      ],
-    }),
-    Component.Search(),
-    Component.Flex({
-      components: [
-        { Component: Component.Darkmode() },
-        { Component: Component.ReaderMode() },
-      ],
-    }),
-  ],
+  left: sidebarLeft,
   right: [],
 }
 
 // components for pages that display lists of pages  (e.g. tags or folders)
 export const defaultListPageLayout: PageLayout = {
   beforeBody: [Component.Breadcrumbs(), Component.ArticleTitle(), Component.ContentMeta()],
-  left: [
-    Component.PageTitle(),
-    Component.MobileOnly(Component.Spacer()),
-    Component.SidebarLink({
-      title: "Learn",
-      slug: "learn",
-      defaultState: "open",
-      links: [
-        { title: "Knowledge", slug: "learn/knowledge" },
-        { title: "Memory", slug: "learn/memory" },
-        { title: "Nuke It from Orbit", slug: "learn/nuke" },
-      ],
-    }),
-    Component.SidebarLink({
-      title: "Study",
-      slug: "recall",
-      defaultState: "open",
-      links: [
-        { title: "Sources", slug: "recall/sources" },
-        { title: "Entities", slug: "recall/entities" },
-        { title: "Concepts", slug: "recall/concepts" },
-        { title: "Synthesis", slug: "recall/synthesis" },
-      ],
-    }),
-    Component.SidebarLink({
-      title: "Visualize",
-      slug: "visualize",
-      defaultState: "open",
-      links: [
-        { title: "Graph View", slug: "visualize/graph-view" },
-      ],
-    }),
-    Component.Search(),
-    Component.Flex({
-      components: [
-        { Component: Component.Darkmode() },
-        { Component: Component.ReaderMode() },
-      ],
-    }),
-  ],
+  left: sidebarLeft,
   right: [],
 }

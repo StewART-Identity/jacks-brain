@@ -217,7 +217,7 @@ document.addEventListener("nav", () => {
 
         if (filtered.length > 0) {
           runsList.innerHTML =
-            `<table class="processing-table">
+            `<table>
               <thead><tr><th>Document</th><th>Date</th><th>Status</th></tr></thead>
               <tbody>` +
             filtered

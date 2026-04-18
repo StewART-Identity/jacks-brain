@@ -28,6 +28,7 @@ import SidebarLink from "./SidebarLink"
 import FullGraph from "./FullGraph"
 import SourcesList from "./SourcesList"
 import NukeButton from "./NukeButton"
+import ApplicationMenu from "./ApplicationMenu"
 
 export {
   ArticleTitle,
@@ -60,4 +61,5 @@ export {
   FullGraph,
   SourcesList,
   NukeButton,
+  ApplicationMenu,
 }

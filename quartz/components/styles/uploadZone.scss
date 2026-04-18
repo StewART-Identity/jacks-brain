@@ -220,26 +220,6 @@
 .runs-action-btn:hover {
   opacity: 0.7;
 }
-/* Processing table — matches Sources table style */
-.processing-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-.processing-table th {
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 2px solid var(--lightgray);
-  font-weight: 600;
-  color: var(--dark);
-}
-.processing-table td {
-  padding: 0.4rem 0.75rem;
-  border-bottom: 1px solid var(--lightgray);
-}
-.processing-table tr:last-child td {
-  border-bottom: none;
-}
 .run-badge {
   padding: 2px 8px;
   border-radius: 10px;
