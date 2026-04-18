@@ -189,7 +189,7 @@
 
 /* Recent runs */
 .recent-runs {
-  margin-top: 2rem;
+  margin-top: 0;
 }
 .recent-runs-header {
   display: flex;
@@ -222,11 +222,13 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--lightgray);
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
   font-size: 0.88rem;
 }
-.run-item:last-child { border-bottom: none; }
+.run-item:nth-child(even) {
+  background: var(--highlight);
+}
 .run-badge {
   padding: 2px 8px;
   border-radius: 10px;
