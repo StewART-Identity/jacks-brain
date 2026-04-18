@@ -24,7 +24,7 @@ Microsoft's cloud identity and access management platform (formerly Azure Active
 - **[[recall/concepts/external-authentication-method]]** — Allows third-party MFA providers (e.g., [[recall/entities/cisco-duo]]) to handle the MFA challenge instead of Microsoft Authenticator.
 - **[[recall/concepts/system-preferred-mfa]]** — A setting that, when enabled, allows Entra ID to choose the MFA method it "prefers." At UNT, this was set to "Disabled" to prevent Entra from overriding Duo.
 - **[[recall/concepts/entra-id-authentication-strength|Authentication Strengths]]** — Custom definitions of acceptable MFA method combinations. The "Entra Admin MFA" custom strength was updated to require Password + Authenticator (Push), removing SMS/Voice. Note: custom strengths are incompatible with EAM — resolved via [[recall/concepts/cloud-native-admin-accounts]].
-- **Entra Connect** — Syncs on-premises AD groups to Entra ID (e.g., DuoUsers, ~90,000 members).
+- **[[recall/concepts/entra-connect|Entra Connect]]** — Syncs on-premises AD groups to Entra ID (e.g., DuoUsers, ~90,000 members; 12h refresh cycle). See [[recall/concepts/entra-connect]] for the architectural dependency this creates between the provisioning and authentication layers.
 - **[[recall/concepts/privileged-identity-management|PIM (Privileged Identity Management)]]** — P2 feature for just-in-time privileged access. Recommended for cloud-native admin accounts with eligible role assignments; planned for full rollout at UNT.
 
 ## Tenant Environment Model

@@ -27,7 +27,7 @@ UNT System's IAM team manages centralized authentication for the system's instit
 - **[[recall/entities/citrix-horizon]]** — Virtual desktop/application delivery platform requiring dedicated [[recall/concepts/conditional-access-policy]]
 - **Entra Connect** — Syncs on-premises AD groups (including DuoUsers, ~90,000 members) to Entra ID
 - **[[recall/entities/edirectory]]** — On-premises NetIQ eDirectory (`idmpidv01.untsystem.edu:637`); primary identity store for provisioning
-- **Active Directory** — Four domains: `ad.unt.edu`, `unt.ad.unt.edu`, `hsc.ad.unt.edu`, `students.ad.unt.edu`; one least-privilege service account per domain
+- **[[recall/entities/active-directory|Active Directory]]** — Four domains: `ad.unt.edu`, `unt.ad.unt.edu`, `hsc.ad.unt.edu`, `students.ad.unt.edu`; one least-privilege service account per domain
 - **Oracle databases** — HRPD (`oradb404`) and LSPD (`oradb405`), PeopleSoft HR/LS; source-of-truth for employee and student data
 - **[[recall/entities/iam-modules]]** — Shared Python library centralizing all connections, logging, and credential management for 4+ scripting repos
 

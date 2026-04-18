@@ -66,13 +66,14 @@ Both accounts operate under **least-privilege**: write access is scoped to the s
 
 ## Role in UNT IAM Architecture
 
-eDirectory occupies the **provisioning foundation** layer of UNT's hybrid identity stack. Scripts that provision, deactivate, or modify users in eDirectory typically cascade changes outward to Active Directory and [[recall/entities/microsoft-entra-id]] (via Entra Connect sync or direct Graph API calls). The [[recall/entities/iam-modules]] library provides all eDirectory connections and the `EDirectoryClient` higher-level interface.
+eDirectory occupies the **provisioning foundation** layer of UNT's hybrid identity stack. Scripts that provision, deactivate, or modify users in eDirectory typically cascade changes outward to [[recall/entities/active-directory|Active Directory]] and [[recall/entities/microsoft-entra-id]] (via Entra Connect sync or direct Graph API calls). The [[recall/entities/iam-modules]] library provides all eDirectory connections and the `EDirectoryClient` higher-level interface.
 
 This is distinct from the **authentication layer** — users authenticate against Entra ID (via [[recall/concepts/external-authentication-method]] with [[recall/entities/cisco-duo]]), not directly against eDirectory. eDirectory is where identity records are mastered; Entra ID is where authentication occurs.
 
 ## Related Pages
 
 - [[recall/entities/iam-modules]]
+- [[recall/entities/active-directory]]
 - [[recall/entities/unt-system]]
 - [[recall/concepts/iam-scripting-architecture]]
 - [[recall/sources/2026-04-18-2026-04-18-contract]]
