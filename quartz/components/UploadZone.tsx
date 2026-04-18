@@ -18,6 +18,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
             accept=".md,.txt,.pdf,.html,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp"
           />
         </div>
+        <div id="file-status" class="card-status" style="display:none"></div>
       </div>
 
       <div class="ingest-card paste-section">
@@ -36,6 +37,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
         <div class="paste-row">
           <button id="paste-btn">Upload</button>
         </div>
+        <div id="paste-status" class="card-status" style="display:none"></div>
       </div>
 
       <div class="ingest-card youtube-section">
@@ -44,11 +46,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
           <input type="url" id="youtube-input" placeholder="https://www.youtube.com/watch?v=..." />
           <button id="youtube-btn">Upload</button>
         </div>
-      </div>
-
-      <div id="status-area" class="status-area" style="display:none">
-        <h3>Upload Status</h3>
-        <div id="status-messages"></div>
+        <div id="youtube-status" class="card-status" style="display:none"></div>
       </div>
 
       <div id="recent-runs" class="recent-runs">

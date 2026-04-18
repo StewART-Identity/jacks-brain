@@ -87,20 +87,21 @@ FullGraph.css =
   z-index: 5;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.4rem;
 }
 .graph-ctrl-btn {
   background: var(--light);
   border: 1px solid var(--lightgray);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--dark);
-  font-size: 1.1rem;
-  padding: 0.2rem 0.5rem;
+  font-size: 1.5rem;
+  padding: 0.4rem 0.6rem;
   cursor: pointer;
   opacity: 0.7;
   transition: opacity 0.15s ease;
   line-height: 1;
-  width: 2rem;
+  width: 2.8rem;
+  height: 2.8rem;
   text-align: center;
 }
 .graph-ctrl-btn:hover {

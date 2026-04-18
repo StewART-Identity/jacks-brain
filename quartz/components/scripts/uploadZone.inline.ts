@@ -1,8 +1,9 @@
 document.addEventListener("nav", () => {
   const dropZone = document.getElementById("drop-zone")
   const fileInput = document.getElementById("file-input") as HTMLInputElement | null
-  const statusArea = document.getElementById("status-area") as HTMLElement | null
-  const statusMessages = document.getElementById("status-messages")
+  const fileStatus = document.getElementById("file-status") as HTMLElement | null
+  const pasteStatus = document.getElementById("paste-status") as HTMLElement | null
+  const youtubeStatus = document.getElementById("youtube-status") as HTMLElement | null
   const youtubeInput = document.getElementById("youtube-input") as HTMLInputElement | null
   const youtubeBtn = document.getElementById("youtube-btn") as HTMLButtonElement | null
   const pasteInput = document.getElementById("paste-input") as HTMLTextAreaElement | null
@@ -12,13 +13,11 @@ document.addEventListener("nav", () => {
 
   if (!dropZone || !fileInput) return
 
-  function showStatus(msg: string, type: string) {
-    if (!statusArea || !statusMessages) return
-    statusArea.style.display = "block"
-    const div = document.createElement("div")
-    div.className = "status-msg " + type
-    div.textContent = msg
-    statusMessages.prepend(div)
+  function showCardStatus(target: HTMLElement | null, msg: string, type: string) {
+    if (!target) return
+    target.style.display = "block"
+    target.className = "card-status " + type
+    target.textContent = msg
   }
 
   // Drag and drop
@@ -69,7 +68,7 @@ document.addEventListener("nav", () => {
           const namedFile = new File([file], `${today}-pasted-image-${timestamp}.${ext}`, {
             type: file.type,
           })
-          showStatus("Pasted image detected, uploading...", "pending")
+          showCardStatus(fileStatus, "Pasted image detected, uploading...", "pending")
           uploadFile(namedFile)
         }
         return
@@ -82,20 +81,20 @@ document.addEventListener("nav", () => {
     localStorage.removeItem("docProcessingCleared")
     const recentSection = document.getElementById("recent-runs")
     if (recentSection) recentSection.style.display = ""
-    showStatus("Uploading " + file.name + "...", "pending")
+    showCardStatus(fileStatus, "Uploading " + file.name + "...", "pending")
     try {
       const formData = new FormData()
       formData.append("file", file)
       const response = await fetch("/api/upload", { method: "POST", body: formData })
       const data = await response.json()
       if (data.success) {
-        showStatus(data.message, "success")
+        showCardStatus(fileStatus, "Uploaded. Check Document Processing for current status.", "success")
         setTimeout(loadRuns, 3000)
       } else {
-        showStatus("Upload failed: " + (data.error || "Unknown error"), "error")
+        showCardStatus(fileStatus, "Upload failed: " + (data.error || "Unknown error"), "error")
       }
     } catch (err: any) {
-      showStatus("Upload failed: " + err.message, "error")
+      showCardStatus(fileStatus, "Upload failed: " + err.message, "error")
     }
     fileInput.value = ""
   }
@@ -120,7 +119,7 @@ document.addEventListener("nav", () => {
       const content = `# ${pasteTitle?.value.trim() || "Pasted Text"}\n\n${text}`
 
       const file = new File([content], filename, { type: "text/markdown" })
-      showStatus("Uploading pasted text as " + filename + "...", "pending")
+      showCardStatus(pasteStatus, "Uploading pasted text as " + filename + "...", "pending")
 
       try {
         const formData = new FormData()
@@ -128,15 +127,15 @@ document.addEventListener("nav", () => {
         const response = await fetch("/api/upload", { method: "POST", body: formData })
         const data = await response.json()
         if (data.success) {
-          showStatus(data.message, "success")
+          showCardStatus(pasteStatus, "Uploaded. Check Document Processing for current status.", "success")
           pasteInput.value = ""
           if (pasteTitle) pasteTitle.value = ""
           setTimeout(loadRuns, 3000)
         } else {
-          showStatus("Upload failed: " + (data.error || "Unknown error"), "error")
+          showCardStatus(pasteStatus, "Upload failed: " + (data.error || "Unknown error"), "error")
         }
       } catch (err: any) {
-        showStatus("Upload failed: " + err.message, "error")
+        showCardStatus(pasteStatus, "Upload failed: " + err.message, "error")
       }
 
       pasteBtn.disabled = false
@@ -151,7 +150,7 @@ document.addEventListener("nav", () => {
       if (!url) return
       youtubeBtn.disabled = true
       youtubeBtn.textContent = "Submitting..."
-      showStatus("Submitting YouTube URL...", "pending")
+      showCardStatus(youtubeStatus, "Submitting YouTube URL...", "pending")
       try {
         const response = await fetch("/api/youtube", {
           method: "POST",
@@ -160,14 +159,14 @@ document.addEventListener("nav", () => {
         })
         const data = await response.json()
         if (data.success) {
-          showStatus(data.message, "success")
+          showCardStatus(youtubeStatus, "Uploaded. Check Document Processing for current status.", "success")
           youtubeInput.value = ""
           setTimeout(loadRuns, 3000)
         } else {
-          showStatus("Failed: " + (data.error || "Unknown error"), "error")
+          showCardStatus(youtubeStatus, "Failed: " + (data.error || "Unknown error"), "error")
         }
       } catch (err: any) {
-        showStatus("Failed: " + err.message, "error")
+        showCardStatus(youtubeStatus, "Failed: " + err.message, "error")
       }
       youtubeBtn.disabled = false
       youtubeBtn.textContent = "Upload"
