@@ -461,6 +461,59 @@ input.search-bar {
 :root:not([saved-theme="dark"]) .left-sidebar {
   border-right-color: $green-100;
 }
+
+
+/* ==========================================================================
+   Mobile hamburger menu
+   ========================================================================== */
+
+.mobile-menu-toggle {
+  display: none;
+}
+
+@media all and (max-width: 800px) {
+  .sidebar.left {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    position: relative;
+    padding-top: 1rem !important;
+    padding-bottom: 0.5rem !important;
+    gap: 0 !important;
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    color: var(--dark);
+    cursor: pointer;
+    padding: 0.4rem;
+    position: absolute;
+    right: 0;
+    top: 1rem;
+    z-index: 10;
+  }
+
+  .sidebar.left .sidebar-content {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    padding-top: 0.5rem;
+  }
+
+  .sidebar.left .sidebar-content.open {
+    display: flex;
+  }
+
+  .sidebar.left .page-title {
+    display: block !important;
+  }
+
+  .sidebar.left .spacer {
+    display: none !important;
+  }
+}
 :root[saved-theme="dark"] .left-sidebar {
   border-right-color: $green-800;
 }

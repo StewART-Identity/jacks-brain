@@ -21,4 +21,16 @@ PageTitle.css = `
 }
 `
 
+PageTitle.afterDOMLoaded = `
+document.addEventListener("nav", function() {
+  var toggle = document.querySelector(".mobile-menu-toggle");
+  var content = document.querySelector(".sidebar-content");
+  if (!toggle || !content) return;
+  toggle.addEventListener("click", function() {
+    var open = content.classList.toggle("open");
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+});
+`
+
 export default (() => PageTitle) satisfies QuartzComponentConstructor
