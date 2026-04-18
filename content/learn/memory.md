@@ -4,6 +4,10 @@ title: "Memory"
 
 Permanent record of knowledge added to the wiki, organized by date.
 
+## 2026-04-18
+
+- **Ingested:** 2026-04-18-Entra_Authentication_Methods-Rollout-Plan-FINAL.docx
+
 ## 2026-04-16
 
 - **Initialized:** Wiki UI and ingest pipeline finalized
