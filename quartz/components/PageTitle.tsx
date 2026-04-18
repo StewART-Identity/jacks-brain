@@ -30,6 +30,20 @@ document.addEventListener("nav", function() {
     var open = content.classList.toggle("open");
     toggle.setAttribute("aria-expanded", open ? "true" : "false");
   });
+
+  var fsBtn = document.getElementById("graph-fullscreen-btn");
+  var graphEl = document.getElementById("full-graph");
+  if (fsBtn && graphEl) {
+    fsBtn.addEventListener("click", function() {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else if (graphEl.requestFullscreen) {
+        graphEl.requestFullscreen();
+      } else if (graphEl.webkitRequestFullscreen) {
+        graphEl.webkitRequestFullscreen();
+      }
+    });
+  }
 });
 `
 

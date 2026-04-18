@@ -22,6 +22,9 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
 
   return (
     <div class={displayClass} id="full-graph">
+      <button type="button" id="graph-fullscreen-btn" class="graph-fullscreen-btn" title="Full screen">
+        &#x26F6;
+      </button>
       <div class="graph-container" data-cfg={JSON.stringify(graphConfig)}></div>
     </div>
   )
@@ -33,6 +36,7 @@ FullGraph.css =
 #full-graph {
   width: 100%;
   margin: 1rem 0;
+  position: relative;
 }
 #full-graph > .graph-container {
   border-radius: 8px;
@@ -42,7 +46,33 @@ FullGraph.css =
   width: 100%;
   overflow: hidden;
 }
+#full-graph:fullscreen > .graph-container,
+#full-graph:-webkit-full-screen > .graph-container {
+  height: 100vh;
+  border: none;
+  border-radius: 0;
+}
+.graph-fullscreen-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 5;
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 6px;
+  color: var(--dark);
+  font-size: 1.1rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+  line-height: 1;
+}
+.graph-fullscreen-btn:hover {
+  opacity: 1;
+}
 `
+
 FullGraph.afterDOMLoaded = script
 
 export default (() => FullGraph) satisfies QuartzComponentConstructor
