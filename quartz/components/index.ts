@@ -27,6 +27,7 @@ import UploadZone from "./UploadZone"
 import SidebarLink from "./SidebarLink"
 import FullGraph from "./FullGraph"
 import SourcesList from "./SourcesList"
+import NukeButton from "./NukeButton"
 
 export {
   ArticleTitle,
@@ -58,4 +59,5 @@ export {
   SidebarLink,
   FullGraph,
   SourcesList,
+  NukeButton,
 }

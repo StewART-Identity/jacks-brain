@@ -18,6 +18,10 @@ export const sharedPageComponents: SharedLayout = {
       component: Component.SourcesList(),
       condition: (page) => page.fileData.slug === "recall/sources",
     }),
+    Component.ConditionalRender({
+      component: Component.NukeButton(),
+      condition: (page) => page.fileData.slug === "learn/nuke",
+    }),
   ],
   footer: Component.Footer(),
 }
@@ -43,6 +47,7 @@ export const defaultContentPageLayout: PageLayout = {
       links: [
         { title: "Knowledge", slug: "learn/knowledge" },
         { title: "Memory", slug: "learn/memory" },
+        { title: "Nuke It from Orbit", slug: "learn/nuke" },
       ],
     }),
     Component.SidebarLink({
@@ -88,6 +93,7 @@ export const defaultListPageLayout: PageLayout = {
       links: [
         { title: "Knowledge", slug: "learn/knowledge" },
         { title: "Memory", slug: "learn/memory" },
+        { title: "Nuke It from Orbit", slug: "learn/nuke" },
       ],
     }),
     Component.SidebarLink({

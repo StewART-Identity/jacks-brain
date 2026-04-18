@@ -1,4 +1,7 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
+// @ts-ignore
+import script from "./scripts/graph.inline"
+import style from "./styles/graph.scss"
 
 const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   const graphConfig = {
@@ -24,7 +27,9 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   )
 }
 
-FullGraph.css = `
+FullGraph.css =
+  style +
+  `
 #full-graph {
   width: 100%;
   margin: 1rem 0;
@@ -38,5 +43,6 @@ FullGraph.css = `
   overflow: hidden;
 }
 `
+FullGraph.afterDOMLoaded = script
 
 export default (() => FullGraph) satisfies QuartzComponentConstructor

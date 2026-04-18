@@ -51,7 +51,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
         <div id="status-messages"></div>
       </div>
 
-      <div id="recent-runs" class="ingest-card recent-runs">
+      <div id="recent-runs" class="recent-runs">
         <div class="recent-runs-header">
           <h3>Document Processing</h3>
           <div class="recent-runs-actions">
