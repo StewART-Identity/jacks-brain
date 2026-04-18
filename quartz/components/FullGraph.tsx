@@ -46,11 +46,27 @@ FullGraph.css =
   width: 100%;
   overflow: hidden;
 }
+#full-graph:fullscreen,
+#full-graph:-webkit-full-screen {
+  background: var(--light);
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
+}
 #full-graph:fullscreen > .graph-container,
 #full-graph:-webkit-full-screen > .graph-container {
-  height: 100vh;
+  height: 100%;
+  width: 100%;
   border: none;
   border-radius: 0;
+}
+#full-graph:fullscreen > .graph-fullscreen-btn,
+#full-graph:-webkit-full-screen > .graph-fullscreen-btn {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
 }
 .graph-fullscreen-btn {
   position: absolute;
