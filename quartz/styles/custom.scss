@@ -96,10 +96,17 @@ $oxblood-800: #6B2020;
 .page-title {
   font-weight: 700;
   letter-spacing: -0.02em;
+
+  a, a:visited, a:hover {
+    color: inherit;
+  }
 }
 :root[saved-theme="dark"] .page-title {
   color: $brass-100;
   text-shadow: 0 0 40px rgba($brass-300, 0.15);
+}
+:root:not([saved-theme="dark"]) .page-title {
+  color: $brass-600;
 }
 
 
