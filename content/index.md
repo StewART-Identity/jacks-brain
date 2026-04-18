@@ -1,5 +1,5 @@
 ---
-title: "Jack's Brain"
+title: "Welcome"
 ---
 
 Welcome to Jack's Brain, the repository for all his knowledge sources.
