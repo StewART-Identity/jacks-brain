@@ -467,6 +467,13 @@ input.search-bar {
    Mobile hamburger menu
    ========================================================================== */
 
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+}
+
 .mobile-menu-toggle {
   display: none;
 }
@@ -497,9 +504,8 @@ input.search-bar {
 
   .sidebar.left .sidebar-content {
     display: none;
-    flex-direction: column;
-    width: 100%;
     padding-top: 0.5rem;
+    gap: 0.8rem;
   }
 
   .sidebar.left .sidebar-content.open {
