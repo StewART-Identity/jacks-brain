@@ -13,8 +13,6 @@ sources:
 confidence: high
 ---
 
-# Conditional Access Policy
-
 A [[recall/entities/microsoft-entra-id]] policy construct that evaluates signals (user identity, device state, application, location, risk level) and enforces access controls (grant, block, require MFA, require compliant device, etc.) at authentication time.
 
 ## How It Works

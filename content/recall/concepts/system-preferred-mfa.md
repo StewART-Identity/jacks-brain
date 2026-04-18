@@ -13,8 +13,6 @@ sources:
 confidence: high
 ---
 
-# System-Preferred MFA
-
 A [[recall/entities/microsoft-entra-id]] setting that, when set to "Microsoft managed," allows Entra ID to automatically select the MFA method it determines to be most secure or appropriate — overriding the user's default or a configured [[recall/concepts/external-authentication-method]].
 
 ## States

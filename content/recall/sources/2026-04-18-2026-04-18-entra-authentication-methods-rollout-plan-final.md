@@ -15,8 +15,6 @@ sources: []
 confidence: high
 ---
 
-# Entra Authentication Methods Rollout Plan
-
 [Download original](/originals/2026-04-18-Entra_Authentication_Methods-Rollout-Plan-FINAL.docx)
 
 **Prepared by:** [[recall/entities/jack-stewart]] | Architect/Engineer, [[recall/entities/unt-system]] Identity and Access Management

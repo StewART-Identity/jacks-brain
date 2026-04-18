@@ -13,8 +13,6 @@ sources:
 confidence: high
 ---
 
-# External Authentication Method (EAM)
-
 A [[recall/entities/microsoft-entra-id]] feature that allows a third-party MFA provider to handle the MFA challenge in place of Microsoft's built-in methods (e.g., Microsoft Authenticator). The external provider is registered in Entra ID's Authentication Methods settings and invoked during Conditional Access MFA grants.
 
 ## How It Works

@@ -216,16 +216,21 @@ document.addEventListener("nav", () => {
         })
 
         if (filtered.length > 0) {
-          runsList.innerHTML = filtered
-            .map(
-              (run: any) =>
-                `<div class="run-item">
-                  <span class="run-badge ${run.conclusion || run.status}">${run.conclusion || run.status}</span>
-                  <span class="run-doc">${run.document || run.name}</span>
-                  <span class="run-time">${new Date(run.created).toLocaleString()}</span>
-                </div>`,
-            )
-            .join("")
+          runsList.innerHTML =
+            `<table class="processing-table">
+              <thead><tr><th>Document</th><th>Date</th><th>Status</th></tr></thead>
+              <tbody>` +
+            filtered
+              .map(
+                (run: any) =>
+                  `<tr>
+                    <td>${run.document || run.name}</td>
+                    <td>${new Date(run.created).toLocaleString()}</td>
+                    <td><span class="run-badge ${run.conclusion || run.status}">${run.conclusion || run.status}</span></td>
+                  </tr>`,
+              )
+              .join("") +
+            `</tbody></table>`
         } else {
           runsList.innerHTML = '<p class="muted">No active processing.</p>'
         }

@@ -14,8 +14,6 @@ sources:
 confidence: high
 ---
 
-# MFA Sign-In Frequency and Remembered Devices
-
 Two complementary controls that reduce MFA re-prompt frequency for end users — one at the [[recall/entities/microsoft-entra-id]] layer, one at the [[recall/entities/cisco-duo]] layer.
 
 ## Sign-In Frequency (Entra Conditional Access)

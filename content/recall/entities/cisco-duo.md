@@ -13,8 +13,6 @@ sources:
 confidence: high
 ---
 
-# Cisco Duo
-
 A multi-factor authentication (MFA) platform integrated into [[recall/entities/unt-system]]'s identity stack as a [[recall/concepts/external-authentication-method]] (EAM) within [[recall/entities/microsoft-entra-id]].
 
 ## Integration at UNT System

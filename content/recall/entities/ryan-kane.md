@@ -12,8 +12,6 @@ sources:
 confidence: high
 ---
 
-# Ryan Kane
-
 Director, Enterprise Collaboration Services at [[recall/entities/unt-system]].
 
 ## Role

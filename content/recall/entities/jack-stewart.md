@@ -14,8 +14,6 @@ sources:
 confidence: high
 ---
 
-# Jack Stewart
-
 Architect/Engineer, Identity and Access Management at [[recall/entities/unt-system]].
 
 ## Role

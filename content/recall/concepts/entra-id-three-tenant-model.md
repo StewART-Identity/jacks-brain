@@ -14,8 +14,6 @@ sources:
 confidence: high
 ---
 
-# Entra ID Three-Tenant Model
-
 A persistent, licensed Microsoft [[recall/entities/microsoft-entra-id]] infrastructure pattern using three parallel tenants: production, staging, and greenfield baseline. Proposed by [[recall/entities/jack-stewart]] for [[recall/entities/unt-system]] in February 2026.
 
 ## The Three Tenants

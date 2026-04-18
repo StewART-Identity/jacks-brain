@@ -13,8 +13,6 @@ sources:
 confidence: high
 ---
 
-# UNT System
-
 The University of North Texas System — a public university system operating a shared Identity and Access Management (IAM) infrastructure.
 
 ## IAM Infrastructure

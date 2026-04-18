@@ -15,8 +15,6 @@ sources:
 confidence: high
 ---
 
-# Microsoft Entra ID
-
 Microsoft's cloud identity and access management platform (formerly Azure Active Directory). [[recall/entities/unt-system]] migrated to Entra ID managed authentication from ADFS on January 28, 2026.
 
 ## Key Features Used at UNT System

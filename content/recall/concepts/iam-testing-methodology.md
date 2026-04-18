@@ -14,8 +14,6 @@ sources:
 confidence: medium
 ---
 
-# IAM Testing Methodology
-
 A formal testing methodology document developed by [[recall/entities/unt-system]]'s IAM team that defines scope classifications, risk assessment criteria, testing phases, and approval workflows for identity infrastructure changes.
 
 ## What It Defines

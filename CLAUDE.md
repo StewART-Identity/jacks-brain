@@ -76,9 +76,11 @@ Trigger: user says "ingest [source]" or drops a file.
    `content/recall/entities/`.
 5. For each significant concept: create or update its page in
    `content/recall/concepts/`.
-6. Update `content/index.md` with new pages.
-7. Append an entry to `content/log.md`.
-8. Report what you created and updated.
+6. If the source connects to or contrasts with existing wiki content,
+   create or update a synthesis page in `content/recall/synthesis/`.
+7. Update `content/index.md` with new pages.
+8. Append an entry to `content/learn/memory.md`.
+9. Report what you created and updated.
 
 A single source typically touches 5–15 pages. Take your time. Quality of
 cross-references matters more than speed.

@@ -13,8 +13,6 @@ sources:
 confidence: high
 ---
 
-# Citrix Horizon
-
 A virtual desktop infrastructure (VDI) and application delivery platform used at [[recall/entities/unt-system]]. It is an enterprise application registered in [[recall/entities/microsoft-entra-id]].
 
 ## MFA Enforcement at UNT System

@@ -146,13 +146,19 @@ Follow the "Ingest" workflow from CLAUDE.md:
 1. Create a source summary page in content/recall/sources/ named ${today}-${originalName.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md
 2. Create or update entity pages in content/recall/entities/ for significant entities mentioned
 3. Create or update concept pages in content/recall/concepts/ for significant concepts
-4. Update content/index.md with the new pages added to the appropriate tables
-5. Update content/learn/memory.md — add an "**Ingested:**" entry under today's date heading (## ${today}). If today's date heading already exists, add the entry under it. If not, create a new date heading at the top (below the frontmatter and description). Format: \`- **Ingested:** document-name.ext\`. Do NOT include timestamps, only dates.
+4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/recall/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents.
+5. Update content/index.md with the new pages added to the appropriate tables
+6. Update content/learn/memory.md — add a row to the table (after the header row): | ${today} | Ingested | ${originalName} |
 
 The original document is available for download at: /originals/${originalName}
 Include a link to the original document in the source summary page (e.g., [Download original](/originals/${originalName})).
 
-Use wikilinks ([[path]]) aggressively. Today's date is ${today}.
+IMPORTANT formatting rules:
+- Do NOT include a duplicate H1 heading in any page. The frontmatter title is rendered automatically.
+- Use wikilinks ([[path]]) aggressively to cross-reference between pages.
+- All wiki page paths use the recall/ prefix: recall/sources/, recall/entities/, recall/concepts/, recall/synthesis/.
+- Today's date is ${today}.
+
 Write all files directly — do not ask for confirmation.`
 
   console.log(`Calling Claude Code CLI for: ${relative(ROOT, sourcePath)}`)

@@ -14,8 +14,6 @@ sources: []
 confidence: high
 ---
 
-# Entra ID Multi-Tenant Environment Proposal
-
 [Download original](/originals/2026-04-18-Entra_ID_Multi-Tenant_Environment_Proposal.docx)
 
 **Prepared by:** [[recall/entities/jack-stewart]] | IAM Engineer, [[recall/entities/unt-system]] Identity and Access Management

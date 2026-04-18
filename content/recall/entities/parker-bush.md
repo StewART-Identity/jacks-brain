@@ -12,8 +12,6 @@ sources:
 confidence: high
 ---
 
-# Parker Bush
-
 Manager, Identity and Access Management at [[recall/entities/unt-system]].
 
 ## Role

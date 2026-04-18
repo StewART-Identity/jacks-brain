@@ -15,8 +15,6 @@ sources:
 confidence: medium
 ---
 
-# Privileged Identity Management (PIM)
-
 A Microsoft [[recall/entities/microsoft-entra-id]] P2 feature that provides just-in-time privileged access to Azure and Entra ID roles. Administrators are assigned **eligible** (not permanent) role assignments and must activate them on demand, with optional approval workflows and time limits.
 
 ## Key Capabilities
