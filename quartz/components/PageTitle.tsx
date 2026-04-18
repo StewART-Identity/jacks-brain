@@ -43,20 +43,6 @@ document.addEventListener("nav", function() {
         graphEl.webkitRequestFullscreen();
       }
     });
-
-    document.addEventListener("fullscreenchange", function() {
-      var container = graphEl.querySelector(".graph-container");
-      var canvas = container && container.querySelector("canvas");
-      if (!canvas) return;
-      setTimeout(function() {
-        var w = container.clientWidth;
-        var h = container.clientHeight;
-        canvas.style.width = w + "px";
-        canvas.style.height = h + "px";
-        canvas.width = w * window.devicePixelRatio;
-        canvas.height = h * window.devicePixelRatio;
-      }, 100);
-    });
   }
 });
 `

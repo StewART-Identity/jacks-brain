@@ -49,6 +49,12 @@ FullGraph.css =
 }
 #full-graph > .graph-container canvas {
   touch-action: none;
+  display: block;
+}
+#full-graph:fullscreen > .graph-container canvas,
+#full-graph:-webkit-full-screen > .graph-container canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 #full-graph:fullscreen,
 #full-graph:-webkit-full-screen {
