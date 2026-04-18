@@ -10,4 +10,5 @@ Welcome to the knowledge wiki. Use the sidebar to navigate.
 - **[[recall/entities|Entities]]** — People, organizations, tools, systems
 - **[[recall/concepts|Concepts]]** — Ideas, theories, frameworks
 - **[[recall/synthesis|Synthesis]]** — Cross-cutting analysis
+- **[[learn/search|Search]]** — Search across all wiki content
 - **[[visualize/graph-view|Graph View]]** — Interactive map of connections

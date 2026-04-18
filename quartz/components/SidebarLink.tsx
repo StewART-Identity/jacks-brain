@@ -11,31 +11,10 @@ interface Options {
 
 export default ((opts: Options) => {
   const SidebarLink: QuartzComponent = ({ fileData, displayClass }: QuartzComponentProps) => {
-    const isOpen = opts.defaultState === "open"
     return (
       <div class={classNames(displayClass, "sidebar-nav")}>
-        <button
-          type="button"
-          class={`sidebar-nav-toggle${isOpen ? "" : " collapsed"}`}
-          aria-expanded={isOpen}
-        >
-          <h2>{opts.title}</h2>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="5 8 14 8"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="fold"
-          >
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
-        <ul class={`sidebar-nav-list${isOpen ? "" : " collapsed"}`}>
+        <h2 class="sidebar-nav-heading">{opts.title}</h2>
+        <ul class="sidebar-nav-list">
           {opts.links.map((link) => (
             <li>
               <a href={resolveRelative(fileData.slug!, link.slug as any)}>{link.title}</a>
@@ -50,42 +29,18 @@ export default ((opts: Options) => {
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  overflow-y: hidden;
 }
 
-.sidebar-nav-toggle {
-  background: transparent;
-  border: none;
-  text-align: left;
-  cursor: pointer;
-  padding: 0;
-  color: var(--dark);
-  display: flex;
-  align-items: center;
-}
-.sidebar-nav-toggle h2 {
-  font-size: 1rem;
+.sidebar-nav-heading {
+  font-size: 1.1rem;
   margin: 0;
-}
-.sidebar-nav-toggle .fold {
-  margin-left: 0.5rem;
-  transition: transform 0.3s ease;
-  opacity: 0.8;
-}
-.sidebar-nav-toggle.collapsed .fold {
-  transform: rotateZ(-90deg);
+  color: var(--dark);
 }
 
 ul.sidebar-nav-list {
   list-style: none;
   padding: 0;
   margin: 0.3rem 0;
-  overflow: hidden;
-  transition: max-height 0.35s ease;
-  max-height: 500px;
-}
-ul.sidebar-nav-list.collapsed {
-  max-height: 0;
 }
 ul.sidebar-nav-list li {
   padding: 0.15rem 0;
@@ -94,28 +49,12 @@ ul.sidebar-nav-list a {
   color: var(--dark);
   opacity: 0.75;
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
 }
 ul.sidebar-nav-list a:hover {
   color: var(--secondary);
   opacity: 1;
 }
-`
-
-  SidebarLink.afterDOMLoaded = `
-document.addEventListener("nav", () => {
-  const toggles = document.querySelectorAll(".sidebar-nav-toggle")
-  for (const toggle of toggles) {
-    toggle.addEventListener("click", () => {
-      toggle.classList.toggle("collapsed")
-      const list = toggle.nextElementSibling
-      if (list) list.classList.toggle("collapsed")
-      toggle.setAttribute("aria-expanded",
-        toggle.getAttribute("aria-expanded") === "true" ? "false" : "true"
-      )
-    })
-  }
-})
 `
 
   return SidebarLink
