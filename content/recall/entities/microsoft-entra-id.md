@@ -12,6 +12,7 @@ tags:
 sources:
   - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]]"
 confidence: high
 ---
 
@@ -53,4 +54,5 @@ In addition to portal-based configuration, Entra ID is managed programmatically 
 
 - [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
 - [[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]
+- [[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]] — executive brief framing cost, risk, and four-year scope for the three-tenant model
 - [[recall/sources/2026-04-18-2026-04-18-contract]]

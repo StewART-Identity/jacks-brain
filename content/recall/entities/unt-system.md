@@ -12,6 +12,7 @@ sources:
   - "[[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]]"
   - "[[recall/sources/2026-04-18-2026-04-18-contract]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-authentication-methods-migration-executive-brief-2-]]"
 confidence: high
 ---
 
@@ -63,3 +64,4 @@ Provisioning automation runs on `iam-script-gab` as the `iamadm` user. The [[rec
 - [[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]
 - [[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]]
 - [[recall/sources/2026-04-18-2026-04-18-contract]]
+- [[recall/sources/2026-04-18-2026-04-18-authentication-methods-migration-executive-brief-2-]] — industry validation of migration challenges; business continuity risk from EAM fail-mode removal; documents Jack Stewart's August 2025 early warning

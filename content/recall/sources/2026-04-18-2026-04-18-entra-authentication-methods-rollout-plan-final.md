@@ -90,4 +90,4 @@ Provision dedicated [[recall/concepts/cloud-native-admin-accounts]] with minimum
 
 ## Sign-Off
 
-Approved by [[recall/entities/jack-stewart]] (Architect/Engineer, IAM), Parker Bush (Manager, IAM), and Ryan Kane (Director, Enterprise Collaboration Services).
+Approved by [[recall/entities/jack-stewart]] (Architect/Engineer, IAM), [[recall/entities/parker-bush]] (Manager, IAM), and [[recall/entities/ryan-kane]] (Director, Enterprise Collaboration Services).
