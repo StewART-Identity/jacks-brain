@@ -2,7 +2,7 @@
 title: "Jack's Brain"
 ---
 
-Welcome to the knowledge wiki. Use the sidebar to navigate.
+Welcome to Jack's Brain, the repository for all his knowledge sources.
 
 - **[[learn/knowledge|Knowledge]]** — Upload files and videos to ingest
 - **[[learn/memory|Memory]]** — Chronological record of ingestions
