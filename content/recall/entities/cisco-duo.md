@@ -9,19 +9,19 @@ tags:
   - authentication
   - identity
 sources:
-  - "[[sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
 confidence: high
 ---
 
 # Cisco Duo
 
-A multi-factor authentication (MFA) platform integrated into [[entities/unt-system]]'s identity stack as a [[concepts/external-authentication-method]] (EAM) within [[entities/microsoft-entra-id]].
+A multi-factor authentication (MFA) platform integrated into [[recall/entities/unt-system]]'s identity stack as a [[recall/concepts/external-authentication-method]] (EAM) within [[recall/entities/microsoft-entra-id]].
 
 ## Integration at UNT System
 
 - Configured as an **External Authentication Method (EAM)** in Entra ID, meaning Duo handles the MFA challenge instead of Microsoft Authenticator.
 - Two user groups are in scope: `ECS-DUO-Users` (internal users) and `DuoUsers` (~90,000 Duo-enrolled users synced from on-premises AD).
-- **Remembered Devices** feature: configured for 7 days on browser-based apps to reduce daily re-prompts (see [[concepts/mfa-sign-in-frequency]]).
+- **Remembered Devices** feature: configured for 7 days on browser-based apps to reduce daily re-prompts (see [[recall/concepts/mfa-sign-in-frequency]]).
 
 ## Known Limitations
 
@@ -31,10 +31,10 @@ A multi-factor authentication (MFA) platform integrated into [[entities/unt-syst
 
 ## Related Concepts
 
-- [[concepts/external-authentication-method]]
-- [[concepts/system-preferred-mfa]]
-- [[concepts/conditional-access-policy]]
+- [[recall/concepts/external-authentication-method]]
+- [[recall/concepts/system-preferred-mfa]]
+- [[recall/concepts/conditional-access-policy]]
 
 ## Sources
 
-- [[sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
+- [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]

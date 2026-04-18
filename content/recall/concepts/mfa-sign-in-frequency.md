@@ -10,17 +10,17 @@ tags:
   - entra-id
   - session-management
 sources:
-  - "[[sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
 confidence: high
 ---
 
 # MFA Sign-In Frequency and Remembered Devices
 
-Two complementary controls that reduce MFA re-prompt frequency for end users — one at the [[entities/microsoft-entra-id]] layer, one at the [[entities/cisco-duo]] layer.
+Two complementary controls that reduce MFA re-prompt frequency for end users — one at the [[recall/entities/microsoft-entra-id]] layer, one at the [[recall/entities/cisco-duo]] layer.
 
 ## Sign-In Frequency (Entra Conditional Access)
 
-A session control within a [[concepts/conditional-access-policy]] that forces re-authentication after a configurable period. At [[entities/unt-system]], set to **7 days** on `Logon-InternalUsers-CA`.
+A session control within a [[recall/concepts/conditional-access-policy]] that forces re-authentication after a configurable period. At [[recall/entities/unt-system]], set to **7 days** on `Logon-InternalUsers-CA`.
 
 - After the period expires, the user is prompted for MFA again regardless of active sessions.
 - Does not affect app-specific session timeouts (e.g., Infoblox's 2-hour timeout); those apps must be excluded from broader session controls.
@@ -28,11 +28,11 @@ A session control within a [[concepts/conditional-access-policy]] that forces re
 
 ## Remembered Devices (Duo)
 
-A feature in the [[entities/cisco-duo]] Admin Panel that stores a browser cookie after a successful Duo authentication, suppressing the Duo prompt for subsequent sign-ins within the configured window.
+A feature in the [[recall/entities/cisco-duo]] Admin Panel that stores a browser cookie after a successful Duo authentication, suppressing the Duo prompt for subsequent sign-ins within the configured window.
 
 - Configured per application in Duo Admin Panel → Applications → Azure/Entra ID app.
 - Set to **7 days** for browser-based apps at UNT System.
-- Applies regardless of which [[concepts/conditional-access-policy]] triggered the MFA requirement.
+- Applies regardless of which [[recall/concepts/conditional-access-policy]] triggered the MFA requirement.
 - May not work consistently across all platforms — mobile apps using broker authentication may still prompt.
 
 ## Interaction Between the Two
@@ -47,10 +47,10 @@ If only one is set, users may still be prompted: Entra could request MFA again (
 
 ## Related Concepts
 
-- [[concepts/conditional-access-policy]]
-- [[concepts/external-authentication-method]]
-- [[concepts/system-preferred-mfa]]
+- [[recall/concepts/conditional-access-policy]]
+- [[recall/concepts/external-authentication-method]]
+- [[recall/concepts/system-preferred-mfa]]
 
 ## Sources
 
-- [[sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
+- [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]

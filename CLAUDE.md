@@ -6,15 +6,18 @@ conventions, and workflows you follow. Read it at the start of every session.
 ## Directory structure
 
 ```
-content/          # The wiki — you own this layer entirely
-  index.md        # Master catalog of all pages (you maintain this)
-  log.md          # Chronological record of operations
-  sources/        # One summary page per ingested source
-  entities/       # People, organizations, tools, systems
-  concepts/       # Ideas, theories, frameworks, principles
-  synthesis/      # Cross-cutting analysis, comparisons, theses
-raw/              # Immutable source documents — never modify these
-SCHEMA.md         # This file — read-only during operations
+content/                # The wiki — you own this layer entirely
+  index.md              # Master catalog of all pages (you maintain this)
+  learn/
+    knowledge.md        # Upload / ingest page
+    memory.md           # Chronological record of operations
+  recall/
+    sources/            # One summary page per ingested source
+    entities/           # People, organizations, tools, systems
+    concepts/           # Ideas, theories, frameworks, principles
+    synthesis/          # Cross-cutting analysis, comparisons, theses
+static/originals/       # Immutable source documents — never modify these
+CLAUDE.md               # This file — read-only during operations
 ```
 
 Quartz serves everything in `content/` as the browsable wiki. Files in `raw/`
@@ -33,7 +36,7 @@ updated: YYYY-MM-DD
 tags:
   - relevant-tag
 sources:
-  - "[[sources/source-filename]]"
+  - "[[recall/sources/source-filename]]"
 confidence: high | medium | low | speculative
 ---
 
@@ -46,15 +49,15 @@ Content here. Use [[wikilinks]] to link to other pages.
 
 - Filenames: lowercase, hyphens for spaces. `quantum-entanglement.md`, not
   `Quantum Entanglement.md`.
-- Source pages: `sources/YYYY-MM-DD-short-descriptor.md`
-- Entity pages: `entities/entity-name.md`
-- Concept pages: `concepts/concept-name.md`
-- Synthesis pages: `synthesis/descriptive-title.md`
+- Source pages: `recall/sources/YYYY-MM-DD-short-descriptor.md`
+- Entity pages: `recall/entities/entity-name.md`
+- Concept pages: `recall/concepts/concept-name.md`
+- Synthesis pages: `recall/synthesis/descriptive-title.md`
 
 ### Wikilinks
 
-Use `[[relative-path]]` format: `[[concepts/gradient-descent]]`,
-`[[entities/claude-shannon]]`. Quartz resolves these automatically.
+Use `[[relative-path]]` format: `[[recall/concepts/gradient-descent]]`,
+`[[recall/entities/claude-shannon]]`. Quartz resolves these automatically.
 
 When referencing a page, always use a wikilink. Cross-reference generously —
 links are what make the wiki valuable. Every new page should link to at least
@@ -64,15 +67,15 @@ two existing pages, and you should update existing pages to link back.
 
 ### Ingest
 
-Trigger: user says "ingest [source]" or drops a file in `raw/`.
+Trigger: user says "ingest [source]" or drops a file.
 
-1. Read the source document in `raw/`.
+1. Read the source document in `static/originals/`.
 2. Discuss key takeaways with the user. Ask what to emphasize.
-3. Create a source summary page in `content/sources/`.
+3. Create a source summary page in `content/recall/sources/`.
 4. For each significant entity mentioned: create or update its page in
-   `content/entities/`.
+   `content/recall/entities/`.
 5. For each significant concept: create or update its page in
-   `content/concepts/`.
+   `content/recall/concepts/`.
 6. Update `content/index.md` with new pages.
 7. Append an entry to `content/log.md`.
 8. Report what you created and updated.
@@ -120,22 +123,22 @@ title: "Wiki Index"
 ## Sources
 | Page | Summary | Date |
 |------|---------|------|
-| [[sources/2026-04-14-example]] | Brief description | 2026-04-14 |
+| [[recall/sources/2026-04-14-example]] | Brief description | 2026-04-14 |
 
 ## Entities
 | Page | Summary |
 |------|---------|
-| [[entities/example-entity]] | One-line description |
+| [[recall/entities/example-entity]] | One-line description |
 
 ## Concepts
 | Page | Summary |
 |------|---------|
-| [[concepts/example-concept]] | One-line description |
+| [[recall/concepts/example-concept]] | One-line description |
 
 ## Synthesis
 | Page | Summary | Date |
 |------|---------|------|
-| [[synthesis/example-analysis]] | One-line description | 2026-04-14 |
+| [[recall/synthesis/example-analysis]] | One-line description | 2026-04-14 |
 ```
 
 ## Log format
@@ -144,13 +147,13 @@ title: "Wiki Index"
 
 ```markdown
 ## [2026-04-14] ingest | Source Title
-- Created: sources/2026-04-14-source-title.md
-- Created: entities/new-entity.md
-- Updated: concepts/existing-concept.md (added section on X)
+- Created: recall/sources/2026-04-14-source-title.md
+- Created: recall/entities/new-entity.md
+- Updated: recall/concepts/existing-concept.md (added section on X)
 - Updated: index.md
 
 ## [2026-04-14] query | What is the relationship between X and Y?
-- Filed as: synthesis/x-and-y-relationship.md
+- Filed as: recall/synthesis/x-and-y-relationship.md
 
 ## [2026-04-14] lint
 - Found 2 orphan pages

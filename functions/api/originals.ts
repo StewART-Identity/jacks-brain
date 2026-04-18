@@ -1,7 +1,7 @@
 /**
  * GET /api/originals
  *
- * Lists files in static/originals/ and cross-references with content/sources/
+ * Lists files in static/originals/ and cross-references with content/recall/sources/
  * to determine ingestion status.
  */
 
@@ -44,7 +44,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           "User-Agent": "jacks-brain",
         },
       }),
-      fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/content/sources`, {
+      fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/content/recall/sources`, {
         headers: {
           Authorization: `Bearer ${GITHUB_TOKEN}`,
           Accept: "application/vnd.github.v3+json",

@@ -9,13 +9,13 @@ tags:
   - entra-id
   - security
 sources:
-  - "[[sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
 confidence: high
 ---
 
 # Conditional Access Policy
 
-A [[entities/microsoft-entra-id]] policy construct that evaluates signals (user identity, device state, application, location, risk level) and enforces access controls (grant, block, require MFA, require compliant device, etc.) at authentication time.
+A [[recall/entities/microsoft-entra-id]] policy construct that evaluates signals (user identity, device state, application, location, risk level) and enforces access controls (grant, block, require MFA, require compliant device, etc.) at authentication time.
 
 ## How It Works
 
@@ -31,23 +31,23 @@ Policies can be set to **Report-only** mode to log what would happen without enf
 
 | Policy | Scope | Purpose |
 |--------|-------|---------|
-| `Logon-InternalUsers-CA` | DuoUsers (internal) | Sign-in frequency (7 days), MFA via [[entities/cisco-duo]] |
+| `Logon-InternalUsers-CA` | DuoUsers (internal) | Sign-in frequency (7 days), MFA via [[recall/entities/cisco-duo]] |
 | `Logon-InternalUsers-HighRisk-CA` | DuoUsers | Risk-based MFA challenge (formerly `RequireDuoMfa`, now built-in Require MFA) |
 | `Logon-EntraAdminRoles-CA` | Admin role holders | Stronger MFA (Authenticator Push, no SMS/Voice) |
-| `Logon-CitrixHorizon-CA` | DuoUsers | Require MFA for [[entities/citrix-horizon]] access |
+| `Logon-CitrixHorizon-CA` | DuoUsers | Require MFA for [[recall/entities/citrix-horizon]] access |
 
 ## Session Controls
 
-- **[[concepts/mfa-sign-in-frequency|Sign-in Frequency]]** — Forces re-authentication after a configurable period (e.g., 7 days).
+- **[[recall/concepts/mfa-sign-in-frequency|Sign-in Frequency]]** — Forces re-authentication after a configurable period (e.g., 7 days).
 - **Persistent Browser Session** — Controls whether browser sessions persist across restarts.
 - **App-specific sessions** (e.g., Infoblox 2-hr timeout) must be excluded from broader session controls to avoid conflicts.
 
 ## Related Concepts
 
-- [[concepts/external-authentication-method]]
-- [[concepts/system-preferred-mfa]]
-- [[concepts/mfa-sign-in-frequency]]
+- [[recall/concepts/external-authentication-method]]
+- [[recall/concepts/system-preferred-mfa]]
+- [[recall/concepts/mfa-sign-in-frequency]]
 
 ## Sources
 
-- [[sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
+- [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]

@@ -39,7 +39,7 @@ function findUningestedFiles() {
   )
 
   const existingSources = new Set()
-  const sourcesDir = join(CONTENT_DIR, "sources")
+  const sourcesDir = join(CONTENT_DIR, "recall", "sources")
   if (existsSync(sourcesDir)) {
     for (const f of readdirSync(sourcesDir)) {
       if (f.endsWith(".md")) existingSources.add(f.replace(/\.md$/, ""))
@@ -143,9 +143,9 @@ Read the following files to understand the wiki structure and current state:
 ${sourceInstruction}
 
 Follow the "Ingest" workflow from CLAUDE.md:
-1. Create a source summary page in content/sources/ named ${today}-${originalName.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md
-2. Create or update entity pages in content/entities/ for significant entities mentioned
-3. Create or update concept pages in content/concepts/ for significant concepts
+1. Create a source summary page in content/recall/sources/ named ${today}-${originalName.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md
+2. Create or update entity pages in content/recall/entities/ for significant entities mentioned
+3. Create or update concept pages in content/recall/concepts/ for significant concepts
 4. Update content/index.md with the new pages added to the appropriate tables
 5. Update content/learn/memory.md — add an "**Ingested:**" entry under today's date heading (## ${today}). If today's date heading already exists, add the entry under it. If not, create a new date heading at the top (below the frontmatter and description). Format: \`- **Ingested:** document-name.ext\`. Do NOT include timestamps, only dates.
 

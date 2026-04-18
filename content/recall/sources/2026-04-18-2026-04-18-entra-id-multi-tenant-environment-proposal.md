@@ -18,20 +18,20 @@ confidence: high
 
 [Download original](/originals/2026-04-18-Entra_ID_Multi-Tenant_Environment_Proposal.docx)
 
-**Prepared by:** [[entities/jack-stewart]] | IAM Engineer, [[entities/unt-system]] Identity and Access Management
+**Prepared by:** [[recall/entities/jack-stewart]] | IAM Engineer, [[recall/entities/unt-system]] Identity and Access Management
 **Date:** February 2026 (v1.0 drafted 2026-02-13)
 **Classification:** Internal
 
 ## Overview
 
-A formal proposal requesting two persistent, licensed [[entities/microsoft-entra-id]] tenants to complement the existing production tenant. Together, the three tenants provide testing, staging, and baseline comparison environments for [[entities/unt-system]] IAM infrastructure projects.
+A formal proposal requesting two persistent, licensed [[recall/entities/microsoft-entra-id]] tenants to complement the existing production tenant. Together, the three tenants provide testing, staging, and baseline comparison environments for [[recall/entities/unt-system]] IAM infrastructure projects.
 
 ## Background: The January 2026 Migration
 
 The January 28, 2026 ADFS → Entra ID migration (affecting 72,000+ users) exposed several undocumented behaviors that had to be troubleshot in production:
 
-- Deleting an [[concepts/external-authentication-method]] configuration does **not** remove EAM registrations from individual user objects — leaving orphaned entries on all 72,274 accounts, requiring custom PowerShell cleanup.
-- Neither Microsoft nor [[entities/cisco-duo]] documentation addressed auditing user-level authentication method registrations before migration.
+- Deleting an [[recall/concepts/external-authentication-method]] configuration does **not** remove EAM registrations from individual user objects — leaving orphaned entries on all 72,274 accounts, requiring custom PowerShell cleanup.
+- Neither Microsoft nor [[recall/entities/cisco-duo]] documentation addressed auditing user-level authentication method registrations before migration.
 - The migration status setting operates at the **tenant policy level**, but actual user authentication state exists at the **individual object level** — a disconnect that produced unexpected behavior.
 - Administrators experienced unexpected MFA prompts from authentication strength configurations that required unpredictable propagation time.
 
@@ -43,7 +43,7 @@ The production tenant contains security configurations set by previous administr
 
 ## Proposed Three-Tenant Model
 
-See [[concepts/entra-id-three-tenant-model]] for the full architectural concept.
+See [[recall/concepts/entra-id-three-tenant-model]] for the full architectural concept.
 
 | Tenant | Domain | Purpose | Licensed Users |
 |--------|--------|---------|----------------|
@@ -51,7 +51,7 @@ See [[concepts/entra-id-three-tenant-model]] for the full architectural concept.
 | Staging (myunttest) | myunttest.onmicrosoft.com | Pre-production testing | 1,000 |
 | Greenfield (myuntsrc) | myuntsrc.onmicrosoft.com | Microsoft default baseline (read-only) | 100 |
 
-All three tenants require Entra ID P2 licensing to test P2-dependent features: [[concepts/conditional-access-policy|Conditional Access]], [[concepts/privileged-identity-management]], Identity Protection, and access reviews.
+All three tenants require Entra ID P2 licensing to test P2-dependent features: [[recall/concepts/conditional-access-policy|Conditional Access]], [[recall/concepts/privileged-identity-management]], Identity Protection, and access reviews.
 
 ### Why P2 for Staging
 
@@ -72,7 +72,7 @@ Microsoft 30-day P2 trials are inadequate for ongoing infrastructure testing bec
 
 ## Integration with IAM Testing Methodology
 
-The proposal explicitly provides the infrastructure required to execute the [[concepts/iam-testing-methodology]]:
+The proposal explicitly provides the infrastructure required to execute the [[recall/concepts/iam-testing-methodology]]:
 
 - **Greenfield (myuntsrc):** Planning phase — compare proposed changes against known defaults.
 - **Staging (myunttest):** Smoke, functional, and regression testing before production deployment.
@@ -90,8 +90,8 @@ Based on Microsoft Entra ID P2 pricing of $9.00/user/month (may be reduced via U
 
 ## Projected Four-Year Use Cases
 
-- [[concepts/conditional-access-policy|Conditional Access]] policy redesign across all three institutions
-- [[concepts/privileged-identity-management|Privileged Identity Management (PIM)]] rollout for administrative roles
+- [[recall/concepts/conditional-access-policy|Conditional Access]] policy redesign across all three institutions
+- [[recall/concepts/privileged-identity-management|Privileged Identity Management (PIM)]] rollout for administrative roles
 - Enterprise application migration from on-premises auth to Entra ID SSO
 - Identity Protection policy tuning and risk-based CA implementation
 - Potential migration from Entra Connect Sync to Entra Cloud Sync
@@ -106,12 +106,12 @@ Based on Microsoft Entra ID P2 pricing of $9.00/user/month (may be reduced via U
 
 ## Related Pages
 
-- [[entities/microsoft-entra-id]]
-- [[entities/unt-system]]
-- [[entities/jack-stewart]]
-- [[entities/cisco-duo]]
-- [[concepts/entra-id-three-tenant-model]]
-- [[concepts/iam-testing-methodology]]
-- [[concepts/privileged-identity-management]]
-- [[concepts/external-authentication-method]]
-- [[concepts/conditional-access-policy]]
+- [[recall/entities/microsoft-entra-id]]
+- [[recall/entities/unt-system]]
+- [[recall/entities/jack-stewart]]
+- [[recall/entities/cisco-duo]]
+- [[recall/concepts/entra-id-three-tenant-model]]
+- [[recall/concepts/iam-testing-methodology]]
+- [[recall/concepts/privileged-identity-management]]
+- [[recall/concepts/external-authentication-method]]
+- [[recall/concepts/conditional-access-policy]]
