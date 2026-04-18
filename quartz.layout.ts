@@ -40,7 +40,6 @@ const sidebarLeft = [
     links: [
       { title: "Knowledge", slug: "learn/knowledge" },
       { title: "Memory", slug: "learn/memory" },
-      { title: "Search", slug: "learn/search" },
     ],
   }),
   Component.SidebarLink({
@@ -52,6 +51,7 @@ const sidebarLeft = [
       { title: "Entities", slug: "recall/entities" },
       { title: "Concepts", slug: "recall/concepts" },
       { title: "Synthesis", slug: "recall/synthesis" },
+      { title: "Search", slug: "learn/search" },
     ],
   }),
   Component.SidebarLink({
@@ -62,7 +62,6 @@ const sidebarLeft = [
       { title: "Graph View", slug: "visualize/graph-view" },
     ],
   }),
-  Component.Search(),
   Component.ApplicationMenu(),
 ]
 
