@@ -16,7 +16,7 @@ Manager, Identity and Access Management at [[recall/entities/unt-system]].
 
 ## Role
 
-Parker Bush manages the IAM team at UNT System. He is a co-signer of the MFA Reauthentication Frequency & System-Preferred MFA rollout plan (March 2026), alongside [[recall/entities/jack-stewart]] and Ryan Kane.
+Parker Bush manages the IAM team at UNT System. He is a co-signer of the MFA Reauthentication Frequency & System-Preferred MFA rollout plan (March 2026), alongside [[recall/entities/jack-stewart]] and [[recall/entities/ryan-kane|Ryan Kane]].
 
 ## Sources
 

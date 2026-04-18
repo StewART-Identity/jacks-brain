@@ -30,15 +30,21 @@ When a [[recall/concepts/conditional-access-policy]] requires MFA, Entra ID dele
 ## Known Limitations
 
 - **Incompatible with custom authentication strengths** — A Microsoft platform limitation. Policies using custom auth strength definitions cannot route through an EAM. Cloud-native admin accounts are the recommended workaround for admin roles that need both.
-- **Mobile broker bypass** — On mobile platforms, authentication may go through the Microsoft Authenticator broker app instead of Duo, bypassing the EAM. No config-level fix is available.
+- **Mobile broker bypass** — On mobile platforms, authentication may go through the Microsoft Authenticator broker app instead of Duo, bypassing the EAM. No config-level fix is available. This behavior is widely reported across the industry (Cisco Community forums, Microsoft Q&A, January 2026), not unique to UNT.
 - **Federated admin accounts** — May conflict with EAM routing.
+- **Orphaned user registrations on deletion** — Deleting an EAM configuration does not remove the corresponding registrations from individual user objects. Discovered in the January 2026 migration; requires custom PowerShell remediation. See [[recall/concepts/orphaned-authentication-registrations]].
+- **No fail-mode control** — Unlike ADFS-based MFA adapters that expose an explicit fail-open/fail-closed setting, EAM provides no fallback behavior when the EAM provider is unreachable. If the provider's cloud service is unavailable, [[recall/entities/microsoft-entra-id]]'s Conditional Access engine denies access. See [[recall/concepts/mfa-fail-open-fail-closed]].
 
 ## Related Concepts
 
 - [[recall/concepts/system-preferred-mfa]]
 - [[recall/concepts/conditional-access-policy]]
 - [[recall/concepts/mfa-sign-in-frequency]]
+- [[recall/concepts/mfa-fail-open-fail-closed]]
+- [[recall/concepts/microsoft-managed-defaults]]
 
 ## Sources
 
 - [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
+- [[recall/sources/2026-04-18-2026-04-18-auth-methods-migration-case-study-1-]]
+- [[recall/sources/2026-04-18-2026-04-18-authentication-methods-migration-executive-brief-2-]]

@@ -14,6 +14,8 @@ sources:
   - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-auth-methods-migration-case-study-1-]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-authentication-methods-migration-executive-brief-2-]]"
 confidence: high
 ---
 
@@ -92,6 +94,64 @@ The brief explicitly names a four-year horizon and frames cost as potentially re
 
 The Rollout Plan operationalizes the principles the Multi-Tenant Proposal argues for. The Multi-Tenant Proposal provides the infrastructure the Rollout Plan depends on. Neither document is fully self-contained without the other. Together they represent a coherent, incident-driven push to bring identity infrastructure change management up to the rigor level of other enterprise systems — with the same pattern (persistent test environments, formal testing phases, documented sign-offs) that ERP platforms like PeopleSoft have established as standard practice.
 
+## The Case Study: Closing the Evidence Loop
+
+The [[recall/sources/2026-04-18-2026-04-18-auth-methods-migration-case-study-1-|Authentication Methods Migration Case Study]] is the fourth source in this cluster and the one that most directly quantifies the incident's cost. Where the Multi-Tenant Proposal and Executive Brief argue prospectively ("here is what test environments would prevent"), the case study argues retrospectively ("here is exactly what happened, and here is how each testing phase would have caught each issue").
+
+It maps the incident's four failure modes to specific methodology phases with concrete outcomes:
+
+| Issue | Testing Phase That Would Have Caught It | Outcome With Testing |
+|---|---|---|
+| Orphaned registrations (72,274 accounts) | Full lifecycle functional testing (create + modify + delete EAM) | Cleanup procedure documented before go-live |
+| Authentication strength propagation delays | Regression testing across admin MFA flows | Propagation timing documented in rollout plan |
+| No pre-migration user audit guidance | Pre-migration scan in staging tenant | User-object vs. policy-level gap revealed before production |
+| User disruption during remediation | Production pilot (500–1,000 users) | No production impact; issues resolved before deployment |
+
+This structured mapping is the case study's primary contribution: it transforms the incident from a general argument for "better testing" into a specific, traceable case where each gap has a named testing control that would have prevented it. The [[recall/concepts/orphaned-authentication-registrations]] concept — the most technically significant discovery — gets its own dedicated analysis.
+
+Taken together, the four sources now form a complete arc: **incident → infrastructure proposal → process plan → retrospective case study**. Each document addresses the same underlying gap from a different vantage point and for a different audience.
+
+The [[recall/sources/2026-04-18-2026-04-18-authentication-methods-migration-executive-brief-2-|Authentication Methods Migration Executive Brief]] (February 14, 2026) extends the arc with a fifth perspective: **industry validation**. Where the case study argues "here is what happened and what testing would have prevented," the executive brief argues "here is evidence that every challenge UNT encountered is consistent with industry-wide experience — and here is where UNT exceeded what any other organization has done."
+
+## Industry Validation: The Fifth Source
+
+The [[recall/sources/2026-04-18-2026-04-18-authentication-methods-migration-executive-brief-2-|Authentication Methods Migration Executive Brief]] adds an external validation dimension that transforms the arc from an internal organizational story into a documented instance of industry-wide patterns.
+
+### What the Industry Brief Confirms
+
+The brief systematically validates each of the four main issues UNT encountered against published external evidence:
+
+| Issue | UNT Experience | Industry Evidence |
+|-------|---------------|-------------------|
+| Authenticator fallback on mobile despite EAM | Reported by users post-migration | Multiple orgs report identical behavior (Cisco Community, Jan 2026; Microsoft Q&A) |
+| Admin lockouts after migration | Potential risk; avoided through careful execution | Multiple documented cases requiring Microsoft support intervention |
+| "Microsoft managed" defaults enabling Authenticator | System-Preferred MFA confusion | One admin spent 7 hours troubleshooting; hundreds of forum responses; no published list of affected controls |
+| Orphaned registrations undocumented | 72,274 accounts required custom remediation | **No guidance exists anywhere in the industry** — confirmed after comprehensive research |
+
+The orphaned registration finding is the starkest: UNT's discovery is genuinely novel. Every other challenge has at least some external documentation; the cleanup requirement for orphaned EAM registrations has none.
+
+### New Issue Surfaced: Fail-Open/Fail-Closed Removal
+
+The brief introduces a business continuity risk not addressed by any of the four earlier sources: the loss of fail-mode control when migrating from ADFS+Duo to EAM. Under ADFS, administrators could configure Duo to fail-open (allow access without MFA if Duo is unreachable) or fail-closed. Under EAM, this control is gone — Conditional Access always denies if the MFA claim is not satisfied, and there is no administrative lever to change this behavior. See [[recall/concepts/mfa-fail-open-fail-closed]].
+
+This is a consequential architectural change with university-scale impact: a Duo service outage could lock out the entire ~72,000-user population from Microsoft 365. The recommended mitigation (enabling SMS/Voice as supplemental methods for `ECS-DUO-Users`) introduces its own tradeoff — Entra ID's lack of MFA method prioritization means users see all three options equally.
+
+### The Early Warning Context
+
+The brief also documents a concrete example of institutional risk that pre-dated the January 2026 migration: [[recall/entities/jack-stewart]] flagged the need to begin migration in August 2025, more than a month before Microsoft's September 30 deadline. The warning was dismissed because colleagues confused two distinct Microsoft mandates — the all-user *Authentication Methods policy migration* and the admin-only *mandatory MFA for admin portals*. This confusion is documented as an industry-wide pattern, not a UNT-specific failure of awareness.
+
+The fact that UNT completed the migration in January 2026 without incident despite missing the September deadline was, as the brief notes, "a fortunate outcome of Microsoft's gradual enforcement, not a guarantee." This retrospective honesty about timing is notable in an executive communication context.
+
+### The Complete Five-Source Arc
+
+| Source | Vantage Point | Audience | Primary Contribution |
+|--------|--------------|----------|---------------------|
+| Multi-Tenant Environment Proposal | Infrastructure gap | Technical/Executive | Argues for persistent test tenants; names incident as primary motivation |
+| Executive Brief (Test Environment) | Cost/risk framing | Executive | Translates the proposal for non-technical leadership; 4-year horizon |
+| Rollout Plan | Operational process | Technical | First execution of the IAM Testing Methodology in Part 0 |
+| Case Study | Retrospective evidence | Technical/Executive | Maps each incident failure mode to a specific testing control |
+| **Executive Brief (Industry Validation)** | **External context** | **Executive** | **Validates UNT's experience against industry; identifies new business continuity risk** |
+
 ## Related Pages
 
 - [[recall/entities/unt-system]]
@@ -104,3 +164,6 @@ The Rollout Plan operationalizes the principles the Multi-Tenant Proposal argues
 - [[recall/concepts/conditional-access-policy]]
 - [[recall/concepts/system-preferred-mfa]]
 - [[recall/concepts/mfa-sign-in-frequency]]
+- [[recall/concepts/orphaned-authentication-registrations]]
+- [[recall/concepts/mfa-fail-open-fail-closed]]
+- [[recall/concepts/microsoft-managed-defaults]]

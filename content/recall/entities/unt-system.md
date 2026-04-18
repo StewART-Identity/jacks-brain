@@ -10,6 +10,7 @@ tags:
 sources:
   - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]]"
 confidence: high
 ---
 
@@ -51,3 +52,4 @@ Estimated new cost: $9,900/month ($118,800/year) before enterprise/educational p
 
 - [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
 - [[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]
+- [[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]]

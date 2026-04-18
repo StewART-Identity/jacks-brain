@@ -13,6 +13,7 @@ sources:
   - "[[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]]"
+  - "[[recall/sources/2026-04-18-2026-04-18-auth-methods-migration-case-study-1-]]"
 confidence: medium
 ---
 
@@ -46,6 +47,8 @@ The methodology was developed in response to that incident. Without the supporti
 As of February 2026, the methodology document exists but its supporting infrastructure (persistent staging and greenfield tenants) was pending approval per [[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]].
 
 The [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final|Entra Authentication Methods Rollout Plan]] (March 2026) is the first concrete execution of this methodology: its Part 0 defines scope classifications, test personas, test cases, a Go/No-Go gate, and required sign-offs — all in `myunttest.onmicrosoft.com`. See [[recall/synthesis/adfs-migration-incident-driven-iam-maturation]] for the cross-cutting analysis.
+
+The [[recall/sources/2026-04-18-2026-04-18-auth-methods-migration-case-study-1-|Authentication Methods Migration Case Study]] provides the definitive structured argument for the methodology: a point-by-point before/after analysis showing how each testing phase would have caught a specific production issue — orphaned registrations (functional lifecycle testing), authentication strength propagation delays (regression testing), and user disruption (production pilot). It operationalizes the methodology's value claim in concrete, traceable terms.
 
 ## Related Pages
 

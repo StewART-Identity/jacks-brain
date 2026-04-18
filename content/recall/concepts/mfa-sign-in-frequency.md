@@ -49,6 +49,13 @@ If only one is set, users may still be prompted: Entra could request MFA again (
 - [[recall/concepts/external-authentication-method]]
 - [[recall/concepts/system-preferred-mfa]]
 
+## ADFS vs. EAM: Session Behavior Shift
+
+Under [[recall/entities/unt-system]]'s previous ADFS-federated configuration, Duo's remembered device cookie provided users with extended sessions (typically 30 days). After migrating to [[recall/entities/microsoft-entra-id]] managed authentication via [[recall/concepts/external-authentication-method]], session lifetime is governed by the intersection of Entra's token policies, Conditional Access session controls, and Duo's remembered device duration.
+
+Without explicit configuration of persistent browser sessions or Duo remembered device policies, users experience significantly more frequent MFA prompts than before — a known, expected, and configurable side effect of the architectural change. This is consistent with industry-wide post-migration experience documented across multiple organizations.
+
 ## Sources
 
 - [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
+- [[recall/sources/2026-04-18-2026-04-18-authentication-methods-migration-executive-brief-2-]]

@@ -34,6 +34,11 @@ When System-Preferred MFA was set to "Microsoft managed," [[recall/entities/micr
 - Must be disabled before [[recall/concepts/mfa-sign-in-frequency|sign-in frequency]] and [[recall/concepts/conditional-access-policy|Conditional Access policy]] changes take effect as intended — otherwise Entra may swap the MFA method and invalidate the session controls.
 - Disabling this setting is Step 1 (first in sequence) in the UNT rollout plan, as it has no direct user-facing impact and unblocks all subsequent steps.
 
+## Industry Context
+
+System-Preferred MFA set to "Microsoft managed" is one of several [[recall/concepts/microsoft-managed-defaults]] that have caused widespread industry confusion for organizations using third-party MFA providers. The broader issue: Microsoft does not publish a comprehensive list of which "Microsoft managed" settings affect Authenticator enrollment, making troubleshooting difficult when users are unexpectedly prompted to register Authenticator.
+
 ## Sources
 
 - [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
+- [[recall/sources/2026-04-18-2026-04-18-authentication-methods-migration-executive-brief-2-]]
