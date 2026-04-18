@@ -54,7 +54,6 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
           <h3>Document Processing</h3>
           <div class="recent-runs-actions">
             <button id="refresh-runs-btn" class="runs-action-btn" title="Refresh">&#8635;</button>
-            <button id="clear-runs-btn" class="runs-action-btn" title="Clear">&times;</button>
           </div>
         </div>
         <div id="runs-list">

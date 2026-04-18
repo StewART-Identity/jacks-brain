@@ -227,44 +227,33 @@ document.addEventListener("nav", () => {
 
   const recentRunsSection = document.getElementById("recent-runs") as HTMLElement | null
 
-  // Refresh runs button — shows the section and reloads
+  // Refresh runs button
   const refreshRunsBtn = document.getElementById("refresh-runs-btn") as HTMLButtonElement | null
   if (refreshRunsBtn) {
     refreshRunsBtn.addEventListener("click", () => {
-      localStorage.removeItem("docProcessingCleared")
-      if (recentRunsSection) recentRunsSection.style.display = ""
       if (runsList) runsList.innerHTML = '<p class="muted">Loading...</p>'
       loadRuns()
     })
   }
 
-  // Clear runs button — hides the entire section
-  const clearRunsBtn = document.getElementById("clear-runs-btn") as HTMLButtonElement | null
-  if (clearRunsBtn) {
-    clearRunsBtn.addEventListener("click", () => {
-      localStorage.setItem("docProcessingCleared", "true")
-      if (recentRunsSection) recentRunsSection.style.display = "none"
-    })
-  }
+  let pollTimer: ReturnType<typeof setInterval> | null = null
 
-  // Load runs — skip if cleared
   async function loadRuns() {
     if (!runsList) return
-    if (localStorage.getItem("docProcessingCleared") === "true") {
-      if (recentRunsSection) recentRunsSection.style.display = "none"
-      return
-    }
     try {
       const response = await fetch("/api/status")
       const data = await response.json()
 
+      let hasActive = false
+
       if (data.runs && data.runs.length > 0) {
-        // Only show in-progress/queued, or runs from the last 24 hours
         const cutoff = Date.now() - 24 * 60 * 60 * 1000
         const filtered = data.runs.filter((run: any) => {
           if (run.status === "in_progress" || run.status === "queued") return true
           return new Date(run.created).getTime() > cutoff
         })
+
+        hasActive = filtered.some((r: any) => r.status === "in_progress" || r.status === "queued")
 
         if (filtered.length > 0) {
           runsList.innerHTML =
@@ -287,6 +276,14 @@ document.addEventListener("nav", () => {
         }
       } else {
         runsList.innerHTML = '<p class="muted">No active processing.</p>'
+      }
+
+      // Auto-refresh every 10s while runs are active, stop when done
+      if (hasActive && !pollTimer) {
+        pollTimer = setInterval(loadRuns, 10000)
+      } else if (!hasActive && pollTimer) {
+        clearInterval(pollTimer)
+        pollTimer = null
       }
     } catch {
       runsList.innerHTML = '<p class="muted">Could not load status.</p>'
