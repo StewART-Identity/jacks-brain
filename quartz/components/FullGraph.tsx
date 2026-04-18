@@ -22,9 +22,11 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
 
   return (
     <div class={displayClass} id="full-graph">
-      <button type="button" id="graph-fullscreen-btn" class="graph-fullscreen-btn" title="Full screen">
-        &#x26F6;
-      </button>
+      <div class="graph-controls">
+        <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
+        <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
+        <button type="button" id="graph-fullscreen-btn" class="graph-ctrl-btn" title="Full screen">&#x26F6;</button>
+      </div>
       <div class="graph-container" data-cfg={JSON.stringify(graphConfig)}></div>
     </div>
   )
@@ -71,18 +73,23 @@ FullGraph.css =
   border: none;
   border-radius: 0;
 }
-#full-graph:fullscreen > .graph-fullscreen-btn,
-#full-graph:-webkit-full-screen > .graph-fullscreen-btn {
+#full-graph:fullscreen > .graph-controls,
+#full-graph:-webkit-full-screen > .graph-controls {
   position: fixed;
   top: 1rem;
   right: 1rem;
   z-index: 100;
 }
-.graph-fullscreen-btn {
+.graph-controls {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
   z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.graph-ctrl-btn {
   background: var(--light);
   border: 1px solid var(--lightgray);
   border-radius: 6px;
@@ -93,8 +100,10 @@ FullGraph.css =
   opacity: 0.7;
   transition: opacity 0.15s ease;
   line-height: 1;
+  width: 2rem;
+  text-align: center;
 }
-.graph-fullscreen-btn:hover {
+.graph-ctrl-btn:hover {
   opacity: 1;
 }
 `

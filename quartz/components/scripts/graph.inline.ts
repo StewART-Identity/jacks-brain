@@ -209,7 +209,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     const numLinks = graphData.links.filter(
       (l) => l.source.id === d.id || l.target.id === d.id,
     ).length
-    return 2 + Math.sqrt(numLinks)
+    return 1 + Math.sqrt(numLinks) * 0.5
   }
 
   let hoveredNodeId: string | null = null
@@ -503,7 +503,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           [0, 0],
           [width, height],
         ])
-        .scaleExtent([0.25, 4])
+        .scaleExtent([0.25, 10])
         .on("zoom", ({ transform }) => {
           currentTransform = transform
           stage.scale.set(transform.k, transform.k)

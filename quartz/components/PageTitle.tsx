@@ -32,8 +32,10 @@ document.addEventListener("nav", function() {
   });
 
   var fsBtn = document.getElementById("graph-fullscreen-btn");
+  var zoomInBtn = document.getElementById("graph-zoom-in");
+  var zoomOutBtn = document.getElementById("graph-zoom-out");
   var graphEl = document.getElementById("full-graph");
-  if (fsBtn && graphEl) {
+  if (graphEl && fsBtn) {
     fsBtn.addEventListener("click", function() {
       if (document.fullscreenElement) {
         document.exitFullscreen();
@@ -43,6 +45,22 @@ document.addEventListener("nav", function() {
         graphEl.webkitRequestFullscreen();
       }
     });
+
+    // Zoom buttons simulate wheel events on the canvas
+    function simulateZoom(direction) {
+      var canvas = graphEl.querySelector("canvas");
+      if (!canvas) return;
+      var rect = canvas.getBoundingClientRect();
+      var cx = rect.left + rect.width / 2;
+      var cy = rect.top + rect.height / 2;
+      canvas.dispatchEvent(new WheelEvent("wheel", {
+        clientX: cx, clientY: cy,
+        deltaY: direction * 150,
+        bubbles: true, cancelable: true
+      }));
+    }
+    if (zoomInBtn) zoomInBtn.addEventListener("click", function() { simulateZoom(-1); });
+    if (zoomOutBtn) zoomOutBtn.addEventListener("click", function() { simulateZoom(1); });
   }
 });
 `
