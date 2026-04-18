@@ -3,7 +3,7 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
 const NukeButton: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="nuke-app">
-      <button id="nuke-btn" class="nuke-btn">Nuke It from Orbit</button>
+      <button id="nuke-btn" class="nuke-btn">Nuke It From Orbit</button>
       <p class="nuke-sub">It's the only way to be sure.</p>
       <div id="nuke-status" class="nuke-status" style="display:none"></div>
     </div>
@@ -44,13 +44,13 @@ document.addEventListener("nav", () => {
         status.className = "nuke-status error"
         status.textContent = "Error: " + (data.error || "Unknown error")
         btn.disabled = false
-        btn.textContent = "Nuke It from Orbit"
+        btn.textContent = "Nuke It From Orbit"
       }
     } catch (err) {
       status.className = "nuke-status error"
       status.textContent = "Error: " + err.message
       btn.disabled = false
-      btn.textContent = "Nuke It from Orbit"
+      btn.textContent = "Nuke It From Orbit"
     }
   })
 })

@@ -20,7 +20,7 @@ export const sharedPageComponents: SharedLayout = {
     }),
     Component.ConditionalRender({
       component: Component.NukeButton(),
-      condition: (page) => page.fileData.slug === "learn/nuke",
+      condition: (page) => page.fileData.slug === "application/nuke",
     }),
     Component.ConditionalRender({
       component: Component.SearchPage(),

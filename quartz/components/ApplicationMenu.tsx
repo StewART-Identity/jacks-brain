@@ -12,13 +12,16 @@ const ApplicationMenu: QuartzComponent = ({ fileData, displayClass }: QuartzComp
       <h2 class="sidebar-nav-heading">Application</h2>
       <ul class="sidebar-nav-list">
         <li>
+          <a href={resolveRelative(fileData.slug!, "application/help" as any)}>Help</a>
+        </li>
+        <li>
           <a href="#" class="readermode app-toggle">Reading Mode</a>
         </li>
         <li>
           <a href="#" class="darkmode app-toggle">Light/Dark Mode</a>
         </li>
         <li>
-          <a href={resolveRelative(fileData.slug!, "learn/nuke" as any)}>Nuke It from Orbit</a>
+          <a href={resolveRelative(fileData.slug!, "application/nuke" as any)}>Nuke It From Orbit</a>
         </li>
       </ul>
     </div>

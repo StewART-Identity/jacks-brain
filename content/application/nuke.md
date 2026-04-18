@@ -1,5 +1,5 @@
 ---
-title: "Nuke It from Orbit"
+title: "Nuke It From Orbit"
 ---
 
 Erase all ingested content from the wiki. This permanently deletes:
