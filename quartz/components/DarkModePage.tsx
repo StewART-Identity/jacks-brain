@@ -17,8 +17,8 @@ DarkModePage.css = `
 }
 .toggle-page-btn {
   padding: 0.8rem 2rem;
-  background: var(--secondary);
-  color: var(--light);
+  background: #D4AD5A;
+  color: #1A3A2A;
   border: none;
   border-radius: 8px;
   font-weight: 600;
