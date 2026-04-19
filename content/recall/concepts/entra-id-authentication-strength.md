@@ -48,6 +48,10 @@ The recommended fix is to provision [[recall/concepts/cloud-native-admin-account
 
 See [[recall/concepts/cloud-native-admin-accounts]] for the full architectural pattern.
 
+## Propagation Delays
+
+Changes to authentication strength requirements do not take effect immediately. During the propagation window, the system may enforce stale policy — producing unexpected MFA prompts for affected users. This was observed during the January 28, 2026 ADFS migration at [[recall/entities/unt-system]], where administrators received Authenticator prompts despite policy specifying Duo. See [[recall/concepts/authentication-strength-propagation-delays]].
+
 ## Related Concepts
 
 - [[recall/concepts/conditional-access-policy]]
@@ -55,7 +59,9 @@ See [[recall/concepts/cloud-native-admin-accounts]] for the full architectural p
 - [[recall/concepts/system-preferred-mfa]]
 - [[recall/concepts/cloud-native-admin-accounts]]
 - [[recall/concepts/privileged-identity-management]]
+- [[recall/concepts/authentication-strength-propagation-delays]]
 
 ## Sources
 
 - [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
+- [[recall/sources/2026-04-18-2026-04-18-auth-methods-migration-case-study-1-]]

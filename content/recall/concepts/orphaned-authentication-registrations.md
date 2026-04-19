@@ -11,6 +11,8 @@ tags:
   - incident
 sources:
   - "[[recall/sources/2026-04-18-2026-04-18-auth-methods-migration-case-study-1-]]"
+  - "[[recall/sources/2026-04-19-2026-04-18-auth-methods-migration-case-study-1-]]"
+  - "[[recall/sources/2026-04-19-2026-04-18-authentication-methods-migration-executive-brief-2-]]"
 confidence: high
 ---
 

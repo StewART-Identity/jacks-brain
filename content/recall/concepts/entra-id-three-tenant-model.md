@@ -11,8 +11,10 @@ tags:
   - iam
 sources:
   - "[[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
+  - "[[recall/sources/2026-04-19-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]]"
+  - "[[recall/sources/2026-04-19-2026-04-18-entra-test-environment-executive-brief-1-]]"
 confidence: high
 ---
 
@@ -32,18 +34,23 @@ All three tenants require P2 licensing to enable the full feature surface:
 - **Staging** needs P2 to test P2-dependent production features: risk-based [[recall/concepts/conditional-access-policy|Conditional Access]], [[recall/concepts/privileged-identity-management]], Identity Protection, access reviews. Testing against a P1 tenant produces a false sense of readiness.
 - **Greenfield** needs P2 to ensure all P2 feature defaults are visible for comparison.
 
-## Greenfield Integrity
+## Inherited Configuration Risk and Greenfield Integrity
 
-The greenfield tenant answers a critical auditing question: "Is this a setting we configured, or is it what Microsoft delivers by default?" This eliminates guesswork when reviewing inherited configurations.
+The greenfield tenant solves two related problems:
 
-The greenfield must be **persistent** (not recreated from a trial) because Microsoft regularly updates default tenant settings. A greenfield created at a known point in time provides a stable, documentable reference. If the tenant is deleted and recreated, there is no guarantee of identical defaults.
+**Configuration provenance:** The current production tenant contains security configurations set by previous administrators whose decisions are undocumented. Without a known baseline, the IAM team cannot determine whether an existing setting is a deliberate security decision, a Microsoft default, or configuration drift. The greenfield answers: "Is this a setting we configured, or is it what Microsoft delivers by default?"
+
+**Documentation unreliability:** The January 2026 migration demonstrated that Microsoft's documentation does not always accurately reflect actual tenant behavior — particularly around user-object-level configurations vs. tenant-policy-level settings. The [[recall/concepts/orphaned-authentication-registrations|EAM deletion behavior]] and the tenant/user-object disconnect appeared in no official documentation. The greenfield provides empirical ground truth when documentation fails.
+
+The greenfield must be **persistent** (not recreated from a trial) because Microsoft regularly updates default tenant settings. A persistent greenfield created at a known point in time provides a stable, **versioned** reference — comparable across time for long-running projects. If the tenant is deleted and recreated, there is no guarantee of identical defaults.
 
 ## Why Persistent Environments (vs. 30-Day Trials)
 
 Microsoft 30-day P2 trials are inadequate for ongoing infrastructure work:
 - IAM projects span months (the January 2026 migration ran September 2025 through February 2026)
 - Destroying/recreating staging state between projects wastes engineering time and risks reconstruction errors
-- Under a production incident, provisioning a trial tenant is not viable — persistent environments allow immediate access
+- Greenfield integrity cannot be preserved across recreation — Microsoft regularly updates defaults
+- Under a production incident, provisioning a trial tenant is not viable — **persistent environments are incident response infrastructure**, enabling troubleshooting within minutes rather than hours
 
 ## Integration with IAM Testing Methodology
 

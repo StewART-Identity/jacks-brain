@@ -12,6 +12,7 @@ tags:
   - separation-of-concerns
 sources:
   - "[[recall/sources/2026-04-18-2026-04-18-contract]]"
+  - "[[recall/sources/2026-04-19-2026-04-18-contract]]"
 confidence: high
 ---
 
@@ -96,6 +97,32 @@ The SIGINT protection has two layers, both provided by `iam_modules`:
 
 Both layers read the same `_current_operation` state set via `set_operation()`, so the interrupt message always reflects the actual phase in progress.
 
+## Migration Checklist (Legacy Script Conversion)
+
+The CONTRACT defines a 17-step procedure for converting inline legacy scripts to the `iam_modules` architecture. Key steps in order:
+
+1. Add sys.path preamble (copy exactly — do not vary it)
+2. Replace `.env` loading with `load_config(__file__)`
+3. Replace logging setup with `setup_logging('script_name')`
+4. Replace LDAP connection code with `connect_to_edir()`, `connect_to_ad()`, etc.
+5. Replace Oracle connection code with `connect_to_hrdb()` / `connect_to_lsdb()`
+6. Replace `--dry-run` flag with `--commit`; default must be dry-run
+7. Remove `import ssl`, direct `Tls()` construction, and all `load_dotenv()` calls
+8. Remove `import cx_Oracle`; replace with `from iam_modules.connections import ...`
+9. Remove any in-script connection function or `LDAPConnectionManager` class definitions
+10. Add `set_operation()` calls at each processing phase
+11. Replace `conn.result['result']` checks with `try/except LDAPException`
+12. Use `run(main)` as entry point (not `sys.exit(main())`)
+13. Test with `python script_name.py --verbose` (dry-run) before committing
+
+## Service Account Delegation Matrix
+
+The CONTRACT requires maintaining a living attribution table: every LDAP attribute written, the object type, the operation, and the specific script responsible. This is embedded in the architecture document itself — a permission audit trail that must be updated whenever a script writes to a new attribute.
+
+The IAMDrip account (`cn=IAMDrip`) is the sole exception to attribute-specific delegation — it requires write access to arbitrary attributes on `ou=people,o=unt` because it replays LDIF records that may touch any attribute.
+
+The `deactivate_terminateduser` and `reactivate_terminateduser` scripts skip the STUDENTS domain by default; the `--students` flag must be passed explicitly to include it.
+
 ## What This Architecture Prevents
 
 Without this architecture, the 21+ scripts that once defined inline eDirectory connections each had their own TLS configuration, their own `load_dotenv()` calls, and their own credential variable names. Changes to server hostnames, cipher suites, or TLS versions required hunting across all scripts. The module layer centralizes that surface to a single file (`connections.py`), making fleet-wide infrastructure changes a single-file update.
@@ -109,4 +136,5 @@ Without this architecture, the 21+ scripts that once defined inline eDirectory c
 - [[recall/concepts/dry-run-by-default]]
 - [[recall/concepts/graceful-interrupt-handling]]
 - [[recall/sources/2026-04-18-2026-04-18-contract]]
+- [[recall/sources/2026-04-19-2026-04-18-contract]]
 - [[recall/synthesis/unt-iam-provisioning-layer]]

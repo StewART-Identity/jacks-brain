@@ -6,6 +6,15 @@ Permanent record of knowledge added to the wiki, organized by date.
 
 | Date | Action | Details |
 |------|--------|---------|
+| 2026-04-19 | Ingested | neuron_transparent.png |
+| 2026-04-19 | Ingested | neuron_icon_1024.png |
+| 2026-04-19 | Ingested | neuron_background.png |
+| 2026-04-19 | Ingested | 2026-04-18-Entra_Test_Environment-Executive_Brief--1-.docx |
+| 2026-04-19 | Ingested | 2026-04-18-Entra_ID_Multi-Tenant_Environment_Proposal.docx |
+| 2026-04-19 | Ingested | 2026-04-18-Entra_Authentication_Methods-Rollout-Plan-FINAL.docx |
+| 2026-04-19 | Ingested | 2026-04-18-CONTRACT.md |
+| 2026-04-19 | Ingested | 2026-04-18-Authentication-Methods-Migration-Executive-Brief--2-.docx |
+| 2026-04-19 | Ingested | 2026-04-18-Auth_Methods_Migration-Case_Study--1-.docx |
 | 2026-04-18 | Ingested | neuron_transparent.png |
 | 2026-04-18 | Ingested | neuron_icon_1024.png |
 | 2026-04-18 | Ingested | 2026-04-18-CONTRACT.md |

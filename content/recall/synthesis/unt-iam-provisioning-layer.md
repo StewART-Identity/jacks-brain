@@ -12,10 +12,12 @@ tags:
   - identity
 sources:
   - "[[recall/sources/2026-04-18-2026-04-18-contract]]"
+  - "[[recall/sources/2026-04-19-2026-04-18-contract]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
   - "[[recall/sources/2026-04-18-2026-04-18-auth-methods-migration-case-study-1-]]"
   - "[[recall/sources/2026-04-18-2026-04-18-authentication-methods-migration-executive-brief-2-]]"
+  - "[[recall/sources/2026-04-19-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
 confidence: high
 ---
 

@@ -2,7 +2,7 @@
 title: "January 2026 ADFS Migration: Incident-Driven IAM Infrastructure Maturation"
 type: synthesis
 created: 2026-04-18
-updated: 2026-04-18
+updated: 2026-04-19
 tags:
   - identity
   - iam
@@ -13,9 +13,12 @@ tags:
 sources:
   - "[[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
+  - "[[recall/sources/2026-04-19-2026-04-18-entra-id-multi-tenant-environment-proposal]]"
   - "[[recall/sources/2026-04-18-2026-04-18-entra-test-environment-executive-brief-1-]]"
+  - "[[recall/sources/2026-04-19-2026-04-18-entra-test-environment-executive-brief-1-]]"
   - "[[recall/sources/2026-04-18-2026-04-18-auth-methods-migration-case-study-1-]]"
   - "[[recall/sources/2026-04-18-2026-04-18-authentication-methods-migration-executive-brief-2-]]"
+  - "[[recall/sources/2026-04-19-2026-04-18-entra-authentication-methods-rollout-plan-final]]"
 confidence: high
 ---
 
@@ -151,6 +154,29 @@ The fact that UNT completed the migration in January 2026 without incident despi
 | Rollout Plan | Operational process | Technical | First execution of the IAM Testing Methodology in Part 0 |
 | Case Study | Retrospective evidence | Technical/Executive | Maps each incident failure mode to a specific testing control |
 | **Executive Brief (Industry Validation)** | **External context** | **Executive** | **Validates UNT's experience against industry; identifies new business continuity risk** |
+
+## Greenfield as Documentation Insurance
+
+The [[recall/sources/2026-04-19-2026-04-18-entra-id-multi-tenant-environment-proposal|second reading of the Multi-Tenant Proposal]] surfaces a sharper justification for the greenfield tenant than "compare against defaults." The proposal makes an explicit claim: Microsoft's documentation cannot be trusted to accurately describe actual tenant behavior. This is not a general caution — it is a specific finding from the January 2026 migration, where the [[recall/concepts/orphaned-authentication-registrations|EAM deletion behavior]] and the tenant-policy vs. user-object disconnect appeared in no official documentation.
+
+This repositions the greenfield from *convenience* to *epistemological necessity*: when documentation is known to be unreliable, an empirical reference is the only way to know what the platform actually does by default.
+
+A second distinct problem surfaces in this reading: **inherited configuration risk**. The production tenant contains settings from previous administrators. Without a greenfield baseline, the IAM team cannot determine whether any given setting is a deliberate security decision, a Microsoft default, or configuration drift. The greenfield resolves this by providing a known starting state — one that is persistent, documented, and versionable across time.
+
+The second reading also clarifies that persistent environments serve **two** functions: pre-production testing (the framing from the first read) and **incident response infrastructure**. Under the January 2026 migration, the absence of a persistent staging tenant meant all troubleshooting occurred against production. Under the proposed model, the next incident would have an immediately available staging environment. Persistent environments are not just planning assets — they are operational readiness infrastructure.
+
+## The Full Six-Source Arc
+
+The [[recall/sources/2026-04-19-2026-04-18-entra-id-multi-tenant-environment-proposal|second reading of the Multi-Tenant Proposal]] completes the source cluster with a new dimension:
+
+| Source | Vantage Point | Audience | Primary Contribution |
+|--------|--------------|----------|---------------------|
+| Multi-Tenant Environment Proposal (first read) | Infrastructure gap | Technical/Executive | Argues for persistent test tenants; names incident as primary motivation |
+| **Multi-Tenant Environment Proposal (second read)** | **Documentation reliability + incident response** | **Technical** | **Surfaces greenfield as documentation insurance; inherited config risk; operational readiness framing** |
+| Executive Brief (Test Environment) | Cost/risk framing | Executive | Translates the proposal for non-technical leadership; 4-year horizon |
+| Rollout Plan | Operational process | Technical | First execution of the IAM Testing Methodology in Part 0 |
+| Case Study | Retrospective evidence | Technical/Executive | Maps each incident failure mode to a specific testing control |
+| Executive Brief (Industry Validation) | External context | Executive | Validates UNT's experience against industry; identifies new business continuity risk |
 
 ## Related Pages
 

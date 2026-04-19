@@ -2,7 +2,7 @@
 title: "Go/No-Go Gate"
 type: concept
 created: 2026-04-18
-updated: 2026-04-18
+updated: 2026-04-19
 tags:
   - change-management
   - identity
@@ -57,6 +57,22 @@ The go/no-go decision at [[recall/entities/unt-system]] requires joint approval 
 - [[recall/entities/parker-bush]] — Manager, Identity and Access Management
 - [[recall/entities/ryan-kane]] — Director, Enterprise Collaboration Services
 
+## Mid-Deployment Phase Checkpoints
+
+The Part 0 Go/No-Go gate is not the only gate in the Rollout Plan. The plan also defines a **Part 1 → Part 2 Checkpoint** between the Enterprise and Departmental deployment phases. This is a mid-deployment validation step, distinct from the pre-production gate:
+
+| Gate Type | When | What It Validates |
+|-----------|------|-------------------|
+| Pre-production Go/No-Go | Before any production change | All test cases pass in staging tenant |
+| Part 1 → Part 2 Checkpoint | After Part 1, before Part 2 | Active settings confirmed; no conflicts between phases |
+| CA Enforcement Ramp | Within Part 2 | `Logon-CitrixHorizon-CA` in Report-only before enforcement |
+
+The Part 1 → Part 2 Checkpoint requires confirming both that Part 1 settings are active (System-preferred MFA disabled, sign-in frequency 7 days, Duo Remembered Devices 7 days, test sign-in confirmed) and that no conflicts exist across the now-active policies. Only then does Part 2 proceed.
+
+This nested gating reflects the team's commitment to sequencing-as-safety: enforcement always follows validation, at every level of the rollout.
+
+See [[recall/sources/2026-04-19-2026-04-18-entra-authentication-methods-rollout-plan-final]] for detailed analysis of all three gates.
+
 ## Related Concepts
 
 - [[recall/concepts/iam-testing-methodology]]
@@ -68,3 +84,4 @@ The go/no-go decision at [[recall/entities/unt-system]] requires joint approval 
 ## Sources
 
 - [[recall/sources/2026-04-18-2026-04-18-entra-authentication-methods-rollout-plan-final]]
+- [[recall/sources/2026-04-19-2026-04-18-entra-authentication-methods-rollout-plan-final]]
