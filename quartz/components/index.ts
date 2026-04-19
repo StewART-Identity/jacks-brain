@@ -30,6 +30,8 @@ import SourcesList from "./SourcesList"
 import NukeButton from "./NukeButton"
 import ApplicationMenu from "./ApplicationMenu"
 import SearchPage from "./SearchPage"
+import DarkModePage from "./DarkModePage"
+import ReadingModePage from "./ReadingModePage"
 
 export {
   ArticleTitle,
@@ -64,4 +66,6 @@ export {
   NukeButton,
   ApplicationMenu,
   SearchPage,
+  DarkModePage,
+  ReadingModePage,
 }

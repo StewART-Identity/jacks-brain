@@ -15,10 +15,10 @@ const ApplicationMenu: QuartzComponent = ({ fileData, displayClass }: QuartzComp
           <a href={resolveRelative(fileData.slug!, "application/help" as any)}>Help</a>
         </li>
         <li>
-          <a href="#" class="readermode app-toggle">Reading Mode</a>
+          <a href={resolveRelative(fileData.slug!, "application/readingmode" as any)}>Reading Mode</a>
         </li>
         <li>
-          <a href="#" class="darkmode app-toggle">Light/Dark Mode</a>
+          <a href={resolveRelative(fileData.slug!, "application/darkmode" as any)}>Light/Dark Mode</a>
         </li>
         <li>
           <a href={resolveRelative(fileData.slug!, "application/nuke" as any)}>Nuke It From Orbit</a>
@@ -30,14 +30,5 @@ const ApplicationMenu: QuartzComponent = ({ fileData, displayClass }: QuartzComp
 
 ApplicationMenu.beforeDOMLoaded = darkmodeScript + "\n" + readermodeScript
 
-ApplicationMenu.afterDOMLoaded = `
-document.addEventListener("nav", () => {
-  for (const link of document.querySelectorAll(".app-toggle")) {
-    link.addEventListener("click", (e) => {
-      e.preventDefault()
-    })
-  }
-})
-`
 
 export default (() => ApplicationMenu) satisfies QuartzComponentConstructor
