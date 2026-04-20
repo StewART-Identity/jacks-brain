@@ -25,6 +25,10 @@ const ResearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) =
             value="10"
             class="research-count-input"
           />
+          <label class="research-rank-toggle">
+            <input type="checkbox" id="research-rank" checked />
+            Rank with Claude
+          </label>
           <button id="research-btn" class="research-btn">
             Search
           </button>
@@ -34,7 +38,9 @@ const ResearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) =
 
       <div id="research-results" class="research-results" style="display:none">
         <div class="research-results-header">
-          <h3>Results</h3>
+          <h3>
+            Results <span id="research-provider" class="research-provider"></span>
+          </h3>
           <button id="ingest-selected-btn" class="ingest-selected-btn" disabled>
             Ingest selected
           </button>

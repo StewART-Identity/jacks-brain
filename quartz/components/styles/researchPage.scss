@@ -60,6 +60,20 @@
   outline: none;
   border-color: var(--secondary);
 }
+.research-rank-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--darkgray);
+  cursor: pointer;
+  user-select: none;
+}
+.research-rank-toggle input {
+  width: 0.95rem;
+  height: 0.95rem;
+  cursor: pointer;
+}
 .research-btn {
   margin-left: auto;
   padding: 0.6rem 1.2rem;
@@ -94,6 +108,12 @@
 .research-results-header h3 {
   margin: 0;
   font-size: 1.1rem;
+}
+.research-provider {
+  margin-left: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--gray);
 }
 .ingest-selected-btn {
   padding: 0.5rem 1rem;

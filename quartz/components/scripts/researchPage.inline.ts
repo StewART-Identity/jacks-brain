@@ -1,14 +1,22 @@
 document.addEventListener("nav", () => {
   const queryInput = document.getElementById("research-query") as HTMLTextAreaElement | null
   const countInput = document.getElementById("research-count") as HTMLInputElement | null
+  const rankInput = document.getElementById("research-rank") as HTMLInputElement | null
   const searchBtn = document.getElementById("research-btn") as HTMLButtonElement | null
   const statusEl = document.getElementById("research-status") as HTMLElement | null
   const resultsSection = document.getElementById("research-results") as HTMLElement | null
   const resultsList = document.getElementById("research-results-list") as HTMLElement | null
+  const providerEl = document.getElementById("research-provider") as HTMLElement | null
   const ingestBtn = document.getElementById("ingest-selected-btn") as HTMLButtonElement | null
   const ingestStatus = document.getElementById("research-ingest-status") as HTMLElement | null
 
   if (!queryInput || !countInput || !searchBtn || !resultsList || !ingestBtn) return
+
+  const PROVIDER_LABELS: Record<string, string> = {
+    brave: "via Brave Search",
+    "brave+claude": "via Brave, ranked by Claude",
+    "claude-web-search": "via Claude web search",
+  }
 
   function showStatus(target: HTMLElement | null, msg: string, type: string) {
     if (!target) return
@@ -86,25 +94,30 @@ document.addEventListener("nav", () => {
     if (!query) return
 
     const count = Math.max(1, Math.min(25, parseInt(countInput.value, 10) || 10))
+    const rank = rankInput ? rankInput.checked : true
 
     clearStatus(statusEl)
     clearStatus(ingestStatus)
     if (resultsSection) resultsSection.style.display = "none"
+    if (providerEl) providerEl.textContent = ""
     resultsList.innerHTML = ""
 
     searchBtn.disabled = true
     searchBtn.textContent = "Searching..."
-    showStatus(statusEl, "Asking Claude to find the best " + count + " sources...", "pending")
+    showStatus(statusEl, "Searching for the best " + count + " sources...", "pending")
 
     try {
       const response = await fetch("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, count }),
+        body: JSON.stringify({ query, count, rank }),
       })
       const data = await response.json()
       if (data.success) {
         clearStatus(statusEl)
+        if (providerEl && data.provider) {
+          providerEl.textContent = PROVIDER_LABELS[data.provider] || ""
+        }
         renderResults(data.results || [])
       } else {
         showStatus(statusEl, "Search failed: " + (data.error || "Unknown error"), "error")
