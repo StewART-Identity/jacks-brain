@@ -118,6 +118,9 @@ document.addEventListener("nav", () => {
         if (providerEl && data.provider) {
           providerEl.textContent = PROVIDER_LABELS[data.provider] || ""
         }
+        if (data.rankingError) {
+          showStatus(statusEl, data.rankingError + " — showing Brave results.", "pending")
+        }
         renderResults(data.results || [])
       } else {
         showStatus(statusEl, "Search failed: " + (data.error || "Unknown error"), "error")

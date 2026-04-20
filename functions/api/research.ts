@@ -274,14 +274,28 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
       if (rank && ANTHROPIC_API_KEY) {
         const model = ANTHROPIC_MODEL || DEFAULT_RANK_MODEL
-        const ranked = await rerankWithClaude(ANTHROPIC_API_KEY, model, query, candidates, count)
-        return Response.json({
-          success: true,
-          query,
-          count,
-          provider: "brave+claude",
-          results: ranked,
-        })
+        try {
+          const ranked = await rerankWithClaude(ANTHROPIC_API_KEY, model, query, candidates, count)
+          return Response.json({
+            success: true,
+            query,
+            count,
+            provider: "brave+claude",
+            results: ranked,
+          })
+        } catch (err) {
+          // Claude ranking failed (e.g. no credits). Fall back to raw Brave
+          // results so the feature still works.
+          const message = err instanceof Error ? err.message : "Unknown error"
+          return Response.json({
+            success: true,
+            query,
+            count,
+            provider: "brave",
+            results: candidates.slice(0, count),
+            rankingError: `Claude ranking unavailable: ${message}`,
+          })
+        }
       }
 
       return Response.json({
