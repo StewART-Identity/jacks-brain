@@ -175,9 +175,23 @@ title: "Wiki Index"
   contradicts existing wiki content, note the contradiction explicitly on both
   pages and let the user decide.
 - **Prefer updates over new pages.** If a concept page already exists, enrich
-  it rather than creating a near-duplicate.
+  it rather than creating a near-duplicate. If a source page already exists
+  (same underlying document being re-read), update it in place with an
+  "Updates from [date] re-read" section rather than creating a sibling page.
 - **Keep source summaries faithful.** Source pages summarize what the source
   says, not your interpretation. Interpretation belongs in concept and synthesis
   pages.
 - **Confidence tags matter.** Mark speculative connections as `confidence: speculative`.
   Mark well-sourced claims as `confidence: high`. This helps the user trust the wiki.
+
+## Normalization rules
+
+These rules take precedence over how the source documents style things.
+The wiki is the user's own knowledge layer; it is not bound to the
+conventions of the external documents it ingests.
+
+- **Jack Stewart's title** is **"IAM Engineer"** — never "Architect",
+  "Architect/Engineer", or any other variant. Source documents may use
+  other styling for external audiences; the wiki always uses "IAM Engineer".
+  This applies to entity pages, source summary byline attribution, and
+  any other place the title appears.
