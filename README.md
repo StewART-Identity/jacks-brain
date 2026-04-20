@@ -1,152 +1,62 @@
----
-title: "Getting Started"
----
+# Jack's Brain — Pre-Nuke Fixes
 
-# Getting started: GitHub LLM Wiki with Quartz
+Two files replacing their counterparts in `jacks-brain/`, to apply before
+you nuke and restart the wiki.
 
-A personal knowledge base using the Karpathy LLM Wiki pattern,
-GitHub as the backend, and Quartz as the browser frontend.
+## What's changed
 
-## Step 1: Create the repo from Quartz
+### `scripts/ingest.mjs`
 
-Quartz is the static site generator that gives you the graph view,
-search, backlinks, and wikilink navigation. You start by cloning it
-and making it your own.
+Three changes, all in service of fixing the duplicate-source-page bug:
 
-From any machine with Node.js 22+ and git:
+1. **Dedup now normalizes the date prefix.** The existing `findUningestedFiles`
+   checked `2026-04-18-CONTRACT.md` against `2026-04-18-2026-04-18-contract`
+   and concluded they didn't match. New behavior: strip any leading
+   `YYYY-MM-DD-` from both sides before comparing, and lowercase. Re-ingesting
+   the same source file on a different day now correctly identifies it as
+   an existing page.
 
-```bash
-git clone https://github.com/jackyzha0/quartz.git my-wiki
-cd my-wiki
-npm install
-```
+2. **Filename construction no longer double-prepends the date.** If the
+   original filename already starts with `YYYY-MM-DD-`, today's date is
+   not prepended again. `2026-04-18-CONTRACT.md` ingested today becomes
+   `2026-04-18-contract.md`, not `2026-04-20-2026-04-18-contract.md`.
 
-Then remove Quartz's upstream remote and add your own:
+3. **Re-reads update in place.** When the target source filename already
+   exists on disk, the ingest prompt switches to a "re-read" mode that
+   instructs Claude Code to update the existing page (adding an "Updates
+   from [date] re-read" section) rather than create a sibling page.
+   The memory log distinguishes these as "Re-read" vs "Ingested" rows.
 
-```bash
-git remote remove origin
-```
+### `CLAUDE.md`
 
-Go to GitHub and create a new **private** repo (e.g., `my-wiki`).
-Then:
+Two changes:
 
-```bash
-git remote add origin git@github.com:YOUR_USERNAME/my-wiki.git
-```
+1. **"Prefer updates over new pages" now covers source pages** too, not
+   just concept pages. Re-reading a source updates the existing page.
 
-## Step 2: Add the wiki structure
+2. **New "Normalization rules" section** with the Jack Stewart title
+   convention: the wiki always uses "IAM Engineer" regardless of how
+   source documents style the title. This prevents the source's
+   "Architect/Engineer" from propagating to entity pages.
 
-Copy the starter files from this package into your repo:
+## How to apply
 
-- `SCHEMA.md` → repo root (next to `quartz.config.ts`)
-- `content/index.md` → replaces the default content
-- `content/log.md` → new file
-- `content/sources/`, `content/entities/`, `content/concepts/`,
-  `content/synthesis/` → new directories (with `.gitkeep` files)
-- `raw/` → new directory at repo root (with `.gitkeep`)
-- `.github/workflows/deploy.yml` → new file
+Copy the two files over their counterparts in the `jacks-brain/` repo,
+commit, push. Using the GitHub Bridge at `idm-toolbox.pages.dev/bridge/`:
 
-Delete or replace Quartz's default sample content in `content/`
-(keep the directories you just created).
+1. Target repo: `jackstewart/jacks-brain` (or wherever it lives)
+2. Branch: `main`
+3. Drop both files preserving the directory structure (`CLAUDE.md` at
+   repo root, `scripts/ingest.mjs` in the scripts folder).
+4. Commit message: `Fix ingest dedup and add re-read workflow`
 
-## Step 3: Configure Quartz
+No code changes are needed in the wiki content itself — you're going to
+nuke that anyway.
 
-Edit `quartz.config.ts` to customize your wiki. The key settings:
+## What this does NOT fix
 
-```typescript
-const config: QuartzConfig = {
-  configuration: {
-    pageTitle: "My Wiki",           // Your wiki name
-    enableSPA: true,                // Smooth navigation
-    enablePopovers: true,           // Hover previews on links
-    locale: "en-US",
-    baseUrl: "YOUR_USERNAME.github.io/my-wiki",
-    // ...
-  },
-  // ...
-}
-```
-
-The defaults for graph view, search, wikilinks, and backlinks are
-already enabled. You shouldn't need to change `quartz.layout.ts`
-unless you want to rearrange the page layout.
-
-## Step 4: Enable GitHub Pages
-
-In your repo on github.com:
-
-1. Go to **Settings → Pages**
-2. Under **Source**, select **GitHub Actions**
-
-That's it. The workflow file you added will handle the rest.
-
-## Step 5: Push and verify
-
-```bash
-git add -A
-git commit -m "Initial wiki setup"
-git push -u origin main
-```
-
-Wait a couple of minutes for the Actions build to finish.
-Then visit `https://YOUR_USERNAME.github.io/my-wiki/`.
-
-You should see your empty wiki with the index page, the graph
-view (empty for now), and search.
-
-## Step 6: First ingest
-
-Now the fun part. Drop a document into `raw/` — an article saved
-as markdown, a PDF, a text file. Commit and push it.
-
-Then open Claude Code (on your laptop or in a Codespace) pointed
-at the repo:
-
-```
-claude-code --project /path/to/my-wiki
-```
-
-Tell Claude:
-
-> Read SCHEMA.md, then ingest the new source in raw/.
-
-Claude will read the source, discuss it with you, create wiki pages,
-update the index and log, and you'll review the changes together.
-When you're happy:
-
-```bash
-git add -A
-git commit -m "Ingest: [source title]"
-git push
-```
-
-The wiki rebuilds automatically. Open it on your iPad and browse
-the graph — your first nodes and links are live.
-
-## Ongoing workflow
-
-**From any device (iPad, laptop, phone):**
-- Browse the wiki at your GitHub Pages URL
-- Navigate via graph view, search, or wikilinks
-- Upload files to `raw/` via GitHub's web interface
-
-**From a laptop or Codespace:**
-- Run Claude Code for ingest, query, or lint operations
-- Review and commit changes
-- Push to trigger a rebuild
-
-**Periodically:**
-- Run a lint pass: tell Claude "lint the wiki"
-- Review contradictions and orphan pages
-- Ask questions that produce synthesis pages
-
-## Tips
-
-- **Obsidian Web Clipper** (browser extension) converts web articles
-  to clean markdown. Great for getting sources into `raw/`.
-- **Working Copy** (iOS) is a full git client for iPad if you want
-  to do more than just browse.
-- Start with one domain — don't try to build a wiki about everything
-  at once. Let it grow naturally.
-- The wiki gets more valuable with every source. The cross-references
-  compound. The 20th ingest is dramatically richer than the first.
+The `content/index.md` file being nearly empty (the CLAUDE.md describes
+it as a master catalog but the per-category index files are doing that
+job per-category). That discrepancy is still present. When you rebuild
+the wiki post-nuke, pick one model — master catalog or per-category
+indexes — and update CLAUDE.md to match.
