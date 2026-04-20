@@ -39,9 +39,14 @@
 .research-controls {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 1.5rem;
   margin-top: 0.75rem;
   flex-wrap: wrap;
+}
+.research-count-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 .research-count-label {
   color: var(--darkgray);

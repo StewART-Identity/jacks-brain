@@ -197,7 +197,7 @@ document.addEventListener("nav", () => {
       }
 
       pasteBtn.disabled = false
-      pasteBtn.textContent = "Upload"
+      pasteBtn.textContent = "Upload Content"
     })
   }
 
@@ -226,7 +226,7 @@ document.addEventListener("nav", () => {
         showCardStatus(urlStatus, "Failed: " + err.message, "error")
       }
       urlBtn.disabled = false
-      urlBtn.textContent = "Fetch"
+      urlBtn.textContent = "Upload Content"
     })
   }
 
@@ -255,7 +255,7 @@ document.addEventListener("nav", () => {
         showCardStatus(youtubeStatus, "Failed: " + err.message, "error")
       }
       youtubeBtn.disabled = false
-      youtubeBtn.textContent = "Upload"
+      youtubeBtn.textContent = "Upload Content"
     })
   }
 })

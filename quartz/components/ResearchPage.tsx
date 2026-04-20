@@ -14,17 +14,19 @@ const ResearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) =
           rows={4}
         ></textarea>
         <div class="research-controls">
-          <label class="research-count-label" for="research-count">
-            Number of results
-          </label>
-          <input
-            type="number"
-            id="research-count"
-            min="1"
-            max="25"
-            value="10"
-            class="research-count-input"
-          />
+          <div class="research-count-group">
+            <label class="research-count-label" for="research-count">
+              Number of results
+            </label>
+            <input
+              type="number"
+              id="research-count"
+              min="1"
+              max="25"
+              value="10"
+              class="research-count-input"
+            />
+          </div>
           <label class="research-rank-toggle">
             <input type="checkbox" id="research-rank" checked />
             Rank with Claude
