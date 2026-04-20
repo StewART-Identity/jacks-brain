@@ -44,7 +44,7 @@ const ResearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) =
             Results <span id="research-provider" class="research-provider"></span>
           </h3>
           <button id="ingest-selected-btn" class="ingest-selected-btn" disabled>
-            Ingest selected
+            Upload Content
           </button>
         </div>
         <div id="research-results-list"></div>

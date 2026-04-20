@@ -48,7 +48,7 @@ document.addEventListener("nav", () => {
       ".research-select:checked",
     ).length
     ingestBtn.disabled = checked === 0
-    ingestBtn.textContent = checked === 0 ? "Ingest selected" : `Ingest selected (${checked})`
+    ingestBtn.textContent = checked === 0 ? "Upload Content" : `Upload Content (${checked})`
   }
 
   function renderResults(results: Array<{ url: string; title: string; summary: string }>) {
@@ -141,7 +141,7 @@ document.addEventListener("nav", () => {
     if (selected.length === 0) return
 
     ingestBtn.disabled = true
-    ingestBtn.textContent = "Ingesting..."
+    ingestBtn.textContent = "Uploading..."
     clearStatus(ingestStatus)
     showStatus(
       ingestStatus,
