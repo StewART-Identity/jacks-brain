@@ -39,7 +39,7 @@
 .research-controls {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1rem;
   margin-top: 0.75rem;
   flex-wrap: wrap;
 }
@@ -69,7 +69,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  margin-top: 0.75rem;
+  padding-left: 1.5rem;
+  margin-left: 1rem;
+  border-left: 1px solid var(--lightgray);
   font-size: 0.9rem;
   color: var(--darkgray);
   cursor: pointer;

@@ -13,10 +13,6 @@ const ResearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) =
           placeholder="What do you want to learn? Ask a question or describe what you're looking for..."
           rows={4}
         ></textarea>
-        <label class="research-rank-toggle">
-          <input type="checkbox" id="research-rank" checked />
-          Rank with Claude
-        </label>
         <div class="research-controls">
           <div class="research-count-group">
             <label class="research-count-label" for="research-count">
@@ -31,6 +27,10 @@ const ResearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) =
               class="research-count-input"
             />
           </div>
+          <label class="research-rank-toggle">
+            <input type="checkbox" id="research-rank" checked />
+            Rank with Claude
+          </label>
           <button id="research-btn" class="research-btn">
             Search
           </button>
