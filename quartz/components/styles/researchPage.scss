@@ -1,0 +1,200 @@
+#research-app {
+  max-width: 800px;
+  padding-bottom: 2rem;
+}
+
+.research-card {
+  padding: 1.25rem 1.25rem 1.5rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 12px;
+  background: var(--light);
+}
+
+:root[saved-theme="dark"] .research-card {
+  background: color-mix(in srgb, var(--light) 92%, transparent);
+}
+
+.research-card .section-label {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+}
+
+.research-card textarea {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.research-card textarea:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+
+.research-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+.research-count-label {
+  color: var(--darkgray);
+  font-size: 0.9rem;
+}
+.research-count-input {
+  width: 5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-size: 0.95rem;
+}
+.research-count-input:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+.research-btn {
+  margin-left: auto;
+  padding: 0.6rem 1.2rem;
+  background: var(--secondary);
+  color: var(--light);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: opacity 0.15s ease;
+}
+.research-btn:hover {
+  opacity: 0.85;
+}
+.research-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.research-results {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--lightgray);
+}
+.research-results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.research-results-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.ingest-selected-btn {
+  padding: 0.5rem 1rem;
+  background: var(--secondary);
+  color: var(--light);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: opacity 0.15s ease;
+}
+.ingest-selected-btn:hover {
+  opacity: 0.85;
+}
+.ingest-selected-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.research-result {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 10px;
+  margin-bottom: 0.6rem;
+  background: var(--light);
+}
+:root[saved-theme="dark"] .research-result {
+  background: color-mix(in srgb, var(--light) 92%, transparent);
+}
+.research-result-check {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.2rem;
+}
+.research-result-check input {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+.research-result-body {
+  flex: 1;
+  min-width: 0;
+}
+.research-result-title {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.15rem;
+  overflow-wrap: anywhere;
+}
+.research-result-title a {
+  color: var(--secondary);
+  text-decoration: none;
+}
+.research-result-title a:hover {
+  text-decoration: underline;
+}
+.research-result-host {
+  font-size: 0.8rem;
+  color: var(--gray);
+  margin-bottom: 0.3rem;
+}
+.research-result-summary {
+  font-size: 0.9rem;
+  color: var(--darkgray);
+  line-height: 1.4;
+}
+.research-result-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+.research-result-view {
+  color: var(--secondary);
+  text-decoration: none;
+  font-weight: 500;
+}
+.research-result-view:hover {
+  text-decoration: underline;
+}
+.research-row-status {
+  color: var(--gray);
+}
+.research-row-status.ok {
+  color: #3a7d53;
+}
+.research-row-status.err {
+  color: #8b3232;
+}
+:root[saved-theme="dark"] .research-row-status.ok {
+  color: #7bbf95;
+}
+:root[saved-theme="dark"] .research-row-status.err {
+  color: #c46b6b;
+}
+
+#research-app .muted {
+  color: var(--gray);
+  font-style: italic;
+}

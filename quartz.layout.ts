@@ -34,6 +34,14 @@ export const sharedPageComponents: SharedLayout = {
       component: Component.ReadingModePage(),
       condition: (page) => page.fileData.slug === "application/readingmode",
     }),
+    Component.ConditionalRender({
+      component: Component.ResearchPage(),
+      condition: (page) => page.fileData.slug === "learn/research",
+    }),
+    Component.ConditionalRender({
+      component: Component.Retention(),
+      condition: (page) => page.fileData.slug === "learn/retention",
+    }),
   ],
   footer: Component.Footer(),
 }
@@ -46,8 +54,10 @@ const sidebarLeft = [
     slug: "learn",
     defaultState: "open",
     links: [
+      { title: "Research", slug: "learn/research" },
       { title: "Knowledge", slug: "learn/knowledge" },
       { title: "Memory", slug: "learn/memory" },
+      { title: "Retention", slug: "learn/retention" },
     ],
   }),
   Component.SidebarLink({
@@ -66,9 +76,7 @@ const sidebarLeft = [
     title: "Visualize",
     slug: "visualize",
     defaultState: "open",
-    links: [
-      { title: "Graph View", slug: "visualize/graph-view" },
-    ],
+    links: [{ title: "Graph View", slug: "visualize/graph-view" }],
   }),
   Component.ApplicationMenu(),
   Component.Search(),
@@ -88,7 +96,11 @@ export const defaultContentPageLayout: PageLayout = {
 
 // components for pages that display lists of pages  (e.g. tags or folders)
 export const defaultListPageLayout: PageLayout = {
-  beforeBody: [Component.Breadcrumbs(), Component.ArticleTitle(), Component.ContentMeta({ showReadingTime: false })],
+  beforeBody: [
+    Component.Breadcrumbs(),
+    Component.ArticleTitle(),
+    Component.ContentMeta({ showReadingTime: false }),
+  ],
   left: sidebarLeft,
   right: [],
 }

@@ -29,15 +29,20 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
           class="paste-title-input"
           placeholder="Title (optional — used for filename)"
         />
-        <textarea
-          id="paste-input"
-          placeholder="Paste or type text here..."
-          rows={6}
-        ></textarea>
+        <textarea id="paste-input" placeholder="Paste or type text here..." rows={6}></textarea>
         <div class="paste-row">
           <button id="paste-btn">Upload</button>
         </div>
         <div id="paste-status" class="card-status" style="display:none"></div>
+      </div>
+
+      <div class="ingest-card url-section">
+        <h3>Paste URL</h3>
+        <div class="url-row">
+          <input type="url" id="url-input" placeholder="https://example.com/article" />
+          <button id="url-btn">Fetch</button>
+        </div>
+        <div id="url-status" class="card-status" style="display:none"></div>
       </div>
 
       <div class="ingest-card youtube-section">
@@ -47,18 +52,6 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
           <button id="youtube-btn">Upload</button>
         </div>
         <div id="youtube-status" class="card-status" style="display:none"></div>
-      </div>
-
-      <div id="recent-runs" class="recent-runs">
-        <div class="recent-runs-header">
-          <h3>Document Processing</h3>
-          <div class="recent-runs-actions">
-            <button id="refresh-runs-btn" class="runs-action-btn" title="Refresh">&#8635;</button>
-          </div>
-        </div>
-        <div id="runs-list">
-          <p class="muted">Loading...</p>
-        </div>
       </div>
     </div>
   )

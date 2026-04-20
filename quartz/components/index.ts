@@ -32,6 +32,8 @@ import ApplicationMenu from "./ApplicationMenu"
 import SearchPage from "./SearchPage"
 import DarkModePage from "./DarkModePage"
 import ReadingModePage from "./ReadingModePage"
+import ResearchPage from "./ResearchPage"
+import Retention from "./Retention"
 
 export {
   ArticleTitle,
@@ -68,4 +70,6 @@ export {
   SearchPage,
   DarkModePage,
   ReadingModePage,
+  ResearchPage,
+  Retention,
 }

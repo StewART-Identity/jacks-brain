@@ -9,7 +9,9 @@ document.addEventListener("nav", () => {
   const pasteInput = document.getElementById("paste-input") as HTMLTextAreaElement | null
   const pasteTitle = document.getElementById("paste-title") as HTMLInputElement | null
   const pasteBtn = document.getElementById("paste-btn") as HTMLButtonElement | null
-  const runsList = document.getElementById("runs-list")
+  const urlInput = document.getElementById("url-input") as HTMLInputElement | null
+  const urlBtn = document.getElementById("url-btn") as HTMLButtonElement | null
+  const urlStatus = document.getElementById("url-status") as HTMLElement | null
 
   if (!dropZone || !fileInput) return
 
@@ -28,6 +30,8 @@ document.addEventListener("nav", () => {
     target.style.display = "none"
   }
 
+  const RETENTION_HINT = "Uploaded. Check Retention for current status."
+
   // Clear file status when user initiates a new upload
   dropZone.addEventListener("click", () => clearCardStatus(fileStatus))
   dropZone.addEventListener("dragover", () => clearCardStatus(fileStatus))
@@ -43,6 +47,14 @@ document.addEventListener("nav", () => {
     pasteTitle.addEventListener("focus", () => {
       clearCardStatus(pasteStatus)
       pasteTitle.value = ""
+    })
+  }
+
+  // Clear URL status and field when user clicks into it
+  if (urlInput) {
+    urlInput.addEventListener("focus", () => {
+      clearCardStatus(urlStatus)
+      urlInput.value = ""
     })
   }
 
@@ -120,15 +132,13 @@ document.addEventListener("nav", () => {
   }
 
   async function uploadFile(file: File) {
-    // Show Document Processing section on new upload
-    localStorage.removeItem("docProcessingCleared")
-    const recentSection = document.getElementById("recent-runs")
-    if (recentSection) recentSection.style.display = ""
-
-    // Warn if another ingest is running
     const busy = await checkActiveIngest()
     if (busy) {
-      showCardStatus(fileStatus, "Another document is currently being processed. Your upload will be queued.", "pending")
+      showCardStatus(
+        fileStatus,
+        "Another document is currently being processed. Your upload will be queued.",
+        "pending",
+      )
     }
 
     showCardStatus(fileStatus, "Uploading " + file.name + "...", "pending")
@@ -138,8 +148,7 @@ document.addEventListener("nav", () => {
       const response = await fetch("/api/upload", { method: "POST", body: formData })
       const data = await response.json()
       if (data.success) {
-        showCardStatus(fileStatus, "Uploaded. Check Document Processing for current status.", "success")
-        setTimeout(loadRuns, 3000)
+        showCardStatus(fileStatus, RETENTION_HINT, "success")
       } else {
         showCardStatus(fileStatus, "Upload failed: " + (data.error || "Unknown error"), "error")
       }
@@ -177,10 +186,9 @@ document.addEventListener("nav", () => {
         const response = await fetch("/api/upload", { method: "POST", body: formData })
         const data = await response.json()
         if (data.success) {
-          showCardStatus(pasteStatus, "Uploaded. Check Document Processing for current status.", "success")
+          showCardStatus(pasteStatus, RETENTION_HINT, "success")
           pasteInput.value = ""
           if (pasteTitle) pasteTitle.value = ""
-          setTimeout(loadRuns, 3000)
         } else {
           showCardStatus(pasteStatus, "Upload failed: " + (data.error || "Unknown error"), "error")
         }
@@ -190,6 +198,35 @@ document.addEventListener("nav", () => {
 
       pasteBtn.disabled = false
       pasteBtn.textContent = "Upload"
+    })
+  }
+
+  // URL ingest
+  if (urlBtn && urlInput) {
+    urlBtn.addEventListener("click", async () => {
+      const url = urlInput.value.trim()
+      if (!url) return
+      urlBtn.disabled = true
+      urlBtn.textContent = "Fetching..."
+      showCardStatus(urlStatus, "Fetching " + url + "...", "pending")
+      try {
+        const response = await fetch("/api/url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url }),
+        })
+        const data = await response.json()
+        if (data.success) {
+          showCardStatus(urlStatus, RETENTION_HINT, "success")
+          urlInput.value = ""
+        } else {
+          showCardStatus(urlStatus, "Failed: " + (data.error || "Unknown error"), "error")
+        }
+      } catch (err: any) {
+        showCardStatus(urlStatus, "Failed: " + err.message, "error")
+      }
+      urlBtn.disabled = false
+      urlBtn.textContent = "Fetch"
     })
   }
 
@@ -209,9 +246,8 @@ document.addEventListener("nav", () => {
         })
         const data = await response.json()
         if (data.success) {
-          showCardStatus(youtubeStatus, "Uploaded. Check Document Processing for current status.", "success")
+          showCardStatus(youtubeStatus, RETENTION_HINT, "success")
           youtubeInput.value = ""
-          setTimeout(loadRuns, 3000)
         } else {
           showCardStatus(youtubeStatus, "Failed: " + (data.error || "Unknown error"), "error")
         }
@@ -222,56 +258,4 @@ document.addEventListener("nav", () => {
       youtubeBtn.textContent = "Upload"
     })
   }
-
-  const recentRunsSection = document.getElementById("recent-runs") as HTMLElement | null
-
-  // Refresh runs button
-  const refreshRunsBtn = document.getElementById("refresh-runs-btn") as HTMLButtonElement | null
-  if (refreshRunsBtn) {
-    refreshRunsBtn.addEventListener("click", () => {
-      if (runsList) runsList.innerHTML = '<p class="muted">Loading...</p>'
-      loadRuns()
-    })
-  }
-
-  let pollTimer: ReturnType<typeof setInterval> | null = null
-
-  async function loadRuns() {
-    if (!runsList) return
-    try {
-      const response = await fetch("/api/status")
-      const data = await response.json()
-
-      if (data.documents && data.documents.length > 0) {
-        runsList.innerHTML =
-          `<div class="table-container"><table>
-            <thead><tr><th>Document</th><th>Uploaded</th><th>Status</th></tr></thead>
-            <tbody>` +
-          data.documents
-            .map(
-              (doc: any) =>
-                `<tr>
-                  <td>${doc.document}</td>
-                  <td>${doc.uploaded || "Unknown"}</td>
-                  <td><span class="run-badge ${doc.status}">${doc.status}</span></td>
-                </tr>`,
-            )
-            .join("") +
-          `</tbody></table></div>`
-      } else {
-        runsList.innerHTML = '<p class="muted">No documents uploaded.</p>'
-      }
-
-      if (data.hasActive && !pollTimer) {
-        pollTimer = setInterval(loadRuns, 10000)
-      } else if (!data.hasActive && pollTimer) {
-        clearInterval(pollTimer)
-        pollTimer = null
-      }
-    } catch {
-      runsList.innerHTML = '<p class="muted">Could not load status.</p>'
-    }
-  }
-
-  loadRuns()
 })
