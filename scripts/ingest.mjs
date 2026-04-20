@@ -38,16 +38,23 @@ function findUningestedFiles() {
     (f) => f !== ".gitkeep" && ALL_EXTENSIONS.has(extname(f).toLowerCase()),
   )
 
+  // Normalize a filename stem for dedup by stripping any leading YYYY-MM-DD-
+  // date prefix (which ingest adds) and lowercasing. This ensures a source
+  // filename like "2026-04-18-CONTRACT.md" matches an existing wiki page
+  // like "2026-04-18-2026-04-18-contract.md" — same underlying source.
+  const normalize = (stem) =>
+    stem.replace(/^(\d{4}-\d{2}-\d{2}-)+/, "").toLowerCase()
+
   const existingSources = new Set()
   const sourcesDir = join(CONTENT_DIR, "recall", "sources")
   if (existsSync(sourcesDir)) {
     for (const f of readdirSync(sourcesDir)) {
-      if (f.endsWith(".md")) existingSources.add(f.replace(/\.md$/, ""))
+      if (f.endsWith(".md")) existingSources.add(normalize(f.replace(/\.md$/, "")))
     }
   }
 
   return rawFiles.filter((f) => {
-    const stem = f.replace(/\.[^.]+$/, "")
+    const stem = normalize(f.replace(/\.[^.]+$/, ""))
     return !existingSources.has(stem)
   })
 }
@@ -118,6 +125,24 @@ function ingestWithClaude(sourcePath) {
   const relReadable = relative(ROOT, readablePath)
   const isConverted = readablePath !== sourcePath
 
+  // Build the target source page filename. If the original filename already
+  // starts with a YYYY-MM-DD- prefix, don't add another one — otherwise
+  // repeat ingests produce names like "2026-04-19-2026-04-18-contract.md".
+  const slug = originalName
+    .replace(/\.[^.]+$/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+  const hasDatePrefix = /^\d{4}-\d{2}-\d{2}-/.test(slug)
+  const sourceStem = hasDatePrefix ? slug : `${today}-${slug}`
+  const sourceFilename = `${sourceStem}.md`
+
+  // Check whether a source page with this stem already exists — if so, this
+  // is a re-read and the page should be updated in place, not duplicated.
+  const sourcesDir = join(CONTENT_DIR, "recall", "sources")
+  const existingPagePath = join(sourcesDir, sourceFilename)
+  const isReRead = existsSync(existingPagePath)
+
   // If we converted the file, read it inline to avoid path issues
   let sourceInstruction
   if (isConverted || [".md", ".txt", ".html"].includes(extname(sourcePath).toLowerCase())) {
@@ -133,6 +158,19 @@ ${content}
 Please read this file to extract its content. The original filename is: ${originalName}`
   }
 
+  const operationNote = isReRead
+    ? `This is a **re-read** of a source already in the wiki.
+The existing source page is: content/recall/sources/${sourceFilename}
+
+When re-reading, UPDATE the existing page in place — do not create a new
+page. Refresh the frontmatter "updated" date to ${today}. Add a brief
+note in the body indicating this is a re-read (e.g., an "## Updates from
+${today} re-read" section), and enrich the existing content with any new
+details, nuances, or patterns the second read surfaces. Entity and
+concept pages should also be updated rather than duplicated.`
+    : `This is a **new** source. Create the source page at:
+content/recall/sources/${sourceFilename}`
+
   const prompt = `You are ingesting a source document into a knowledge wiki.
 
 Read the following files to understand the wiki structure and current state:
@@ -142,13 +180,15 @@ Read the following files to understand the wiki structure and current state:
 
 ${sourceInstruction}
 
+${operationNote}
+
 Follow the "Ingest" workflow from CLAUDE.md:
-1. Create a source summary page in content/recall/sources/ named ${today}-${originalName.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md
-2. Create or update entity pages in content/recall/entities/ for significant entities mentioned
-3. Create or update concept pages in content/recall/concepts/ for significant concepts
+1. ${isReRead ? "Update" : "Create"} the source summary page (path above).
+2. Create or update entity pages in content/recall/entities/ for significant entities mentioned. Always prefer updating over duplicating.
+3. Create or update concept pages in content/recall/concepts/ for significant concepts. Always prefer updating over duplicating.
 4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/recall/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents.
-5. Update content/index.md with the new pages added to the appropriate tables
-6. Update content/learn/memory.md — add a row to the table (after the header row): | ${today} | Ingested | ${originalName} |
+5. Update content/index.md with the new or changed pages.
+6. Update content/learn/memory.md — add a row to the table (after the header row): | ${today} | ${isReRead ? "Re-read" : "Ingested"} | ${originalName} |
 
 The original document is available for download at: /originals/${originalName}
 Include a link to the original document in the source summary page (e.g., [Download original](/originals/${originalName})).
