@@ -229,7 +229,7 @@ ${transcriptText}
 
   console.log(`\nTranscript saved to: raw/${filename}`)
   console.log(`Method: ${method}`)
-  console.log(`\nTo ingest into the wiki, run: npm run ingest -- raw/${filename}`)
+  console.log(`\nTo catalog into the wiki, run: npm run catalog -- raw/${filename}`)
 }
 
 main().catch((err) => {
