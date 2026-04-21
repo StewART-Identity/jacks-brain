@@ -21,21 +21,21 @@ document.addEventListener("nav", () => {
       if (data.documents && data.documents.length > 0) {
         runsList.innerHTML =
           `<div class="table-container"><table>
-            <thead><tr><th>Document</th><th>Uploaded</th><th>Status</th></tr></thead>
+            <thead><tr><th>Document</th><th>Acquired</th><th>Status</th></tr></thead>
             <tbody>` +
           data.documents
             .map(
               (doc: any) =>
                 `<tr>
                   <td>${doc.document}</td>
-                  <td>${doc.uploaded || "Unknown"}</td>
+                  <td>${doc.acquired || "Unknown"}</td>
                   <td><span class="run-badge ${doc.status}">${doc.status}</span></td>
                 </tr>`,
             )
             .join("") +
           `</tbody></table></div>`
       } else {
-        runsList.innerHTML = '<p class="muted">No documents uploaded.</p>'
+        runsList.innerHTML = '<p class="muted">No acquisitions yet.</p>'
       }
 
       if (data.hasActive && !pollTimer) {
