@@ -2,7 +2,7 @@
 title: "Nuke It From Orbit"
 ---
 
-Erase all ingested content from the wiki. This permanently deletes:
+Erase all cataloged content from the wiki. This permanently deletes:
 
 - All source summary pages
 - All entity pages
