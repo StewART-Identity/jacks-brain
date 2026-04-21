@@ -122,7 +122,7 @@ document.addEventListener("nav", () => {
     }
   })
 
-  async function checkActiveIngest(): Promise<boolean> {
+  async function checkActiveCatalog(): Promise<boolean> {
     try {
       const res = await fetch("/api/status")
       const data = await res.json()
@@ -132,7 +132,7 @@ document.addEventListener("nav", () => {
   }
 
   async function uploadFile(file: File) {
-    const busy = await checkActiveIngest()
+    const busy = await checkActiveCatalog()
     if (busy) {
       showCardStatus(
         fileStatus,
@@ -158,7 +158,7 @@ document.addEventListener("nav", () => {
     fileInput.value = ""
   }
 
-  // Text paste ingest
+  // Text paste catalog
   if (pasteBtn && pasteInput) {
     pasteBtn.addEventListener("click", async () => {
       const text = pasteInput.value.trim()
@@ -201,7 +201,7 @@ document.addEventListener("nav", () => {
     })
   }
 
-  // URL ingest
+  // URL catalog
   if (urlBtn && urlInput) {
     urlBtn.addEventListener("click", async () => {
       const url = urlInput.value.trim()
@@ -230,7 +230,7 @@ document.addEventListener("nav", () => {
     })
   }
 
-  // YouTube ingest
+  // YouTube catalog
   if (youtubeBtn && youtubeInput) {
     youtubeBtn.addEventListener("click", async () => {
       const url = youtubeInput.value.trim()
