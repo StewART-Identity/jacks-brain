@@ -43,12 +43,12 @@ const ResearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) =
           <h3>
             Results <span id="research-provider" class="research-provider"></span>
           </h3>
-          <button id="ingest-selected-btn" class="ingest-selected-btn" disabled>
+          <button id="catalog-selected-btn" class="catalog-selected-btn" disabled>
             Upload Content
           </button>
         </div>
         <div id="research-results-list"></div>
-        <div id="research-ingest-status" class="card-status" style="display:none"></div>
+        <div id="research-catalog-status" class="card-status" style="display:none"></div>
       </div>
     </div>
   )
