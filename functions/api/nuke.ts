@@ -107,11 +107,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       }
     }
 
-    const emptyIndex = `---\ntitle: "Jack's Brain"\n---\n\nWelcome to the knowledge wiki. Use the sidebar to navigate.\n\n- **[[learn/knowledge|Knowledge]]** — Upload files and videos to ingest\n- **[[learn/memory|Memory]]** — Chronological record of ingestions\n- **[[recall/sources|Sources]]** — Summaries of ingested documents\n- **[[recall/entities|Entities]]** — People, organizations, tools, systems\n- **[[recall/concepts|Concepts]]** — Ideas, theories, frameworks\n- **[[recall/synthesis|Synthesis]]** — Cross-cutting analysis\n- **[[visualize/graph-view|Graph View]]** — Interactive map of connections\n`
+    const emptyIndex = `---\ntitle: "Jack's Brain"\n---\n\nWelcome to the knowledge wiki. Use the sidebar to navigate.\n\n- **[[learn/knowledge|Knowledge]]** — Upload files and videos to catalog\n- **[[learn/memory|Memory]]** — Chronological record of cataloging activity\n- **[[recall/sources|Sources]]** — Summaries of cataloged documents\n- **[[recall/entities|Entities]]** — People, organizations, tools, systems\n- **[[recall/concepts|Concepts]]** — Ideas, theories, frameworks\n- **[[recall/synthesis|Synthesis]]** — Cross-cutting analysis\n- **[[visualize/graph-view|Graph View]]** — Interactive map of connections\n`
 
     const emptyMemory = `---\ntitle: "Memory"\n---\n\nPermanent record of knowledge added to the wiki, organized by date.\n\n| Date | Action | Details |\n|------|--------|--------|\n`
 
-    const emptySources = `---\ntitle: "Sources"\n---\n\nUploaded documents and their ingestion status. Click a filename to download the original.\n\n| Content | Summary | Date |\n|---------|---------|------|\n`
+    const emptySources = `---\ntitle: "Sources"\n---\n\nAcquired documents and their cataloging status. Click a filename to download the original.\n\n| Content | Summary | Date |\n|---------|---------|------|\n`
 
     const emptyEntities = `---\ntitle: "Entities"\n---\n\nPeople, organizations, tools, and systems referenced across sources.\n\n| Content | Summary |\n|---------|--------|\n`
 
