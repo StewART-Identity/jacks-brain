@@ -7,10 +7,10 @@ document.addEventListener("nav", () => {
   const resultsSection = document.getElementById("research-results") as HTMLElement | null
   const resultsList = document.getElementById("research-results-list") as HTMLElement | null
   const providerEl = document.getElementById("research-provider") as HTMLElement | null
-  const ingestBtn = document.getElementById("ingest-selected-btn") as HTMLButtonElement | null
-  const ingestStatus = document.getElementById("research-ingest-status") as HTMLElement | null
+  const catalogBtn = document.getElementById("catalog-selected-btn") as HTMLButtonElement | null
+  const catalogStatus = document.getElementById("research-catalog-status") as HTMLElement | null
 
-  if (!queryInput || !countInput || !searchBtn || !resultsList || !ingestBtn) return
+  if (!queryInput || !countInput || !searchBtn || !resultsList || !catalogBtn) return
 
   const PROVIDER_LABELS: Record<string, string> = {
     brave: "via Brave Search",
@@ -42,13 +42,13 @@ document.addEventListener("nav", () => {
       .replace(/'/g, "&#39;")
   }
 
-  function updateIngestBtn() {
-    if (!ingestBtn) return
+  function updateCatalogBtn() {
+    if (!catalogBtn) return
     const checked = resultsList!.querySelectorAll<HTMLInputElement>(
       ".research-select:checked",
     ).length
-    ingestBtn.disabled = checked === 0
-    ingestBtn.textContent = checked === 0 ? "Upload Content" : `Upload Content (${checked})`
+    catalogBtn.disabled = checked === 0
+    catalogBtn.textContent = checked === 0 ? "Upload Content" : `Upload Content (${checked})`
   }
 
   function renderResults(results: Array<{ url: string; title: string; summary: string }>) {
@@ -85,8 +85,8 @@ document.addEventListener("nav", () => {
     resultsSection.style.display = ""
     resultsList
       .querySelectorAll<HTMLInputElement>(".research-select")
-      .forEach((cb) => cb.addEventListener("change", updateIngestBtn))
-    updateIngestBtn()
+      .forEach((cb) => cb.addEventListener("change", updateCatalogBtn))
+    updateCatalogBtn()
   }
 
   searchBtn.addEventListener("click", async () => {
@@ -97,7 +97,7 @@ document.addEventListener("nav", () => {
     const rank = rankInput ? rankInput.checked : true
 
     clearStatus(statusEl)
-    clearStatus(ingestStatus)
+    clearStatus(catalogStatus)
     if (resultsSection) resultsSection.style.display = "none"
     if (providerEl) providerEl.textContent = ""
     resultsList.innerHTML = ""
@@ -133,19 +133,19 @@ document.addEventListener("nav", () => {
     searchBtn.textContent = "Search"
   })
 
-  ingestBtn.addEventListener("click", async () => {
-    if (!ingestBtn || !resultsList) return
+  catalogBtn.addEventListener("click", async () => {
+    if (!catalogBtn || !resultsList) return
     const selected = Array.from(
       resultsList.querySelectorAll<HTMLInputElement>(".research-select:checked"),
     )
     if (selected.length === 0) return
 
-    ingestBtn.disabled = true
-    ingestBtn.textContent = "Uploading..."
-    clearStatus(ingestStatus)
+    catalogBtn.disabled = true
+    catalogBtn.textContent = "Uploading..."
+    clearStatus(catalogStatus)
     showStatus(
-      ingestStatus,
-      `Submitting ${selected.length} URL${selected.length === 1 ? "" : "s"} for ingestion...`,
+      catalogStatus,
+      `Submitting ${selected.length} URL${selected.length === 1 ? "" : "s"} for cataloging...`,
       "pending",
     )
 
@@ -167,7 +167,7 @@ document.addEventListener("nav", () => {
         if (data.success) {
           succeeded++
           if (rowStatus) {
-            rowStatus.textContent = "Queued for ingestion"
+            rowStatus.textContent = "Queued for cataloging"
             rowStatus.className = "research-row-status ok"
           }
           cb.checked = false
@@ -188,14 +188,14 @@ document.addEventListener("nav", () => {
       }
     }
 
-    clearStatus(ingestStatus)
+    clearStatus(catalogStatus)
     const summary =
       `${succeeded} submitted` +
       (failed > 0 ? `, ${failed} failed` : "") +
-      ". Check Retention for ingestion status."
-    showStatus(ingestStatus, summary, failed === 0 ? "success" : "error")
+      ". Check Retention for cataloging status."
+    showStatus(catalogStatus, summary, failed === 0 ? "success" : "error")
 
-    updateIngestBtn()
-    ingestBtn.disabled = false
+    updateCatalogBtn()
+    catalogBtn.disabled = false
   })
 })
