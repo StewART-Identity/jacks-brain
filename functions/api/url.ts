@@ -2,7 +2,7 @@
  * POST /api/url
  *
  * Accepts a URL, fetches the page, extracts readable content, and commits
- * a markdown file to static/originals/. The ingest workflow triggers
+ * a markdown file to static/originals/. The catalog workflow triggers
  * automatically on push.
  *
  * Requires env vars:
@@ -131,7 +131,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const pageRes = await fetch(url, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; jacks-brain-ingest/1.0; +https://github.com/StewART-Identity/jacks-brain)",
+          "Mozilla/5.0 (compatible; jacks-brain-catalog/1.0; +https://github.com/StewART-Identity/jacks-brain)",
         Accept: "text/html,application/xhtml+xml",
       },
       redirect: "follow",
@@ -203,6 +203,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     filename,
     title,
     url,
-    message: `Page committed to ${path}. Ingestion workflow triggered.`,
+    message: `Page committed to ${path}. Catalog workflow triggered.`,
   })
 }
