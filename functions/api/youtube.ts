@@ -1,7 +1,7 @@
 /**
  * POST /api/youtube
  *
- * Accepts a YouTube URL and triggers the youtube-ingest workflow via
+ * Accepts a YouTube URL and triggers the youtube-catalog workflow via
  * GitHub Actions workflow_dispatch.
  *
  * Requires env vars (set in Cloudflare Pages dashboard):
@@ -36,9 +36,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return Response.json({ error: "Invalid YouTube URL" }, { status: 400 })
     }
 
-    // Trigger the youtube-ingest workflow
+    // Trigger the youtube-catalog workflow
     const response = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/youtube-ingest.yml/dispatches`,
+      `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/youtube-catalog.yml/dispatches`,
       {
         method: "POST",
         headers: {
@@ -62,7 +62,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     return Response.json({
       success: true,
       url,
-      message: "YouTube ingest workflow triggered. A PR will be created with the results.",
+      message: "YouTube catalog workflow triggered. A PR will be created with the results.",
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error"
