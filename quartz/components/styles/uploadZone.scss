@@ -12,19 +12,19 @@
   font-size: 1.1rem;
 }
 
-/* Ingest card — wraps each input modality (file, text, URL) */
-.ingest-card {
+/* Catalog card — wraps each input modality (file, text, URL) */
+.catalog-card {
   padding: 1.25rem 1.25rem 1.5rem;
   border: 1px solid var(--lightgray);
   border-radius: 12px;
   background: var(--light);
 
-  & + .ingest-card {
+  & + .catalog-card {
     margin-top: 1rem;
   }
 }
 
-:root[saved-theme="dark"] .ingest-card {
+:root[saved-theme="dark"] .catalog-card {
   background: color-mix(in srgb, var(--light) 92%, transparent);
 }
 
