@@ -2,7 +2,7 @@
  * GET /api/originals
  *
  * Lists files in static/originals/ and cross-references with content/recall/sources/
- * to determine ingestion status.
+ * to determine cataloging status.
  */
 
 interface Env {
@@ -56,8 +56,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const originals: GitHubFile[] = originalsRes.ok ? await originalsRes.json() : []
     const sources: GitHubFile[] = sourcesRes.ok ? await sourcesRes.json() : []
 
-    // Build set of ingested file stems (source pages match original filenames)
-    const ingestedStems = new Set(
+    // Build set of cataloged file stems (source pages match acquisition filenames)
+    const catalogedStems = new Set(
       sources
         .filter((f) => f.name.endsWith(".md") && f.name !== ".gitkeep")
         .map((f) => f.name.replace(/\.md$/, ""))
@@ -70,18 +70,18 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         const stem = f.name.replace(/\.[^.]+$/, "")
         // Extract date from filename (YYYY-MM-DD prefix)
         const dateMatch = f.name.match(/^(\d{4}-\d{2}-\d{2})/)
-        const uploaded = dateMatch ? dateMatch[1] : null
-        const ingested = ingestedStems.has(stem)
+        const acquired = dateMatch ? dateMatch[1] : null
+        const cataloged = catalogedStems.has(stem)
 
         return {
           name: f.name,
           downloadUrl: `/originals/${f.name}`,
           size: f.size,
-          uploaded,
-          ingested,
+          acquired,
+          cataloged,
         }
       })
-      .sort((a, b) => (b.uploaded || "").localeCompare(a.uploaded || ""))
+      .sort((a, b) => (b.acquired || "").localeCompare(a.acquired || ""))
 
     return Response.json({ files })
   } catch (err: unknown) {
