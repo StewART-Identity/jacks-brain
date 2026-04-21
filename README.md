@@ -1,62 +1,76 @@
-# Jack's Brain — Pre-Nuke Fixes
+# Jack's Brain
 
-Two files replacing their counterparts in `jacks-brain/`, to apply before
-you nuke and restart the wiki.
+A personal knowledge wiki built on [Quartz 4](https://quartz.jzhao.xyz/).
+Documents are acquired into `static/originals/` and then cataloged into
+structured wiki pages by `scripts/catalog.mjs`.
 
-## What's changed
+## Vocabulary
 
-### `scripts/ingest.mjs`
+Terminology matters in this project — it shapes how you think about the
+wiki:
 
-Three changes, all in service of fixing the duplicate-source-page bug:
+- **Acquisition** — a document lands in `static/originals/`. You do this.
+- **Cataloging** — the script produces wiki artifacts from an acquisition.
+  Driven by Claude Code CLI; typically results in a source page plus
+  entity / concept / synthesis pages that cross-reference the new entry.
+- **View** — the act of examining a document during cataloging. Each
+  source page's `views:` frontmatter records every viewing.
+- **Re-view** — cataloging a source that already has a wiki page. The
+  existing page is updated in place; a new `views:` entry is appended.
+  Re-views never create sibling files.
 
-1. **Dedup now normalizes the date prefix.** The existing `findUningestedFiles`
-   checked `2026-04-18-CONTRACT.md` against `2026-04-18-2026-04-18-contract`
-   and concluded they didn't match. New behavior: strip any leading
-   `YYYY-MM-DD-` from both sides before comparing, and lowercase. Re-ingesting
-   the same source file on a different day now correctly identifies it as
-   an existing page.
+See `CLAUDE.md` for the full conventions.
 
-2. **Filename construction no longer double-prepends the date.** If the
-   original filename already starts with `YYYY-MM-DD-`, today's date is
-   not prepended again. `2026-04-18-CONTRACT.md` ingested today becomes
-   `2026-04-18-contract.md`, not `2026-04-20-2026-04-18-contract.md`.
+## Structure
 
-3. **Re-reads update in place.** When the target source filename already
-   exists on disk, the ingest prompt switches to a "re-read" mode that
-   instructs Claude Code to update the existing page (adding an "Updates
-   from [date] re-read" section) rather than create a sibling page.
-   The memory log distinguishes these as "Re-read" vs "Ingested" rows.
+```
+content/              The wiki Quartz serves
+  index.md
+  learn/              Meta-pages: knowledge upload, memory log
+  recall/
+    sources/          One page per cataloged document
+    entities/         People, organizations, tools
+    concepts/         Ideas, frameworks
+    synthesis/        Cross-cutting analysis
+  application/        UI help pages
+  visualize/          Graph view
+static/originals/     Acquired source documents (immutable)
+scripts/
+  catalog.mjs         The cataloging pipeline
+  youtube-transcript.mjs
+functions/api/        Cloudflare Pages Functions (originals, status)
+quartz/               Quartz 4 source
+.github/workflows/
+  catalog.yml         CI: auto-catalogs acquisitions pushed to originals/
+```
 
-### `CLAUDE.md`
+## Commands
 
-Two changes:
+- `npm run docs` — build and serve the wiki locally
+- `npm run build` — production build
+- `npm run catalog [file-path]` — catalog an acquisition (or all un-cataloged
+  if no arg). Requires `CLAUDE_CODE_OAUTH_TOKEN` in env.
+- `npm run yt` — YouTube transcript helper
 
-1. **"Prefer updates over new pages" now covers source pages** too, not
-   just concept pages. Re-reading a source updates the existing page.
+## Cataloging workflow
 
-2. **New "Normalization rules" section** with the Jack Stewart title
-   convention: the wiki always uses "IAM Engineer" regardless of how
-   source documents style the title. This prevents the source's
-   "Architect/Engineer" from propagating to entity pages.
+1. Drop a document into `static/originals/`, naming it
+   `YYYY-MM-DD-<descriptor>.<ext>`.
+2. Push. The `catalog.yml` GitHub Actions workflow runs automatically.
+3. The workflow calls `scripts/catalog.mjs`, which invokes Claude Code
+   CLI to view the document and write wiki pages.
+4. The workflow commits the result back to `main`.
 
-## How to apply
+Alternatively, catalog locally: `npm run catalog static/originals/foo.docx`.
 
-Copy the two files over their counterparts in the `jacks-brain/` repo,
-commit, push. Using the GitHub Bridge at `idm-toolbox.pages.dev/bridge/`:
+## Conventions
 
-1. Target repo: `jackstewart/jacks-brain` (or wherever it lives)
-2. Branch: `main`
-3. Drop both files preserving the directory structure (`CLAUDE.md` at
-   repo root, `scripts/ingest.mjs` in the scripts folder).
-4. Commit message: `Fix ingest dedup and add re-read workflow`
+Read `CLAUDE.md` at the start of any session that modifies the wiki. It
+defines the page format, naming conventions, and workflows. In particular:
 
-No code changes are needed in the wiki content itself — you're going to
-nuke that anyway.
-
-## What this does NOT fix
-
-The `content/index.md` file being nearly empty (the CLAUDE.md describes
-it as a master catalog but the per-category index files are doing that
-job per-category). That discrepancy is still present. When you rebuild
-the wiki post-nuke, pick one model — master catalog or per-category
-indexes — and update CLAUDE.md to match.
+- Source pages have a stable filename across re-views. The date prefix
+  is the *initial cataloging* date and never changes.
+- Re-views replace the body prose entirely and append to `views:`.
+  They do NOT create a new file.
+- Cross-reference aggressively — links between pages are as valuable as
+  the pages themselves.
