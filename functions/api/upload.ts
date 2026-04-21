@@ -2,7 +2,7 @@
  * POST /api/upload
  *
  * Accepts a file via multipart form data, commits the original to
- * static/originals/ in the GitHub repo. The ingest workflow triggers
+ * static/originals/ in the GitHub repo. The catalog workflow triggers
  * automatically on push.
  *
  * Requires env vars (set in Cloudflare Pages dashboard):
@@ -66,12 +66,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return Response.json({ error: "GitHub commit failed", details: err }, { status: 502 })
     }
 
-    // The ingest workflow triggers automatically on push to static/originals/**
+    // The catalog workflow triggers automatically on push to static/originals/**
 
     return Response.json({
       success: true,
       filename,
-      message: `File committed to ${path}. Ingestion workflow triggered.`,
+      message: `File committed to ${path}. Catalog workflow triggered.`,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error"
