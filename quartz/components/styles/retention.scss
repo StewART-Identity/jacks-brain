@@ -42,7 +42,7 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
-.run-badge.ingested {
+.run-badge.cataloged {
   background: #ebf5ee;
   color: #2b5e3e;
 }
@@ -67,7 +67,7 @@
   color: #2e3d55;
 }
 
-:root[saved-theme="dark"] .run-badge.ingested {
+:root[saved-theme="dark"] .run-badge.cataloged {
   background: #1b3f29;
   color: #7bbf95;
 }
