@@ -6,7 +6,7 @@ import styles from "./styles/uploadZone.scss"
 const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="upload-app">
-      <div class="ingest-card">
+      <div class="catalog-card">
         <h3 class="section-label">Upload File</h3>
         <div class="upload-zone" id="drop-zone">
           <div class="upload-icon">&#8693;</div>
@@ -21,7 +21,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
         <div id="file-status" class="card-status" style="display:none"></div>
       </div>
 
-      <div class="ingest-card paste-section">
+      <div class="catalog-card paste-section">
         <h3>Paste Text</h3>
         <input
           type="text"
@@ -36,7 +36,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
         <div id="paste-status" class="card-status" style="display:none"></div>
       </div>
 
-      <div class="ingest-card url-section">
+      <div class="catalog-card url-section">
         <h3>Paste URL</h3>
         <div class="url-row">
           <input type="url" id="url-input" placeholder="https://example.com/article" />
@@ -45,7 +45,7 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
         <div id="url-status" class="card-status" style="display:none"></div>
       </div>
 
-      <div class="ingest-card youtube-section">
+      <div class="catalog-card youtube-section">
         <h3>Paste YouTube URL</h3>
         <div class="youtube-row">
           <input type="url" id="youtube-input" placeholder="https://www.youtube.com/watch?v=..." />
