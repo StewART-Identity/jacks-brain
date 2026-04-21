@@ -123,7 +123,7 @@
   font-weight: 400;
   color: var(--gray);
 }
-.ingest-selected-btn {
+.catalog-selected-btn {
   padding: 0.5rem 1rem;
   background: var(--secondary);
   color: var(--light);
@@ -134,10 +134,10 @@
   font-size: 0.9rem;
   transition: opacity 0.15s ease;
 }
-.ingest-selected-btn:hover {
+.catalog-selected-btn:hover {
   opacity: 0.85;
 }
-.ingest-selected-btn:disabled {
+.catalog-selected-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
