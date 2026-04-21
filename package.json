@@ -19,7 +19,7 @@
     "test": "tsx --test",
     "profile": "0x -D prof ./quartz/bootstrap-cli.mjs build --concurrency=1",
     "yt": "node scripts/youtube-transcript.mjs",
-    "ingest": "node scripts/ingest.mjs"
+    "catalog": "node scripts/catalog.mjs"
   },
   "engines": {
     "npm": ">=10.9.2",
