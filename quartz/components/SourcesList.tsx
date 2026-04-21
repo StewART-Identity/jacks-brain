@@ -21,7 +21,7 @@ document.addEventListener("nav", () => {
 
   function renderTable() {
     if (allFiles.length === 0) {
-      container.innerHTML = '<p class="muted">No files uploaded yet.</p>'
+      container.innerHTML = '<p class="muted">No acquisitions yet.</p>'
       return
     }
 
@@ -30,12 +30,12 @@ document.addEventListener("nav", () => {
       if (sortField === "name") {
         valA = a.name.toLowerCase()
         valB = b.name.toLowerCase()
-      } else if (sortField === "uploaded") {
-        valA = a.uploaded || ""
-        valB = b.uploaded || ""
+      } else if (sortField === "acquired") {
+        valA = a.acquired || ""
+        valB = b.acquired || ""
       } else {
-        valA = a.ingested ? 1 : 0
-        valB = b.ingested ? 1 : 0
+        valA = a.cataloged ? 1 : 0
+        valB = b.cataloged ? 1 : 0
       }
       if (valA < valB) return sortAsc ? -1 : 1
       if (valA > valB) return sortAsc ? 1 : -1
@@ -50,15 +50,15 @@ document.addEventListener("nav", () => {
     container.innerHTML = '<table class="sources-table">' +
       '<thead><tr>' +
       '<th class="sortable" data-sort="name">File' + arrow("name") + '</th>' +
-      '<th class="sortable" data-sort="uploaded">Uploaded' + arrow("uploaded") + '</th>' +
+      '<th class="sortable" data-sort="acquired">Acquired' + arrow("acquired") + '</th>' +
       '<th class="sortable" data-sort="status">Status' + arrow("status") + '</th>' +
       '</tr></thead>' +
       '<tbody>' +
       sorted.map(function(f) {
-        var status = f.ingested
-          ? '<span class="source-badge ingested">Ingested</span>'
+        var status = f.cataloged
+          ? '<span class="source-badge cataloged">Cataloged</span>'
           : '<span class="source-badge pending">Pending</span>'
-        var date = f.uploaded || "Unknown"
+        var date = f.acquired || "Unknown"
         return '<tr>' +
           '<td><a href="' + f.downloadUrl + '" target="_blank">' + f.name + '</a></td>' +
           '<td>' + date + '</td>' +
@@ -138,7 +138,7 @@ SourcesList.css = `
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
-.source-badge.ingested {
+.source-badge.cataloged {
   background: #EBF5EE;
   color: #2B5E3E;
 }
@@ -146,7 +146,7 @@ SourcesList.css = `
   background: #FBF4E4;
   color: #6B4D1A;
 }
-:root[saved-theme="dark"] .source-badge.ingested {
+:root[saved-theme="dark"] .source-badge.cataloged {
   background: #1B3F29;
   color: #7BBF95;
 }
