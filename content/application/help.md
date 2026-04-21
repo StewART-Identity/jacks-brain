@@ -5,11 +5,11 @@ title: "Help"
 A guide to navigating and using Jack's Brain.
 
 ### Learn
-- **[[learn/knowledge|Knowledge]]** — Upload files and videos to ingest
-- **[[learn/memory|Memory]]** — Chronological record of ingestions
+- **[[learn/knowledge|Knowledge]]** — Upload files and videos to catalog
+- **[[learn/memory|Memory]]** — Chronological record of cataloging activity
 
 ### Study
-- **[[recall/sources|Sources]]** — Summaries of ingested documents
+- **[[recall/sources|Sources]]** — Summaries of cataloged documents
 - **[[recall/entities|Entities]]** — People, organizations, tools, systems
 - **[[recall/concepts|Concepts]]** — Ideas, theories, frameworks
 - **[[recall/synthesis|Synthesis]]** — Cross-cutting analysis
@@ -22,4 +22,4 @@ A guide to navigating and using Jack's Brain.
 - **[[application/help|Help]]** — This page
 - **[[application/readingmode|Reading Mode]]** — Distraction-free reading with simplified layout
 - **[[application/darkmode|Light/Dark Mode]]** — Switch between light and dark color themes
-- **[[application/nuke|Nuke It From Orbit]]** — Erase all ingested content and start fresh
+- **[[application/nuke|Nuke It From Orbit]]** — Erase all cataloged content and start fresh
