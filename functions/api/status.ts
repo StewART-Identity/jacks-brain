@@ -1,12 +1,12 @@
 /**
  * GET /api/status
  *
- * Returns the true ingestion state of each uploaded document by
+ * Returns the true cataloging state of each acquired document by
  * cross-referencing static/originals/ files, content/recall/sources/
  * pages, and active workflow runs.
  *
  * States:
- *   INGESTED     — source page exists in the wiki
+ *   CATALOGED    — source page exists in the wiki
  *   IN_PROGRESS  — a workflow is currently processing
  *   QUEUED       — a workflow is queued to process
  *   FAILED       — no source page and no active workflow
@@ -66,7 +66,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         { headers: ghHeaders(GITHUB_TOKEN) },
       ),
       fetch(
-        `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/ingest.yml/runs?per_page=10`,
+        `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/catalog.yml/runs?per_page=10`,
         { headers: ghHeaders(GITHUB_TOKEN) },
       ),
     ])
@@ -77,8 +77,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       ? await runsRes.json()
       : { workflow_runs: [] }
 
-    // Build set of ingested source page stems
-    const ingestedStems = new Set(
+    // Build set of cataloged source page stems
+    const catalogedStems = new Set(
       sources
         .filter((f) => f.name.endsWith(".md") && f.name !== "index.md")
         .map((f) => f.name.replace(/\.md$/, "")),
@@ -104,15 +104,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         (f) =>
           f.type === "file" &&
           f.name !== ".gitkeep" &&
-          f.name !== ".ingest-trigger",
+          f.name !== ".catalog-trigger",
       )
       .map((f) => {
         const stem = f.name.replace(/\.[^.]+$/, "")
         const dateMatch = f.name.match(/^(\d{4}-\d{2}-\d{2})/)
-        const uploaded = dateMatch ? dateMatch[1] : null
+        const acquired = dateMatch ? dateMatch[1] : null
 
         // Check if this document has a source page (match by stem substring)
-        const isIngested = [...ingestedStems].some((s) => {
+        const isCataloged = [...catalogedStems].some((s) => {
           const normalizedStem = stem.toLowerCase().replace(/[^a-z0-9]+/g, "-")
           const normalizedSource = s.toLowerCase()
           return normalizedSource.includes(normalizedStem) ||
@@ -120,28 +120,28 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         })
 
         // Check if an active workflow is processing this file
-        const isActive = activeDocNames.has(f.name) || (hasActiveRun && !isIngested)
+        const isActive = activeDocNames.has(f.name) || (hasActiveRun && !isCataloged)
 
         let status: string
-        if (isIngested) {
-          status = "ingested"
+        if (isCataloged) {
+          status = "cataloged"
         } else if (activeRuns.some((r) => r.status === "in_progress") && isActive) {
           status = "in_progress"
         } else if (activeRuns.some((r) => r.status === "queued") && isActive) {
           status = "queued"
-        } else if (!isIngested) {
+        } else if (!isCataloged) {
           status = "failed"
         } else {
-          status = "ingested"
+          status = "cataloged"
         }
 
         return {
           document: f.name.replace(/^\d{4}-\d{2}-\d{2}-/, ""),
-          uploaded,
+          acquired,
           status,
         }
       })
-      .sort((a, b) => (b.uploaded || "").localeCompare(a.uploaded || ""))
+      .sort((a, b) => (b.acquired || "").localeCompare(a.acquired || ""))
 
     // Also include active run info for auto-refresh detection
     const hasActive = documents.some(
