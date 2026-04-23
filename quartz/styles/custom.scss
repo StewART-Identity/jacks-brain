@@ -786,11 +786,24 @@ body[data-slug="index"] .center > article {
    Memory page — size table columns for "Date | Action | Details" pattern
    Without this, equal-width columns cramp the Details column while leaving
    the short Date and Action columns half-empty.
+
+   Also overrides Quartz base.scss defaults (margin/padding/min-width) that
+   would otherwise force the table wider than its container and trigger a
+   horizontal scrollbar.
    ========================================================================== */
 
+body[data-slug="learn/memory"] .table-container {
+  overflow-x: visible;
+}
 body[data-slug="learn/memory"] .table-container > table {
-  table-layout: fixed;
+  margin: 0;
+  padding: 0;
   width: 100%;
+  table-layout: fixed;
+}
+body[data-slug="learn/memory"] .table-container > table th,
+body[data-slug="learn/memory"] .table-container > table td {
+  min-width: 0;
 }
 body[data-slug="learn/memory"] .table-container > table th:nth-child(1),
 body[data-slug="learn/memory"] .table-container > table td:nth-child(1) {
