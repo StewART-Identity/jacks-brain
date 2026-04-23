@@ -6,6 +6,7 @@ export const sharedPageComponents: SharedLayout = {
   head: Component.Head(),
   header: [],
   afterBody: [
+    Component.Hamburger(),
     Component.ConditionalRender({
       component: Component.UploadZone(),
       condition: (page) => page.fileData.slug === "learn/knowledge",

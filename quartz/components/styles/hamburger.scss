@@ -1,0 +1,142 @@
+@use "../../styles/variables.scss" as *;
+
+/* ==========================================================================
+   Hamburger button
+   Fixed top-left, only visible on mobile. Inherits theme colors.
+   ========================================================================== */
+
+#hamburger-toggle {
+  // Hidden by default (desktop + tablet).
+  // Mobile media query below flips this to display:flex.
+  display: none;
+
+  // When mobile styles are active, this is the layout.
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1000; // Above the sidebar overlay and its backdrop
+
+  width: 44px; // Apple's recommended minimum tap target
+  height: 44px;
+  padding: 0;
+
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  cursor: pointer;
+
+  // A tiny shadow lifts it off the texture background so it reads as a button
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+
+  // Smooth the icon transform when toggling
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--lightgray);
+    outline: none;
+  }
+
+  &:focus-visible {
+    border-color: var(--tertiary);
+  }
+}
+
+.hamburger-line {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--dark);
+  border-radius: 1px;
+  transition: transform 0.25s ease, opacity 0.15s ease;
+  transform-origin: center;
+}
+
+/* When menu is open, morph the three lines into an X.
+   The middle line fades out, top and bottom rotate to cross. */
+body.menu-open #hamburger-toggle {
+  .hamburger-line:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .hamburger-line:nth-child(2) {
+    opacity: 0;
+  }
+  .hamburger-line:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+}
+
+/* ==========================================================================
+   Mobile: show button, transform sidebar into overlay
+   ========================================================================== */
+
+@media all and ($mobile) {
+  #hamburger-toggle {
+    display: flex;
+  }
+
+  /* Override Quartz's default mobile sidebar behavior (which stacks it
+     inline at the top). We want an off-canvas overlay instead. */
+  .sidebar.left {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 80%;
+    max-width: 320px;
+    height: 100vh !important;
+
+    // Start off-screen to the left
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+
+    // Stack above content but below the hamburger button
+    z-index: 999;
+
+    // Solid background so content underneath doesn't bleed through
+    background: var(--light);
+    background-image: url("/static/neuron-texture.png");
+    background-repeat: repeat;
+    background-size: 768px 512px;
+
+    // Restore vertical stacking (Quartz flips to row on mobile)
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 5rem 1.5rem 2rem 1.5rem !important; // 5rem top to clear the hamburger button
+    gap: 1.2rem !important;
+    overflow-y: auto;
+
+    // Subtle shadow to separate the overlay from content
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* When menu is open, slide sidebar in */
+  body.menu-open .sidebar.left {
+    transform: translateX(0);
+  }
+
+  /* Dim the rest of the page when menu is open (backdrop) */
+  body.menu-open::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 998;
+    pointer-events: none; // The outside-click handler in JS handles closing
+  }
+
+  /* Prevent body scroll when menu is open */
+  body.menu-open {
+    overflow: hidden;
+  }
+}

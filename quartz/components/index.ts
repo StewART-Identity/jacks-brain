@@ -34,6 +34,7 @@ import DarkModePage from "./DarkModePage"
 import ReadingModePage from "./ReadingModePage"
 import ResearchPage from "./ResearchPage"
 import Retention from "./Retention"
+import Hamburger from "./Hamburger"
 
 export {
   ArticleTitle,
@@ -72,4 +73,5 @@ export {
   ReadingModePage,
   ResearchPage,
   Retention,
+  Hamburger,
 }
