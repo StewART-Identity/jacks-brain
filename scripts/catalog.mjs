@@ -1,366 +1,317 @@
-#!/usr/bin/env node
-
 /**
- * catalog.mjs
+ * POST /api/nuke
  *
- * Uses Claude Code CLI to view source documents in static/originals/ and
- * write structured wiki pages directly to content/. Uses your Max plan
- * via CLAUDE_CODE_OAUTH_TOKEN.
+ * Deletes all wiki content from the GitHub repo using the Git Trees API.
  *
- * Vocabulary:
- *   - An "acquisition" is a document that has landed in static/originals/.
- *     That's a human step — you put the file there; this script doesn't
- *     handle acquisition.
- *   - "Cataloging" is what this script does: produce wiki artifacts from
- *     an acquisition. A first catalog of a document creates its source
- *     page; a re-catalog (re-view) updates it in place.
- *   - A "view" is the act of examining a document's content during
- *     cataloging. The source page's `views:` frontmatter records each view.
+ * Strategy (5 subrequests total, independent of file count):
+ *   1. GET  /git/refs/heads/main           — get current commit SHA
+ *   2. GET  /git/commits/{sha}             — get the tree SHA from that commit
+ *   3. GET  /git/trees/{sha}?recursive=1   — list all paths in the tree
+ *   4. POST /git/trees                     — create new tree: mark target files
+ *                                            deleted (sha: null), set 6 index
+ *                                            files to fresh content (inline)
+ *   5. POST /git/commits                   — create commit pointing at new tree
+ *   6. PATCH /git/refs/heads/main          — move main to new commit
  *
- * Binary files (.docx, .pdf) are converted to text first using pandoc/pdftotext.
+ * Why Git Trees instead of Contents API: the Contents API needs one HTTP
+ * request per file operation, which on a single Cloudflare Worker invocation
+ * exceeds the subrequest cap once the wiki has 30+ files. Git Trees bundles
+ * every file change into one POST, so this scales to any repo size.
  *
- * Usage:
- *   node scripts/catalog.mjs [file-path]    # catalog a specific file
- *   node scripts/catalog.mjs                # catalog all un-cataloged acquisitions
+ * What gets deleted:
+ *   - content/recall/sources/*.md       (except index.md)
+ *   - content/recall/entities/*.md      (except index.md)
+ *   - content/recall/concepts/*.md      (except index.md)
+ *   - content/recall/synthesis/*.md     (except index.md)
+ *   - static/originals/*                (all acquired document originals)
+ *
+ * What gets reset to empty templates:
+ *   - content/learn/memory.md
+ *   - content/recall/sources/index.md
+ *   - content/recall/entities/index.md
+ *   - content/recall/concepts/index.md
+ *   - content/recall/synthesis/index.md
+ *
+ * What is preserved (NOT touched):
+ *   - content/index.md (the custom landing page)
+ *   - All scaffolding pages (application/, learn/, visualize/)
+ *
+ * Requires env vars:
+ *   GITHUB_TOKEN — fine-grained PAT with contents:write
+ *   GITHUB_REPO  — e.g. "StewART-Identity/jacks-brain"
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs"
-import { join, resolve, basename, relative, extname } from "node:path"
-import { fileURLToPath } from "node:url"
-import { execFileSync, execSync } from "node:child_process"
-import { tmpdir } from "node:os"
-
-const ROOT = resolve(fileURLToPath(import.meta.url), "../..")
-const ORIGINALS_DIR = join(ROOT, "static", "originals")
-const CONTENT_DIR = join(ROOT, "content")
-
-const ALL_EXTENSIONS = new Set([
-  ".md", ".txt", ".html", ".pdf", ".png", ".jpg", ".jpeg",
-  ".gif", ".webp", ".doc", ".docx",
-])
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Canonical slug derivation from any filename.
- *
- * A slug is the slug portion of a wiki source filename WITHOUT any leading
- * date prefix. The same raw filename and any of its previous wiki filenames
- * must produce the same slug so re-view detection works.
- *
- * Steps:
- *   1. Strip the file extension.
- *   2. Strip ALL leading YYYY-MM-DD- prefixes (previous bugs produced double
- *      prefixes like 2026-04-19-2026-04-18-foo.md; we must match those).
- *   3. Lowercase.
- *   4. Collapse any run of non-alphanumeric characters to a single hyphen.
- *      This handles the common input variations: underscores from exported
- *      Office filenames (Foo_Bar), spaces (Foo Bar), double hyphens from
- *      "(1)" suffixes like "Case_Study--1-" → "case-study-1".
- *   5. Trim leading/trailing hyphens.
- */
-function slugify(filenameOrStem) {
-  let s = filenameOrStem.replace(/\.[^.]+$/, "")           // drop extension
-  s = s.replace(/^(\d{4}-\d{2}-\d{2}-)+/, "")              // drop date prefixes
-  s = s.toLowerCase()
-  s = s.replace(/[^a-z0-9]+/g, "-")                         // collapse separators
-  s = s.replace(/^-+|-+$/g, "")                             // trim
-  return s
+interface Env {
+  GITHUB_TOKEN: string
+  GITHUB_REPO: string
 }
 
-/**
- * For a given acquisition filename (in originals/), find the existing wiki
- * source page whose slug matches — if any. Returns { path, firstCatalogDate }
- * or null. Used both for dedup (skip already-cataloged files from the
- * uncataloged scan) AND for re-view detection (so we know which existing
- * page to update in place).
- */
-function findExistingSourcePage(acquisitionFilename) {
-  const sourcesDir = join(CONTENT_DIR, "recall", "sources")
-  if (!existsSync(sourcesDir)) return null
-  const targetSlug = slugify(acquisitionFilename)
-
-  for (const f of readdirSync(sourcesDir)) {
-    if (!f.endsWith(".md")) continue
-    if (slugify(f) !== targetSlug) continue
-    // Extract the first date prefix as the "initial catalog date"
-    const m = f.match(/^(\d{4}-\d{2}-\d{2})-/)
-    return {
-      path: join(sourcesDir, f),
-      filename: f,
-      firstCatalogDate: m ? m[1] : null,
-    }
-  }
-  return null
+interface RefResponse {
+  object: { sha: string }
 }
 
-function findUncatalogedAcquisitions() {
-  if (!existsSync(ORIGINALS_DIR)) return []
-  const acquisitions = readdirSync(ORIGINALS_DIR).filter(
-    (f) => f !== ".gitkeep" && ALL_EXTENSIONS.has(extname(f).toLowerCase()),
-  )
-  return acquisitions.filter((f) => findExistingSourcePage(f) === null)
+interface CommitResponse {
+  tree: { sha: string }
 }
 
-/**
- * Convert binary files to plain text so Claude Code doesn't waste turns
- * trying to read them. Returns the path to a readable text file.
- */
-function convertToText(sourcePath) {
-  const ext = extname(sourcePath).toLowerCase()
-
-  if ([".md", ".txt", ".html"].includes(ext)) {
-    return sourcePath // already text
-  }
-
-  const tmpPath = join(tmpdir(), basename(sourcePath) + ".md")
-
-  if ([".docx", ".doc"].includes(ext)) {
-    console.log(`  Converting ${ext} to markdown with pandoc...`)
-    try {
-      execSync(`pandoc -f docx -t markdown -o "${tmpPath}" "${sourcePath}"`, {
-        encoding: "utf-8",
-        timeout: 60_000,
-      })
-      return tmpPath
-    } catch (err) {
-      console.error(`  pandoc failed, trying raw text extraction...`)
-      // Fallback: extract raw text with strings
-      try {
-        const raw = execSync(`strings "${sourcePath}"`, { encoding: "utf-8", timeout: 30_000 })
-        writeFileSync(tmpPath, raw)
-        return tmpPath
-      } catch {
-        console.error(`  Could not extract text from ${ext} file`)
-        return sourcePath
-      }
-    }
-  }
-
-  if (ext === ".pdf") {
-    console.log(`  Converting PDF to text with pdftotext...`)
-    try {
-      execSync(`pdftotext "${sourcePath}" "${tmpPath}"`, {
-        encoding: "utf-8",
-        timeout: 60_000,
-      })
-      return tmpPath
-    } catch {
-      console.error(`  pdftotext failed, passing raw path to Claude Code`)
-      return sourcePath
-    }
-  }
-
-  // Images — pass directly, Claude Code can view them
-  return sourcePath
+interface TreeEntry {
+  path: string
+  mode: string
+  type: string
+  sha?: string | null
+  content?: string
 }
 
-// ---------------------------------------------------------------------------
-// Claude Code CLI — let it read and write files directly
-// ---------------------------------------------------------------------------
+interface TreeResponse {
+  sha: string
+  tree: TreeEntry[]
+  truncated: boolean
+}
 
-function catalogWithClaude(sourcePath) {
-  const today = new Date().toISOString().slice(0, 10)
-  const originalName = basename(sourcePath)
+interface NewTreeResponse {
+  sha: string
+}
 
-  // Convert binary formats to text
-  const readablePath = convertToText(sourcePath)
-  const relReadable = relative(ROOT, readablePath)
-  const isConverted = readablePath !== sourcePath
+interface NewCommitResponse {
+  sha: string
+}
 
-  // Compute canonical slug and decide whether this is a re-view.
-  // If an existing page matches this slug, we use ITS filename verbatim —
-  // never guessing a new path. If there's no match, this is the initial
-  // cataloging and we build a fresh filename: YYYY-MM-DD-<slug>.md where
-  // the date is today (baked in permanently as the initial-catalog date).
-  const slug = slugify(originalName)
-  const existing = findExistingSourcePage(originalName)
-  const isReView = existing !== null
-  const sourceFilename = isReView ? existing.filename : `${today}-${slug}.md`
-  const sourcePagePath = `content/recall/sources/${sourceFilename}`
+const BRANCH = "main"
 
-  // If we converted the file, read it inline to avoid path issues
-  let sourceInstruction
-  if (isConverted || [".md", ".txt", ".html"].includes(extname(sourcePath).toLowerCase())) {
-    const content = readFileSync(readablePath, "utf-8")
-    sourceInstruction = `The source document content (originally "${originalName}") is below:
+// Directories whose contents (except index.md) should be wiped clean.
+// These are the "content" directories cataloging writes to.
+const WIPE_DIRS = [
+  "content/recall/sources/",
+  "content/recall/entities/",
+  "content/recall/concepts/",
+  "content/recall/synthesis/",
+  "static/originals/",
+]
 
-<source-document>
-${content}
-</source-document>`
-  } else {
-    // Images — tell Claude Code to read the file
-    sourceInstruction = `The source document is an image file at: ${relative(ROOT, sourcePath)}
-Please view this file to extract its content. The original filename is: ${originalName}`
+// Files that should be reset to empty-state templates (not deleted).
+// These anchor the UI — deleting them would 404 the navigation.
+//
+// NOTE: content/index.md is NOT in this list. It's the user's custom
+// landing page (hero image + welcome text). A fresh empty-state template
+// would destroy that design. Nuke leaves the landing page alone.
+const RESET_TEMPLATES: Record<string, string> = {
+  "content/learn/memory.md":
+    `---\ntitle: "Memory"\n---\n\nPermanent record of knowledge added to the wiki, organized by date.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
+
+  "content/recall/sources/index.md":
+    `---\ntitle: "Sources"\n---\n\nAcquired documents and their cataloging status. Click a filename to download the original.\n\n| Content | Summary | Date |\n|---------|---------|------|\n`,
+
+  "content/recall/entities/index.md":
+    `---\ntitle: "Entities"\n---\n\nPeople, organizations, tools, and systems referenced across sources.\n\n| Content | Summary |\n|---------|--------|\n`,
+
+  "content/recall/concepts/index.md":
+    `---\ntitle: "Concepts"\n---\n\nIdeas, theories, frameworks, and principles extracted from sources.\n\n| Content | Summary |\n|---------|--------|\n`,
+
+  "content/recall/synthesis/index.md":
+    `---\ntitle: "Synthesis"\n---\n\nCross-cutting analysis, comparisons, and theses drawn from multiple sources.\n\n| Content | Summary | Date |\n|---------|---------|------|\n`,
+}
+
+// ─── HTTP helper ───────────────────────────────────────────────────────────
+
+async function ghFetch(
+  url: string,
+  token: string,
+  options: RequestInit = {},
+): Promise<Response> {
+  return fetch(url, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+      "User-Agent": "jacks-brain-nuke",
+      "X-GitHub-Api-Version": "2022-11-28",
+      ...((options.headers as Record<string, string>) || {}),
+    },
+  })
+}
+
+// ─── Endpoint ──────────────────────────────────────────────────────────────
+
+export const onRequestPost: PagesFunction<Env> = async (context) => {
+  const { GITHUB_TOKEN, GITHUB_REPO } = context.env
+
+  if (!GITHUB_TOKEN || !GITHUB_REPO) {
+    return Response.json({ error: "Server misconfigured" }, { status: 500 })
   }
 
-  const operationNote = isReView
-    ? `This is a **re-view** of a source already in the wiki.
-
-The canonical page is: ${sourcePagePath}
-(Initial cataloging date: ${existing.firstCatalogDate || "unknown"}. This is a re-view dated ${today}.)
-
-CRITICAL rules for a re-view, per CLAUDE.md:
-
-1. UPDATE the existing page at the exact path above. Do NOT create a new
-   file with a different date prefix. The filename is stable across re-views.
-
-2. REPLACE the body prose entirely with the new viewing's interpretation.
-   The old prose is intentionally superseded. If you want to preserve a
-   specific phrasing or framing from a previous viewing, add a
-   "## Previous viewings" section to the new body and quote/summarize it
-   there.
-
-3. Update the frontmatter:
-   - Keep 'created' at its original value (never change).
-   - Set 'updated' to ${today}.
-   - If this viewing reframes the document's rhetorical role, update 'role'
-     to match the current interpretation.
-   - Append a new entry to 'views:' with date ${today} and a one-line
-     note describing what this viewing contributed (e.g., "Reframed from
-     argument to evidence base; added three concept links").
-
-4. Entity and concept pages: update in place, as always. Do NOT create
-   siblings.`
-    : `This is the **initial cataloging** of a new source. Create the source page at:
-${sourcePagePath}
-
-Frontmatter must include (in addition to the standard fields):
-- 'role': one of argument, evidence, reference, primary-data, narrative, analysis
-- 'views': a list with a single initial entry:
-    - date: ${today}
-      note: "Initial cataloging."`
-
-  const prompt = `You are cataloging a source document into a knowledge wiki.
-
-Read the following files to understand the wiki structure and current state:
-1. CLAUDE.md — the wiki schema and conventions
-2. content/index.md — the current wiki index
-3. content/learn/memory.md — the current memory/log
-4. content/recall/sources/index.md — the sources listing
-5. content/recall/entities/index.md — the entities listing
-6. content/recall/concepts/index.md — the concepts listing
-7. content/recall/synthesis/index.md — the synthesis listing
-
-${sourceInstruction}
-
-${operationNote}
-
-Follow the "Catalog" workflow from CLAUDE.md:
-1. ${isReView ? "Update" : "Create"} the source summary page at the exact path above.
-2. Create or update entity pages in content/recall/entities/ for significant entities mentioned. Always prefer updating over duplicating.
-3. Create or update concept pages in content/recall/concepts/ for significant concepts. Always prefer updating over duplicating.
-4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/recall/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents.
-
-5. Update the four category index pages to list any pages you created or
-   updated in this run. Each category has its own index file with a table.
-   You MUST append a row to each relevant index for every new page you
-   created, and update the summary cell if you modified an existing page.
-
-   Columns differ by category — use these exact formats:
-
-   a. content/recall/sources/index.md
-      Table header: | Content | Summary | Date |
-      New row: | [[recall/sources/<slug>\\|<title>]] | <one-sentence summary> | ${today} |
-
-   b. content/recall/entities/index.md
-      Table header: | Content | Summary |
-      New row: | [[recall/entities/<slug>\\|<title>]] | <one-sentence summary> |
-
-   c. content/recall/concepts/index.md
-      Table header: | Content | Summary |
-      New row: | [[recall/concepts/<slug>\\|<title>]] | <one-sentence summary> |
-
-   d. content/recall/synthesis/index.md (only if you created or updated a synthesis page)
-      Table header: | Content | Summary | Date |
-      New row: | [[recall/synthesis/<slug>\\|<title>]] | <one-sentence summary> | ${today} |
-
-   Rules for all four:
-   - If the page already exists in the index, UPDATE the existing row's
-     summary if the new content materially changes it. Do NOT add a
-     duplicate row. Match rows by the wikilink target.
-   - If the page is new, APPEND the row after the last existing data row
-     (not immediately after the header — preserve chronological order for
-     the sources/synthesis tables).
-   - Use the EXACT wikilink format shown above, with the pipe escape.
-   - Keep summaries to a single sentence. If the source page already has a
-     one-sentence description in its frontmatter or body, reuse it for
-     consistency.
-
-6. Update content/index.md with the new or changed pages.
-7. Update content/learn/memory.md — add a row to the table (after the header row): | ${today} | ${isReView ? "Re-viewed" : "Cataloged"} | ${originalName} |
-
-The original document is available for download at: /static/originals/${originalName}
-Include a link to the original document in the source summary page (e.g., [Download original](/static/originals/${originalName})).
-
-IMPORTANT formatting rules:
-- Do NOT include a duplicate H1 heading in any page. The frontmatter title is rendered automatically.
-- Use wikilinks ([[path]]) aggressively to cross-reference between pages.
-- All wiki page paths use the recall/ prefix: recall/sources/, recall/entities/, recall/concepts/, recall/synthesis/.
-- Today's date is ${today}.
-- The source page path is EXACTLY ${sourcePagePath}. Do not add or strip date prefixes from this path.
-
-Write all files directly — do not ask for confirmation.`
-
-  console.log(`Calling Claude Code CLI for: ${relative(ROOT, sourcePath)}`)
+  const api = `https://api.github.com/repos/${GITHUB_REPO}`
 
   try {
-    const output = execFileSync("claude", [
-      "-p",
-      "--output-format", "text",
-      "--max-turns", "25",
-    ], {
-      input: prompt,
-      encoding: "utf-8",
-      maxBuffer: 50 * 1024 * 1024,
-      cwd: ROOT,
-      timeout: 600_000,
+    // ── Subrequest 1: current commit SHA ──────────────────────────────────
+    const refRes = await ghFetch(`${api}/git/ref/heads/${BRANCH}`, GITHUB_TOKEN)
+    if (!refRes.ok) {
+      const text = await refRes.text()
+      return Response.json(
+        { error: `Failed to read branch ref: ${refRes.status} ${text}` },
+        { status: 500 },
+      )
+    }
+    const ref: RefResponse = await refRes.json()
+    const currentCommitSha = ref.object.sha
+
+    // ── Subrequest 2: tree SHA from that commit ───────────────────────────
+    const commitRes = await ghFetch(
+      `${api}/git/commits/${currentCommitSha}`,
+      GITHUB_TOKEN,
+    )
+    if (!commitRes.ok) {
+      const text = await commitRes.text()
+      return Response.json(
+        { error: `Failed to read commit: ${commitRes.status} ${text}` },
+        { status: 500 },
+      )
+    }
+    const commit: CommitResponse = await commitRes.json()
+    const baseTreeSha = commit.tree.sha
+
+    // ── Subrequest 3: full tree (recursive) ───────────────────────────────
+    const treeRes = await ghFetch(
+      `${api}/git/trees/${baseTreeSha}?recursive=1`,
+      GITHUB_TOKEN,
+    )
+    if (!treeRes.ok) {
+      const text = await treeRes.text()
+      return Response.json(
+        { error: `Failed to read tree: ${treeRes.status} ${text}` },
+        { status: 500 },
+      )
+    }
+    const tree: TreeResponse = await treeRes.json()
+
+    if (tree.truncated) {
+      // 100k paths / 7 MB ceiling; far beyond what this wiki will ever hit.
+      // If we do hit it, pagination requires per-subtree fetches, which
+      // defeats the whole point of this rewrite.
+      return Response.json(
+        { error: "Tree response truncated — repo too large for single-shot nuke" },
+        { status: 500 },
+      )
+    }
+
+    // ── Build new-tree changeset ──────────────────────────────────────────
+    // Two kinds of entries:
+    //   - Files under WIPE_DIRS (except index.md): sha=null → delete
+    //   - Files in RESET_TEMPLATES: content=<template> → overwrite
+    //
+    // Entries NOT in this changeset are inherited from base_tree unchanged.
+
+    const changes: TreeEntry[] = []
+    let toDelete = 0
+
+    for (const entry of tree.tree) {
+      if (entry.type !== "blob") continue
+      if (!entry.path) continue
+
+      // Skip anything under a WIPE_DIR that isn't index.md
+      const inWipeDir = WIPE_DIRS.some((dir) => entry.path.startsWith(dir))
+      const isIndex = entry.path.endsWith("/index.md")
+
+      if (inWipeDir && !isIndex) {
+        // Mark for deletion (sha: null is the wire signal)
+        changes.push({
+          path: entry.path,
+          mode: entry.mode,
+          type: "blob",
+          sha: null,
+        })
+        toDelete++
+      }
+    }
+
+    // Add the 6 index-file resets as inline content
+    for (const [path, content] of Object.entries(RESET_TEMPLATES)) {
+      changes.push({
+        path,
+        mode: "100644",
+        type: "blob",
+        content,
+      })
+    }
+
+    if (changes.length === 0) {
+      return Response.json({
+        success: true,
+        deleted: 0,
+        message: "Nothing to nuke — repo already clean.",
+      })
+    }
+
+    // ── Subrequest 4: create new tree ─────────────────────────────────────
+    //
+    // JSON.stringify would drop `sha: null` if we used sha?: string | null
+    // with omitempty semantics — but we're building the object inline, so
+    // explicit `null` serializes correctly as `"sha": null`. This is what
+    // the Retool blog warns about: tree-builder libraries in other
+    // languages serialize `null` fields as missing fields.
+    const newTreeRes = await ghFetch(`${api}/git/trees`, GITHUB_TOKEN, {
+      method: "POST",
+      body: JSON.stringify({
+        base_tree: baseTreeSha,
+        tree: changes,
+      }),
     })
-
-    console.log(output)
-  } catch (err) {
-    if (err.stdout) {
-      console.log(err.stdout)
-      console.error("Claude Code stderr:", err.stderr?.slice(0, 2000))
+    if (!newTreeRes.ok) {
+      const text = await newTreeRes.text()
+      return Response.json(
+        { error: `Failed to create tree: ${newTreeRes.status} ${text}` },
+        { status: 500 },
+      )
     }
-    throw new Error(`Claude Code CLI failed: ${err.message}`)
+    const newTree: NewTreeResponse = await newTreeRes.json()
+
+    // ── Subrequest 5: create commit ───────────────────────────────────────
+    const newCommitRes = await ghFetch(`${api}/git/commits`, GITHUB_TOKEN, {
+      method: "POST",
+      body: JSON.stringify({
+        message: `nuke: wipe wiki content (${toDelete} files deleted, 5 templates reset)`,
+        tree: newTree.sha,
+        parents: [currentCommitSha],
+      }),
+    })
+    if (!newCommitRes.ok) {
+      const text = await newCommitRes.text()
+      return Response.json(
+        { error: `Failed to create commit: ${newCommitRes.status} ${text}` },
+        { status: 500 },
+      )
+    }
+    const newCommit: NewCommitResponse = await newCommitRes.json()
+
+    // ── Subrequest 6: update branch ref ───────────────────────────────────
+    const patchRes = await ghFetch(
+      `${api}/git/refs/heads/${BRANCH}`,
+      GITHUB_TOKEN,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          sha: newCommit.sha,
+          force: false,
+        }),
+      },
+    )
+    if (!patchRes.ok) {
+      const text = await patchRes.text()
+      return Response.json(
+        { error: `Failed to update branch: ${patchRes.status} ${text}` },
+        { status: 500 },
+      )
+    }
+
+    return Response.json({
+      success: true,
+      deleted: toDelete,
+      commit: newCommit.sha,
+      message: `Deleted ${toDelete} files. Reset 5 template files. New commit: ${newCommit.sha.slice(0, 7)}`,
+    })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error"
+    return Response.json({ error: message }, { status: 500 })
   }
 }
 
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
-
-function main() {
-  let filesToCatalog = []
-  const explicitPath = process.argv[2]
-
-  if (explicitPath) {
-    const fullPath = resolve(explicitPath)
-    if (!existsSync(fullPath)) {
-      console.error(`File not found: ${explicitPath}`)
-      process.exit(1)
-    }
-    filesToCatalog = [fullPath]
-  } else {
-    const uncatalogedNames = findUncatalogedAcquisitions()
-    if (uncatalogedNames.length === 0) {
-      console.log("No new acquisitions to catalog in static/originals/.")
-      process.exit(0)
-    }
-    filesToCatalog = uncatalogedNames.map((f) => join(ORIGINALS_DIR, f))
-    console.log(`Found ${filesToCatalog.length} acquisition(s) to catalog:`)
-    filesToCatalog.forEach((f) => console.log(`  - ${relative(ROOT, f)}`))
-  }
-
-  for (const filepath of filesToCatalog) {
-    console.log(`\nCataloging: ${relative(ROOT, filepath)}`)
-    catalogWithClaude(filepath)
-  }
-
-  console.log("\nCataloging complete.")
-}
-
-main()

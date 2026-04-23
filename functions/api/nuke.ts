@@ -26,12 +26,15 @@
  *   - static/originals/*                (all acquired document originals)
  *
  * What gets reset to empty templates:
- *   - content/index.md
  *   - content/learn/memory.md
  *   - content/recall/sources/index.md
  *   - content/recall/entities/index.md
  *   - content/recall/concepts/index.md
  *   - content/recall/synthesis/index.md
+ *
+ * What is preserved (NOT touched):
+ *   - content/index.md (the custom landing page)
+ *   - All scaffolding pages (application/, learn/, visualize/)
  *
  * Requires env vars:
  *   GITHUB_TOKEN — fine-grained PAT with contents:write
@@ -87,10 +90,11 @@ const WIPE_DIRS = [
 
 // Files that should be reset to empty-state templates (not deleted).
 // These anchor the UI — deleting them would 404 the navigation.
+//
+// NOTE: content/index.md is NOT in this list. It's the user's custom
+// landing page (hero image + welcome text). A fresh empty-state template
+// would destroy that design. Nuke leaves the landing page alone.
 const RESET_TEMPLATES: Record<string, string> = {
-  "content/index.md":
-    `---\ntitle: "Jack's Brain"\n---\n\nWelcome to the knowledge wiki. Use the sidebar to navigate.\n\n- **[[learn/knowledge|Knowledge]]** — Upload files and videos to catalog\n- **[[learn/memory|Memory]]** — Chronological record of cataloging activity\n- **[[recall/sources|Sources]]** — Summaries of cataloged documents\n- **[[recall/entities|Entities]]** — People, organizations, tools, systems\n- **[[recall/concepts|Concepts]]** — Ideas, theories, frameworks\n- **[[recall/synthesis|Synthesis]]** — Cross-cutting analysis\n- **[[visualize/graph-view|Graph View]]** — Interactive map of connections\n`,
-
   "content/learn/memory.md":
     `---\ntitle: "Memory"\n---\n\nPermanent record of knowledge added to the wiki, organized by date.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
 
@@ -265,7 +269,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const newCommitRes = await ghFetch(`${api}/git/commits`, GITHUB_TOKEN, {
       method: "POST",
       body: JSON.stringify({
-        message: `nuke: wipe wiki content (${toDelete} files deleted, 6 templates reset)`,
+        message: `nuke: wipe wiki content (${toDelete} files deleted, 5 templates reset)`,
         tree: newTree.sha,
         parents: [currentCommitSha],
       }),
@@ -303,13 +307,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       success: true,
       deleted: toDelete,
       commit: newCommit.sha,
-      message: `Deleted ${toDelete} files. Reset 6 template files. New commit: ${newCommit.sha.slice(0, 7)}`,
+      message: `Deleted ${toDelete} files. Reset 5 template files. New commit: ${newCommit.sha.slice(0, 7)}`,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error"
     return Response.json({ error: message }, { status: 500 })
   }
 }
-
-
 
