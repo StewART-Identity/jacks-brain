@@ -1,6 +1,7 @@
 document.addEventListener("nav", () => {
   const dropZone = document.getElementById("drop-zone")
   const fileInput = document.getElementById("file-input") as HTMLInputElement | null
+  const fileTitle = document.getElementById("file-title") as HTMLInputElement | null
   const fileStatus = document.getElementById("file-status") as HTMLElement | null
   const pasteStatus = document.getElementById("paste-status") as HTMLElement | null
   const youtubeStatus = document.getElementById("youtube-status") as HTMLElement | null
@@ -35,6 +36,11 @@ document.addEventListener("nav", () => {
   // Clear file status when user initiates a new upload
   dropZone.addEventListener("click", () => clearCardStatus(fileStatus))
   dropZone.addEventListener("dragover", () => clearCardStatus(fileStatus))
+
+  // Clear file status when user focuses the title field (new upload coming)
+  if (fileTitle) {
+    fileTitle.addEventListener("focus", () => clearCardStatus(fileStatus))
+  }
 
   // Clear paste status and fields when user clicks into them
   if (pasteInput) {
@@ -131,6 +137,28 @@ document.addEventListener("nav", () => {
     return false
   }
 
+  // Turn a user-provided title into a filename-safe slug.
+  // Mirrors the paste card's slugify logic so that titles work the same
+  // way regardless of which card the user is in.
+  function slugify(s: string): string {
+    return s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+  }
+
+  // Derive a filename from a user title and the original file's extension.
+  // If no title is given, returns null — caller falls back to file.name.
+  function filenameFromTitle(title: string, originalName: string): string | null {
+    const slug = slugify(title)
+    if (!slug) return null
+    // Preserve the original extension (".png", ".pdf", etc.)
+    const extMatch = originalName.match(/\.[^.]+$/)
+    const ext = extMatch ? extMatch[0].toLowerCase() : ""
+    const today = new Date().toISOString().slice(0, 10)
+    return `${today}-${slug}${ext}`
+  }
+
   async function uploadFile(file: File) {
     const busy = await checkActiveCatalog()
     if (busy) {
@@ -141,14 +169,27 @@ document.addEventListener("nav", () => {
       )
     }
 
-    showCardStatus(fileStatus, "Uploading " + file.name + "...", "pending")
+    // If the user filled in a title, rename the file before uploading.
+    // Empty or whitespace-only titles fall back to the original filename,
+    // which gets date-prefixed server-side (see upload.ts).
+    const title = fileTitle?.value.trim() || ""
+    const renamedName = title ? filenameFromTitle(title, file.name) : null
+    const fileToUpload = renamedName
+      ? new File([file], renamedName, { type: file.type })
+      : file
+
+    showCardStatus(fileStatus, "Uploading " + fileToUpload.name + "...", "pending")
     try {
       const formData = new FormData()
-      formData.append("file", file)
+      formData.append("file", fileToUpload)
       const response = await fetch("/api/upload", { method: "POST", body: formData })
       const data = await response.json()
       if (data.success) {
         showCardStatus(fileStatus, RETENTION_HINT, "success")
+        // Clear the title field on success so it doesn't accidentally apply
+        // to the next upload. The paste card clears on focus; the file card
+        // clears on successful completion.
+        if (fileTitle) fileTitle.value = ""
       } else {
         showCardStatus(fileStatus, "Upload failed: " + (data.error || "Unknown error"), "error")
       }

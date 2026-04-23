@@ -8,6 +8,12 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
     <div class={displayClass} id="upload-app">
       <div class="catalog-card">
         <h3 class="section-label">Upload File</h3>
+        <input
+          type="text"
+          id="file-title"
+          class="paste-title-input"
+          placeholder="Title (optional — used for filename, e.g. 'SAML vs OAuth diagram')"
+        />
         <div class="upload-zone" id="drop-zone">
           <div class="upload-icon">&#8693;</div>
           <p class="upload-label">Drop a file here</p>
