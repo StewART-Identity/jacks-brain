@@ -1,6 +1,35 @@
 #retention-app {
-  max-width: 800px;
+  max-width: 720px;
   padding-bottom: 2rem;
+}
+
+/* Retention table: let the Document column grow; fix Acquired and Status
+   to their content size. Without this, browser's default table algorithm
+   distributes width equally among columns, cramping long document names
+   while leaving the short date/status columns half-empty. */
+#retention-app table {
+  width: 100%;
+  table-layout: fixed;
+}
+#retention-app thead th:nth-child(1) {
+  /* Document — takes whatever's left */
+  width: auto;
+}
+#retention-app thead th:nth-child(2),
+#retention-app tbody td:nth-child(2) {
+  /* Acquired — fits "2026-04-23" plus padding */
+  width: 7rem;
+  white-space: nowrap;
+}
+#retention-app thead th:nth-child(3),
+#retention-app tbody td:nth-child(3) {
+  /* Status — fits the widest badge ("IN_PROGRESS") plus padding */
+  width: 8rem;
+  white-space: nowrap;
+}
+#retention-app tbody td:nth-child(1) {
+  /* Document name can be long — allow wrapping and break on hyphens */
+  overflow-wrap: anywhere;
 }
 
 .recent-runs {

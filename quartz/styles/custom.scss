@@ -783,6 +783,34 @@ body[data-slug="index"] .center > article {
 
 
 /* ==========================================================================
+   Memory page — size table columns for "Date | Action | Details" pattern
+   Without this, equal-width columns cramp the Details column while leaving
+   the short Date and Action columns half-empty.
+   ========================================================================== */
+
+body[data-slug="learn/memory"] .table-container > table {
+  table-layout: fixed;
+  width: 100%;
+}
+body[data-slug="learn/memory"] .table-container > table th:nth-child(1),
+body[data-slug="learn/memory"] .table-container > table td:nth-child(1) {
+  /* Date — YYYY-MM-DD */
+  width: 7rem;
+  white-space: nowrap;
+}
+body[data-slug="learn/memory"] .table-container > table th:nth-child(2),
+body[data-slug="learn/memory"] .table-container > table td:nth-child(2) {
+  /* Action — "Cataloged", "Re-viewed" */
+  width: 8rem;
+  white-space: nowrap;
+}
+body[data-slug="learn/memory"] .table-container > table td:nth-child(3) {
+  /* Details — filenames, allow wrapping on long names */
+  overflow-wrap: anywhere;
+}
+
+
+/* ==========================================================================
    Selection highlight
    ========================================================================== */
 
