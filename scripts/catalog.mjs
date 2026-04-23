@@ -239,6 +239,10 @@ Read the following files to understand the wiki structure and current state:
 1. CLAUDE.md — the wiki schema and conventions
 2. content/index.md — the current wiki index
 3. content/learn/memory.md — the current memory/log
+4. content/recall/sources/index.md — the sources listing
+5. content/recall/entities/index.md — the entities listing
+6. content/recall/concepts/index.md — the concepts listing
+7. content/recall/synthesis/index.md — the synthesis listing
 
 ${sourceInstruction}
 
@@ -249,11 +253,47 @@ Follow the "Catalog" workflow from CLAUDE.md:
 2. Create or update entity pages in content/recall/entities/ for significant entities mentioned. Always prefer updating over duplicating.
 3. Create or update concept pages in content/recall/concepts/ for significant concepts. Always prefer updating over duplicating.
 4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/recall/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents.
-5. Update content/index.md with the new or changed pages.
-6. Update content/learn/memory.md — add a row to the table (after the header row): | ${today} | ${isReView ? "Re-viewed" : "Cataloged"} | ${originalName} |
 
-The original document is available for download at: /originals/${originalName}
-Include a link to the original document in the source summary page (e.g., [Download original](/originals/${originalName})).
+5. Update the four category index pages to list any pages you created or
+   updated in this run. Each category has its own index file with a table.
+   You MUST append a row to each relevant index for every new page you
+   created, and update the summary cell if you modified an existing page.
+
+   Columns differ by category — use these exact formats:
+
+   a. content/recall/sources/index.md
+      Table header: | Content | Summary | Date |
+      New row: | [[recall/sources/<slug>\\|<title>]] | <one-sentence summary> | ${today} |
+
+   b. content/recall/entities/index.md
+      Table header: | Content | Summary |
+      New row: | [[recall/entities/<slug>\\|<title>]] | <one-sentence summary> |
+
+   c. content/recall/concepts/index.md
+      Table header: | Content | Summary |
+      New row: | [[recall/concepts/<slug>\\|<title>]] | <one-sentence summary> |
+
+   d. content/recall/synthesis/index.md (only if you created or updated a synthesis page)
+      Table header: | Content | Summary | Date |
+      New row: | [[recall/synthesis/<slug>\\|<title>]] | <one-sentence summary> | ${today} |
+
+   Rules for all four:
+   - If the page already exists in the index, UPDATE the existing row's
+     summary if the new content materially changes it. Do NOT add a
+     duplicate row. Match rows by the wikilink target.
+   - If the page is new, APPEND the row after the last existing data row
+     (not immediately after the header — preserve chronological order for
+     the sources/synthesis tables).
+   - Use the EXACT wikilink format shown above, with the pipe escape.
+   - Keep summaries to a single sentence. If the source page already has a
+     one-sentence description in its frontmatter or body, reuse it for
+     consistency.
+
+6. Update content/index.md with the new or changed pages.
+7. Update content/learn/memory.md — add a row to the table (after the header row): | ${today} | ${isReView ? "Re-viewed" : "Cataloged"} | ${originalName} |
+
+The original document is available for download at: /static/originals/${originalName}
+Include a link to the original document in the source summary page (e.g., [Download original](/static/originals/${originalName})).
 
 IMPORTANT formatting rules:
 - Do NOT include a duplicate H1 heading in any page. The frontmatter title is rendered automatically.
