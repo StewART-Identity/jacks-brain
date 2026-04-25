@@ -19,19 +19,18 @@
  * every file change into one POST, so this scales to any repo size.
  *
  * What gets deleted:
- *   - content/recall/sources/*.md       (except index.md)
- *   - content/recall/entities/*.md      (except index.md)
- *   - content/recall/concepts/*.md      (except index.md)
- *   - content/recall/synthesis/*.md     (except index.md)
+ *   - content/collection/sources/*.md       (except index.md)
+ *   - content/collection/entities/*.md      (except index.md)
+ *   - content/collection/concepts/*.md      (except index.md)
+ *   - content/collection/synthesis/*.md     (except index.md)
  *   - static/originals/*                (all acquired document originals)
  *
  * What gets reset to empty templates:
- *   - data/retention-log.md             (the audit log — keep file, empty table)
- *   - content/learn/retention.md        (the page intro — keep file, no table)
- *   - content/recall/sources/index.md
- *   - content/recall/entities/index.md
- *   - content/recall/concepts/index.md
- *   - content/recall/synthesis/index.md
+ *   - content/learn/memory.md
+ *   - content/collection/sources/index.md
+ *   - content/collection/entities/index.md
+ *   - content/collection/concepts/index.md
+ *   - content/collection/synthesis/index.md
  *
  * What is preserved (NOT touched):
  *   - content/index.md (the custom landing page)
@@ -82,10 +81,10 @@ const BRANCH = "main"
 // Directories whose contents (except index.md) should be wiped clean.
 // These are the "content" directories cataloging writes to.
 const WIPE_DIRS = [
-  "content/recall/sources/",
-  "content/recall/entities/",
-  "content/recall/concepts/",
-  "content/recall/synthesis/",
+  "content/collection/sources/",
+  "content/collection/entities/",
+  "content/collection/concepts/",
+  "content/collection/synthesis/",
   "static/originals/",
 ]
 
@@ -97,21 +96,18 @@ const WIPE_DIRS = [
 // would destroy that design. Nuke leaves the landing page alone.
 const RESET_TEMPLATES: Record<string, string> = {
   "content/learn/retention.md":
-    `---\ntitle: "Retention"\n---\n\nPermanent record of every document retained in the wiki. Click a title to rename it — the underlying filename is preserved.\n`,
+    `---\ntitle: "Retention"\n---\n\nPermanent record of every document retained in the wiki. Click a title to rename it — the underlying filename is preserved.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
 
-  "data/retention-log.md":
-    `# Retention Log\n\nAudit log of all cataloging operations. Read by /api/retention; rendered by the RetentionList component on /learn/retention. Do not delete this file — nuke resets it to an empty table instead.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
-
-  "content/recall/sources/index.md":
+  "content/collection/sources/index.md":
     `---\ntitle: "Sources"\n---\n\nAcquired documents and their cataloging status. Click a filename to download the original.\n\n| Content | Summary | Date |\n|---------|---------|------|\n`,
 
-  "content/recall/entities/index.md":
+  "content/collection/entities/index.md":
     `---\ntitle: "Entities"\n---\n\nPeople, organizations, tools, and systems referenced across sources.\n\n| Content | Summary |\n|---------|--------|\n`,
 
-  "content/recall/concepts/index.md":
+  "content/collection/concepts/index.md":
     `---\ntitle: "Concepts"\n---\n\nIdeas, theories, frameworks, and principles extracted from sources.\n\n| Content | Summary |\n|---------|--------|\n`,
 
-  "content/recall/synthesis/index.md":
+  "content/collection/synthesis/index.md":
     `---\ntitle: "Synthesis"\n---\n\nCross-cutting analysis, comparisons, and theses drawn from multiple sources.\n\n| Content | Summary | Date |\n|---------|---------|------|\n`,
 }
 
