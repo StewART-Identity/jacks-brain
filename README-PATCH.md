@@ -1,100 +1,76 @@
-# Jack's Brain — Selection + Collection Rename Patch
+# Jack's Brain — Consolidated Retention Fix (Re-push)
 
-Renames the sidebar vocabulary to match library-science conventions:
+## The situation
 
-- **`learn/knowledge`** → **`learn/selection`** (the act of selecting a
-  source to add to the collection)
-- **Study section / `recall/`** → **Collection section / `collection/`**
-  (the noun describing what the library holds)
+The earlier retention-fix patch only partially applied to the repo:
 
-After this patch, the Learn sidebar reads as a complete collection-
-development lifecycle: **Research → Selection → Acquisition → Retention.**
+- ✅ **Content files landed**: `content/learn/retention.md` was stripped
+  of its audit table; `data/retention-log.md` was created with the
+  IMG_2369 row.
+- ❌ **Code files did not land**: the Pages Functions still read the old
+  path (`content/learn/retention.md`), still use the broken date-
+  stripping slug derivation. `scripts/catalog.mjs` still writes audit
+  rows to the old location.
 
-## What changed
+Result: the audit log data exists at the correct new location, but the
+code doesn't know to look there. It reads the now-table-less Retention
+page, finds no rows, and shows "No documents retained yet."
 
-### Renamed (full filesystem move)
+## What this re-push does
 
-- `content/learn/knowledge.md` → `content/learn/selection.md`
-- `content/recall/**` (10 files) copied to `content/collection/**` with
-  all internal `[[recall/...]]` wikilinks rewritten to `[[collection/...]]`
+Re-applies the four code-file changes from the retention-fix patch on
+top of the current repo state (which includes the recent Collection
+rename). Net effect after this lands:
 
-### Updated
-
-- `quartz.layout.ts` — sidebar title/slug for both renames
-- `CLAUDE.md` — directory-structure block, all `content/recall/` path
-  refs, every `[[recall/...]]` wikilink in example blocks
-- `scripts/catalog.mjs` — prompt text and path construction for source/
-  entity/concept/synthesis pages
-- `functions/api/*.ts` (5 files: nuke, source, retention, originals,
-  status) — every `content/recall/` path reference
-- `content/application/help.md` — Learn section rewritten (now shows all
-  four lifecycle pages), Study→Collection heading, all wikilinks
-- `README.md`, `PACKAGING_NOTES.md` — root-level path references
+- `functions/api/retention.ts` — reads `data/retention-log.md`; slug
+  derivation preserves date prefix so it matches source page filenames
+- `functions/api/originals.ts` — same slug fix
+- `functions/api/nuke.ts` — `RESET_TEMPLATES` now has entries for both
+  the page body (intro only) and the data file (empty audit table);
+  stale comment reference to `memory.md` updated
+- `scripts/catalog.mjs` — writes audit rows to `data/retention-log.md`
 
 ## How to apply
 
 Drop through the Bridge:
-
-- **Strip prefix:** `jbpatch-collection/`
+- **Strip prefix:** `jbpatch-consolidated/`
 - **Target repo:** `StewART-Identity/jacks-brain`
 - **Branch:** `main`
 
-One commit, all files atomic.
+Four files, one commit.
 
-Suggested commit message:
+Commit message suggestion:
 
 ```
-Rename Knowledge → Selection and Study/recall → Collection
+Actually land the retention-log relocation and slug fix
 ```
 
-## REQUIRED CLEANUP after deploy
+## After deploy
 
-The Bridge can only add or overwrite files — it can't delete. After this
-patch lands and the build succeeds, the OLD files/directories will still
-exist in the repo alongside the new ones. The sidebar won't show them
-(layout.ts only references the new paths), but they'll remain browsable
-at their old URLs and leak into search.
+Refresh `/learn/retention`. You should see:
 
-### Cleanup checklist (do after deploy succeeds)
+- The IMG_2369 row populated with title "SAML vs. OAuth Diagram"
+- Filename in the Document column (read-only, monospace)
+- Title clickable for inline rename
 
-Via GitHub web UI, delete these files/directories:
+## Unrelated cleanup still pending
 
-- [ ] `content/learn/knowledge.md` (the old upload page)
-- [ ] Entire `content/recall/` directory and all its contents:
-  - [ ] `content/recall/index.md`
-  - [ ] `content/recall/sources/index.md`
-  - [ ] `content/recall/sources/2026-04-23-img-2369.md`
-  - [ ] `content/recall/entities/index.md`
-  - [ ] `content/recall/entities/active-directory.md`
-  - [ ] `content/recall/concepts/index.md`
-  - [ ] `content/recall/concepts/oauth.md`
-  - [ ] `content/recall/concepts/saml.md`
-  - [ ] `content/recall/synthesis/index.md`
-  - [ ] `content/recall/synthesis/saml-vs-oauth.md`
+Still sitting in the repo as orphan files from earlier renames — none
+breaking anything but bloating the repo:
 
-Fastest path: open each file in GitHub web UI, trash can, "Delete file",
-commit. Alternatively, `git rm -r content/recall/` in a local clone.
+- `content/learn/memory.md` — carryover from the Memory → Retention
+  rename way back; should have been deleted then
+- `quartz/components/Retention.tsx` — orphaned old component
+- `quartz/components/scripts/retention.inline.ts`
+- `quartz/components/styles/retention.scss`
 
-Also carryover from earlier patches (never cleaned up):
-- [ ] `quartz/components/Retention.tsx` (orphaned component)
-- [ ] `quartz/components/scripts/retention.inline.ts`
-- [ ] `quartz/components/styles/retention.scss`
+Delete via GitHub web UI at your convenience.
 
-## What you should see after deploy + cleanup
+## Why this happened
 
-Sidebar:
-
-- **Learn** — Research, Selection, Acquisition, Retention
-- **Collection** — Sources, Entities, Concepts, Synthesis, Search
-- **Visualize** — Graph View
-
-URLs:
-
-- `/learn/selection` loads the upload form
-- `/collection/sources` loads the Sources index
-- `/collection/concepts/oauth` loads the OAuth concept page
-- `/collection/synthesis/saml-vs-oauth` loads the synthesis page
-
-Existing wikilinks in the new collection pages should all resolve
-(they were rewritten during the copy). The Graph view should also
-update to show the new paths.
+The Bridge silently skipped some files on the previous retention-fix
+push. We didn't verify each file post-deploy, so the partial application
+went unnoticed until you opened the Retention page and saw it empty.
+Lesson for the future: after any multi-file Bridge push, explicitly
+verify each target file's contents match what was in the zip before
+calling the deploy done.
