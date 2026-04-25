@@ -20,7 +20,7 @@ document.addEventListener("nav", () => {
 
       if (data.documents && data.documents.length > 0) {
         runsList.innerHTML =
-          `<div class="table-container"><table>
+          `<div class="table-container jb-table"><table>
             <thead><tr><th>Document</th><th>Acquired</th><th>Status</th></tr></thead>
             <tbody>` +
           data.documents
