@@ -70,7 +70,7 @@ document.addEventListener("nav", () => {
       return 0
     })
 
-    container.innerHTML = '<div class="table-container"><table>' +
+    container.innerHTML = '<div class="table-container jb-table"><table>' +
       '<thead><tr>' +
       '<th class="sortable" data-sort="date">Date' + arrow("date") + '</th>' +
       '<th class="sortable" data-sort="action">Action' + arrow("action") + '</th>' +
@@ -221,23 +221,10 @@ RetentionList.css = `
   padding-bottom: 2rem;
 }
 
-/* Inherit Quartz base table styles from .table-container; only override
-   what's specific to the Retention table: column widths, the inline-edit
-   interaction states, and the missing-source dash. */
-
-#retention-list-app .table-container {
-  overflow-x: visible;
-}
-#retention-list-app .table-container > table {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  table-layout: fixed;
-}
-#retention-list-app .table-container > table th,
-#retention-list-app .table-container > table td {
-  min-width: 0;
-}
+/* Retention table: column widths and inline-edit interaction states.
+   The unified table look (header band, alternating rows, cell borders,
+   flush-left) comes from quartz/styles/jbtable.scss via the .jb-table
+   class on the wrapping <div>. */
 
 /* Date — fits "2026-04-23" plus padding */
 #retention-list-app thead th:nth-child(1),
