@@ -1,0 +1,141 @@
+#acquisition-app {
+  max-width: 720px;
+  padding-bottom: 2rem;
+}
+
+/* Retention table: let the Document column grow; fix Acquired and Status
+   to their content size. Without this, browser's default table algorithm
+   distributes width equally among columns, cramping long document names
+   while leaving the short date/status columns half-empty. */
+
+/* Override Quartz's default .table-container styling for this page.
+   Base.scss applies 1rem margin + 1.5rem padding + min-width:75px to
+   every table cell, which (combined with table-layout:fixed) forces
+   our table wider than the container and triggers a horizontal scrollbar. */
+#acquisition-app .table-container {
+  overflow-x: visible; /* no horizontal scroll */
+}
+#acquisition-app .table-container > table {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  table-layout: fixed;
+}
+#acquisition-app .table-container > table th,
+#acquisition-app .table-container > table td {
+  min-width: 0; /* cancel the default min-width:75px */
+}
+#acquisition-app thead th:nth-child(1) {
+  /* Document — takes whatever's left */
+  width: auto;
+}
+#acquisition-app thead th:nth-child(2),
+#acquisition-app tbody td:nth-child(2) {
+  /* Acquired — fits "2026-04-23" plus padding */
+  width: 7rem;
+  white-space: nowrap;
+}
+#acquisition-app thead th:nth-child(3),
+#acquisition-app tbody td:nth-child(3) {
+  /* Status — fits the widest badge ("IN_PROGRESS") plus padding */
+  width: 8rem;
+  white-space: nowrap;
+}
+#acquisition-app tbody td:nth-child(1) {
+  /* Document name can be long — allow wrapping and break on hyphens */
+  overflow-wrap: anywhere;
+}
+
+.recent-runs {
+  margin-top: 0;
+}
+.recent-runs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.recent-runs-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.recent-runs-actions {
+  display: flex;
+  gap: 0.3rem;
+}
+.runs-action-btn {
+  background: transparent;
+  border: 1px solid var(--lightgray);
+  border-radius: 6px;
+  color: var(--gray);
+  font-size: 1rem;
+  padding: 0.1rem 0.5rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  line-height: 1;
+}
+.runs-action-btn:hover {
+  opacity: 0.7;
+}
+.run-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.run-badge.cataloged {
+  background: #ebf5ee;
+  color: #2b5e3e;
+}
+.run-badge.success {
+  background: #ebf5ee;
+  color: #2b5e3e;
+}
+.run-badge.failed {
+  background: #f9eded;
+  color: #6b2020;
+}
+.run-badge.failure {
+  background: #f9eded;
+  color: #6b2020;
+}
+.run-badge.in_progress {
+  background: #fbf4e4;
+  color: #6b4d1a;
+}
+.run-badge.queued {
+  background: #eef1f6;
+  color: #2e3d55;
+}
+
+:root[saved-theme="dark"] .run-badge.cataloged {
+  background: #1b3f29;
+  color: #7bbf95;
+}
+:root[saved-theme="dark"] .run-badge.success {
+  background: #1b3f29;
+  color: #7bbf95;
+}
+:root[saved-theme="dark"] .run-badge.failed {
+  background: #6b2020;
+  color: #c46b6b;
+}
+:root[saved-theme="dark"] .run-badge.failure {
+  background: #6b2020;
+  color: #c46b6b;
+}
+:root[saved-theme="dark"] .run-badge.in_progress {
+  background: #6b4d1a;
+  color: #d4ad5a;
+}
+:root[saved-theme="dark"] .run-badge.queued {
+  background: #2e3d55;
+  color: #7b8fad;
+}
+
+#acquisition-app .muted {
+  color: var(--gray);
+  font-style: italic;
+}
