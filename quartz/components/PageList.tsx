@@ -198,6 +198,7 @@ PageList.css = `
 
 .collection-table.table-container {
   margin: 1rem 0;
+  padding: 0;
   overflow-x: visible;
   overflow-y: visible;
 }
@@ -220,13 +221,6 @@ PageList.css = `
   overflow-wrap: break-word;
   border: 1px solid var(--gray);
   background-color: var(--light);
-}
-
-/* First column has no left padding so its content aligns with the
-   page title above. */
-.collection-table th:first-child,
-.collection-table td:first-child {
-  padding-left: 0;
 }
 
 .collection-table th {
@@ -255,7 +249,6 @@ PageList.css = `
 .collection-table td.col-title {
   width: 18%;
   font-weight: 500;
-  padding-right: 1rem;
 }
 .collection-table th.col-summary,
 .collection-table td.col-summary {
@@ -269,7 +262,6 @@ PageList.css = `
 .collection-table td.col-date {
   width: 15%;
   white-space: nowrap;
-  padding-left: 1rem;
 }
 
 /* When Date column is absent (Concepts & Entities), redistribute the
