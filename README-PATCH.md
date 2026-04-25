@@ -1,54 +1,76 @@
-# Jack's Brain — Search card visual parity (real fix)
+# Jack's Brain — Code review fixes
 
-The previous Search card had two visible problems:
-1. The Search button was stretched across the full row.
-2. Layout didn't match the Research card.
+Three fixes from the earlier code review:
 
-## Root cause
+## 1. SourcesList — complete HTML escaping (security)
 
-I had put `class="search-button"` on the visible Search button so the
-search engine could find it. But that class is heavily styled in
-`search.scss` for the **sidebar's compact modal trigger** —
-specifically `.search .search-button { width: 100%; height: 2rem;
-border-radius: 4px; ... }`. Those styles leaked onto my visible
-button and overrode (or merged with) my Research-style button rules,
-giving it the wrong width, height, and border radius.
+Previously only the filename was HTML-escaped. The download URL and
+acquired date were interpolated raw, which would break the page if the
+API ever returned data containing HTML-significant characters (`<`,
+`"`, `&`) and would have been an XSS vector if anything could
+influence the API response.
 
-## Fix
+**Fix:** Added an `esc()` helper covering all five HTML-significant
+characters and a `safeUrl()` helper that rejects non-navigable schemes
+(`javascript:`, `data:`, etc.). Filenames go through `esc()`, dates go
+through `esc()`, and download URLs go through `safeUrl()` which
+returns "#" for anything that isn't `/...`, `http://...`, or
+`https://...`.
 
-Architectural separation. The DOM now has TWO buttons:
+## 2. SearchPage — eliminate count-cap flicker (correctness)
 
-1. A **hidden** `<button class="search-button">` that exists solely
-   so the engine's `setupSearch` lookup succeeds. It's
-   visually-hidden via the standard 1px / clip-rect technique. The
-   engine binds its handlers to it, but it's never seen or focused.
+Previously the "Number of results" cap used a JS MutationObserver that
+re-applied `display: none` to surplus result cards after the engine
+appended them. On slow hardware there was a brief window where cards
+6–8 could flash visible before being hidden.
 
-2. A **visible** `<button class="search-page-btn">` with NO
-   engine-relevant classes. The sidebar's `.search-button` CSS
-   doesn't match it, so it gets only the styles I write — which are
-   exact copies of `.research-btn`.
+**Fix:** Replaced the JS hide-step with CSS-attribute-driven cap. The
+count input now writes `data-cap="N"` to the `.search-layout`
+container, and CSS rules of the form
 
-## What it should look like
+```css
+.search-layout[data-cap="5"] .result-card:nth-of-type(n+6) {
+  display: none;
+}
+```
 
-Identical to the Research card, with two differences:
+handle the hide synchronously at render time. No JavaScript runs
+between "engine appends card" and "card is invisible," so there's no
+window for a flash. Bonus: the script is simpler — the
+MutationObserver is gone.
 
-- 2-row textarea instead of 4 (search queries are short)
-- Controls row: "Number of results" + count input on the left;
-  "Search" button on the right. No "Rank with Claude" toggle.
+The `.no-match` empty-state card is explicitly exempted from the cap
+(it's a single card the engine emits when nothing matches; hiding it
+would just leave a blank box).
+
+## 3. PageList — explicit numeric date sort (defensive)
+
+Previously the date sort used `if (av < bv)` against ISO 8601
+timestamp strings. This works because ISO 8601 is fixed-width and
+lexicographically aligned with chronology — but the correctness was
+incidental to the format, not enforced by the code.
+
+**Fix:** When `sortKey === "date"`, parse both values with
+`Date.parse()` and compare numerically. Title sorts still use the
+plain string compare. The behavior is identical for current data;
+the change just makes the date sort robust against any future
+change to the timestamp format.
 
 ## Files in this patch
 
 ```
-quartz/components/SearchPage.tsx          (replaced — hidden button + visible button architecture)
-quartz/components/styles/searchPage.scss  (replaced — hides engine button, mirrors .research-btn)
+quartz/components/SourcesList.tsx          (replaced — esc + safeUrl)
+quartz/components/SearchPage.tsx           (replaced — CSS-driven cap, observer removed)
+quartz/components/styles/searchPage.scss   (replaced — data-cap rules added)
+quartz/components/PageList.tsx             (replaced — numeric date compare)
 ```
 
-Two files. No deletes.
+Four files. No deletes.
 
 ## Apply
 
 Bridge:
-- **Strip prefix:** `jbpatch-search-card-fix2/`
+- **Strip prefix:** `jbpatch-review-fixes/`
 - **Target repo:** `StewART-Identity/jacks-brain`
 - **Branch:** `main`
 - **Commit message:** `ms2555 04/25/2026`
