@@ -1,5 +1,6 @@
 ---
 title: "SAML vs. OAuth — Comparison"
+summary: "Comparison of SAML (authentication) and OAuth (authorization) — what each solves, where they overlap, common confusion."
 type: synthesis
 created: 2026-04-23
 updated: 2026-04-23
