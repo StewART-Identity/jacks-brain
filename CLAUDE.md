@@ -7,15 +7,20 @@ conventions, and workflows you follow. Read it at the start of every session.
 
 ```
 content/                # The wiki — you own this layer entirely
-  index.md              # Master catalog of all pages (you maintain this)
+  index.md              # Welcome page (custom landing — do not turn into a catalog)
   learn/
-    knowledge.md        # Upload / acquisition page
-    memory.md           # Chronological record of operations
+    knowledge.md        # Upload form
+    acquisition.md      # Live status of the cataloging pipeline
+    retention.md        # Chronological audit log of cataloged documents
   recall/
     sources/            # One summary page per cataloged source
+      index.md          # Sources catalog (auto-rendered, do maintain rows here)
     entities/           # People, organizations, tools, systems
+      index.md          # Entities catalog
     concepts/           # Ideas, theories, frameworks, principles
+      index.md          # Concepts catalog
     synthesis/          # Cross-cutting analysis, comparisons, theses
+      index.md          # Synthesis catalog
 static/originals/       # Immutable source documents — never modify these
 CLAUDE.md               # This file — read-only during operations
 ```
@@ -118,8 +123,9 @@ the human performs before cataloging.)
    `content/recall/concepts/`.
 7. If the source connects to or contrasts with existing wiki content,
    create or update a synthesis page in `content/recall/synthesis/`.
-8. Update `content/index.md` with new or changed pages.
-9. Append an entry to `content/learn/memory.md` marking this as
+8. Update the relevant per-category index files (`content/recall/sources/index.md`,
+   `entities/index.md`, etc.) with new or changed rows.
+9. Append an entry to `content/learn/retention.md` marking this as
    "Cataloged" (initial) or "Re-viewed" (subsequent).
 10. Report what you created and updated.
 
@@ -130,7 +136,8 @@ cross-references matters more than speed.
 
 Trigger: user asks a question about the wiki's domain.
 
-1. Read `content/index.md` to find relevant pages.
+1. Read the relevant per-category index file(s) to find pages
+   (`content/recall/sources/index.md`, `recall/concepts/index.md`, etc.).
 2. Read those pages.
 3. Synthesize an answer with `[[wikilinks]]` to supporting pages.
 4. If the answer is substantial and reusable, offer to file it as a new
@@ -148,61 +155,50 @@ Check for and report:
 - Missing cross-references
 - Broken wikilinks
 - Pages missing required frontmatter fields
-- `index.md` out of sync with actual pages
+- Per-category index files out of sync with actual pages
 
 Suggest fixes. Ask before applying them.
 
-## Index format
+## Per-category index format
 
-`content/index.md` is a categorized catalog:
+Each `recall/<category>/index.md` is a flat table of the pages in that
+category. The wiki has no top-level master catalog; per-category indexes
+are authoritative. `content/index.md` is a hand-styled welcome page and
+should not be turned into a catalog.
 
 ```markdown
 ---
-title: "Wiki Index"
+title: "Sources"
 ---
 
-# Wiki Index
+Acquired documents and their cataloging status.
 
-## Sources
-| Page | Summary | Date |
-|------|---------|------|
+| Content | Summary | Date |
+|---------|---------|------|
 | [[recall/sources/2026-04-14-example]] | Brief description | 2026-04-14 |
-
-## Entities
-| Page | Summary |
-|------|---------|
-| [[recall/entities/example-entity]] | One-line description |
-
-## Concepts
-| Page | Summary |
-|------|---------|
-| [[recall/concepts/example-concept]] | One-line description |
-
-## Synthesis
-| Page | Summary | Date |
-|------|---------|------|
-| [[recall/synthesis/example-analysis]] | One-line description | 2026-04-14 |
 ```
 
-## Log format
+(Entities and Concepts indexes have two columns; Sources and Synthesis
+have three including the date.)
 
-`content/log.md` is append-only, newest first:
+## Retention log format
+
+`content/learn/retention.md` is the chronological audit log of cataloging
+operations. It's a markdown table read by the `/api/retention` endpoint
+and rendered by the RetentionList component, where titles can be
+inline-edited (the underlying filename is preserved).
 
 ```markdown
-## [2026-04-14] catalog | Source Title
-- Created: recall/sources/2026-04-14-source-title.md
-- Created: recall/entities/new-entity.md
-- Updated: recall/concepts/existing-concept.md (added section on X)
-- Updated: index.md
-
-## [2026-04-14] query | What is the relationship between X and Y?
-- Filed as: recall/synthesis/x-and-y-relationship.md
-
-## [2026-04-14] lint
-- Found 2 orphan pages
-- Fixed 3 broken wikilinks
-- Suggested 1 new concept page
+| Date | Action | Details |
+|------|--------|---------|
+| 2026-04-14 | Cataloged | 2026-04-14-source-title.png |
+| 2026-04-15 | Re-viewed | 2026-04-14-source-title.png |
 ```
+
+Action values:
+- `Cataloged` — first catalog of an acquisition
+- `Re-viewed` — subsequent re-catalog (updates the source page in place)
+- `Renamed` — title-only change via inline edit on the Retention page
 
 ## Principles
 
