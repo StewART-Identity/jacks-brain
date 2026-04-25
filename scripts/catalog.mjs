@@ -238,7 +238,7 @@ Frontmatter must include (in addition to the standard fields):
 Read the following files to understand the wiki structure and current state:
 1. CLAUDE.md — the wiki schema and conventions
 2. content/index.md — the current wiki index
-3. content/learn/retention.md — the current retention log
+3. data/retention-log.md — the current retention log (audit table, NOT a Quartz page)
 
 ${sourceInstruction}
 
@@ -250,7 +250,7 @@ Follow the "Catalog" workflow from CLAUDE.md:
 3. Create or update concept pages in content/collection/concepts/ for significant concepts. Always prefer updating over duplicating.
 4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/collection/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents.
 5. Update content/index.md with the new or changed pages.
-6. Update content/learn/retention.md — add a row to the table (after the header row): | ${today} | ${isReView ? "Re-viewed" : "Cataloged"} | ${originalName} |
+6. Update data/retention-log.md — add a row to the table (after the header row): | ${today} | ${isReView ? "Re-viewed" : "Cataloged"} | ${originalName} |
 
 The original document is available for download at: /originals/${originalName}
 Include a link to the original document in the source summary page (e.g., [Download original](/originals/${originalName})).
