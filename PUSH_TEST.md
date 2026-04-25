@@ -1,5 +1,3 @@
-# Push test
+# Push test (updated)
 
-Testing a fresh write — em-dash should survive, ellipsis too…
-
-This file will be deleted shortly.
+Updated content — verifying the update branch returns the right message.
