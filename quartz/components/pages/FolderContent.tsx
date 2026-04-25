@@ -122,5 +122,12 @@ export default ((opts?: Partial<FolderContentOptions>) => {
   }
 
   FolderContent.css = concatenateResources(style, PageList.css)
+  // Propagate PageList's client-side sort behavior. Quartz's component
+  // resource collector only enumerates components returned from each
+  // emitter's getQuartzComponents() — and folder pages register
+  // FolderContent there, not the inner PageList. Without this line the
+  // sort script is built into PageList.afterDOMLoaded but never reaches
+  // any compiled output, so clicking a sortable header does nothing.
+  FolderContent.afterDOMLoaded = PageList.afterDOMLoaded
   return FolderContent
 }) satisfies QuartzComponentConstructor
