@@ -5,9 +5,9 @@
  * entry including the original filename, a download URL pointing at the
  * repo's raw content, the date it was acquired (last commit touching the
  * file), and a flag indicating whether a corresponding source page exists
- * in content/recall/sources/ (i.e. whether it has been cataloged yet).
+ * in content/collection/sources/ (i.e. whether it has been cataloged yet).
  *
- * Backs the SourcesList component on /recall/sources/.
+ * Backs the SourcesList component on /collection/sources/.
  *
  * Response shape:
  *   { files: [
@@ -46,15 +46,15 @@ interface OriginalFile {
 
 const BRANCH = "main"
 const ORIGINALS_DIR = "static/originals"
-const SOURCES_DIR = "content/recall/sources"
+const SOURCES_DIR = "content/collection/sources"
 
-// Source pages preserve their date prefix in the filename (e.g.
-// "2026-04-23-img-2369.md"), so the slug we compute from the original
-// filename should also keep it. This is the canonical derivation: lowercase
-// the stem, collapse non-alphanumerics to hyphens, trim trailing hyphens.
+// Mirror of the slug derivation used elsewhere — strips date prefixes so
+// the same underlying source matches between static/originals and
+// content/collection/sources regardless of date prefixing differences.
 function deriveSlug(filename: string): string {
   const stem = filename.replace(/\.[^.]+$/, "").toLowerCase()
-  return stem.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+  const slug = stem.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+  return slug.replace(/^(\d{4}-\d{2}-\d{2}-)+/, "")
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -96,7 +96,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     (e) => e.type === "file" && e.name !== ".gitkeep" && e.download_url,
   )
 
-  // 2. List content/recall/sources/ to know which originals have been cataloged.
+  // 2. List content/collection/sources/ to know which originals have been cataloged.
   const cataloguedSlugs = new Set<string>()
   const sourcesRes = await fetch(
     `${api}/contents/${SOURCES_DIR}?ref=${BRANCH}`,
