@@ -59,9 +59,9 @@ The codebase will be fully consistent on "catalog" vocabulary, except
 for content files that are getting nuked anyway:
 
 - `content/learn/memory.md` (log entries)
-- `content/recall/concepts/neuron-metaphor.md`
-- 7 source pages under `content/recall/sources/`
-- `content/recall/sources/index.md`
+- `content/collection/concepts/neuron-metaphor.md`
+- 7 source pages under `content/collection/sources/`
+- `content/collection/sources/index.md`
 
 These were intentionally skipped per your "this is fodder, I'll nuke it"
 instruction.
