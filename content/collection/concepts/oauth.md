@@ -1,5 +1,6 @@
 ---
 title: "OAuth"
+summary: "Open standard for delegated access — letting an app access a user's data without their password."
 type: concept
 created: 2026-04-23
 updated: 2026-04-23
