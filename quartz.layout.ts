@@ -9,7 +9,7 @@ export const sharedPageComponents: SharedLayout = {
     Component.Hamburger(),
     Component.ConditionalRender({
       component: Component.UploadZone(),
-      condition: (page) => page.fileData.slug === "learn/knowledge",
+      condition: (page) => page.fileData.slug === "learn/selection",
     }),
     Component.ConditionalRender({
       component: Component.FullGraph(),
@@ -17,7 +17,7 @@ export const sharedPageComponents: SharedLayout = {
     }),
     Component.ConditionalRender({
       component: Component.SourcesList(),
-      condition: (page) => page.fileData.slug === "recall/sources",
+      condition: (page) => page.fileData.slug === "collection/sources",
     }),
     Component.ConditionalRender({
       component: Component.NukeButton(),
@@ -60,20 +60,20 @@ const sidebarLeft = [
     defaultState: "open",
     links: [
       { title: "Research", slug: "learn/research" },
-      { title: "Knowledge", slug: "learn/knowledge" },
+      { title: "Selection", slug: "learn/selection" },
       { title: "Acquisition", slug: "learn/acquisition" },
       { title: "Retention", slug: "learn/retention" },
     ],
   }),
   Component.SidebarLink({
-    title: "Study",
-    slug: "recall",
+    title: "Collection",
+    slug: "collection",
     defaultState: "open",
     links: [
-      { title: "Sources", slug: "recall/sources" },
-      { title: "Entities", slug: "recall/entities" },
-      { title: "Concepts", slug: "recall/concepts" },
-      { title: "Synthesis", slug: "recall/synthesis" },
+      { title: "Sources", slug: "collection/sources" },
+      { title: "Entities", slug: "collection/entities" },
+      { title: "Concepts", slug: "collection/concepts" },
+      { title: "Synthesis", slug: "collection/synthesis" },
       { title: "Search", slug: "learn/search" },
     ],
   }),
