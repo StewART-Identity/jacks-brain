@@ -1,96 +1,94 @@
-# Jack's Brain — Table polish + SourcesList unification (combined)
+# Jack's Brain — Sort fix + Search page redesign
 
-This combines two previously-separate patches into a single deploy:
-the PageList polish (column reorder, sortable headers, darker even
-rows) and the SourcesList unification (dynamic table on
-`collection/sources` brought under the same `jb-table` look).
+Two unrelated fixes in one patch:
 
-## Changes
+## 1. Sort headers now actually work
 
-### PageList tables (Sources / Synthesis / Concepts / Entities)
+The previous polish patch added click-to-sort behavior to the Title
+and Date headers in the Collection tables, but it didn't fire — clicks
+on the Title header in the Concepts page (or any of the four
+collection tables) did nothing.
 
-- **Even-row color** darkened from `#244D34` to `#1F4429` so the
-  stripe contrast is gentler and the wallpaper doesn't perceptually
-  peek through.
+**Root cause:** Quartz only collects `afterDOMLoaded` scripts from
+components registered via each emitter's `getQuartzComponents()`. The
+folder/tag emitters register `FolderContent` and `TagContent` (which
+contain the table) but NOT the inner `PageList` (which contains the
+sort script). So `PageList.afterDOMLoaded` was attached, but
+orphaned — never reached the build output.
 
-- **Column reorder**: Title → Date → Summary → Tags. Date moves up
-  from rightmost to second column, sitting next to the fixed-width
-  Title. Summary and Tags become the two variable-width columns
-  that absorb narrow viewports.
+The CSS works fine because `FolderContent.css` includes
+`PageList.css` via `concatenateResources`. The same propagation
+needed to happen for `afterDOMLoaded` and didn't.
 
-- **Sortable Title and Date columns**:
-  - Click Title → toggle A→Z / Z→A
-  - Click Date → toggle newest/oldest first
-  - Default sort on page load: newest first (date descending). On
-    Concepts and Entities (which have no Date column), default is
-    title ascending.
-  - Chevron indicator: `⇅` on inactive sortable columns, `▲` or
-    `▼` on the active one.
+**Fix:** Two one-liners — `FolderContent.afterDOMLoaded =
+PageList.afterDOMLoaded` and the same for `TagContent`. Now the sort
+script ships and clicks bind correctly.
 
-- Sort happens entirely client-side after the SSR render. Quartz's
-  SSR sorter still produces the initial "newest first" order so
-  there's no flash of unsorted content.
+## 2. New SearchPage: research-style card
 
-### SourcesList dynamic table (collection/sources)
+Replaces the old "Begin Search" button with a roomy card that mirrors
+the Research page aesthetic:
 
-The dynamic table that lists raw uploaded files via `/api/originals`
-now uses the same `.jb-table` styling as the PageList tables.
+- Rounded corners, semi-transparent dark fill (matches `research-card`)
+- Wide input field with placeholder text
+- Hint line explaining `#tag` syntax
+- Search button on the right with the magnifying glass icon
+- Results render below the card as a list of cards (no modal)
 
-- Host `<div id="sources-list">` now has `class="table-container
-  jb-table"`, so the unified styling applies automatically.
+**How it works under the hood:** The new SearchPage emits the same
+`.search > .search-container > .search-space > input.search-bar` DOM
+contract that the existing `Search` sidebar component does. The
+search engine in `scripts/search.inline.ts` iterates over EVERY
+`.search` element on the page and binds to all of them — so this
+embedded copy is wired automatically with no engine changes.
 
-- Column order: **File → Acquired → Status**, matching the
-  PageList convention of "primary identifier first, fixed-width
-  metadata second".
+The visual difference between the embedded card and the sidebar
+modal is purely CSS: `searchPage.scss` overrides `.search-container`
+positioning when nested under `#search-page`, flattening the
+fixed-position fullscreen modal into an inline-flowing block inside
+the card.
 
-- Sortable headers use the same `.sortable` / `.sort-active` /
-  `.sort-indicator` classes as PageList, with `⇅`/`▲`/`▼` chevrons.
-
-- **Default sort: pending first**, by Status with ascending
-  direction (false=pending sorts before true=cataloged).
-
-- Per-column "first click" direction defaults: File → A→Z,
-  Acquired → newest first, Status → pending first. Subsequent
-  clicks toggle.
-
-- **Status badges retuned for dark-row backgrounds**:
-  - **Cataloged**: sage green pill (`#3A7D53` background,
-    `#EBF5EE` text). Reads as "approved" without screaming.
-  - **Pending**: warm amber pill (`#6B4D1A` background, `#F0DDB3`
-    text). Ties to the existing dark-mode `textHighlight`
-    palette.
-
-- Filename links in the File column are now warm sand (`#F0DDB3`,
-  matching the header text) instead of secondary green, which
-  would have read as muted green-on-green on the new dark
-  backgrounds.
-
-- Bonus fix: the old default `sortField = "uploaded"` wasn't a
-  valid field, so the sort fell through to comparing the
-  `cataloged` boolean and accidentally produced pending-first by
-  coincidence. Now it's explicit and intentional.
-
-- Bonus hardening: filenames are now HTML-escaped before being
-  inserted into the table. The previous code interpolated
-  `f.name` directly into innerHTML.
+A small inline script ensures the engine treats the embedded
+container as "active" as soon as you focus or type in the input, so
+results render immediately without requiring a click on the search
+button.
 
 ## Files in this patch
 
 ```
-quartz/styles/_jbtable.scss            (replaced — even-row color, sortable header styles)
-quartz/components/PageList.tsx         (replaced — column reorder, sort markup, inline sort script)
-quartz/components/SourcesList.tsx      (replaced — jb-table look, retuned badges, pending-first default)
+quartz/components/pages/FolderContent.tsx   (replaced — afterDOMLoaded propagation)
+quartz/components/pages/TagContent.tsx      (replaced — afterDOMLoaded propagation)
+quartz/components/SearchPage.tsx            (replaced — research-style card)
+quartz/components/styles/searchPage.scss    (added — new stylesheet)
 ```
 
-Three files. No deletes required.
+Four files. No deletes required.
+
+## Things NOT changed (intentionally)
+
+- **The sidebar Search modal** — still works exactly the same. Cmd/Ctrl+K
+  still opens it. Tag prefix `#` still works. The embedded SearchPage
+  is purely additive.
+
+- **The Acquisition column order** — left as Document → Acquired →
+  Status, matching the SourcesList convention. The Retention table
+  already starts with Date and was unchanged.
 
 ## Apply
 
 Bridge:
-- **Strip prefix:** `jbpatch-tables-combined/`
+- **Strip prefix:** `jbpatch-search-and-sort/`
 - **Target repo:** `StewART-Identity/jacks-brain`
 - **Branch:** `main`
 - **Commit message:** `ms2555 04/25/2026`
 
-After Cloudflare rebuilds, hard-refresh to clear the cached CSS
-(`Ctrl+Shift+R`).
+After Cloudflare rebuilds, hard-refresh (`Ctrl+Shift+R`).
+
+To verify the sort fix: open `collection/concepts`, click the Title
+header — the OAuth and SAML rows should swap. The chevron should flip
+from `▲` to `▼` (or appear if it was missing before).
+
+To verify the new SearchPage: open `learn/search`. You should see a
+research-style card with a "Search the wiki" label, a wide input,
+and a hint about `#tag` syntax. Type into it — results should appear
+below the card as soon as you start typing.
