@@ -129,5 +129,10 @@ export default ((opts?: Partial<TagContentOptions>) => {
   }
 
   TagContent.css = concatenateResources(style, PageList.css)
+  // Propagate PageList's client-side sort behavior. See FolderContent.tsx
+  // for the full explanation — Quartz only enumerates components at the
+  // emitter level (TagContent), not their children (PageList), so we
+  // have to forward the sort script up to where it'll be collected.
+  TagContent.afterDOMLoaded = PageList.afterDOMLoaded
   return TagContent
 }) satisfies QuartzComponentConstructor
