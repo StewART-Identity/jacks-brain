@@ -74,16 +74,31 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
 
   if (tableConfig) {
     // Collection sub-page: render as a real table.
+    //
+    // Column order: Title -> Date -> Summary -> Tags
+    // Sortable: Title (alphabetical) and Date (chronological).
+    // Default sort applied by the SSR sorter above is "newest first" via
+    // byDateAndAlphabeticalFolderFirst. The client-side sort script in
+    // PageList.afterDOMLoaded picks up that default and lets the user
+    // toggle by clicking a sortable header.
     const showDate = tableConfig.showDate
     return (
       <div class="table-container jb-table">
         <table>
           <thead>
             <tr>
-              <th class="col-title">Title</th>
+              <th class="col-title sortable sort-active" data-sort="title">
+                Title
+                <span class="sort-indicator">⇅</span>
+              </th>
+              {showDate && (
+                <th class="col-date sortable" data-sort="date">
+                  Date
+                  <span class="sort-indicator">⇅</span>
+                </th>
+              )}
               <th class="col-summary">Summary</th>
               <th class="col-tags">Tags</th>
-              {showDate && <th class="col-date">Date</th>}
             </tr>
           </thead>
           <tbody>
@@ -94,9 +109,15 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                   | string
                   | undefined
               const tags = page.frontmatter?.tags ?? []
+              // ISO timestamp on the row so the client-side sort script
+              // can compare dates without re-parsing the formatted date.
+              // Empty string for pages with no date so they sort last on
+              // ascending and first on descending — same as undefined-date
+              // handling in the SSR sorters above.
+              const isoDate = page.dates ? getDate(cfg, page)!.toISOString() : ""
 
               return (
-                <tr>
+                <tr data-title={title.toLowerCase()} data-date={isoDate}>
                   <td class="col-title">
                     <a
                       href={resolveRelative(fileData.slug!, page.slug!)}
@@ -105,6 +126,13 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                       {title}
                     </a>
                   </td>
+                  {showDate && (
+                    <td class="col-date">
+                      {page.dates && (
+                        <Date date={getDate(cfg, page)!} locale={cfg.locale} />
+                      )}
+                    </td>
+                  )}
                   <td class="col-summary">
                     {summary ? (
                       <span>{summary}</span>
@@ -129,13 +157,6 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                       ))}
                     </ul>
                   </td>
-                  {showDate && (
-                    <td class="col-date">
-                      {page.dates && (
-                        <Date date={getDate(cfg, page)!} locale={cfg.locale} />
-                      )}
-                    </td>
-                  )}
                 </tr>
               )
             })}
@@ -200,26 +221,28 @@ PageList.css = `
 /* Percentage-based column widths so the table never overflows,
    regardless of viewport width. Tags gets the largest share since
    tag pills need horizontal room to look like proper pills.
-   With table-layout: fixed (set by jbtable.scss), widths are ratios. */
+   With table-layout: fixed (set by jbtable.scss), widths are ratios.
 
-/* Sources & Synthesis (4 columns: Title / Summary / Tags / Date) */
+   Column order: Title -> Date -> Summary -> Tags. */
+
+/* Sources & Synthesis (4 columns: Title / Date / Summary / Tags) */
 .jb-table th.col-title,
 .jb-table td.col-title {
   width: 18%;
   font-weight: 500;
 }
+.jb-table th.col-date,
+.jb-table td.col-date {
+  width: 12%;
+  white-space: nowrap;
+}
 .jb-table th.col-summary,
 .jb-table td.col-summary {
-  width: 32%;
+  width: 35%;
 }
 .jb-table th.col-tags,
 .jb-table td.col-tags {
   width: 35%;
-}
-.jb-table th.col-date,
-.jb-table td.col-date {
-  width: 15%;
-  white-space: nowrap;
 }
 
 /* When Date column is absent (Concepts & Entities), redistribute the
@@ -259,4 +282,103 @@ PageList.css = `
   margin: 0;
   padding: 0;
 }
+`
+
+// Client-side sort behavior for the Collection table headers.
+//
+// The SSR render emits rows in "newest first" order via the Quartz
+// sorter. This script runs on every Quartz `nav` event (which fires on
+// initial load AND on every SPA navigation) and:
+//
+// 1. Finds the .table-container.jb-table table on the page (if any).
+// 2. Wires a click handler onto every <th class="sortable">.
+// 3. On click, reorders the <tr> elements in <tbody> by the active key
+//    (data-title or data-date), respecting the current ascending/
+//    descending direction and updating the chevron indicator.
+//
+// State is held in plain locals — there's only ever one such table per
+// page, so we don't need to scope state per element. `addCleanup` is
+// Quartz's hook for tearing down listeners before the next nav event.
+PageList.afterDOMLoaded = `
+document.addEventListener("nav", () => {
+  const wrapper = document.querySelector(".table-container.jb-table")
+  if (!wrapper) return
+  const table = wrapper.querySelector("table")
+  const tbody = table && table.querySelector("tbody")
+  if (!table || !tbody) return
+
+  // Default state matches the SSR render: sorted by date descending.
+  // If this table has no Date column (Concepts/Entities), default to
+  // title ascending instead.
+  const hasDate = !!table.querySelector("th.col-date")
+  let sortKey = hasDate ? "date" : "title"
+  let sortAsc = hasDate ? false : true
+
+  function indicator(asc) {
+    return asc ? "▲" : "▼"
+  }
+
+  function applySort() {
+    const headers = table.querySelectorAll("th.sortable")
+    headers.forEach((th) => {
+      const key = th.getAttribute("data-sort")
+      const indEl = th.querySelector(".sort-indicator")
+      if (!indEl) return
+      if (key === sortKey) {
+        th.classList.add("sort-active")
+        indEl.textContent = indicator(sortAsc)
+      } else {
+        th.classList.remove("sort-active")
+        indEl.textContent = "⇅"
+      }
+    })
+
+    const rows = Array.from(tbody.querySelectorAll("tr"))
+    rows.sort((a, b) => {
+      const av = a.getAttribute("data-" + sortKey) || ""
+      const bv = b.getAttribute("data-" + sortKey) || ""
+      // Empty values (rows with no date, mostly) sort to the bottom in
+      // ascending order and to the top in descending order — consistent
+      // with the SSR sorter's handling of missing dates.
+      if (av === "" && bv !== "") return sortAsc ? 1 : -1
+      if (bv === "" && av !== "") return sortAsc ? -1 : 1
+      if (av < bv) return sortAsc ? -1 : 1
+      if (av > bv) return sortAsc ? 1 : -1
+      return 0
+    })
+    rows.forEach((row) => tbody.appendChild(row))
+  }
+
+  function onHeaderClick(ev) {
+    const th = ev.currentTarget
+    const key = th.getAttribute("data-sort")
+    if (!key) return
+    if (sortKey === key) {
+      sortAsc = !sortAsc
+    } else {
+      sortKey = key
+      // Sensible default direction per column: newest first for date,
+      // A-to-Z for title.
+      sortAsc = key !== "date"
+    }
+    applySort()
+  }
+
+  const sortableHeaders = table.querySelectorAll("th.sortable")
+  sortableHeaders.forEach((th) => {
+    th.addEventListener("click", onHeaderClick)
+    window.addCleanup(() =>
+      th.removeEventListener("click", onHeaderClick),
+    )
+  })
+
+  // Set the initial indicator to match the SSR-applied sort order
+  // without re-sorting the rows (they're already in the right order).
+  const activeHeader = table.querySelector('th.sortable[data-sort="' + sortKey + '"]')
+  if (activeHeader) {
+    activeHeader.classList.add("sort-active")
+    const indEl = activeHeader.querySelector(".sort-indicator")
+    if (indEl) indEl.textContent = indicator(sortAsc)
+  }
+})
 `
