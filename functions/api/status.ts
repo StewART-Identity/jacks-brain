@@ -1,7 +1,7 @@
 /**
  * GET /api/status
  *
- * Patch tag: status-fix-v4 (autolink strip handles partial wraps).
+ * Patch tag: status-fix-v5 (debug: surface raw f.name in JSON).
  * If you don't see this comment in the deployed file, the upload was
  * silently no-op'd — re-upload or copy/paste the file by hand.
  *
@@ -151,6 +151,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     ])
 
     const originalsRaw: GitHubFile[] = originalsRes.ok ? await originalsRes.json() : []
+    // DEBUG v5: capture raw names from GitHub before any of our processing,
+    // and also log the body bytes if the JSON parse mangled them.
+    const debugRawNames = originalsRaw.map(f => f.name)
     // Defensively strip any autolink wrapper off filenames returned by
     // the contents API. We've observed this happening for files whose
     // names look URL-ish (e.g. anything ending in .md). If `name` comes
@@ -254,7 +257,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       (d) => d.status === "in_progress" || d.status === "queued",
     )
 
-    return Response.json({ documents, hasActive })
+    return Response.json({ documents, hasActive, debugRawNames })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error"
     return Response.json({ error: message }, { status: 500 })
