@@ -237,8 +237,9 @@ Frontmatter must include (in addition to the standard fields):
 
 Read the following files to understand the wiki structure and current state:
 1. CLAUDE.md — the wiki schema and conventions
-2. content/index.md — the current wiki index
+2. content/index.md — the welcome/landing page (do not modify)
 3. data/retention-log.md — the current retention log (audit table, NOT a Quartz page)
+4. Any existing pages in content/collection/ that may already cover this material — update in place if so.
 
 ${sourceInstruction}
 
@@ -249,13 +250,14 @@ Follow the "Catalog" workflow from CLAUDE.md:
 2. Create or update entity pages in content/collection/entities/ for significant entities mentioned. Always prefer updating over duplicating.
 3. Create or update concept pages in content/collection/concepts/ for significant concepts. Always prefer updating over duplicating.
 4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/collection/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents.
-5. Update content/index.md with the new or changed pages.
+5. Do NOT modify content/index.md (it's the welcome page) or any of the per-category index.md files in collection/ (they are intro-only; the page list is auto-rendered).
 6. Update data/retention-log.md — add a row to the table (after the header row): | ${today} | ${isReView ? "Re-viewed" : "Cataloged"} | ${originalName} |
 
 The original document is available for download at: /originals/${originalName}
 Include a link to the original document in the source summary page (e.g., [Download original](/originals/${originalName})).
 
 IMPORTANT formatting rules:
+- Every page (source, entity, concept, synthesis) MUST include a 'summary:' field in its frontmatter — a single-sentence (≤140 char) description that will appear in the Collection table listings. Make it informative on its own, not just a restated title.
 - Do NOT include a duplicate H1 heading in any page. The frontmatter title is rendered automatically.
 - Use wikilinks ([[path]]) aggressively to cross-reference between pages.
 - All wiki page paths use the collection/ prefix: collection/sources/, collection/entities/, collection/concepts/, collection/synthesis/.
