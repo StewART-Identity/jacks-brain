@@ -95,8 +95,8 @@ const WIPE_DIRS = [
 // landing page (hero image + welcome text). A fresh empty-state template
 // would destroy that design. Nuke leaves the landing page alone.
 const RESET_TEMPLATES: Record<string, string> = {
-  "content/learn/memory.md":
-    `---\ntitle: "Memory"\n---\n\nPermanent record of knowledge added to the wiki, organized by date.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
+  "content/learn/retention.md":
+    `---\ntitle: "Retention"\n---\n\nPermanent record of every document retained in the wiki. Click a title to rename it — the underlying filename is preserved.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
 
   "content/recall/sources/index.md":
     `---\ntitle: "Sources"\n---\n\nAcquired documents and their cataloging status. Click a filename to download the original.\n\n| Content | Summary | Date |\n|---------|---------|------|\n`,
@@ -134,6 +134,13 @@ async function ghFetch(
 // ─── Endpoint ──────────────────────────────────────────────────────────────
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
+  // Defense in depth — Cloudflare Access sets this header on every request
+  // it lets through. If it's missing, the request didn't come via Access.
+  const accessUser = context.request.headers.get("cf-access-authenticated-user-email")
+  if (!accessUser) {
+    return Response.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   const { GITHUB_TOKEN, GITHUB_REPO } = context.env
 
   if (!GITHUB_TOKEN || !GITHUB_REPO) {
