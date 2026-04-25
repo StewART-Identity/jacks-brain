@@ -18,9 +18,6 @@ const ApplicationMenu: QuartzComponent = ({ fileData, displayClass }: QuartzComp
           <a href={resolveRelative(fileData.slug!, "application/readingmode" as any)}>Reading Mode</a>
         </li>
         <li>
-          <a href={resolveRelative(fileData.slug!, "application/darkmode" as any)}>Light/Dark Mode</a>
-        </li>
-        <li>
           <a href={resolveRelative(fileData.slug!, "application/nuke" as any)}>Nuke It From Orbit</a>
         </li>
       </ul>
