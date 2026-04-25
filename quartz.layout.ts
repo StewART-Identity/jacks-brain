@@ -40,7 +40,11 @@ export const sharedPageComponents: SharedLayout = {
       condition: (page) => page.fileData.slug === "learn/research",
     }),
     Component.ConditionalRender({
-      component: Component.Retention(),
+      component: Component.Acquisition(),
+      condition: (page) => page.fileData.slug === "learn/acquisition",
+    }),
+    Component.ConditionalRender({
+      component: Component.RetentionList(),
       condition: (page) => page.fileData.slug === "learn/retention",
     }),
   ],
@@ -57,7 +61,7 @@ const sidebarLeft = [
     links: [
       { title: "Research", slug: "learn/research" },
       { title: "Knowledge", slug: "learn/knowledge" },
-      { title: "Memory", slug: "learn/memory" },
+      { title: "Acquisition", slug: "learn/acquisition" },
       { title: "Retention", slug: "learn/retention" },
     ],
   }),
