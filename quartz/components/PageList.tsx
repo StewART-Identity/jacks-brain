@@ -205,6 +205,8 @@ PageList.css = `
 .collection-table > table {
   width: 100%;
   max-width: 100%;
+  margin: 0;
+  padding: 0;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -215,6 +217,7 @@ PageList.css = `
   padding: 0.5rem 0.6rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  border: 1px solid var(--lightgray);
 }
 
 .collection-table th {
