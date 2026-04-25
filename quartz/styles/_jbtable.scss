@@ -4,21 +4,36 @@
    four Collection sub-pages (Sources, Entities, Concepts, Synthesis) —
    share this single look:
 
-   - Header row: solid dark-green band, bold text, no vertical borders
-     between header cells. A 2px bottom border separates header from body.
-   - Body rows: full 1px border on all four sides of every cell, joining
-     cleanly at corners (border-collapse).
-   - Body rows: alternating opaque background colors so the neuron
+   - Yellow header text on a solid dark-green band, no vertical borders.
+   - Body rows: horizontal rules only (no vertical cell borders).
+   - Body rows: alternating opaque green backgrounds so the neuron
      wallpaper never bleeds through.
-   - Table edge flush-left with surrounding content.
+   - Table edge flush-left with the page title and prose above it.
+   - No horizontal scrollbar — width is governed entirely by the
+     percentage column widths defined in PageList.tsx.
 
    Use by adding `class="jb-table"` to the wrapping `<div>` (alongside
-   the existing `table-container` class). */
+   the existing `table-container` class).
 
-.jb-table {
-  /* Override base.scss's `.table-container { overflow-x: auto }` so we
-     never get a horizontal scrollbar — width is governed entirely by
-     percentage column widths inside. */
+   IMPORTANT — selector specificity note:
+   This file is `@use`d at the top of base.scss, which means base.scss's
+   own `.table-container { overflow-x: auto }`, `table { margin: 1rem }`,
+   `th,td { min-width: 75px }`, `tr { border-bottom: 1px solid var(--lightgray) }`,
+   etc. are defined LATER in the compiled output. With equal specificity,
+   source order would mean base.scss wins and these overrides do nothing.
+   To guarantee these rules win we anchor every selector on the compound
+   class `.table-container.jb-table` (specificity 0,2,0) which beats
+   base.scss's `.table-container` (specificity 0,1,0).
+
+   Colors are hardcoded rather than referenced via CSS custom properties
+   because the site is now dark-only and these table colors are part of
+   the table design contract — they should not shift if anyone ever
+   tweaks the theme palette for unrelated reasons. */
+
+.table-container.jb-table {
+  /* Cancel base.scss's `overflow-x: auto` so we never get a horizontal
+     scrollbar — width is governed entirely by percentage column widths
+     defined in PageList.tsx. */
   overflow-x: visible;
   overflow-y: visible;
 
@@ -27,8 +42,9 @@
   padding: 0;
 }
 
-.jb-table > table {
-  /* Cancel base.scss's table margin/padding which push the table inward. */
+.table-container.jb-table > table {
+  /* Cancel base.scss's `table { margin: 1rem; padding: 1.5rem }` which
+     is what was pushing the table inward away from the left edge. */
   margin: 0;
   padding: 0;
   width: 100%;
@@ -36,43 +52,50 @@
   border-collapse: collapse;
 }
 
-/* Cells: cancel base.scss's min-width:75px which would force overflow
-   when combined with table-layout: fixed. */
-.jb-table > table th,
-.jb-table > table td {
+/* Cells — defaults that apply to header and body cells alike. */
+.table-container.jb-table > table th,
+.table-container.jb-table > table td {
+  /* Cancel base.scss's `min-width: 75px` which would force overflow
+     when combined with table-layout: fixed and a narrow viewport. */
   min-width: 0;
   vertical-align: top;
   padding: 0.55rem 0.75rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  /* No vertical borders anywhere — Option B is horizontal rules only. */
+  border-left: none;
+  border-right: none;
 }
 
-/* HEADER row.
-   - Solid dark band (matches site secondary color).
-   - White-ish text.
-   - Bold.
-   - No borders between header cells (the dark band reads as one bar).
-   - 2px bottom border to separate from body. */
-.jb-table > table thead th {
-  background-color: var(--secondary);
-  color: var(--light);
+/* HEADER row — solid dark-green band, yellow text, no internal borders. */
+.table-container.jb-table > table thead th {
+  background-color: #2B5E3E;     /* matches site --secondary */
+  color: #F0DDB3;                /* warm sand yellow — readable on dark green */
   font-weight: 600;
   text-align: left;
   border: none;
-  border-bottom: 2px solid var(--secondary);
+  /* 2px bottom rule separates header from body. */
+  border-bottom: 2px solid #2B5E3E;
 }
 
-/* BODY rows.
-   - Each cell gets a full 1px border on all four sides.
-   - border-collapse on the table makes them join cleanly at corners. */
-.jb-table > table tbody td {
-  border: 1px solid var(--gray);
+/* BODY rows — horizontal rules only, alternating opaque green fills. */
+.table-container.jb-table > table tbody td {
+  border-top: none;
+  border-bottom: 1px solid #3A7D53;  /* matches site --gray (mid mint-green) */
+  color: #EBF5EE;                    /* matches site light-mode --light, used here as body text on dark fill */
 }
 
-/* Alternating opaque row backgrounds. */
-.jb-table > table tbody tr:nth-child(odd) td {
-  background-color: var(--light);
+/* Drop the bottom rule on the final row so the table ends cleanly. */
+.table-container.jb-table > table tbody tr:last-child td {
+  border-bottom: none;
 }
-.jb-table > table tbody tr:nth-child(even) td {
-  background-color: var(--lightgray);
+
+/* Alternating opaque row backgrounds — gentle contrast so text stays
+   the dominant element. The lighter shade (#244D34) sits visually
+   between --lightgray (#1B3F29) and --secondary (#2B5E3E). */
+.table-container.jb-table > table tbody tr:nth-child(odd) td {
+  background-color: #1B3F29;
+}
+.table-container.jb-table > table tbody tr:nth-child(even) td {
+  background-color: #244D34;
 }
