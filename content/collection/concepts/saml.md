@@ -1,5 +1,6 @@
 ---
 title: "SAML"
+summary: "XML-based SSO protocol that lets enterprises federate authentication via Identity Provider assertions."
 type: concept
 created: 2026-04-23
 updated: 2026-04-23
