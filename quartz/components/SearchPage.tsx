@@ -4,36 +4,34 @@ import styles from "./styles/searchPage.scss"
 /* SearchPage — the dedicated /learn/search route.
  *
  * Renders a Research-style card (rounded, semi-transparent dark fill,
- * roomy textarea-feel input) that hosts the EXACT DOM contract the
- * existing search engine in `scripts/search.inline.ts` looks for:
+ * roomy textarea) that hosts the EXACT DOM contract the existing
+ * search engine in `scripts/search.inline.ts` looks for:
  *
  *   .search
  *     .search-button         (focuses the input via showSearch())
  *     .search-container
  *       .search-space
- *         input.search-bar   (the actual search input)
- *         .search-layout     (engine appends results-container here)
+ *         textarea.search-bar  (the actual search input — note that
+ *                              the engine uses `.value` and `input`
+ *                              events, both of which work identically
+ *                              on textareas and inputs)
+ *         .search-layout       (engine appends results-container here)
  *
  * The engine's `setupSearch` at the bottom of search.inline.ts runs on
  * every nav event and iterates over EVERY `.search` element on the
  * page, so this instance is bound automatically alongside the sidebar
- * Search component — no script changes required.
- *
- * The visual difference between this page-embedded copy and the
- * sidebar's modal version is purely CSS: searchPage.scss flattens the
- * `.search-container` (which the sidebar styles as a fixed-position
- * fullscreen modal) into an inline-flowing block inside our card. */
+ * Search component — no script changes required. */
 const SearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="search-page">
       <div class="search search-page-search">
         <div class="search-page-card">
           <h3 class="search-page-label">Search the wiki</h3>
-          <input
+          <textarea
             class="search-bar"
-            type="text"
+            rows={2}
             autocomplete="off"
-            placeholder="Title, content, or tag..."
+            placeholder="Search by title, content, or tag. Prefix with # for tag search."
             aria-label="Search the wiki"
           />
           <div class="search-page-controls">
@@ -60,10 +58,6 @@ const SearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
         </div>
         <div class="search-container">
           <div class="search-space">
-            {/* The .search-bar above is the visible input. The engine
-                reads it because it has class `search-bar` inside the
-                same `.search` ancestor — no second input needed. The
-                .search-layout below receives appended results. */}
             <div class="search-layout" data-preview="false"></div>
           </div>
         </div>
@@ -74,21 +68,6 @@ const SearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
 
 SearchPage.afterDOMLoaded = `
 document.addEventListener("nav", () => {
-  // The sidebar Search modal has a Cmd/Ctrl+K shortcut and a click-
-  // outside-to-close behavior, neither of which makes sense on the
-  // embedded SearchPage where the input is just part of the page. We
-  // don't strip those — they fire harmlessly because the embedded
-  // .search-container has no fixed positioning to toggle.
-  //
-  // What we DO want: typing in the embedded input should immediately
-  // show results without requiring a click on the search button to
-  // "open" the search. The engine's onType handler is wired to the
-  // input on every .search-bar, but it only renders results into
-  // .search-layout if the parent .search-container has the .active
-  // class. Workaround: when the user focuses or types in the embedded
-  // input, set .active on its container. From the engine's POV the
-  // search is "open"; from the user's POV nothing visible changed
-  // because the container is already inline-flowing and styled.
   const root = document.getElementById("search-page")
   if (!root) return
   const container = root.querySelector(".search-container")
@@ -96,14 +75,32 @@ document.addEventListener("nav", () => {
   if (!container || !bar) return
 
   // Mark active on first interaction so the engine renders results.
+  // The engine's onType handler is wired to the textarea, but it only
+  // appends results into .search-layout when the parent
+  // .search-container has the .active class. Setting it manually on
+  // focus/input means the user can just type — no need to click the
+  // search button first to "open" the search.
   const ensureActive = () => {
     container.classList.add("active")
   }
   bar.addEventListener("focus", ensureActive)
   bar.addEventListener("input", ensureActive)
+
+  // Suppress newline-on-Enter inside the search textarea. The engine's
+  // document-level keydown handler captures Enter to navigate to the
+  // highlighted result; without this, Enter would also insert a
+  // literal newline into the textarea before the navigation fires.
+  const suppressEnterNewline = (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+      e.preventDefault()
+    }
+  }
+  bar.addEventListener("keydown", suppressEnterNewline)
+
   window.addCleanup(() => {
     bar.removeEventListener("focus", ensureActive)
     bar.removeEventListener("input", ensureActive)
+    bar.removeEventListener("keydown", suppressEnterNewline)
   })
 })
 `
