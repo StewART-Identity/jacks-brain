@@ -3,8 +3,18 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
 const RetentionList: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="retention-list-app">
-      <div id="retention-list">
-        <p class="muted">Loading...</p>
+      <div class="recent-runs">
+        <div class="recent-runs-header">
+          <h3>Retention Log</h3>
+          <div class="recent-runs-actions">
+            <button id="refresh-retention-btn" class="runs-action-btn" title="Refresh">
+              &#8635;
+            </button>
+          </div>
+        </div>
+        <div id="retention-list">
+          <p class="muted">Loading...</p>
+        </div>
       </div>
     </div>
   )
@@ -14,6 +24,7 @@ RetentionList.afterDOMLoaded = `
 document.addEventListener("nav", () => {
   const container = document.getElementById("retention-list")
   if (!container) return
+  const refreshBtn = document.getElementById("refresh-retention-btn")
 
   let allRows = []
   let sortField = "date"
@@ -59,7 +70,7 @@ document.addEventListener("nav", () => {
       return 0
     })
 
-    container.innerHTML = '<table class="retention-table">' +
+    container.innerHTML = '<div class="table-container"><table>' +
       '<thead><tr>' +
       '<th class="sortable" data-sort="date">Date' + arrow("date") + '</th>' +
       '<th class="sortable" data-sort="action">Action' + arrow("action") + '</th>' +
@@ -78,7 +89,7 @@ document.addEventListener("nav", () => {
           '<td>' + titleCell + '</td>' +
           '</tr>'
       }).join("") +
-      '</tbody></table>'
+      '</tbody></table></div>'
 
     container.querySelectorAll("th.sortable").forEach(function(th) {
       th.addEventListener("click", function() {
@@ -111,7 +122,6 @@ document.addEventListener("nav", () => {
     span.contentEditable = "true"
     span.textContent = original
     span.focus()
-    // Select all text
     const range = document.createRange()
     range.selectNodeContents(span)
     const sel = window.getSelection()
@@ -168,7 +178,6 @@ document.addEventListener("nav", () => {
       span.classList.remove("saving")
       span.classList.add("saved")
       setTimeout(function() { span.classList.remove("saved") }, 1200)
-      // Update in-memory dataset so subsequent re-renders show the new title
       const slug = span.dataset.slug
       allRows.forEach(function(r) { if (r.slug === slug) r.title = newTitle })
     } catch (e) {
@@ -186,6 +195,7 @@ document.addEventListener("nav", () => {
   }
 
   async function loadRetention() {
+    container.innerHTML = '<p class="muted">Loading...</p>'
     try {
       const response = await fetch("/api/retention")
       if (!response.ok) throw new Error("HTTP " + response.status)
@@ -197,44 +207,77 @@ document.addEventListener("nav", () => {
     }
   }
 
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", loadRetention)
+  }
+
   loadRetention()
 })
 `
 
 RetentionList.css = `
 #retention-list-app {
-  margin-top: 1rem;
+  max-width: 720px;
+  padding-bottom: 2rem;
 }
-.retention-table {
+
+/* Inherit Quartz base table styles from .table-container; only override
+   what's specific to the Retention table: column widths, the inline-edit
+   interaction states, and the missing-source dash. */
+
+#retention-list-app .table-container {
+  overflow-x: visible;
+}
+#retention-list-app .table-container > table {
+  margin: 0;
+  padding: 0;
   width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
+  table-layout: fixed;
 }
-.retention-table th {
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 2px solid var(--lightgray);
-  font-weight: 600;
-  color: var(--dark);
+#retention-list-app .table-container > table th,
+#retention-list-app .table-container > table td {
+  min-width: 0;
 }
-.retention-table th.sortable {
+
+/* Date — fits "2026-04-23" plus padding */
+#retention-list-app thead th:nth-child(1),
+#retention-list-app tbody td:nth-child(1) {
+  width: 7rem;
+  white-space: nowrap;
+}
+/* Action — fits "Re-viewed" */
+#retention-list-app thead th:nth-child(2),
+#retention-list-app tbody td:nth-child(2) {
+  width: 6.5rem;
+  white-space: nowrap;
+}
+/* Document — fixed width so Title can grow */
+#retention-list-app thead th:nth-child(3),
+#retention-list-app tbody td:nth-child(3) {
+  width: 13rem;
+}
+#retention-list-app tbody td:nth-child(3) code {
+  font-size: 0.85em;
+  overflow-wrap: anywhere;
+  background: transparent;
+  padding: 0;
+  color: var(--gray);
+}
+/* Title — takes whatever's left */
+#retention-list-app thead th:nth-child(4),
+#retention-list-app tbody td:nth-child(4) {
+  width: auto;
+  overflow-wrap: anywhere;
+}
+
+#retention-list-app th.sortable {
   cursor: pointer;
   user-select: none;
 }
-.retention-table th.sortable:hover {
+#retention-list-app th.sortable:hover {
   color: var(--secondary);
 }
-.retention-table td {
-  padding: 0.4rem 0.75rem;
-  border-bottom: 1px solid var(--lightgray);
-  vertical-align: middle;
-}
-.retention-table code {
-  font-size: 0.85em;
-  color: var(--gray);
-  background: transparent;
-  padding: 0;
-}
+
 .title-edit {
   display: inline-block;
   min-width: 4rem;
@@ -270,6 +313,11 @@ RetentionList.css = `
   color: var(--gray);
   font-style: italic;
   cursor: not-allowed;
+}
+
+#retention-list-app .muted {
+  color: var(--gray);
+  font-style: italic;
 }
 `
 
