@@ -43,6 +43,7 @@ FullGraph.css =
 #full-graph > .graph-container {
   border-radius: 8px;
   border: 1px solid var(--lightgray);
+  background-color: var(--light);
   box-sizing: border-box;
   height: 70vh;
   width: 100%;
