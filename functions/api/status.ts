@@ -1,7 +1,7 @@
 /**
  * GET /api/status
  *
- * Patch tag: status-fix-v3 (extension-anchored regex + autolink strip).
+ * Patch tag: status-fix-v4 (autolink strip handles partial wraps).
  * If you don't see this comment in the deployed file, the upload was
  * silently no-op'd — re-upload or copy/paste the file by hand.
  *
@@ -61,16 +61,15 @@ function ghHeaders(token: string) {
 }
 
 /**
- * Strip a markdown-autolink wrapper off a filename, if present.
- * Some upstream tooling auto-converts `name.md` style strings into
- * `[name.md](http://name.md)` form. We've seen this on filenames
- * returned by the GitHub contents API as well as inside the retention
- * markdown table. Whatever's introducing it, the fix on read is the
- * same: collapse `[X](Y)` back to X.
+ * Strip markdown-autolink wrappers `[X](Y)` out of a string. Some upstream
+ * tooling auto-converts URL-shaped tokens like `name.md` into autolink form,
+ * and we've observed it both as a full-string wrap (`[2026-04-25-x.md](...)`)
+ * and as a partial wrap that leaves a non-URL prefix outside the brackets
+ * (`2026-04-25-[x.md](...)`). Use a global replace so both cases collapse
+ * back to the link text. If the input has no autolinks, this is a no-op.
  */
 function stripAutolink(s: string): string {
-  const m = s.match(/^\[(.+?)\]\([^)]*\)$/)
-  return m ? m[1] : s
+  return s.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
 }
 
 /**
