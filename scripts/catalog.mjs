@@ -78,7 +78,7 @@ function slugify(filenameOrStem) {
  * page to update in place).
  */
 function findExistingSourcePage(acquisitionFilename) {
-  const sourcesDir = join(CONTENT_DIR, "recall", "sources")
+  const sourcesDir = join(CONTENT_DIR, "collection", "sources")
   if (!existsSync(sourcesDir)) return null
   const targetSlug = slugify(acquisitionFilename)
 
@@ -179,7 +179,7 @@ function catalogWithClaude(sourcePath) {
   const existing = findExistingSourcePage(originalName)
   const isReView = existing !== null
   const sourceFilename = isReView ? existing.filename : `${today}-${slug}.md`
-  const sourcePagePath = `content/recall/sources/${sourceFilename}`
+  const sourcePagePath = `content/collection/sources/${sourceFilename}`
 
   // If we converted the file, read it inline to avoid path issues
   let sourceInstruction
@@ -238,7 +238,7 @@ Frontmatter must include (in addition to the standard fields):
 Read the following files to understand the wiki structure and current state:
 1. CLAUDE.md — the wiki schema and conventions
 2. content/index.md — the current wiki index
-3. data/retention-log.md — the current retention log (audit table, NOT a Quartz page)
+3. content/learn/retention.md — the current retention log
 
 ${sourceInstruction}
 
@@ -246,11 +246,11 @@ ${operationNote}
 
 Follow the "Catalog" workflow from CLAUDE.md:
 1. ${isReView ? "Update" : "Create"} the source summary page at the exact path above.
-2. Create or update entity pages in content/recall/entities/ for significant entities mentioned. Always prefer updating over duplicating.
-3. Create or update concept pages in content/recall/concepts/ for significant concepts. Always prefer updating over duplicating.
-4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/recall/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents.
+2. Create or update entity pages in content/collection/entities/ for significant entities mentioned. Always prefer updating over duplicating.
+3. Create or update concept pages in content/collection/concepts/ for significant concepts. Always prefer updating over duplicating.
+4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/collection/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents.
 5. Update content/index.md with the new or changed pages.
-6. Update data/retention-log.md — add a row to the table (after the header row): | ${today} | ${isReView ? "Re-viewed" : "Cataloged"} | ${originalName} |
+6. Update content/learn/retention.md — add a row to the table (after the header row): | ${today} | ${isReView ? "Re-viewed" : "Cataloged"} | ${originalName} |
 
 The original document is available for download at: /originals/${originalName}
 Include a link to the original document in the source summary page (e.g., [Download original](/originals/${originalName})).
@@ -258,7 +258,7 @@ Include a link to the original document in the source summary page (e.g., [Downl
 IMPORTANT formatting rules:
 - Do NOT include a duplicate H1 heading in any page. The frontmatter title is rendered automatically.
 - Use wikilinks ([[path]]) aggressively to cross-reference between pages.
-- All wiki page paths use the recall/ prefix: recall/sources/, recall/entities/, recall/concepts/, recall/synthesis/.
+- All wiki page paths use the collection/ prefix: collection/sources/, collection/entities/, collection/concepts/, collection/synthesis/.
 - Today's date is ${today}.
 - The source page path is EXACTLY ${sourcePagePath}. Do not add or strip date prefixes from this path.
 
