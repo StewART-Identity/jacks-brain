@@ -253,3 +253,30 @@
   padding: 0 0.15em;
   border-radius: 2px;
 }
+
+/* "Number of results" cap.
+
+   The SearchPage's count input writes its value to data-cap on
+   .search-layout (see SearchPage.afterDOMLoaded). These rules hide
+   result cards beyond the cap synchronously, the moment the engine
+   appends them — there's no JS-driven hide step that could let a
+   "trimmed" card flash visible for a frame before being hidden.
+
+   The engine's internal cap is 8, so we only need rules for caps
+   1 through 7. Cap=8 means "show everything" and needs no rule. */
+#search-page .search-layout[data-cap="1"] .results-container .result-card:nth-of-type(n+2),
+#search-page .search-layout[data-cap="2"] .results-container .result-card:nth-of-type(n+3),
+#search-page .search-layout[data-cap="3"] .results-container .result-card:nth-of-type(n+4),
+#search-page .search-layout[data-cap="4"] .results-container .result-card:nth-of-type(n+5),
+#search-page .search-layout[data-cap="5"] .results-container .result-card:nth-of-type(n+6),
+#search-page .search-layout[data-cap="6"] .results-container .result-card:nth-of-type(n+7),
+#search-page .search-layout[data-cap="7"] .results-container .result-card:nth-of-type(n+8) {
+  display: none;
+}
+
+/* Don't hide the "no match" empty-state card via the cap rules — it's
+   a single card that the engine emits when there are zero results,
+   and hiding it would just leave a blank box. */
+#search-page .search-layout .result-card.no-match {
+  display: block !important;
+}
