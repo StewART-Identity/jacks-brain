@@ -28,10 +28,6 @@ export const sharedPageComponents: SharedLayout = {
       condition: (page) => page.fileData.slug === "learn/search",
     }),
     Component.ConditionalRender({
-      component: Component.DarkModePage(),
-      condition: (page) => page.fileData.slug === "application/darkmode",
-    }),
-    Component.ConditionalRender({
       component: Component.ReadingModePage(),
       condition: (page) => page.fileData.slug === "application/readingmode",
     }),
