@@ -48,13 +48,13 @@ const BRANCH = "main"
 const ORIGINALS_DIR = "static/originals"
 const SOURCES_DIR = "content/recall/sources"
 
-// Mirror of the slug derivation used elsewhere — strips date prefixes so
-// the same underlying source matches between static/originals and
-// content/recall/sources regardless of date prefixing differences.
+// Source pages preserve their date prefix in the filename (e.g.
+// "2026-04-23-img-2369.md"), so the slug we compute from the original
+// filename should also keep it. This is the canonical derivation: lowercase
+// the stem, collapse non-alphanumerics to hyphens, trim trailing hyphens.
 function deriveSlug(filename: string): string {
   const stem = filename.replace(/\.[^.]+$/, "").toLowerCase()
-  const slug = stem.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
-  return slug.replace(/^(\d{4}-\d{2}-\d{2}-)+/, "")
+  return stem.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
