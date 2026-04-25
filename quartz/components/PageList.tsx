@@ -209,29 +209,40 @@ PageList.css = `
   padding: 0;
   border-collapse: collapse;
   table-layout: fixed;
+  background-color: var(--light);
 }
 
 .collection-table th,
 .collection-table td {
   vertical-align: top;
-  padding: 0.5rem 0.6rem;
+  padding: 0.6rem 0.7rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  border: 1px solid var(--lightgray);
+  border: 1px solid var(--gray);
+  background-color: var(--light);
+}
+
+/* First column has no left padding so its content aligns with the
+   page title above. */
+.collection-table th:first-child,
+.collection-table td:first-child {
+  padding-left: 0;
 }
 
 .collection-table th {
   text-align: left;
   border-bottom: 2px solid var(--gray);
   font-weight: 600;
-  background-color: var(--light);
+  background-color: var(--lightgray);
 }
 
-.collection-table tbody tr {
-  border-bottom: 1px solid var(--lightgray);
+/* Alternating row colors for readability. Both fully opaque so the
+   neuron wallpaper doesn't bleed through. */
+.collection-table tbody tr:nth-child(odd) td {
+  background-color: var(--light);
 }
-.collection-table tbody tr:last-child {
-  border-bottom: none;
+.collection-table tbody tr:nth-child(even) td {
+  background-color: var(--lightgray);
 }
 
 /* Percentage-based column widths so the table never overflows,
