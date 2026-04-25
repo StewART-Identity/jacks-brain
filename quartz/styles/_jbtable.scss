@@ -1,0 +1,78 @@
+/* Jack's Brain — unified table styling.
+
+   All six data tables in the wiki — Acquisition, Retention, and the
+   four Collection sub-pages (Sources, Entities, Concepts, Synthesis) —
+   share this single look:
+
+   - Header row: solid dark-green band, bold text, no vertical borders
+     between header cells. A 2px bottom border separates header from body.
+   - Body rows: full 1px border on all four sides of every cell, joining
+     cleanly at corners (border-collapse).
+   - Body rows: alternating opaque background colors so the neuron
+     wallpaper never bleeds through.
+   - Table edge flush-left with surrounding content.
+
+   Use by adding `class="jb-table"` to the wrapping `<div>` (alongside
+   the existing `table-container` class). */
+
+.jb-table {
+  /* Override base.scss's `.table-container { overflow-x: auto }` so we
+     never get a horizontal scrollbar — width is governed entirely by
+     percentage column widths inside. */
+  overflow-x: visible;
+  overflow-y: visible;
+
+  /* Sit flush-left with the page title and prose above. */
+  margin: 1rem 0;
+  padding: 0;
+}
+
+.jb-table > table {
+  /* Cancel base.scss's table margin/padding which push the table inward. */
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+/* Cells: cancel base.scss's min-width:75px which would force overflow
+   when combined with table-layout: fixed. */
+.jb-table > table th,
+.jb-table > table td {
+  min-width: 0;
+  vertical-align: top;
+  padding: 0.55rem 0.75rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* HEADER row.
+   - Solid dark band (matches site secondary color).
+   - White-ish text.
+   - Bold.
+   - No borders between header cells (the dark band reads as one bar).
+   - 2px bottom border to separate from body. */
+.jb-table > table thead th {
+  background-color: var(--secondary);
+  color: var(--light);
+  font-weight: 600;
+  text-align: left;
+  border: none;
+  border-bottom: 2px solid var(--secondary);
+}
+
+/* BODY rows.
+   - Each cell gets a full 1px border on all four sides.
+   - border-collapse on the table makes them join cleanly at corners. */
+.jb-table > table tbody td {
+  border: 1px solid var(--gray);
+}
+
+/* Alternating opaque row backgrounds. */
+.jb-table > table tbody tr:nth-child(odd) td {
+  background-color: var(--light);
+}
+.jb-table > table tbody tr:nth-child(even) td {
+  background-color: var(--lightgray);
+}
