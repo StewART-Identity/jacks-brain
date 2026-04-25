@@ -1,36 +1,45 @@
-# Jack's Brain — Two Final Polish Fixes
+# Jack's Brain — Final Polish (third try)
 
-## Fixes
+Three fixes:
 
-**Collection table — remove horizontal scrollbar.** My fixed column
-widths (Title 12rem + Tags 14rem + Date 7rem) plus padding added up to
-more than the content area provided, forcing horizontal scroll. Replaced
-with flexible widths: Title is `nowrap` (sized to its longest cell),
-Tags is `nowrap`, Date is `nowrap`, and Summary takes `width: 100%`
-(the rest of the row). Also overrode `.table-container { overflow-x: auto }`
-to `visible` so even if there's a small overrun, no scrollbar appears.
+1. **Search modal centered on entire viewport, not content area.** Removed
+   the desktop sidebar offset that constrained the modal to the right
+   side. Modal now spans the full screen with the input in the absolute
+   visual center. (Yes, the sidebar is covered by the backdrop while
+   active — that's the price of true centering.)
 
-**Search modal — center it.** Switched the modal from
-`display: inline-block` + top margin to `display: flex` with
-`align-items: center; justify-content: center`. The search input now
-sits in the visual center of the content area (still leaving the
-sidebar visible on desktop, full-width on mobile).
+2. **Horizontal scrollbar on Collection tables — gone.** Switched from
+   fixed-rem column widths to percentage-based widths with
+   `table-layout: fixed`. The table now mathematically can't exceed
+   its container width regardless of content. Also raised the
+   specificity of the `overflow: visible` override.
+
+3. **Tags column widened.** Tags now get 35% of the table width
+   (40% on Concepts/Entities where there's no Date column). Pills
+   wrap on multiple rows naturally rather than getting crammed into a
+   narrow strip.
+
+## Column proportions
+
+Sources & Synthesis (with Date):
+- Title 18%, Summary 32%, Tags 35%, Date 15%
+
+Concepts & Entities (no Date):
+- Title 22%, Summary 38%, Tags 40%
 
 ## Files
 
 Two:
-- `quartz/components/PageList.tsx` (column widths)
-- `quartz/components/styles/search.scss` (flex centering)
+- `quartz/components/PageList.tsx` (column layout)
+- `quartz/components/styles/search.scss` (centering)
 
 ## Apply
 
 Bridge:
-- **Strip prefix:** `jbpatch-finetune/`
+- **Strip prefix:** `jbpatch-final/`
 - **Target repo:** `StewART-Identity/jacks-brain`
 - **Branch:** `main`
 
-Commit message:
-
 ```
-Make Collection tables fit content area; center search modal
+Final polish: full-viewport search center, no table scrollbar, wider tags
 ```
