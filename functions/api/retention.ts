@@ -2,8 +2,8 @@
  * GET /api/retention
  *
  * Returns the retention log as structured JSON for the RetentionList
- * component. Reads the markdown table in content/learn/retention.md and
- * for each row, looks up the current title of the source page (so the
+ * component. Reads the markdown table in data/retention-log.md and for
+ * each row, looks up the current title of the source page (so the
  * "Title" column reflects renames done since the row was logged).
  *
  * Response shape:
@@ -43,17 +43,17 @@ interface RetentionRow {
 }
 
 const BRANCH = "main"
-const RETENTION_PATH = "content/learn/retention.md"
+const RETENTION_PATH = "data/retention-log.md"
 
 // Mirror of the slug derivation in scripts/catalog.mjs:
 //   lowercase, replace any leading/trailing junk, hyphenate non-alphanumerics,
 //   and STRIP any leading YYYY-MM-DD- prefix so re-catalogs of the same
 //   underlying file produce the same slug.
 function deriveSlug(filename: string): string {
+  // Source pages preserve their date prefix (e.g. "2026-04-23-img-2369.md"),
+  // so the slug is just: stem → lowercase → non-alphanumerics collapsed to hyphens.
   const stem = filename.replace(/\.[^.]+$/, "").toLowerCase()
-  const slug = stem.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
-  // Strip leading date prefix, possibly multiple times if the file accumulated them
-  return slug.replace(/^(\d{4}-\d{2}-\d{2}-)+/, "")
+  return stem.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
 }
 
 function decodeBase64Utf8(b64: string): string {
