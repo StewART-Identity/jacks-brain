@@ -1,27 +1,41 @@
-/* SearchPage — Research-style card with the wiki search embedded.
+/* SearchPage — Research-style card, parallel structure to Research.
 
-   Visually parallel to researchPage.scss: rounded card, semi-
-   transparent dark fill, 720px max-width, label, textarea, controls
-   row with count input on the left and Search button on the right.
+   Visual contract (matches researchPage.scss exactly):
+   - 720px max-width card with rounded corners, semi-transparent dark fill
+   - "Search the wiki" label above
+   - Textarea: full width, dark green fill, 2 rows
+   - Controls row: "Number of results" + 5rem-wide input on the left,
+     Search button (auto-width, padding 0.6rem 1.2rem) on the right.
 
-   All selectors are scoped under `#search-page` so the sidebar Search
-   component continues to render its own modal-style search without
-   interference. */
+   Scoped under #search-page so the sidebar Search component is
+   unaffected. */
 
 #search-page {
   max-width: 720px;
   padding-bottom: 2rem;
 }
 
-/* The `.search` element wraps everything because the search engine
-   uses `.search` as its root selector. The sidebar copy of `.search`
-   is constrained to `max-width: 14rem` by search.scss for compact
-   sidebar rendering. Override that here so our embedded copy fills
-   the full 720px article column width — same width as Research. */
+/* Override the sidebar's .search { max-width: 14rem } when nested
+   inside #search-page so the card fills the article column. */
 #search-page .search {
   min-width: 0;
   max-width: 100%;
   width: 100%;
+}
+
+/* The hidden engine-only button — keep it in the DOM (the engine
+   bails if it can't find one) but make it occupy zero space and stay
+   invisible to assistive tech and tab order. */
+#search-page > .search > .search-button {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 #search-page .search-page-card {
@@ -37,9 +51,7 @@
   color: var(--dark);
 }
 
-/* Textarea matches Research card's textarea styling exactly, sized
-   at 2 rows (Research uses 4). Search queries are short so 2 is
-   honest about the input you'd actually type. */
+/* Textarea — exact mirror of .research-card textarea. */
 #search-page textarea.search-bar {
   width: 100%;
   padding: 0.6rem 0.8rem;
@@ -62,8 +74,7 @@
   opacity: 0.7;
 }
 
-/* Controls row — same shape as Research's: count group on the left,
-   Search button on the right (margin-left: auto pushes it). */
+/* Controls row — exact mirror of .research-controls. */
 #search-page .search-page-controls {
   display: flex;
   align-items: center;
@@ -97,6 +108,13 @@
   border-color: var(--secondary);
 }
 
+/* Visible Search button — exact mirror of .research-btn.
+
+   Note: !important on width and height isn't needed here because the
+   button has NO `.search-button` class, so the sidebar's
+   `.search .search-button { width: 100%; height: 2rem }` rules don't
+   match. This is the whole point of the JSX refactor — the visible
+   button is selectorically isolated from engine-targeted styles. */
 #search-page .search-page-btn {
   margin-left: auto;
   padding: 0.6rem 1.2rem;
@@ -113,10 +131,8 @@
   opacity: 0.85;
 }
 
-/* Override the sidebar's modal positioning. The base .search-container
-   from search.scss is `position: fixed; width: 100vw; height: 100vh`
-   with a backdrop-filter — turn that off entirely when nested inside
-   #search-page. */
+/* Override the sidebar's modal-style .search-container positioning.
+   When nested inside #search-page, flatten it to inline flow. */
 #search-page .search-container {
   position: static !important;
   width: auto !important;
@@ -134,9 +150,8 @@
 }
 
 #search-page .search-container .search-space > * {
-  /* The base styles put a heavy drop shadow and a rounded white box
-     around each child of .search-space. We don't want those for the
-     embedded list; the card already provides the visual frame. */
+  /* Cancel base sidebar styles (heavy drop shadow, white box,
+     forced background) — the card already provides the visual frame. */
   box-shadow: none !important;
   background: transparent !important;
   border-radius: 0 !important;
@@ -163,9 +178,8 @@
   padding: 0.5rem;
 }
 
-/* Individual result cards. Engine emits <a class="result-card"> with
-   .card-title (h3) and .card-description (p) inside. Restyle to
-   match the Research result card aesthetic. */
+/* Individual result cards — engine emits <a class="result-card"> with
+   .card-title (h3) and .card-description (p). */
 #search-page .result-card {
   display: block;
   width: 100%;
@@ -223,7 +237,6 @@
   font-weight: 600;
 }
 
-/* "No match" empty state — engine emits <a class="result-card no-match">. */
 #search-page .result-card.no-match {
   cursor: default;
   border-style: dashed;
@@ -234,7 +247,6 @@
   background: transparent;
 }
 
-/* Highlighted search match terms in titles and previews. */
 #search-page .result-card .highlight {
   background: var(--textHighlight);
   color: var(--dark);
