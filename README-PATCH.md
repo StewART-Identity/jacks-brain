@@ -1,25 +1,59 @@
-# Jack's Brain — Match Acquisition Style
+# Jack's Brain — Unified Table Style
 
-Three fixes to the Collection table:
+Single source of truth for all six tables (Acquisition, Retention, and
+the four Collection sub-pages). Every table in the wiki now uses the
+same visual look:
 
-1. **Title text no longer crammed against left border.** Removed the
-   `padding-left: 0` rule on first-child cells. Every cell now has the
-   standard 0.7rem horizontal padding, so content has breathing room
-   inside its border.
+- **Header row**: solid dark green band (var(--secondary)), white-ish
+  bold text, no vertical borders between header cells, 2px bottom
+  border separating header from body.
+- **Body rows**: full 1px borders on every cell, joined cleanly at
+  corners via `border-collapse: collapse`.
+- **Body rows**: alternating opaque backgrounds — odd rows
+  `var(--light)`, even rows `var(--lightgray)`. Neuron wallpaper no
+  longer bleeds through.
+- **Flush left**: zero margin/padding on the table-container wrapper
+  so the table edge aligns with the page title above it.
 
-2. **Header row matches Acquisition's look.** Restored the dark band
-   styling — `var(--lightgray)` background, 2px bottom border. Same
-   visual rhythm as the Acquisition page.
+## Architecture
 
-3. **Flush-left attempt.** Added `padding: 0` to the outer
-   `.table-container`. If this doesn't fully resolve the offset, we can
-   investigate the parent wrapper (`.page-listing` div) next.
+A new `quartz/styles/jbtable.scss` partial holds the shared rules.
+`base.scss` imports it via `@use`, so the styles are always loaded
+site-wide. Any element with `class="jb-table"` (typically alongside
+`class="table-container"`) picks them up automatically.
+
+Per-component CSS files (`acquisition.scss`, `RetentionList.tsx`'s
+inline styles, `PageList.tsx`'s inline styles) have been stripped of
+their visual overrides — they now only define column widths and any
+component-specific extras (badges, inline-edit states, tag pills).
+
+If you ever want to change the table look — say, swap to a different
+header color or remove cell borders — change `jbtable.scss` and every
+table updates at once.
+
+## Files
+
+Six files:
+- `quartz/styles/jbtable.scss` — NEW shared partial
+- `quartz/styles/base.scss` — adds `@use "./jbtable.scss"`
+- `quartz/components/PageList.tsx` — Collection tables now use `.jb-table`
+- `quartz/components/RetentionList.tsx` — Retention table now uses `.jb-table`
+- `quartz/components/scripts/acquisition.inline.ts` — Acquisition table now uses `.jb-table`
+- `quartz/components/styles/acquisition.scss` — stripped of visual overrides
 
 ## Apply
 
 Bridge:
-- **Strip prefix:** `jbpatch-table-final/`
+- **Strip prefix:** `jbpatch-unified/`
 - **Target repo:** `StewART-Identity/jacks-brain`
 - **Branch:** `main`
 
-One file. Single commit.
+Single commit.
+
+## After deploy
+
+All six tables should look identical: same dark green header band, same
+flush-left positioning, same alternating row colors, same cell borders.
+The only differences between them are the columns themselves (Acquisition
+has 3 columns; Retention has 4; Collection sub-pages have 3 or 4
+depending on whether Date applies).
