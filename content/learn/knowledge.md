@@ -1,5 +1,0 @@
----
-title: "Knowledge"
----
-
-Add knowledge by dropping a file, pasting text, fetching a web page URL, or providing the URL to a YouTube video.
