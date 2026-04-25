@@ -14,6 +14,7 @@ tags:
 sources:
   - "[[collection/sources/2026-04-23-img-2369]]"
   - "[[collection/sources/2026-04-25-alma-v2-technical-reference]]"
+  - "[[collection/sources/2026-04-25-iam-brief-deprovisioning-gap-analysis]]"
 confidence: high
 ---
 
@@ -40,3 +41,9 @@ At [[collection/entities/unt-system-iam|UNT System IAM]], Active Directory is de
 [[collection/entities/alma|ALMA]] manages the AD account state through the `userAccountControl` attribute, specifically bit 2 (`UF_ACCOUNTDISABLE`): setting it disables the account; clearing it re-enables it. During inactivity deactivation, ALMA lets IDM propagation set this bit (via the `DeactivateAccounts` output transformation that sets `dirxml-uACAccountDisable=true`). During reactivation, because the `untAccountADNoSync` sync lock is still active at that stage, ALMA re-enables AD accounts directly via the `/reactivate/ad` endpoint rather than through IDM.
 
 When an AD account is disabled, it cannot authenticate in [[collection/concepts/saml|SAML]] flows (where the IdP validates credentials against AD) or [[collection/concepts/oauth|OAuth]] flows (where the Authorization Server uses AD for user validation). Account lifecycle management is therefore the enforcement layer beneath these authentication protocols. See [[collection/concepts/account-lifecycle-management|account lifecycle management]] and [[collection/synthesis/unt-iam-identity-infrastructure|UNT IAM Identity Infrastructure]] for broader context.
+
+## AD Offboarding Gap
+
+ALMA handles inactivity-based deactivation, but permanent offboarding of separated employees has a separate gap. `ad/offboarding.py` in `dstools` contains logic to disable AD accounts and delete Exchange ActiveSync objects for terminated users — but it does not appear in any crontab. The only scheduled offboarding-adjacent process, `idtree/idtree_offboarding_workaround.py` (daily, 11:59 PM), only removes terminated employees from IDTREE group memberships and does not touch AD accounts.
+
+As a result, automated account disablement for separated employees depends entirely on manual action or Identity Manager driver behavior. See [[collection/concepts/deprovisioning|deprovisioning]] and [[collection/sources/2026-04-25-iam-brief-deprovisioning-gap-analysis|Deprovisioning Gap Analysis]] for full context.

@@ -12,6 +12,7 @@ tags:
   - identity
 sources:
   - "[[collection/sources/2026-04-25-alma-v2-technical-reference]]"
+  - "[[collection/sources/2026-04-25-iam-brief-deprovisioning-gap-analysis]]"
 confidence: high
 ---
 
@@ -64,3 +65,9 @@ This allows progressive production enablement: observe in dry-run first to valid
 | `untAccountOverride=Y` | Exempt from inactivity deactivation | Application eligibility check |
 
 `untAccountIgnore` is double-enforced: it operates at the LDAP search filter level (the user never enters the processing queue) and again at the application level (rejected if somehow reached by another path). This defense-in-depth approach prevents both accidental and programmatic bypass.
+
+## Scope Boundary: Lifecycle vs. Deprovisioning
+
+Account lifecycle management (as implemented by [[collection/entities/alma|ALMA]]) is scoped to **inactivity**: users who have stopped using their accounts but retain an organizational relationship. It is explicitly reversible — every deactivation has a corresponding reactivation path.
+
+[[collection/concepts/deprovisioning|Deprovisioning]] is the adjacent but distinct discipline of handling **permanent separation**: terminated, retired, or unaffiliated users who will not return. These operations — deleting [[collection/entities/cisco-duo|Duo]] accounts, purging stale [[collection/entities/edirectory-idtree|IDTREE]] role attributes, disabling [[collection/entities/active-directory|AD]] accounts for separated employees — are not part of ALMA's scope and are handled by separate tooling. At UNT System, this tooling (in `dstools`) was never fully activated, creating a gap documented in the [[collection/sources/2026-04-25-iam-brief-deprovisioning-gap-analysis|Deprovisioning Gap Analysis]]. See [[collection/synthesis/unt-iam-deprovisioning-gap|UNT IAM Deprovisioning Gap]] for the cross-cutting analysis.

@@ -13,6 +13,7 @@ tags:
   - unt-system
 sources:
   - "[[collection/sources/2026-04-25-alma-v2-technical-reference]]"
+  - "[[collection/sources/2026-04-25-iam-brief-deprovisioning-gap-analysis]]"
 confidence: high
 ---
 
@@ -36,6 +37,12 @@ IDTREE is the [[collection/entities/unt-system-iam|UNT System IAM]] deployment o
 In [[collection/entities/alma|ALMA]]'s deactivation workflow, IDTREE is written first (`loginDisabled=TRUE`, `untAccountDisabled=Y`), then IDM drivers are given time to propagate to AD. `untAccountADNoSync` is set last — only after verification confirms all downstream systems reflect the expected state — acting as a sync lock that prevents subsequent IDM events from undoing the deactivation.
 
 During reactivation, `untAccountDisabled` is set to `N` rather than deleted; IDM requires an actual change event, and a deletion would not reliably trigger one. Because `untAccountADNoSync` is still set at reactivation start, AD is re-enabled directly by ALMA rather than via IDM propagation. The nosync flag is deleted last, after verification.
+
+## Stale Attribute Accumulation (Deprovisioning Gap)
+
+A separate problem exists alongside the ALMA-managed lifecycle: role purge automation for separated students was never activated. Three Python scripts (`purge_unt_roles.py`, `purge_hsc_roles.py`, `purge_dal_roles.py`) exist in the `dstools` repository and were intended as replacements for the original Perl purge scripts — but none appear in the purge crontab. The only scheduled purge is `find_old_enrollment_groups.py` (weekly, Saturdays).
+
+The result: approximately 113,000 users retain stale student attributes indefinitely, including `classEnrollment` references, role values, and scoped affiliations. This contributes to group bloat (e.g., `UNT Graduate Students`) and inaccurate affiliation-based access decisions downstream. See [[collection/concepts/deprovisioning|deprovisioning]] and [[collection/sources/2026-04-25-iam-brief-deprovisioning-gap-analysis|Deprovisioning Gap Analysis]] for the full picture.
 
 ## Relationship to Active Directory
 
