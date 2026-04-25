@@ -52,9 +52,10 @@ const SOURCES_DIR = "content/collection/sources"
 // the same underlying source matches between static/originals and
 // content/collection/sources regardless of date prefixing differences.
 function deriveSlug(filename: string): string {
+  // Source pages preserve their date prefix in the filename
+  // (e.g. "2026-04-23-img-2369.md"), so the derived slug should too.
   const stem = filename.replace(/\.[^.]+$/, "").toLowerCase()
-  const slug = stem.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
-  return slug.replace(/^(\d{4}-\d{2}-\d{2}-)+/, "")
+  return stem.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
