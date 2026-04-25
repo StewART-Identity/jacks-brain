@@ -1,7 +1,7 @@
 /* SearchPage — Research-style card with the wiki search embedded in
    it. The card mirrors the visual contract of researchPage.scss
-   (rounded, semi-transparent dark fill, roomy input) and the search
-   results render below it as an inline list.
+   (rounded, semi-transparent dark fill, roomy textarea) and the
+   search results render below it as an inline list.
 
    All selectors are scoped under `#search-page` so the sidebar
    Search component continues to render its own modal-style search
@@ -10,6 +10,18 @@
 #search-page {
   max-width: 720px;
   padding-bottom: 2rem;
+}
+
+/* The `.search` element wraps everything because the search engine
+   uses `.search` as its root selector. The sidebar copy of `.search`
+   is constrained to `max-width: 14rem` by search.scss for compact
+   sidebar rendering. Override that here so our embedded copy fills
+   the full 720px article column width — this is what aligns the
+   Search card with the Research card visually. */
+#search-page .search {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 
 #search-page .search-page-card {
@@ -25,29 +37,28 @@
   color: var(--dark);
 }
 
-/* The visible input. Larger than the sidebar's compact 2rem-tall
-   button so it reads as "type your question here" rather than as a
-   constrained search field. */
-#search-page input.search-bar {
+/* The textarea matches the Research card's textarea styling exactly,
+   sized at 2 rows (Research uses 4 — search queries are typically
+   short, so 2 is the right size for this use case). */
+#search-page textarea.search-bar {
   width: 100%;
-  box-sizing: border-box;
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 0.8rem;
   border: 1px solid var(--lightgray);
   border-radius: 8px;
   background: var(--light);
   color: var(--darkgray);
+  font-size: 0.95rem;
   font-family: inherit;
-  font-size: 1rem;
-  /* Override base.scss's table cell `min-width: 75px` and any other
-     stray sizing — input is its own element, not a table cell, but
-     defensive. */
+  resize: vertical;
+  box-sizing: border-box;
+  /* Override base.scss's stray min-width on inputs that might apply. */
   min-width: 0;
 }
-#search-page input.search-bar:focus {
+#search-page textarea.search-bar:focus {
   outline: none;
   border-color: var(--secondary);
 }
-#search-page input.search-bar::placeholder {
+#search-page textarea.search-bar::placeholder {
   color: var(--gray);
   opacity: 0.7;
 }
