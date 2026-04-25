@@ -1,21 +1,29 @@
-# Jack's Brain — Table Border + Alignment
+# Jack's Brain — Row Polish
 
-Two tweaks to PageList.tsx:
+Four CSS adjustments on the Collection table:
 
-1. **Table now flush-left with title/description.** Quartz's base
-   stylesheet applies `margin: 1rem` to all tables inside `.table-container`.
-   Overrode that to `margin: 0` so the Collection table edge lines up
-   with the page heading.
+1. **Opaque rows** — every `td` and `th` has an explicit
+   `background-color` (no transparency), so the neuron wallpaper no
+   longer shows through cells.
 
-2. **Subtle cell borders.** Added `border: 1px solid var(--lightgray)`
-   to every `th` and `td` so each cell is visually delineated without
-   being heavy.
+2. **Alternating row colors** — odd rows use `var(--light)`, even rows
+   use `var(--lightgray)`. Both are theme tokens so they harmonize with
+   the rest of the site in light or dark mode.
+
+3. **Heavier borders** — bumped from `var(--lightgray)` to `var(--gray)`
+   on cell borders. Borders are now visually distinct without being
+   heavy-handed.
+
+4. **Flush left with the page title** — first column gets
+   `padding-left: 0`, so the cell content (e.g. "SAML vs. OAuth Diagram")
+   aligns with the "Sources" heading above. No negative margins, no
+   layout hacks.
 
 ## Apply
 
 Bridge:
-- **Strip prefix:** `jbpatch-borders/`
+- **Strip prefix:** `jbpatch-rows/`
 - **Target repo:** `StewART-Identity/jacks-brain`
 - **Branch:** `main`
 
-Single file. One commit.
+One file. Single commit.
