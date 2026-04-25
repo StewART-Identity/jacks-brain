@@ -35,6 +35,7 @@ Every wiki page uses this template:
 ```markdown
 ---
 title: "Page Title"
+summary: "One-sentence description (≤140 chars) shown in Collection table listings."
 type: source | entity | concept | synthesis
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
@@ -45,10 +46,17 @@ sources:
 confidence: high | medium | low | speculative
 ---
 
-# Page Title
-
 Content here. Use [[wikilinks]] to link to other pages.
 ```
+
+The `summary` field is required for every page. It appears as the
+"Summary" column on each Collection sub-page (Sources, Entities,
+Concepts, Synthesis) and is what makes the listings scannable. Make it
+informative on its own — not just the title rephrased. Examples:
+
+- *OAuth*: "Open standard for delegated access — letting an app access a user's data without their password."
+- *Active Directory*: "Microsoft's directory and credential store; the canonical backend behind enterprise SAML and OAuth flows."
+- *SAML vs. OAuth*: "Comparison of SAML (authentication) and OAuth (authorization) — what each solves, where they overlap, common confusion."
 
 ### Source-page-specific frontmatter
 
