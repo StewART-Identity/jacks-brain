@@ -106,22 +106,18 @@ document.addEventListener("nav", () => {
   }
   bar.addEventListener("keydown", suppressEnterNewline)
 
-  // Apply the "Number of results" cap by hiding result cards beyond N.
-  const applyCap = () => {
-    const n = Math.max(1, Math.min(8, parseInt(countInput && countInput.value, 10) || 5))
-    const cards = root.querySelectorAll(".search-layout .result-card")
-    cards.forEach((card, i) => {
-      if (card.classList.contains("no-match")) return
-      card.style.display = i < n ? "" : "none"
-    })
-  }
-
+  // Apply the "Number of results" cap by setting a data-cap attribute
+  // on the .search-layout element. The CSS in searchPage.scss handles
+  // the actual hiding via :nth-child rules, so the cap is enforced
+  // synchronously the moment the engine appends new result cards —
+  // no MutationObserver, no flash of soon-to-be-hidden cards.
   const layout = root.querySelector(".search-layout")
-  let observer = null
-  if (layout) {
-    observer = new MutationObserver(() => applyCap())
-    observer.observe(layout, { childList: true, subtree: true })
+  const applyCap = () => {
+    if (!layout) return
+    const n = Math.max(1, Math.min(8, parseInt(countInput && countInput.value, 10) || 5))
+    layout.setAttribute("data-cap", String(n))
   }
+  applyCap()
 
   if (countInput) {
     countInput.addEventListener("input", applyCap)
@@ -138,7 +134,6 @@ document.addEventListener("nav", () => {
     bar.removeEventListener("keydown", suppressEnterNewline)
     if (countInput) countInput.removeEventListener("input", applyCap)
     if (btn) btn.removeEventListener("click", focusBar)
-    if (observer) observer.disconnect()
   })
 })
 `
