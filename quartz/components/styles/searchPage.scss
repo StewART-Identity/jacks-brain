@@ -1,11 +1,12 @@
-/* SearchPage — Research-style card with the wiki search embedded in
-   it. The card mirrors the visual contract of researchPage.scss
-   (rounded, semi-transparent dark fill, roomy textarea) and the
-   search results render below it as an inline list.
+/* SearchPage — Research-style card with the wiki search embedded.
 
-   All selectors are scoped under `#search-page` so the sidebar
-   Search component continues to render its own modal-style search
-   without interference. */
+   Visually parallel to researchPage.scss: rounded card, semi-
+   transparent dark fill, 720px max-width, label, textarea, controls
+   row with count input on the left and Search button on the right.
+
+   All selectors are scoped under `#search-page` so the sidebar Search
+   component continues to render its own modal-style search without
+   interference. */
 
 #search-page {
   max-width: 720px;
@@ -16,8 +17,7 @@
    uses `.search` as its root selector. The sidebar copy of `.search`
    is constrained to `max-width: 14rem` by search.scss for compact
    sidebar rendering. Override that here so our embedded copy fills
-   the full 720px article column width — this is what aligns the
-   Search card with the Research card visually. */
+   the full 720px article column width — same width as Research. */
 #search-page .search {
   min-width: 0;
   max-width: 100%;
@@ -32,14 +32,14 @@
 }
 
 #search-page .search-page-label {
-  margin: 0 0 0.85rem 0;
+  margin: 0 0 0.75rem 0;
   font-size: 1.1rem;
   color: var(--dark);
 }
 
-/* The textarea matches the Research card's textarea styling exactly,
-   sized at 2 rows (Research uses 4 — search queries are typically
-   short, so 2 is the right size for this use case). */
+/* Textarea matches Research card's textarea styling exactly, sized
+   at 2 rows (Research uses 4). Search queries are short so 2 is
+   honest about the input you'd actually type. */
 #search-page textarea.search-bar {
   width: 100%;
   padding: 0.6rem 0.8rem;
@@ -51,7 +51,6 @@
   font-family: inherit;
   resize: vertical;
   box-sizing: border-box;
-  /* Override base.scss's stray min-width on inputs that might apply. */
   min-width: 0;
 }
 #search-page textarea.search-bar:focus {
@@ -63,6 +62,8 @@
   opacity: 0.7;
 }
 
+/* Controls row — same shape as Research's: count group on the left,
+   Search button on the right (margin-left: auto pushes it). */
 #search-page .search-page-controls {
   display: flex;
   align-items: center;
@@ -71,22 +72,31 @@
   flex-wrap: wrap;
 }
 
-#search-page .search-page-hint {
-  flex: 1;
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--gray);
-  line-height: 1.4;
-}
-#search-page .search-page-hint code {
-  background: rgba(0, 0, 0, 0.18);
-  padding: 0 0.3em;
-  border-radius: 3px;
-  font-size: 0.95em;
+#search-page .search-page-count-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
-/* The Search button. Doubles as the engine's `.search-button`
-   trigger (on click, the engine focuses the input via showSearch). */
+#search-page .search-page-count-label {
+  color: var(--darkgray);
+  font-size: 0.9rem;
+}
+
+#search-page .search-page-count-input {
+  width: 5rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-size: 0.95rem;
+}
+#search-page .search-page-count-input:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+
 #search-page .search-page-btn {
   margin-left: auto;
   padding: 0.6rem 1.2rem;
@@ -97,21 +107,10 @@
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
   transition: opacity 0.15s ease;
 }
 #search-page .search-page-btn:hover {
   opacity: 0.85;
-}
-#search-page .search-page-btn svg {
-  width: 1rem;
-  height: 1rem;
-}
-#search-page .search-page-btn .search-path {
-  stroke: var(--light);
-  stroke-width: 1.8px;
 }
 
 /* Override the sidebar's modal positioning. The base .search-container
@@ -144,7 +143,7 @@
   margin-bottom: 0 !important;
 }
 
-/* The results layout (engine appends results-container here). */
+/* Results layout (engine appends results-container here). */
 #search-page .search-layout {
   display: none;
   border: none !important;
@@ -164,10 +163,9 @@
   padding: 0.5rem;
 }
 
-/* Individual result cards inside the results list. The engine emits
-   <a class="result-card"> for each hit, with .card-title (h3) and
-   .card-description (p) inside. Restyle to match the research-result
-   aesthetic. */
+/* Individual result cards. Engine emits <a class="result-card"> with
+   .card-title (h3) and .card-description (p) inside. Restyle to
+   match the Research result card aesthetic. */
 #search-page .result-card {
   display: block;
   width: 100%;
@@ -225,7 +223,7 @@
   font-weight: 600;
 }
 
-/* The "no match" empty state result card. */
+/* "No match" empty state — engine emits <a class="result-card no-match">. */
 #search-page .result-card.no-match {
   cursor: default;
   border-style: dashed;
@@ -236,8 +234,7 @@
   background: transparent;
 }
 
-/* Highlighted search match terms in titles and previews — emitted by
-   the engine's `highlight()` function as <span class="highlight">. */
+/* Highlighted search match terms in titles and previews. */
 #search-page .result-card .highlight {
   background: var(--textHighlight);
   color: var(--dark);
