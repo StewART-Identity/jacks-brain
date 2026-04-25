@@ -40,7 +40,6 @@ interface RetentionRow {
   slug: string
   title: string
   sourcePresent: boolean
-  loggedAt: string | null
 }
 
 const BRANCH = "main"
@@ -88,6 +87,16 @@ function parseTable(markdown: string): { date: string; action: string; details: 
       .replace(/^\||\|$/g, "")
       .split("|")
       .map(c => c.trim())
+      // If a cell is in markdown autolink form `[text](url)` — which can
+      // happen when the file passes through a markdown processor that
+      // auto-links bare URLs (e.g. some GitHub Bridge clients normalize
+      // tokens like `foo.md` into links) — collapse it back to just the
+      // text. We treat the link text as authoritative because that's what
+      // the row was originally written with.
+      .map(c => {
+        const m = c.match(/^\[(.+?)\]\([^)]*\)$/)
+        return m ? m[1] : c
+      })
     if (cells.length < 3) continue
     rows.push({ date: cells[0], action: cells[1], details: cells[2] })
   }
@@ -103,55 +112,6 @@ function extractTitle(markdown: string): string | null {
   const value = titleLine.replace(/^title:\s*/, "").trim()
   // Strip surrounding single or double quotes if present
   return value.replace(/^["'](.*)["']$/, "$1")
-}
-
-interface CommitListItem {
-  sha: string
-  commit: {
-    message: string
-    committer: { date: string }
-  }
-}
-
-/**
- * Build a map of {filename → ISO timestamp} by walking commits to
- * data/retention-log.md in reverse-chronological order. Mirrors the same
- * approach used in /api/status against static/originals/, so that two
- * documents logged on the same date sort by the actual commit time
- * (newest first) instead of falling back to whatever order they happen
- * to appear in the markdown table.
- *
- * The append_retention_entry MCP tool always commits with a message like
- * "Log retention: <action> <filename>", and the upload form's pipeline
- * follows the same convention. We extract the filename from each commit
- * message and take the newest commit per filename.
- *
- * One API call, per_page=100. If the log ever grows past that, older
- * entries fall back to the row's date column via the sort comparator.
- */
-async function getRetentionTimestamps(
-  api: string,
-  headers: Record<string, string>,
-): Promise<Map<string, string>> {
-  const res = await fetch(
-    `${api}/commits?path=${encodeURIComponent(RETENTION_PATH)}&per_page=100`,
-    { headers },
-  )
-  if (!res.ok) return new Map()
-
-  const commits = (await res.json()) as CommitListItem[]
-  const timestamps = new Map<string, string>()
-
-  // Newest-first. First match per filename wins.
-  for (const c of commits) {
-    const msg = c.commit.message
-    // Match the YYYY-MM-DD-<rest> filename out of the message body.
-    const match = msg.match(/(\d{4}-\d{2}-\d{2}-[A-Za-z0-9._-]+)/)
-    if (match && !timestamps.has(match[1])) {
-      timestamps.set(match[1], c.commit.committer.date)
-    }
-  }
-  return timestamps
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -173,14 +133,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     "User-Agent": "jacks-brain-retention",
   }
 
-  // 1. Read the retention markdown and the per-row commit timestamps
-  // in parallel. The timestamp map lets us tiebreak same-date rows by
-  // their actual commit time, matching what /api/status does for
-  // static/originals/.
-  const [retRes, timestamps] = await Promise.all([
-    fetch(`${api}/contents/${RETENTION_PATH}?ref=${BRANCH}`, { headers }),
-    getRetentionTimestamps(api, headers),
-  ])
+  // 1. Read the retention markdown
+  const retRes = await fetch(
+    `${api}/contents/${RETENTION_PATH}?ref=${BRANCH}`,
+    { headers },
+  )
   if (retRes.status === 404) {
     return Response.json({ rows: [] })
   }
@@ -239,6 +196,19 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   )
 
   // 4. Build the response rows.
+  //
+  // Rows are emitted in append-newest-first order. The retention log is
+  // strictly append-only — every cataloging operation writes a new row at
+  // the bottom of the markdown table — so reversing the parsed table gives
+  // us the correct chronological-newest-first ordering, including the
+  // tiebreak between same-date entries that would otherwise sort
+  // arbitrarily on the date column alone.
+  //
+  // (We considered fetching commit timestamps via the Commits API for a
+  // more robust ordering, but that approach depends on commit messages
+  // including the filename, which isn't guaranteed when entries are
+  // committed through tools other than append_retention_entry. Append
+  // order is the source of truth that doesn't require parsing commits.)
   const rows: RetentionRow[] = tableRows.map((row) => {
     const slug = deriveSlug(row.details)
     const sourcePresent = sourcesPresent.has(slug)
@@ -249,20 +219,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       slug,
       title: slugToTitle.get(slug) || (sourcePresent ? row.details : ""),
       sourcePresent,
-      // Real commit timestamp drives sort order. Falls back to the date
-      // column if we couldn't resolve a timestamp (e.g. older entries
-      // beyond the per_page=100 commits window).
-      loggedAt: timestamps.get(row.details) || null,
     }
-  })
-
-  // Sort newest-first. Primary key: commit timestamp. Falls back to the
-  // date column for any row without a resolved timestamp.
-  rows.sort((a, b) => {
-    const aKey = a.loggedAt || a.date || ""
-    const bKey = b.loggedAt || b.date || ""
-    return bKey.localeCompare(aKey)
-  })
+  }).reverse()
 
   return Response.json({ rows })
 }
