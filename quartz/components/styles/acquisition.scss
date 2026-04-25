@@ -3,28 +3,11 @@
   padding-bottom: 2rem;
 }
 
-/* Retention table: let the Document column grow; fix Acquired and Status
-   to their content size. Without this, browser's default table algorithm
-   distributes width equally among columns, cramping long document names
-   while leaving the short date/status columns half-empty. */
+/* Acquisition table: column widths.
+   The unified table look (header band, alternating rows, cell borders,
+   flush-left) comes from quartz/styles/jbtable.scss via the .jb-table
+   class on the wrapping <div>. */
 
-/* Override Quartz's default .table-container styling for this page.
-   Base.scss applies 1rem margin + 1.5rem padding + min-width:75px to
-   every table cell, which (combined with table-layout:fixed) forces
-   our table wider than the container and triggers a horizontal scrollbar. */
-#acquisition-app .table-container {
-  overflow-x: visible; /* no horizontal scroll */
-}
-#acquisition-app .table-container > table {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  table-layout: fixed;
-}
-#acquisition-app .table-container > table th,
-#acquisition-app .table-container > table td {
-  min-width: 0; /* cancel the default min-width:75px */
-}
 #acquisition-app thead th:nth-child(1) {
   /* Document — takes whatever's left */
   width: auto;
