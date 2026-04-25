@@ -1,5 +1,6 @@
 ---
 title: "Active Directory"
+summary: "Microsoft's directory and credential store; the canonical backend behind enterprise SAML and OAuth flows."
 type: entity
 created: 2026-04-23
 updated: 2026-04-23
