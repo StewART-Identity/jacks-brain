@@ -3,38 +3,44 @@ import styles from "./styles/searchPage.scss"
 
 /* SearchPage — the dedicated /learn/search route.
  *
- * The card mirrors the Research card visually: rounded, semi-transparent
- * dark fill, label, textarea, and a controls row with a count input on
- * the left and a Search button on the right. No "Rank with Claude"
- * toggle (that's Research-specific).
+ * Visually mirrors the Research card exactly: rounded card, semi-
+ * transparent dark fill, label, textarea, controls row with count
+ * input on the left and Search button on the right (Research-button
+ * sized, NOT compact-sidebar-button sized).
  *
- * The card hosts the EXACT DOM contract the existing search engine in
- * `scripts/search.inline.ts` looks for:
+ * Architecture note — this is a re-do of an earlier attempt that
+ * failed because I put the engine's `.search-button` class on the
+ * visible Search button. That made the sidebar's
+ * `.search .search-button { width: 100%; height: 2rem; ... }` rules
+ * leak onto the visible button, stretching it across the row and
+ * compressing it vertically. Fix: the visible button now has NO
+ * engine-relevant classes. A separate, hidden `<button class="search-button">`
+ * exists solely to satisfy the engine's `setupSearch` lookup
+ * (which bails early if it can't find a .search-button element).
  *
- *   .search
- *     .search-button         (focuses the input via showSearch())
+ * Engine DOM contract still met:
+ *   .search                              (root, engine iterates these)
+ *     button.search-button (display:none)  (engine binds click handler)
  *     .search-container
  *       .search-space
- *         textarea.search-bar  (the actual search input — note that
- *                              the engine uses `.value` and `input`
- *                              events, both of which work identically
- *                              on textareas and inputs)
- *         .search-layout       (engine appends results-container here)
- *
- * The engine's `setupSearch` runs on every nav event and iterates over
- * EVERY `.search` element on the page, so this instance is bound
- * automatically alongside the sidebar Search component — no engine
- * changes required.
- *
- * Note on the count input: the engine caps results at 8 internally
- * (numSearchResults = 8 in search.inline.ts, defined at module scope).
- * This page can't ask for more than 8 — but it can ask for fewer.
- * Setting the input to e.g. 5 hides the 6th-8th result rows
- * client-side. The input is min=1 max=8 to be honest about that. */
+ *         textarea.search-bar              (the actual visible input)
+ *         .search-layout                   (engine appends results here)
+ */
 const SearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="search-page">
-      <div class="search search-page-search">
+      <div class="search">
+        {/* Hidden button for the engine. The engine's setupSearch
+            requires a .search-button element to exist; without one it
+            bails early. We keep this element off-screen and render a
+            separate visible Search button below. */}
+        <button
+          class="search-button"
+          type="button"
+          aria-hidden="true"
+          tabIndex={-1}
+        ></button>
+
         <div class="search-page-card">
           <h3 class="search-page-label">Search the wiki</h3>
           <textarea
@@ -58,7 +64,10 @@ const SearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
                 class="search-page-count-input"
               />
             </div>
-            <button class="search-button search-page-btn" type="button">
+            {/* The visible Search button. NO engine classes — fully
+                styled by our own searchPage.scss with no leakage from
+                the sidebar's .search-button rules. */}
+            <button class="search-page-btn" type="button">
               Search
             </button>
           </div>
@@ -83,21 +92,13 @@ document.addEventListener("nav", () => {
   if (!container || !bar) return
 
   // Mark active on first interaction so the engine renders results.
-  // The engine's onType handler is wired to the textarea, but it only
-  // appends results into .search-layout when the parent
-  // .search-container has the .active class. Setting it manually on
-  // focus/input means the user can just type — no need to click the
-  // search button first to "open" the search.
   const ensureActive = () => {
     container.classList.add("active")
   }
   bar.addEventListener("focus", ensureActive)
   bar.addEventListener("input", ensureActive)
 
-  // Suppress newline-on-Enter inside the search textarea. The engine's
-  // document-level keydown handler captures Enter to navigate to the
-  // highlighted result; without this, Enter would also insert a literal
-  // newline into the textarea before the navigation fires.
+  // Suppress newline-on-Enter inside the search textarea.
   const suppressEnterNewline = (e) => {
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
       e.preventDefault()
@@ -105,27 +106,16 @@ document.addEventListener("nav", () => {
   }
   bar.addEventListener("keydown", suppressEnterNewline)
 
-  // Apply the "Number of results" cap by hiding result cards beyond
-  // the chosen N. The engine renders results into .results-container
-  // asynchronously (input event -> debounced search -> appendChild),
-  // so we can't trim just once — we have to re-trim whenever the
-  // results list changes. A MutationObserver on the results container
-  // (created lazily by the engine) watches for new .result-card
-  // children and reapplies the cap.
+  // Apply the "Number of results" cap by hiding result cards beyond N.
   const applyCap = () => {
     const n = Math.max(1, Math.min(8, parseInt(countInput && countInput.value, 10) || 5))
     const cards = root.querySelectorAll(".search-layout .result-card")
     cards.forEach((card, i) => {
-      // Don't hide the "no match" empty state (it's a single card and
-      // hiding it would just leave a blank box).
       if (card.classList.contains("no-match")) return
       card.style.display = i < n ? "" : "none"
     })
   }
 
-  // Watch the .search-layout for any DOM changes (the engine swaps the
-  // results-container in and out, then appends/replaces result cards
-  // inside it). Re-apply the cap on every mutation.
   const layout = root.querySelector(".search-layout")
   let observer = null
   if (layout) {
@@ -133,15 +123,11 @@ document.addEventListener("nav", () => {
     observer.observe(layout, { childList: true, subtree: true })
   }
 
-  // Re-apply when the user changes the count.
   if (countInput) {
     countInput.addEventListener("input", applyCap)
   }
 
-  // The Search button on this page is a no-op for engine purposes
-  // (the engine focuses the input via showSearch on click — useful in
-  // the modal context, not here). Make it explicitly focus the input
-  // so the user always lands in the textarea after clicking.
+  // The visible Search button focuses the input.
   const btn = root.querySelector(".search-page-btn")
   const focusBar = () => bar.focus()
   if (btn) btn.addEventListener("click", focusBar)
