@@ -84,6 +84,8 @@
     height: 100vh;
     overflow-y: auto;
     display: none;
+    align-items: center;
+    justify-content: center;
     backdrop-filter: blur(4px);
 
     /* On desktop, leave room for the left sidebar — search shouldn't
@@ -94,14 +96,12 @@
     }
 
     &.active {
-      display: inline-block;
+      display: flex;
     }
 
     & > .search-space {
       width: 65%;
-      margin-top: 12vh;
-      margin-left: auto;
-      margin-right: auto;
+      margin: 0 auto;
 
       @media all and not ($desktop) {
         width: 90%;
