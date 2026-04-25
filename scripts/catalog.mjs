@@ -253,9 +253,9 @@ Follow the "Catalog" workflow from CLAUDE.md:
 5. Do NOT modify content/index.md (it's the welcome page) or any of the per-category index.md files in collection/ (they are intro-only; the page list is auto-rendered).
 6. Update data/retention-log.md — add a row to the table (after the header row): | ${today} | ${isReView ? "Re-viewed" : "Cataloged"} | ${originalName} |
 
-The original document is available for download at: /static/originals/${originalName}
-Include a link to the original document in the source summary page (e.g., [Download original](/static/originals/${originalName})).
-The /static/originals/ prefix is required — Quartz serves the static/ directory under that path. Do NOT use /originals/ — that path will 404.
+The original document is available for download at: /api/originals/${originalName}
+Include a link to the original document in the source summary page (e.g., [Download original](/api/originals/${originalName})).
+The /api/originals/ prefix is required — it is the auth-controlled download proxy that streams the file from the GitHub repo. Do NOT use /originals/ or /static/originals/ — neither path is served.
 
 IMPORTANT formatting rules:
 - Every page (source, entity, concept, synthesis) MUST include a 'summary:' field in its frontmatter — a single-sentence (≤140 char) description that will appear in the Collection table listings. Make it informative on its own, not just a restated title.
