@@ -95,6 +95,13 @@ function extractReadable(html: string): { title: string; body: string } {
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
+  // Defense in depth — Cloudflare Access sets this header on every request
+  // it lets through. If it's missing, the request didn't come via Access.
+  const accessUser = context.request.headers.get("cf-access-authenticated-user-email")
+  if (!accessUser) {
+    return Response.json({ error: "Forbidden" }, { status: 403 })
+  }
+
   const { GITHUB_TOKEN, GITHUB_REPO } = context.env
 
   if (!GITHUB_TOKEN || !GITHUB_REPO) {
