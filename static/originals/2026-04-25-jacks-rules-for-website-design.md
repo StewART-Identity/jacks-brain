@@ -1,5 +1,45 @@
 # Jack's Rules for Website Design
 
+*Or: how I accidentally wrote UX theory while yelling at medical billing websites.*
+
+---
+
+A few years ago, before I'd actually studied UX in any serious way, I got mad at enough websites that I wrote my feelings down. I called it *Jack's Rules for Website Design*. It was, at its politest, a rant.
+
+Recently, while rebuilding my personal wiki with the help of an AI assistant that actually knows UX, something embarrassing happened: every rule I wrote in anger turned out to correspond to a real, named principle of interaction design. I had, without meaning to, reinvented large chunks of Don Norman's career, stamped with profanity and threats.
+
+So here's the rant, annotated. Each rule has three layers:
+
+1. **The rule itself** — what I yelled at the screen.
+2. **My commentary** — the part my wife asks me to tone down.
+3. **The actual UX principle** — what I was accidentally describing.
+
+It's 2026. We've collectively had the web for thirty-plus years. Almost none of these rules should still need saying. And yet.
+
+---
+
+## 1. It's the year 2026: automatically redirect from http to https.
+
+> SSL certificates are cheap. Use them LOTS.
+
+**The principle: defensive defaults.** Infrastructure choices — which protocol, which subdomain, which port — should never be the user's problem. If your site only works on HTTPS, don't punish someone who typed `http` into the address bar; redirect them. The user's job is to want what you're selling. Your job is to get out of the way.
+
+---
+
+## 2. Automatically redirect from www.medicaldebt.com to medicaldebt.com.
+
+> No one cares that the current convention is to exclude `www` in domain names. You know — your users don't.
+
+**The principle: user agnosticism about infrastructure.** Your users don't know whether your canonical URL includes `www`, and it would be insulting to expect them to. Support both, pick one as canonical, redirect the other. This is one DNS record and one server config line, not a design question.
+
+---
+
+## 3. If you print it on your bills, do not make your payment URL long.
+
+Case in point:
+
+https://www.medicaldebt.com/capitalist/running-dog/swine-pig/oppressor-tyrants/ugly-input-form.html?here=is&some=useless&additional=crap#314159261728
+
 > Especially for websites focused on taking payments for medical services, most people can barely use a computer much less type your needlessly and stupidly long URL.
 
 **The principle: match the medium to the message.** A URL printed on paper is a transcription task. Every character is an opportunity for a typo. If you expect someone to type `medicaldebt.com/pay/INV-8472` from a printed statement, make it exactly that. Don't print your internal routing structure on paper and expect a sixty-year-old with a smartphone to get it right on the first try. There's a whole field of study — information scent and cognitive load — that boils down to: *don't.*
