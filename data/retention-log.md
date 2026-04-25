@@ -8,3 +8,4 @@ Audit log of all cataloging operations. Read by /api/retention; rendered by the 
 | 2026-04-25 | Cataloged | 2026-04-25-IAM_Team_Knowledge-UI_Vocabulary_and_Conventions_for_Web_Interfaces.docx |
 | 2026-04-25 | Cataloged | 2026-04-25-jacks-rules-for-website-design.md |
 | 2026-04-25 | Cataloged | 2026-04-25-ALMA_v2_Technical_Reference.docx |
+| 2026-04-26 | Cataloged | 2026-04-25-IAM_Brief_Deprovisioning_Gap_Analysis.pdf |
