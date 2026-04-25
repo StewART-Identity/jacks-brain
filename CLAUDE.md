@@ -116,32 +116,67 @@ Trigger: user says "catalog [source]" or drops a file. (Related: a file
 appearing in `static/originals/` is an *acquisition* — the upstream step
 the human performs before cataloging.)
 
+The catalog has three phases: **register, enrich, verify.** Registration
+gets the document into the audit trail and the per-category indexes
+quickly; enrichment fills in the substantive content; verification
+confirms nothing was missed. Do them in order — registration is cheap
+and recoverable, enrichment is expensive and shouldn't run if
+registration failed, and verification depends on both.
+
+#### Register
+
 1. View the acquired document in `static/originals/`.
+
 2. Discuss key takeaways with the user. Ask what to emphasize.
+
 3. Check whether a source page already exists for this document (match
    by slug, not by filename — see "Naming conventions"). If it does,
    this is a **re-view**; if not, this is the **initial cataloging**.
+
 4. Create or update the source summary page in `content/collection/sources/`.
    On a re-view: replace the body, append a `views:` entry, update `role:`
    if the interpretation changed. On an initial cataloging: create the
    file with a single `views:` entry.
-5. For each significant entity mentioned: create or update its page in
-   `content/collection/entities/`.
-6. For each significant concept: create or update its page in
-   `content/collection/concepts/`.
-7. If the source connects to or contrasts with existing wiki content,
-   create or update a synthesis page in `content/collection/synthesis/`.
-8. Update the relevant per-category index files (`content/collection/sources/index.md`,
-   `entities/index.md`, etc.) with new or changed rows.
-9. Append an entry to `data/retention-log.md` marking this as
-   "Cataloged" (initial) or "Re-viewed" (subsequent). Note: the rendered
-   page lives at `content/learn/retention.md` but contains no table —
-   the React component there fetches the actual log from
-   `data/retention-log.md` via `/api/retention`. Always write to the
-   data file, never to the rendered page.
-   When working through the MCP server, use the `append_retention_entry`
-   tool — it knows the table schema and the valid action vocabulary.
-10. Report what you created and updated.
+
+5. Log the retention entry. Call `append_retention_entry` with the
+   action (`Cataloged` for an initial, `Re-viewed` for a re-view) and
+   the original filename from `static/originals/`.
+
+6. Update `content/collection/sources/index.md` with the new or changed row.
+
+#### Enrich
+
+7. For each significant entity mentioned: create or update its page in
+   `content/collection/entities/`. Update `content/collection/entities/index.md`
+   accordingly.
+
+8. For each significant concept: create or update its page in
+   `content/collection/concepts/`. Update `content/collection/concepts/index.md`
+   accordingly.
+
+9. If the source connects to or contrasts with existing wiki content,
+   create or update a synthesis page in `content/collection/synthesis/`,
+   and update `content/collection/synthesis/index.md`.
+
+#### Verify
+
+10. Read back what was committed. Specifically:
+    - `data/retention-log.md` contains a row for this catalog.
+    - `content/collection/sources/index.md` lists the new or updated source.
+    - Each entity and concept page created in steps 7–8 appears in its
+      respective index file.
+
+    Use the `read_repo_file` tool to read `data/retention-log.md` (it lives
+    outside `content/`, so `read_wiki_page` doesn't reach it). If
+    `read_repo_file` is not available in the current session, ask the
+    user to confirm the retention entry landed before reporting completion.
+
+    If any of these are missing, fix them now before reporting completion.
+    The wiki's audit and navigation depend on these being in sync; a
+    catalog that produced beautiful prose but didn't update the indexes
+    is an incomplete catalog.
+
+11. Report what you created and updated.
 
 A single source typically touches 5–15 pages. Take your time. Quality of
 cross-references matters more than speed.
@@ -202,6 +237,7 @@ operations. It's a markdown table read by the `/api/retention` endpoint
 and rendered by the RetentionList component on `content/learn/retention.md`,
 where titles can be inline-edited (the underlying filename is preserved).
 The rendered page itself contains no table — only the data file does.
+Always write to the data file, never to the rendered page.
 
 ```markdown
 | Date | Action | Details |
