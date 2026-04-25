@@ -22,6 +22,5 @@ A guide to navigating and using Jack's Brain.
 
 ### Application
 - **[[application/help|Help]]** — This page
-- **[[application/readingmode|Reading Mode]]** — Distraction-free reading with simplified layout
 - **[[application/darkmode|Light/Dark Mode]]** — Switch between light and dark color themes
 - **[[application/nuke|Nuke It From Orbit]]** — Erase all cataloged content and start fresh
