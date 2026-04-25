@@ -342,6 +342,19 @@ document.addEventListener("nav", () => {
       // with the SSR sorter's handling of missing dates.
       if (av === "" && bv !== "") return sortAsc ? 1 : -1
       if (bv === "" && av !== "") return sortAsc ? -1 : 1
+      // For dates, parse to numeric timestamps and compare. ISO 8601
+      // strings happen to sort correctly under string comparison, but
+      // making the comparison explicitly numeric guarantees correct
+      // chronological ordering even if the date format ever changes.
+      // For titles (or any other string key), fall through to a plain
+      // case-aware string compare.
+      if (sortKey === "date") {
+        const at = Date.parse(av)
+        const bt = Date.parse(bv)
+        if (at < bt) return sortAsc ? -1 : 1
+        if (at > bt) return sortAsc ? 1 : -1
+        return 0
+      }
       if (av < bv) return sortAsc ? -1 : 1
       if (av > bv) return sortAsc ? 1 : -1
       return 0
