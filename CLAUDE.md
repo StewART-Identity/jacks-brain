@@ -133,8 +133,14 @@ the human performs before cataloging.)
    create or update a synthesis page in `content/collection/synthesis/`.
 8. Update the relevant per-category index files (`content/collection/sources/index.md`,
    `entities/index.md`, etc.) with new or changed rows.
-9. Append an entry to `content/learn/retention.md` marking this as
-   "Cataloged" (initial) or "Re-viewed" (subsequent).
+9. Append an entry to `data/retention-log.md` marking this as
+   "Cataloged" (initial) or "Re-viewed" (subsequent). Note: the rendered
+   page lives at `content/learn/retention.md` but contains no table —
+   the React component there fetches the actual log from
+   `data/retention-log.md` via `/api/retention`. Always write to the
+   data file, never to the rendered page.
+   When working through the MCP server, use the `append_retention_entry`
+   tool — it knows the table schema and the valid action vocabulary.
 10. Report what you created and updated.
 
 A single source typically touches 5–15 pages. Take your time. Quality of
@@ -191,10 +197,11 @@ have three including the date.)
 
 ## Retention log format
 
-`content/learn/retention.md` is the chronological audit log of cataloging
+`data/retention-log.md` is the chronological audit log of cataloging
 operations. It's a markdown table read by the `/api/retention` endpoint
-and rendered by the RetentionList component, where titles can be
-inline-edited (the underlying filename is preserved).
+and rendered by the RetentionList component on `content/learn/retention.md`,
+where titles can be inline-edited (the underlying filename is preserved).
+The rendered page itself contains no table — only the data file does.
 
 ```markdown
 | Date | Action | Details |
