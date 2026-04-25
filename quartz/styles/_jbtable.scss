@@ -78,6 +78,26 @@
   border-bottom: 2px solid #2B5E3E;
 }
 
+/* Sortable header cells — pointer cursor, hover lightens slightly,
+   chevron indicator sits inline with the label. */
+.table-container.jb-table > table thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+.table-container.jb-table > table thead th.sortable:hover {
+  background-color: #3A7D53;     /* one step lighter than --secondary */
+}
+.table-container.jb-table > table thead th.sortable .sort-indicator {
+  display: inline-block;
+  margin-left: 0.35em;
+  opacity: 0.55;
+  font-size: 0.85em;
+}
+.table-container.jb-table > table thead th.sortable.sort-active .sort-indicator {
+  opacity: 1;
+}
+
 /* BODY rows — horizontal rules only, alternating opaque green fills. */
 .table-container.jb-table > table tbody td {
   border-top: none;
@@ -90,12 +110,15 @@
   border-bottom: none;
 }
 
-/* Alternating opaque row backgrounds — gentle contrast so text stays
-   the dominant element. The lighter shade (#244D34) sits visually
-   between --lightgray (#1B3F29) and --secondary (#2B5E3E). */
+/* Alternating opaque row backgrounds.
+
+   Both shades are dark and saturated enough that the neuron wallpaper
+   does not perceptually bleed through. The two stops are close in
+   luminance (only ~2.5% lighter on the even rows) so the stripe reads
+   as "two siblings" rather than "dark row + tinted-glass row". */
 .table-container.jb-table > table tbody tr:nth-child(odd) td {
   background-color: #1B3F29;
 }
 .table-container.jb-table > table tbody tr:nth-child(even) td {
-  background-color: #244D34;
+  background-color: #1F4429;
 }
