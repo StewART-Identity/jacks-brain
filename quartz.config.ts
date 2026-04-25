@@ -5,7 +5,29 @@ import * as Plugin from "./quartz/plugins"
  * Quartz 4 Configuration
  *
  * See https://quartz.jzhao.xyz/configuration for more information.
+ *
+ * Note on theming: this site is dark-only. The Quartz theme system still
+ * emits two CSS color blocks (one for default `:root`, one for
+ * `:root[saved-theme="dark"]`), so we keep both keys here and set them to
+ * identical values. The Light/Dark Mode toggle component, sidebar link,
+ * and content page have been removed, but the underlying darkmode.inline
+ * script (imported via ApplicationMenu) may still set `saved-theme` based
+ * on the user's OS preference on first visit. Identical color blocks
+ * guarantee that has no visible effect.
  */
+
+const palette = {
+  light: "#0F2418",
+  lightgray: "#1B3F29",
+  gray: "#7BBF95",
+  darkgray: "#E3E0DB",
+  dark: "#F0DDB3",
+  secondary: "#D4AD5A",
+  tertiary: "#7BBF95",
+  highlight: "rgba(27, 63, 41, 0.5)",
+  textHighlight: "#6B4D1A",
+}
+
 const config: QuartzConfig = {
   configuration: {
     pageTitle: "Jack's Brain",
@@ -28,28 +50,8 @@ const config: QuartzConfig = {
         code: "JetBrains Mono",
       },
       colors: {
-        lightMode: {
-          light: "#EBF5EE",
-          lightgray: "#C1DFCC",
-          gray: "#3A7D53",
-          darkgray: "#3D3A36",
-          dark: "#0F2418",
-          secondary: "#2B5E3E",
-          tertiary: "#A8842A",
-          highlight: "rgba(193, 223, 204, 0.4)",
-          textHighlight: "#F0DDB3",
-        },
-        darkMode: {
-          light: "#0F2418",
-          lightgray: "#1B3F29",
-          gray: "#7BBF95",
-          darkgray: "#E3E0DB",
-          dark: "#F0DDB3",
-          secondary: "#D4AD5A",
-          tertiary: "#7BBF95",
-          highlight: "rgba(27, 63, 41, 0.5)",
-          textHighlight: "#6B4D1A",
-        },
+        lightMode: palette,
+        darkMode: palette,
       },
     },
   },
