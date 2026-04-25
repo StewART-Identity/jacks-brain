@@ -10,6 +10,7 @@ tags:
   - unt
 sources:
   - "[[collection/sources/2026-04-25-iam-team-knowledge-ui-vocabulary-and-conventions-for-web-interfaces]]"
+  - "[[collection/sources/2026-04-25-jacks-rules-for-website-design]]"
 confidence: high
 ---
 
@@ -18,3 +19,4 @@ Jack Stewart is an IAM Engineer. He builds and maintains the [[collection/entiti
 ## Authored Sources
 
 - [[collection/sources/2026-04-25-iam-team-knowledge-ui-vocabulary-and-conventions-for-web-interfaces|UI Vocabulary and Conventions for Web Interfaces]] (2026-04-25) — shared vocabulary reference for the IAM team covering web UI regions, components, controls, and spacing terms.
+- [[collection/sources/2026-04-25-jacks-rules-for-website-design|Jack's Rules for Website Design]] (2026-04-25) — opinionated design rules for web forms and payment flows, grounded in named UX principles including Postel's Law, Fitts's Law, and cognitive load theory.

@@ -13,6 +13,7 @@ tags:
   - communication
 sources:
   - "[[collection/sources/2026-04-25-iam-team-knowledge-ui-vocabulary-and-conventions-for-web-interfaces]]"
+  - "[[collection/sources/2026-04-25-jacks-rules-for-website-design]]"
 confidence: high
 ---
 
@@ -86,4 +87,4 @@ Use the specific term when type matters. "Field" is acceptable casual shorthand 
 
 This vocabulary is applied across the [[collection/entities/iam-toolbox|IAM Toolbox]], UNT Directory App, and DSTools Azure replacement. It was formalized by [[collection/entities/jack-stewart|Jack Stewart]] in the [[collection/sources/2026-04-25-iam-team-knowledge-ui-vocabulary-and-conventions-for-web-interfaces|UI Vocabulary and Conventions for Web Interfaces]] reference document.
 
-See [[collection/synthesis/iam-team-frontend-communication|IAM Team Frontend Communication]] for analysis of how shared vocabulary improves design and engineering collaboration.
+See [[collection/synthesis/iam-team-frontend-communication|IAM Team Frontend Communication]] for analysis of how shared vocabulary improves design and engineering collaboration. For the normative complement — *how* these controls must behave — see [[collection/sources/2026-04-25-jacks-rules-for-website-design|Jack's Rules for Website Design]] and [[collection/synthesis/web-form-design-principles|Web Form Design Principles]].
