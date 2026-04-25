@@ -67,7 +67,10 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
   }
 
   const currentSlug = fileData.slug ?? ""
-  const tableConfig = COLLECTION_TABLE_SLUGS[currentSlug]
+  // Quartz's FullSlug for an index page includes the trailing 'index'
+  // segment (e.g. "collection/sources/index"). Strip it for the lookup.
+  const lookupSlug = currentSlug.replace(/\/index$/, "")
+  const tableConfig = COLLECTION_TABLE_SLUGS[lookupSlug]
 
   if (tableConfig) {
     // Collection sub-page: render as a real table.
