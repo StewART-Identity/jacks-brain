@@ -1,76 +1,44 @@
-# Jack's Brain — Consolidated Retention Fix (Re-push)
+# Jack's Brain — Graph Opacity Patch
 
-## The situation
+Two-file patch that makes the Graph View container opaque so the
+neuron-network wallpaper doesn't compete visually with the graph's own
+edges.
 
-The earlier retention-fix patch only partially applied to the repo:
+## Why
 
-- ✅ **Content files landed**: `content/learn/retention.md` was stripped
-  of its audit table; `data/retention-log.md` was created with the
-  IMG_2369 row.
-- ❌ **Code files did not land**: the Pages Functions still read the old
-  path (`content/learn/retention.md`), still use the broken date-
-  stripping slug derivation. `scripts/catalog.mjs` still writes audit
-  rows to the old location.
+The neuron wallpaper has faint glowing connecting lines that happen to
+look exactly like the graph's own edges. When the graph container is
+transparent, the eye can't separate real node-to-node connections from
+the background noise. Fullscreen mode was already opaque (via a
+`:fullscreen` rule), but the default embedded view was see-through.
 
-Result: the audit log data exists at the correct new location, but the
-code doesn't know to look there. It reads the now-table-less Retention
-page, finds no rows, and shows "No documents retained yet."
+## Change
 
-## What this re-push does
+Adds `background-color: var(--light)` to:
 
-Re-applies the four code-file changes from the retention-fix patch on
-top of the current repo state (which includes the recent Collection
-rename). Net effect after this lands:
+1. `#full-graph > .graph-container` (the main Graph View page container)
+2. `.graph-outer` (the sidebar inline mini-graph shown on content pages)
 
-- `functions/api/retention.ts` — reads `data/retention-log.md`; slug
-  derivation preserves date prefix so it matches source page filenames
-- `functions/api/originals.ts` — same slug fix
-- `functions/api/nuke.ts` — `RESET_TEMPLATES` now has entries for both
-  the page body (intro only) and the data file (empty audit table);
-  stale comment reference to `memory.md` updated
-- `scripts/catalog.mjs` — writes audit rows to `data/retention-log.md`
+Everything else about the graph behaviour is untouched.
 
 ## How to apply
 
-Drop through the Bridge:
-- **Strip prefix:** `jbpatch-consolidated/`
+Bridge:
+- **Strip prefix:** `jbpatch-graph/`
 - **Target repo:** `StewART-Identity/jacks-brain`
 - **Branch:** `main`
 
-Four files, one commit.
+Two files, one commit.
 
 Commit message suggestion:
 
 ```
-Actually land the retention-log relocation and slug fix
+Make graph view container opaque
 ```
 
 ## After deploy
 
-Refresh `/learn/retention`. You should see:
-
-- The IMG_2369 row populated with title "SAML vs. OAuth Diagram"
-- Filename in the Document column (read-only, monospace)
-- Title clickable for inline rename
-
-## Unrelated cleanup still pending
-
-Still sitting in the repo as orphan files from earlier renames — none
-breaking anything but bloating the repo:
-
-- `content/learn/memory.md` — carryover from the Memory → Retention
-  rename way back; should have been deleted then
-- `quartz/components/Retention.tsx` — orphaned old component
-- `quartz/components/scripts/retention.inline.ts`
-- `quartz/components/styles/retention.scss`
-
-Delete via GitHub web UI at your convenience.
-
-## Why this happened
-
-The Bridge silently skipped some files on the previous retention-fix
-push. We didn't verify each file post-deploy, so the partial application
-went unnoticed until you opened the Retention page and saw it empty.
-Lesson for the future: after any multi-file Bridge push, explicitly
-verify each target file's contents match what was in the zip before
-calling the deploy done.
+Refresh `/visualize/graph-view`. The graph area should have a solid
+light-on-dark panel matching the rest of the site's card surfaces,
+with nodes and edges clearly visible against the uniform background
+instead of blurring into the neuron wallpaper.
