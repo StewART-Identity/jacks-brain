@@ -9,10 +9,10 @@ conventions, and workflows you follow. Read it at the start of every session.
 content/                # The wiki — you own this layer entirely
   index.md              # Welcome page (custom landing — do not turn into a catalog)
   learn/
-    knowledge.md        # Upload form
+    selection.md        # Upload form — add a source to the collection
     acquisition.md      # Live status of the cataloging pipeline
     retention.md        # Chronological audit log of cataloged documents
-  recall/
+  collection/
     sources/            # One summary page per cataloged source
       index.md          # Sources catalog (auto-rendered, do maintain rows here)
     entities/           # People, organizations, tools, systems
@@ -41,7 +41,7 @@ updated: YYYY-MM-DD
 tags:
   - relevant-tag
 sources:
-  - "[[recall/sources/source-filename]]"
+  - "[[collection/sources/source-filename]]"
 confidence: high | medium | low | speculative
 ---
 
@@ -83,18 +83,18 @@ views:
 
 - Filenames: lowercase, hyphens for spaces. `quantum-entanglement.md`, not
   `Quantum Entanglement.md`.
-- Source pages: `recall/sources/YYYY-MM-DD-short-descriptor.md` where the
+- Source pages: `collection/sources/YYYY-MM-DD-short-descriptor.md` where the
   date is the date of **initial cataloging**, never re-cataloging. A source
   page's filename is stable across re-views — re-views never create new
   files.
-- Entity pages: `recall/entities/entity-name.md`
-- Concept pages: `recall/concepts/concept-name.md`
-- Synthesis pages: `recall/synthesis/descriptive-title.md`
+- Entity pages: `collection/entities/entity-name.md`
+- Concept pages: `collection/concepts/concept-name.md`
+- Synthesis pages: `collection/synthesis/descriptive-title.md`
 
 ### Wikilinks
 
-Use `[[relative-path]]` format: `[[recall/concepts/gradient-descent]]`,
-`[[recall/entities/claude-shannon]]`. Quartz resolves these automatically.
+Use `[[relative-path]]` format: `[[collection/concepts/gradient-descent]]`,
+`[[collection/entities/claude-shannon]]`. Quartz resolves these automatically.
 
 When referencing a page, always use a wikilink. Cross-reference generously —
 links are what make the wiki valuable. Every new page should link to at least
@@ -113,17 +113,17 @@ the human performs before cataloging.)
 3. Check whether a source page already exists for this document (match
    by slug, not by filename — see "Naming conventions"). If it does,
    this is a **re-view**; if not, this is the **initial cataloging**.
-4. Create or update the source summary page in `content/recall/sources/`.
+4. Create or update the source summary page in `content/collection/sources/`.
    On a re-view: replace the body, append a `views:` entry, update `role:`
    if the interpretation changed. On an initial cataloging: create the
    file with a single `views:` entry.
 5. For each significant entity mentioned: create or update its page in
-   `content/recall/entities/`.
+   `content/collection/entities/`.
 6. For each significant concept: create or update its page in
-   `content/recall/concepts/`.
+   `content/collection/concepts/`.
 7. If the source connects to or contrasts with existing wiki content,
-   create or update a synthesis page in `content/recall/synthesis/`.
-8. Update the relevant per-category index files (`content/recall/sources/index.md`,
+   create or update a synthesis page in `content/collection/synthesis/`.
+8. Update the relevant per-category index files (`content/collection/sources/index.md`,
    `entities/index.md`, etc.) with new or changed rows.
 9. Append an entry to `content/learn/retention.md` marking this as
    "Cataloged" (initial) or "Re-viewed" (subsequent).
@@ -137,7 +137,7 @@ cross-references matters more than speed.
 Trigger: user asks a question about the wiki's domain.
 
 1. Read the relevant per-category index file(s) to find pages
-   (`content/recall/sources/index.md`, `recall/concepts/index.md`, etc.).
+   (`content/collection/sources/index.md`, `collection/concepts/index.md`, etc.).
 2. Read those pages.
 3. Synthesize an answer with `[[wikilinks]]` to supporting pages.
 4. If the answer is substantial and reusable, offer to file it as a new
@@ -161,7 +161,7 @@ Suggest fixes. Ask before applying them.
 
 ## Per-category index format
 
-Each `recall/<category>/index.md` is a flat table of the pages in that
+Each `collection/<category>/index.md` is a flat table of the pages in that
 category. The wiki has no top-level master catalog; per-category indexes
 are authoritative. `content/index.md` is a hand-styled welcome page and
 should not be turned into a catalog.
@@ -175,7 +175,7 @@ Acquired documents and their cataloging status.
 
 | Content | Summary | Date |
 |---------|---------|------|
-| [[recall/sources/2026-04-14-example]] | Brief description | 2026-04-14 |
+| [[collection/sources/2026-04-14-example]] | Brief description | 2026-04-14 |
 ```
 
 (Entities and Concepts indexes have two columns; Sources and Synthesis
