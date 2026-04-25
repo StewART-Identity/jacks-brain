@@ -155,6 +155,7 @@ After deploy, in a fresh InPrivate window (so Access auth is fresh):
 - [ ] Escape during edit cancels and reverts
 - [ ] If a row's source page is gone, the title cell shows a muted dash
       and clicking it does nothing
+      
 
 If any of those fail, check Cloudflare Pages → your project → Functions
 logs (live) for the failing endpoint's error message.
