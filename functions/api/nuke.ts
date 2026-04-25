@@ -26,7 +26,8 @@
  *   - static/originals/*                (all acquired document originals)
  *
  * What gets reset to empty templates:
- *   - content/learn/memory.md
+ *   - data/retention-log.md             (the audit log — keep file, empty table)
+ *   - content/learn/retention.md        (the page intro — keep file, no table)
  *   - content/collection/sources/index.md
  *   - content/collection/entities/index.md
  *   - content/collection/concepts/index.md
@@ -96,7 +97,10 @@ const WIPE_DIRS = [
 // would destroy that design. Nuke leaves the landing page alone.
 const RESET_TEMPLATES: Record<string, string> = {
   "content/learn/retention.md":
-    `---\ntitle: "Retention"\n---\n\nPermanent record of every document retained in the wiki. Click a title to rename it — the underlying filename is preserved.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
+    `---\ntitle: "Retention"\n---\n\nPermanent record of every document retained in the wiki. Click a title to rename it — the underlying filename is preserved.\n`,
+
+  "data/retention-log.md":
+    `# Retention Log\n\nAudit log of all cataloging operations. Read by /api/retention; rendered by the RetentionList component on /learn/retention. Do not delete this file — nuke resets it to an empty table instead.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
 
   "content/collection/sources/index.md":
     `---\ntitle: "Sources"\n---\n\nAcquired documents and their cataloging status. Click a filename to download the original.\n\n| Content | Summary | Date |\n|---------|---------|------|\n`,
