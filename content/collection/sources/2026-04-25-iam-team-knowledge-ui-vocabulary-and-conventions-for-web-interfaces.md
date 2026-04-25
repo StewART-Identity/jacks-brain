@@ -22,7 +22,7 @@ views:
 
 Authored by [[collection/entities/jack-stewart|Jack Stewart]], IAM Engineer, April 25, 2026. A shared vocabulary reference for the IAM team, grounding design and engineering discussions in standard HTML and UX terminology.
 
-[Download original](/static/originals/2026-04-25-IAM_Team_Knowledge-UI_Vocabulary_and_Conventions_for_Web_Interfaces.docx)
+[Download original](/api/originals/2026-04-25-IAM_Team_Knowledge-UI_Vocabulary_and_Conventions_for_Web_Interfaces.docx)
 
 ## Purpose
 
