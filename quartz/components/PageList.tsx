@@ -198,18 +198,18 @@ PageList.css = `
 
 .collection-table {
   margin: 1rem 0;
+  overflow-x: visible;
 }
 
 .collection-table > table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
 }
 
 .collection-table th,
 .collection-table td {
   vertical-align: top;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 0.6rem;
 }
 
 .collection-table th {
@@ -226,25 +226,26 @@ PageList.css = `
   border-bottom: none;
 }
 
-/* Column widths — Title is fixed-ish; Summary stretches; Tags is bounded;
-   Date is narrow. */
+/* Column widths — Title is min-content; Summary takes the rest;
+   Tags is bounded; Date is narrow and nowrap. */
 .collection-table th.col-title,
 .collection-table td.col-title {
-  width: 12rem;
+  white-space: nowrap;
   font-weight: 500;
+  padding-right: 1rem;
 }
 .collection-table th.col-summary,
 .collection-table td.col-summary {
-  width: auto;
+  width: 100%;
 }
 .collection-table th.col-tags,
 .collection-table td.col-tags {
-  width: 14rem;
+  white-space: nowrap;
 }
 .collection-table th.col-date,
 .collection-table td.col-date {
-  width: 7rem;
   white-space: nowrap;
+  padding-left: 1rem;
 }
 
 .collection-table td.col-title a {
