@@ -1,6 +1,10 @@
 /**
  * GET /api/status
  *
+ * Patch tag: status-fix-v3 (extension-anchored regex + autolink strip).
+ * If you don't see this comment in the deployed file, the upload was
+ * silently no-op'd — re-upload or copy/paste the file by hand.
+ *
  * Returns the true cataloging state of each acquired document by
  * cross-referencing static/originals/ files, content/collection/sources/
  * pages, and active workflow runs.
@@ -43,9 +47,9 @@ interface GitHubRunsResponse {
 interface GitHubCommit {
   sha: string
   commit: {
+    message: string
     committer: { date: string }
   }
-  files?: { filename: string }[]
 }
 
 function ghHeaders(token: string) {
@@ -57,17 +61,35 @@ function ghHeaders(token: string) {
 }
 
 /**
+ * Strip a markdown-autolink wrapper off a filename, if present.
+ * Some upstream tooling auto-converts `name.md` style strings into
+ * `[name.md](http://name.md)` form. We've seen this on filenames
+ * returned by the GitHub contents API as well as inside the retention
+ * markdown table. Whatever's introducing it, the fix on read is the
+ * same: collapse `[X](Y)` back to X.
+ */
+function stripAutolink(s: string): string {
+  const m = s.match(/^\[(.+?)\]\([^)]*\)$/)
+  return m ? m[1] : s
+}
+
+/**
  * Build a map of {filename → ISO timestamp of the commit that last touched it}
  * by walking commits that affected static/originals/ in reverse-chronological
- * order. The first commit we see per file is the newest, which is what we
- * want for "acquired" ordering — re-acquisitions (overwrites via
- * acquire_for_catalog) bubble that file to the top of the list, matching
- * user expectation that the most recent activity surfaces first.
+ * order. The first commit we see per file is the newest.
  *
- * One API call regardless of file count. We fetch per_page=100 which covers
- * the foreseeable scale of static/originals/; if it ever grows past that,
- * the older files just fall back to the date in their filename via the
- * sort comparator below.
+ * We extract filenames out of commit messages because the list-commits
+ * endpoint doesn't include `files`. The previous version of this regex
+ * required a YYYY-MM-DD date prefix in the matched filename, which broke
+ * for any commit whose message used a non-default template (e.g. a
+ * re-acquisition where the operator passed a custom commit_message
+ * referring to the file by its bare name without the date prefix).
+ *
+ * The new regex anchors on file extensions instead, which is much harder
+ * to fool: any token ending in a known extension (.md, .png, .docx, etc.)
+ * preceded by reasonable filename characters is treated as a candidate.
+ * If the message contains no recognizable filename, we just don't get a
+ * timestamp for that commit and the sort falls back to the date column.
  */
 async function getOriginalsTimestamps(
   token: string,
@@ -82,19 +104,24 @@ async function getOriginalsTimestamps(
   const commits: GitHubCommit[] = await res.json()
   const timestamps = new Map<string, string>()
 
-  // Commits are returned newest-first. For each commit, we'd ideally read
-  // its `files` list to know which originals it touched — but the list-commits
-  // endpoint doesn't include files, only get-single-commit does. Rather than
-  // fan out to N detail calls, we approximate: assume the commit message
-  // names the file (our acquire_for_catalog tool always commits with a
-  // message containing the filename). This holds for tool-driven acquisitions
-  // and degrades gracefully (filename-prefix sort) for anything else.
+  // Match any token with a file extension we use for originals. The token
+  // can include underscores, dots, hyphens, letters, digits — the same set
+  // we restrict acquire_for_catalog filenames to.
+  const filenameRe = /([A-Za-z0-9._-]+\.(?:md|png|jpg|jpeg|gif|webp|pdf|docx|pptx|xlsx|csv|txt|html|json|mp4|mov|webm))/gi
+
   for (const c of commits) {
-    const msg = (c as unknown as { commit: { message: string } }).commit.message
-    // Match filenames like 2026-04-25-something.md inside the commit message.
-    const match = msg.match(/(\d{4}-\d{2}-\d{2}-[A-Za-z0-9._-]+)/)
-    if (match && !timestamps.has(match[1])) {
-      timestamps.set(match[1], c.commit.committer.date)
+    const msg = c.commit.message
+    // Find ALL filename-shaped tokens in the message and pick the longest
+    // (most specific) one. This handles two cases:
+    //  - "Acquire 2026-04-25-something.md for cataloging" (one match, easy)
+    //  - "Re-acquire jacks-rules-for-website-design.md with complete text"
+    //    (no date prefix, but still has a recognizable filename token)
+    const matches = [...msg.matchAll(filenameRe)].map(m => m[1])
+    if (matches.length === 0) continue
+    matches.sort((a, b) => b.length - a.length)
+    const filename = stripAutolink(matches[0])
+    if (!timestamps.has(filename)) {
+      timestamps.set(filename, c.commit.committer.date)
     }
   }
   return timestamps
@@ -124,7 +151,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       getOriginalsTimestamps(GITHUB_TOKEN, GITHUB_REPO),
     ])
 
-    const originals: GitHubFile[] = originalsRes.ok ? await originalsRes.json() : []
+    const originalsRaw: GitHubFile[] = originalsRes.ok ? await originalsRes.json() : []
+    // Defensively strip any autolink wrapper off filenames returned by
+    // the contents API. We've observed this happening for files whose
+    // names look URL-ish (e.g. anything ending in .md). If `name` comes
+    // back clean, this is a no-op.
+    const originals: GitHubFile[] = originalsRaw.map(f => ({
+      ...f,
+      name: stripAutolink(f.name),
+    }))
     const sources: GitHubFile[] = sourcesRes.ok ? await sourcesRes.json() : []
     const runsData: GitHubRunsResponse = runsRes.ok
       ? await runsRes.json()
@@ -165,8 +200,16 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         const acquired = dateMatch ? dateMatch[1] : null
 
         // Real commit timestamp drives sort order; the date-only `acquired`
-        // string is still what we display in the table column.
-        const acquiredAt = timestamps.get(f.name) || null
+        // string is still what we display in the table column. The
+        // timestamps map keys on the bare filename, so we look up by the
+        // full prefixed name (and also try the de-prefixed name as a
+        // fallback for commit messages that referred to the file without
+        // its date prefix).
+        const dePrefixed = f.name.replace(/^\d{4}-\d{2}-\d{2}-/, "")
+        const acquiredAt =
+          timestamps.get(f.name) ||
+          timestamps.get(dePrefixed) ||
+          null
 
         // Check if this document has a source page (match by stem substring)
         const isCataloged = [...catalogedStems].some((s) => {
@@ -193,7 +236,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         }
 
         return {
-          document: f.name.replace(/^\d{4}-\d{2}-\d{2}-/, ""),
+          document: dePrefixed,
           acquired,
           acquiredAt,
           status,
