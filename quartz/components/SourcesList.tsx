@@ -27,6 +27,37 @@ document.addEventListener("nav", () => {
   const container = document.getElementById("sources-list")
   if (!container) return
 
+  // HTML-escape any string before interpolating it into innerHTML.
+  // Covers ALL five HTML-significant characters (& must come first or
+  // it would re-escape the others' replacement entities). Used for
+  // filenames, dates, and URLs from /api/originals — none of which we
+  // control directly. An unescaped URL containing a stray double-quote
+  // would break out of the href attribute; an unescaped \`<\` in any
+  // field would inject markup. Cheap defense.
+  function esc(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+  }
+
+  // Defense against javascript: / data: URIs. HTML-entity escaping
+  // doesn't neutralize a URL like \`javascript:alert(1)\` — escaping
+  // only protects the attribute boundary, not the URL scheme itself.
+  // We accept only http(s) absolute URLs and same-origin relative
+  // paths; anything else gets replaced with "#" so the link
+  // becomes inert.
+  function safeUrl(u) {
+    const s = String(u == null ? "" : u).trim()
+    if (s === "") return "#"
+    if (s.startsWith("/") || s.startsWith("http://") || s.startsWith("https://")) {
+      return esc(s)
+    }
+    return "#"
+  }
+
   let allFiles = []
 
   // Default sort: pending first by cataloged status (ascending, since
@@ -64,13 +95,12 @@ document.addEventListener("nav", () => {
 
     function thFor(field, label) {
       const isActive = sortField === field
-      const indClass = isActive ? "sort-indicator" : "sort-indicator"
       const cls = isActive ? "sortable sort-active" : "sortable"
       const indText = isActive ? indicator(sortAsc) : "⇅"
       const colCls = "col-" + field
       return '<th class="' + cls + ' ' + colCls + '" data-sort="' + field + '">' +
              label +
-             ' <span class="' + indClass + '">' + indText + '</span>' +
+             ' <span class="sort-indicator">' + indText + '</span>' +
              '</th>'
     }
 
@@ -85,11 +115,12 @@ document.addEventListener("nav", () => {
         const status = f.cataloged
           ? '<span class="source-badge cataloged">Cataloged</span>'
           : '<span class="source-badge pending">Pending</span>'
-        const date = f.acquired || "Unknown"
-        const safeName = (f.name || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        const safeName = esc(f.name)
+        const url = safeUrl(f.downloadUrl)
+        const safeDate = esc(f.acquired || "Unknown")
         return '<tr>' +
-          '<td class="col-name"><a href="' + f.downloadUrl + '" target="_blank" rel="noopener">' + safeName + '</a></td>' +
-          '<td class="col-acquired">' + date + '</td>' +
+          '<td class="col-name"><a href="' + url + '" target="_blank" rel="noopener">' + safeName + '</a></td>' +
+          '<td class="col-acquired">' + safeDate + '</td>' +
           '<td class="col-status">' + status + '</td>' +
           '</tr>'
       }).join("") +
