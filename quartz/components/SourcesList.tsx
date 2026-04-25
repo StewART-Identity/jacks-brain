@@ -1,9 +1,21 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 
+/* SourcesList — the dynamic table on `collection/sources` that lists
+   raw uploaded files (acquired but not yet cataloged) by fetching from
+   `/api/originals`.
+
+   This component shares the unified `.jb-table` look with the four
+   PageList collection tables. Because the markup is built at runtime
+   from API JSON (not server-rendered), the `table-container jb-table`
+   classes are applied to the host <div> instead of to a wrapping
+   element inside the script. The script then writes a bare <table>
+   into that container, and the styles in _jbtable.scss apply
+   automatically. */
+
 const SourcesList: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="sources-list-app">
-      <div id="sources-list">
+      <div id="sources-list" class="table-container jb-table">
         <p class="muted">Loading...</p>
       </div>
     </div>
@@ -16,8 +28,15 @@ document.addEventListener("nav", () => {
   if (!container) return
 
   let allFiles = []
-  let sortField = "uploaded"
-  let sortAsc = false
+
+  // Default sort: pending first by cataloged status (ascending, since
+  // pending = false = 0 sorts before cataloged = true = 1).
+  let sortField = "status"
+  let sortAsc = true
+
+  function indicator(asc) {
+    return asc ? "▲" : "▼"
+  }
 
   function renderTable() {
     if (allFiles.length === 0) {
@@ -28,12 +47,13 @@ document.addEventListener("nav", () => {
     const sorted = [...allFiles].sort(function(a, b) {
       let valA, valB
       if (sortField === "name") {
-        valA = a.name.toLowerCase()
-        valB = b.name.toLowerCase()
+        valA = (a.name || "").toLowerCase()
+        valB = (b.name || "").toLowerCase()
       } else if (sortField === "acquired") {
         valA = a.acquired || ""
         valB = b.acquired || ""
       } else {
+        // status: pending (false) = 0, cataloged (true) = 1
         valA = a.cataloged ? 1 : 0
         valB = b.cataloged ? 1 : 0
       }
@@ -42,49 +62,65 @@ document.addEventListener("nav", () => {
       return 0
     })
 
-    function arrow(field) {
-      if (sortField !== field) return ""
-      return sortAsc ? " \\u25B2" : " \\u25BC"
+    function thFor(field, label) {
+      const isActive = sortField === field
+      const indClass = isActive ? "sort-indicator" : "sort-indicator"
+      const cls = isActive ? "sortable sort-active" : "sortable"
+      const indText = isActive ? indicator(sortAsc) : "⇅"
+      const colCls = "col-" + field
+      return '<th class="' + cls + ' ' + colCls + '" data-sort="' + field + '">' +
+             label +
+             ' <span class="' + indClass + '">' + indText + '</span>' +
+             '</th>'
     }
 
-    container.innerHTML = '<table class="sources-table">' +
+    container.innerHTML = '<table>' +
       '<thead><tr>' +
-      '<th class="sortable" data-sort="name">File' + arrow("name") + '</th>' +
-      '<th class="sortable" data-sort="acquired">Acquired' + arrow("acquired") + '</th>' +
-      '<th class="sortable" data-sort="status">Status' + arrow("status") + '</th>' +
+      thFor("name", "File") +
+      thFor("acquired", "Acquired") +
+      thFor("status", "Status") +
       '</tr></thead>' +
       '<tbody>' +
       sorted.map(function(f) {
-        var status = f.cataloged
+        const status = f.cataloged
           ? '<span class="source-badge cataloged">Cataloged</span>'
           : '<span class="source-badge pending">Pending</span>'
-        var date = f.acquired || "Unknown"
+        const date = f.acquired || "Unknown"
+        const safeName = (f.name || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")
         return '<tr>' +
-          '<td><a href="' + f.downloadUrl + '" target="_blank">' + f.name + '</a></td>' +
-          '<td>' + date + '</td>' +
-          '<td>' + status + '</td>' +
+          '<td class="col-name"><a href="' + f.downloadUrl + '" target="_blank" rel="noopener">' + safeName + '</a></td>' +
+          '<td class="col-acquired">' + date + '</td>' +
+          '<td class="col-status">' + status + '</td>' +
           '</tr>'
       }).join("") +
       '</tbody></table>'
 
     container.querySelectorAll("th.sortable").forEach(function(th) {
-      th.addEventListener("click", function() {
-        var field = th.getAttribute("data-sort")
+      function onClick() {
+        const field = th.getAttribute("data-sort")
         if (sortField === field) {
           sortAsc = !sortAsc
         } else {
           sortField = field
-          sortAsc = true
+          // Sensible default direction per column when first clicked:
+          // - name: A to Z (ascending)
+          // - acquired: newest first (descending)
+          // - status: pending first (ascending — pending=0 before cataloged=1)
+          sortAsc = field !== "acquired"
         }
         renderTable()
+      }
+      th.addEventListener("click", onClick)
+      window.addCleanup(function() {
+        th.removeEventListener("click", onClick)
       })
     })
   }
 
   async function loadSources() {
     try {
-      var response = await fetch("/api/originals")
-      var data = await response.json()
+      const response = await fetch("/api/originals")
+      const data = await response.json()
       allFiles = data.files || []
       renderTable()
     } catch (e) {
@@ -100,59 +136,63 @@ SourcesList.css = `
 #sources-list-app {
   margin-top: 1rem;
 }
-.sources-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
+
+/* Column widths for the SourcesList dynamic table.
+   File: bulk of the row (filenames are long).
+   Acquired: fixed timestamp width.
+   Status: just enough for the badge. */
+#sources-list.jb-table th.col-name,
+#sources-list.jb-table td.col-name {
+  width: 60%;
+  font-weight: 500;
 }
-.sources-table th {
-  text-align: left;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 2px solid var(--lightgray);
-  font-weight: 600;
-  color: var(--dark);
+#sources-list.jb-table th.col-acquired,
+#sources-list.jb-table td.col-acquired {
+  width: 22%;
+  white-space: nowrap;
 }
-.sources-table th.sortable {
-  cursor: pointer;
-  user-select: none;
+#sources-list.jb-table th.col-status,
+#sources-list.jb-table td.col-status {
+  width: 18%;
+  white-space: nowrap;
 }
-.sources-table th.sortable:hover {
-  color: var(--secondary);
-}
-.sources-table td {
-  padding: 0.4rem 0.75rem;
-  border-bottom: 1px solid var(--lightgray);
-}
-.sources-table a {
-  color: var(--secondary);
+
+/* The link in the File column inherits the site's --secondary color
+   via base.scss's \`a\` rule, which on dark green rows reads as a
+   muted green-on-green. Override to the warm sand (matches the
+   header text) so filenames pop against the row backgrounds. */
+#sources-list.jb-table td.col-name a {
+  color: #F0DDB3;
   text-decoration: none;
 }
-.sources-table a:hover {
+#sources-list.jb-table td.col-name a:hover {
   text-decoration: underline;
 }
+
+/* Status badges — retuned for dark green rows.
+
+   Cataloged: sage-green badge that reads as "approved" without
+   screaming. Background is one step lighter than the row borders so
+   it sits forward visually.
+
+   Pending: warm sand/amber pill, ties to the existing palette
+   (textHighlight = #F0DDB3, dark-mode textHighlight = #6B4D1A). */
 .source-badge {
-  padding: 2px 8px;
+  display: inline-block;
+  padding: 2px 9px;
   border-radius: 10px;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 .source-badge.cataloged {
-  background: #EBF5EE;
-  color: #2B5E3E;
+  background: #3A7D53;
+  color: #EBF5EE;
 }
 .source-badge.pending {
-  background: #FBF4E4;
-  color: #6B4D1A;
-}
-:root[saved-theme="dark"] .source-badge.cataloged {
-  background: #1B3F29;
-  color: #7BBF95;
-}
-:root[saved-theme="dark"] .source-badge.pending {
   background: #6B4D1A;
-  color: #D4AD5A;
+  color: #F0DDB3;
 }
 `
 
