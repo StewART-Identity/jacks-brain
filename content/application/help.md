@@ -5,14 +5,16 @@ title: "Help"
 A guide to navigating and using Jack's Brain.
 
 ### Learn
-- **[[learn/knowledge|Knowledge]]** — Upload files and videos to catalog
-- **[[learn/memory|Memory]]** — Chronological record of cataloging activity
+- **[[learn/research|Research]]** — Find candidate sources on the web
+- **[[learn/selection|Selection]]** — Add a chosen source to the collection
+- **[[learn/acquisition|Acquisition]]** — Track documents through cataloging
+- **[[learn/retention|Retention]]** — Permanent record of retained documents
 
-### Study
-- **[[recall/sources|Sources]]** — Summaries of cataloged documents
-- **[[recall/entities|Entities]]** — People, organizations, tools, systems
-- **[[recall/concepts|Concepts]]** — Ideas, theories, frameworks
-- **[[recall/synthesis|Synthesis]]** — Cross-cutting analysis
+### Collection
+- **[[collection/sources|Sources]]** — Summaries of cataloged documents
+- **[[collection/entities|Entities]]** — People, organizations, tools, systems
+- **[[collection/concepts|Concepts]]** — Ideas, theories, frameworks
+- **[[collection/synthesis|Synthesis]]** — Cross-cutting analysis
 - **[[learn/search|Search]]** — Search across all content
 
 ### Visualize
