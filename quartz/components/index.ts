@@ -30,7 +30,6 @@ import SourcesList from "./SourcesList"
 import NukeButton from "./NukeButton"
 import ApplicationMenu from "./ApplicationMenu"
 import SearchPage from "./SearchPage"
-import DarkModePage from "./DarkModePage"
 import ReadingModePage from "./ReadingModePage"
 import ResearchPage from "./ResearchPage"
 import Acquisition from "./Acquisition"
@@ -70,7 +69,6 @@ export {
   NukeButton,
   ApplicationMenu,
   SearchPage,
-  DarkModePage,
   ReadingModePage,
   ResearchPage,
   Acquisition,
