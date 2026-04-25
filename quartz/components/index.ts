@@ -33,7 +33,8 @@ import SearchPage from "./SearchPage"
 import DarkModePage from "./DarkModePage"
 import ReadingModePage from "./ReadingModePage"
 import ResearchPage from "./ResearchPage"
-import Retention from "./Retention"
+import Acquisition from "./Acquisition"
+import RetentionList from "./RetentionList"
 import Hamburger from "./Hamburger"
 
 export {
@@ -72,6 +73,7 @@ export {
   DarkModePage,
   ReadingModePage,
   ResearchPage,
-  Retention,
+  Acquisition,
+  RetentionList,
   Hamburger,
 }
