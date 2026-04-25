@@ -1,10 +1,6 @@
 /**
  * GET /api/status
  *
- * Patch tag: status-fix-v6 (derive document from source-page filename + debug).
- * If you don't see this comment in the deployed file, the upload was
- * silently no-op'd — re-upload or copy/paste the file by hand.
- *
  * Returns the true cataloging state of each acquired document by
  * cross-referencing static/originals/ files, content/collection/sources/
  * pages, and active workflow runs.
@@ -151,13 +147,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     ])
 
     const originalsRaw: GitHubFile[] = originalsRes.ok ? await originalsRes.json() : []
-    // DEBUG v5: capture raw names from GitHub before any of our processing,
-    // and also log the body bytes if the JSON parse mangled them.
-    const debugRawNames = originalsRaw.map(f => f.name)
     // Defensively strip any autolink wrapper off filenames returned by
-    // the contents API. We've observed this happening for files whose
-    // names look URL-ish (e.g. anything ending in .md). If `name` comes
-    // back clean, this is a no-op.
+    // the contents API. We've observed GitHub's contents API returning
+    // `name` values like "[X.md](http://X.md)" for some files whose names
+    // look URL-shaped, even though the file on disk is named cleanly.
+    // If `name` comes back clean (the common case), this is a no-op.
     const originals: GitHubFile[] = originalsRaw.map(f => ({
       ...f,
       name: stripAutolink(f.name),
@@ -228,12 +222,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
         // Document display name: derive from the source page's filename
         // when we have one (it's clean, in our control, and never gets
-        // mangled by upstream tooling). Fall back to the de-prefixed
-        // original filename only when there's no source page yet.
-        // The source-page stem is slugified (lowercase, hyphens) and has
-        // no extension; that's fine for display.
+        // mangled by upstream tooling). Re-attach the extension from the
+        // original file so the displayed name is e.g. "x.md" not "x".
+        // Fall back to the de-prefixed original filename only when there's
+        // no source page yet (uncataloged uploads).
+        const extMatch = f.name.match(/\.([A-Za-z0-9]+)$/)
+        const ext = extMatch ? "." + extMatch[1] : ""
         const documentName = matchingSourceStem
-          ? matchingSourceStem.replace(/^\d{4}-\d{2}-\d{2}-/, "")
+          ? matchingSourceStem.replace(/^\d{4}-\d{2}-\d{2}-/, "") + ext
           : dePrefixed
 
         // Check if an active workflow is processing this file
@@ -272,7 +268,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       (d) => d.status === "in_progress" || d.status === "queued",
     )
 
-    return Response.json({ documents, hasActive, debugRawNames })
+    return Response.json({ documents, hasActive })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error"
     return Response.json({ error: message }, { status: 500 })
