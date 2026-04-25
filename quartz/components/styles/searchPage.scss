@@ -1,0 +1,235 @@
+/* SearchPage — Research-style card with the wiki search embedded in
+   it. The card mirrors the visual contract of researchPage.scss
+   (rounded, semi-transparent dark fill, roomy input) and the search
+   results render below it as an inline list.
+
+   All selectors are scoped under `#search-page` so the sidebar
+   Search component continues to render its own modal-style search
+   without interference. */
+
+#search-page {
+  max-width: 720px;
+  padding-bottom: 2rem;
+}
+
+#search-page .search-page-card {
+  padding: 1.25rem 1.25rem 1.5rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--light) 92%, transparent);
+}
+
+#search-page .search-page-label {
+  margin: 0 0 0.85rem 0;
+  font-size: 1.1rem;
+  color: var(--dark);
+}
+
+/* The visible input. Larger than the sidebar's compact 2rem-tall
+   button so it reads as "type your question here" rather than as a
+   constrained search field. */
+#search-page input.search-bar {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-family: inherit;
+  font-size: 1rem;
+  /* Override base.scss's table cell `min-width: 75px` and any other
+     stray sizing — input is its own element, not a table cell, but
+     defensive. */
+  min-width: 0;
+}
+#search-page input.search-bar:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+#search-page input.search-bar::placeholder {
+  color: var(--gray);
+  opacity: 0.7;
+}
+
+#search-page .search-page-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+#search-page .search-page-hint {
+  flex: 1;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--gray);
+  line-height: 1.4;
+}
+#search-page .search-page-hint code {
+  background: rgba(0, 0, 0, 0.18);
+  padding: 0 0.3em;
+  border-radius: 3px;
+  font-size: 0.95em;
+}
+
+/* The Search button. Doubles as the engine's `.search-button`
+   trigger (on click, the engine focuses the input via showSearch). */
+#search-page .search-page-btn {
+  margin-left: auto;
+  padding: 0.6rem 1.2rem;
+  background: var(--secondary);
+  color: var(--light);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: opacity 0.15s ease;
+}
+#search-page .search-page-btn:hover {
+  opacity: 0.85;
+}
+#search-page .search-page-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+#search-page .search-page-btn .search-path {
+  stroke: var(--light);
+  stroke-width: 1.8px;
+}
+
+/* Override the sidebar's modal positioning. The base .search-container
+   from search.scss is `position: fixed; width: 100vw; height: 100vh`
+   with a backdrop-filter — turn that off entirely when nested inside
+   #search-page. */
+#search-page .search-container {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  display: block !important;
+  overflow: visible !important;
+  backdrop-filter: none !important;
+  z-index: auto !important;
+  margin-top: 1.5rem;
+}
+
+#search-page .search-container .search-space {
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+#search-page .search-container .search-space > * {
+  /* The base styles put a heavy drop shadow and a rounded white box
+     around each child of .search-space. We don't want those for the
+     embedded list; the card already provides the visual frame. */
+  box-shadow: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* The results layout (engine appends results-container here). */
+#search-page .search-layout {
+  display: none;
+  border: none !important;
+}
+#search-page .search-layout.display-results {
+  display: block;
+}
+#search-page .search-layout > .results-container {
+  flex: none !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: 70vh;
+  overflow-y: auto;
+  border: 1px solid var(--lightgray);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--light) 92%, transparent);
+  padding: 0.5rem;
+}
+
+/* Individual result cards inside the results list. The engine emits
+   <a class="result-card"> for each hit, with .card-title (h3) and
+   .card-description (p) inside. Restyle to match the research-result
+   aesthetic. */
+#search-page .result-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 0.9rem;
+  margin: 0.3rem 0;
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+#search-page .result-card:hover,
+#search-page .result-card.focus {
+  border-color: var(--secondary);
+  background: color-mix(in srgb, var(--light) 80%, var(--secondary) 20%);
+}
+#search-page .result-card .card-title,
+#search-page .result-card h3 {
+  margin: 0 0 0.2rem 0;
+  font-size: 1rem;
+  color: var(--dark);
+  font-weight: 600;
+}
+#search-page .result-card .card-description,
+#search-page .result-card p {
+  margin: 0.2rem 0 0 0;
+  font-size: 0.85rem;
+  color: var(--darkgray);
+  line-height: 1.45;
+}
+#search-page .result-card ul.tags {
+  list-style: none;
+  margin: 0.35rem 0 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+#search-page .result-card ul.tags li {
+  margin: 0;
+}
+#search-page .result-card ul.tags li p {
+  margin: 0;
+  padding: 1px 7px;
+  background: var(--highlight);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: var(--dark);
+}
+#search-page .result-card ul.tags li p.match-tag {
+  background: var(--textHighlight);
+  font-weight: 600;
+}
+
+/* The "no match" empty state result card. */
+#search-page .result-card.no-match {
+  cursor: default;
+  border-style: dashed;
+  background: transparent;
+}
+#search-page .result-card.no-match:hover {
+  border-color: var(--lightgray);
+  background: transparent;
+}
+
+/* Highlighted search match terms in titles and previews — emitted by
+   the engine's `highlight()` function as <span class="highlight">. */
+#search-page .result-card .highlight {
+  background: var(--textHighlight);
+  color: var(--dark);
+  padding: 0 0.15em;
+  border-radius: 2px;
+}
