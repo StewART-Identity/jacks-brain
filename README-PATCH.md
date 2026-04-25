@@ -1,132 +1,75 @@
-# Jack's Brain — Collection Table Patch
+# Jack's Brain — Two Fixes
 
-Replaces the Collection sub-page index layout with proper data tables,
-adds a `summary:` frontmatter field, and backfills it on all five
-existing collection pages.
+Fixes the slug-detection bug in PageList that meant the Collection
+table layout never rendered, and constrains the Search modal so it
+doesn't cover the sidebar.
 
-## The bug we found
+## What's wrong (and why the previous patch didn't fix it)
 
-Each Collection sub-page (Sources, Entities, Concepts, Synthesis) was
-rendering two unrelated UI elements stacked on top of each other:
+**Bug 1: Collection sub-pages still rendering as the old flex layout.**
 
-1. An empty markdown table (the "Content / Summary / Date" header row
-   in each `index.md` — never populated, purely decorative)
-2. Quartz's auto-generated `PageList`, which renders each page as a
-   flex layout with the date on the left, title in the middle, and tags
-   floated to the far right
+PageList.tsx was supposed to detect when it was rendering a Collection
+sub-page index and emit a `<table>`. The detection compared `fileData.slug`
+against keys like `"collection/sources"`. But Quartz passes the full
+slug for an index page as `"collection/sources/index"` (with the trailing
+`/index` segment). The lookup never matched, so PageList fell through to
+the original layout. Result: the empty markdown table did go away (that
+fix landed), but the new table never appeared — every page still rendered
+the date / title / floating-tags layout.
 
-Visually this read as "tags floating randomly, disconnected from
-titles." Your instinct that they "should be in the table" was exactly
-right — they should, and now they are.
+I should have caught this before shipping. The Quartz path utilities
+explicitly call out two slug types — `FullSlug` (which keeps `/index`)
+and `SimpleSlug` (which strips it) — and I built the lookup table
+assuming SimpleSlug behavior on a FullSlug input.
 
-## What this patch does
+**Bug 2: Search modal covers the entire viewport including the sidebar.**
 
-### 1. Rewrites `quartz/components/PageList.tsx`
+The Search modal is positioned `fixed` with `left: 0; width: 100vw`,
+making it a true full-viewport overlay. On desktop where the sidebar
+is permanently visible, this looks like the modal "extends over the
+menu" — which is exactly what you described.
 
-PageList now detects when it's rendering one of the four Collection
-sub-pages and emits an actual `<table>` with proper columns:
+## Fixes
 
-- **Sources**: Title / Summary / Tags / Date
-- **Synthesis**: Title / Summary / Tags / Date
-- **Concepts**: Title / Summary / Tags (no date — evergreen)
-- **Entities**: Title / Summary / Tags (no date — evergreen)
+### `quartz/components/PageList.tsx`
 
-For all other contexts (tag pages, search results, custom listings),
-PageList still renders the original flex layout. Backward-compatible.
+One-line addition: strip `/index` from `fileData.slug` before looking
+up the table config. With this, the Collection sub-page indexes will
+finally match and render as tables.
 
-### 2. Strips the empty markdown tables from index pages
+### `quartz/components/styles/search.scss`
 
-Each of the four Collection sub-page `index.md` files had a manual
-markdown table header with no rows. They're now intro prose only;
-the actual listing is the auto-rendered table from PageList.
-
-### 3. Introduces a `summary:` frontmatter field
-
-Every collection page now carries a one-sentence summary in its
-frontmatter, used to populate the Summary column. Existing pages
-backfilled in this patch:
-
-- `oauth.md`: "Open standard for delegated access — letting an app
-  access a user's data without their password."
-- `saml.md`: "XML-based SSO protocol that lets enterprises federate
-  authentication via Identity Provider assertions."
-- `active-directory.md`: "Microsoft's directory and credential store;
-  the canonical backend behind enterprise SAML and OAuth flows."
-- `2026-04-23-img-2369.md`: "Side-by-side instructional diagram
-  comparing the request flow of SAML and OAuth, captured as a photo."
-- `saml-vs-oauth.md`: "Comparison of SAML (authentication) and OAuth
-  (authorization) — what each solves, where they overlap, common
-  confusion."
-
-### 4. Updates `scripts/catalog.mjs`
-
-The catalog prompt now:
-
-- Instructs the model to write a `summary:` field on every page it
-  creates or updates (≤140 chars, informative on its own)
-- Tells it not to modify `content/index.md` (welcome page) or any
-  per-category `index.md` files (intro-only)
-- (Re-applies the retention-log path fix from the consolidated patch
-  in case any of those changes weren't fully synced)
-
-### 5. Updates `CLAUDE.md`
-
-Adds the `summary:` field to the standard frontmatter template, with
-example summaries showing the expected style (informative, not
-title-restated).
+Two-line addition: on desktop (≥1200px), shift the modal `left` to
+`320px` (Quartz's standard `$sidePanelWidth`) and reduce its `width`
+to `calc(100vw - 320px)`. The modal now opens within the content area,
+leaving the sidebar visible and accessible. Mobile behavior is
+unchanged (still full-width, since sidebar is collapsed there anyway).
 
 ## How to apply
 
 Bridge:
-- **Strip prefix:** `jbpatch-collectiontable/`
+- **Strip prefix:** `jbpatch-fixes/`
 - **Target repo:** `StewART-Identity/jacks-brain`
 - **Branch:** `main`
 
-Twelve files. Single commit.
+Two files. Single commit.
 
-Commit message suggestion:
+Suggested commit message:
 
 ```
-Render Collection sub-pages as proper tables; add summary frontmatter
+Fix PageList slug match and constrain search modal width
 ```
 
 ## After deploy
 
-Visit each Collection sub-page in turn. You should see:
-
-- **`/collection/sources`** — Single table. Columns: Title, Summary,
-  Tags, Date. The "Fred" entry (or whatever you renamed it to) has all
-  four columns populated.
-- **`/collection/synthesis`** — Single table. Same four columns.
-  SAML vs. OAuth Comparison entry visible with summary.
-- **`/collection/concepts`** — Three columns: Title, Summary, Tags.
-  OAuth and SAML entries with their respective summaries.
-- **`/collection/entities`** — Three columns: Title, Summary, Tags.
-  Active Directory entry with its summary.
-
-In all cases, tags should appear in their own column right next to the
-title, scannable as a unified table — not floating to the right edge of
-the page.
-
-## Verification
-
-After Cloudflare reports a green build, three quick checks:
-
-1. **Visit `/collection/sources`** — confirm one table, four columns,
-   summary populated.
-2. **View page source** of any collection sub-page index — search for
-   `class="table-container collection-table"`. Present = patch active.
-3. **Visit a tag page** like `/tags/saml` — confirm the page list there
-   still uses the old flex layout (because the slug is `tags/saml`, not
-   `collection/*`). This proves the fallback path is intact and we
-   didn't accidentally break tag/search pages.
-
-## What's NOT in this patch (still pending)
-
-Carryover orphan files from earlier sessions, none breaking anything
-but worth deleting eventually:
-
-- `content/learn/memory.md`
-- `quartz/components/Retention.tsx`
-- `quartz/components/scripts/retention.inline.ts`
-- `quartz/components/styles/retention.scss`
+1. **`/collection/sources`** — should now show a real `<table>` with
+   columns: Title / Summary / Tags / Date. Fred's row populated with
+   summary "Side-by-side instructional diagram comparing the request
+   flow of SAML and OAuth, captured as a photo."
+2. **`/collection/concepts`** — three-column table (no Date), OAuth
+   and SAML rows with their respective summaries.
+3. **`/collection/entities`** — three-column table, Active Directory.
+4. **`/collection/synthesis`** — four-column table with the SAML vs.
+   OAuth Comparison row.
+5. **`/learn/search` → click Begin Search** — modal opens shifted
+   right, leaving the sidebar visible.
