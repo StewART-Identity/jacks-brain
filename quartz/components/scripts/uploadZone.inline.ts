@@ -31,7 +31,7 @@ document.addEventListener("nav", () => {
     target.style.display = "none"
   }
 
-  const RETENTION_HINT = "Uploaded. Check Retention for current status."
+  const ACQUISITION_HINT = "Uploaded. Check Acquisition for current status."
 
   // Clear file status when user initiates a new upload
   dropZone.addEventListener("click", () => clearCardStatus(fileStatus))
@@ -185,7 +185,7 @@ document.addEventListener("nav", () => {
       const response = await fetch("/api/upload", { method: "POST", body: formData })
       const data = await response.json()
       if (data.success) {
-        showCardStatus(fileStatus, RETENTION_HINT, "success")
+        showCardStatus(fileStatus, ACQUISITION_HINT, "success")
         // Clear the title field on success so it doesn't accidentally apply
         // to the next upload. The paste card clears on focus; the file card
         // clears on successful completion.
@@ -227,7 +227,7 @@ document.addEventListener("nav", () => {
         const response = await fetch("/api/upload", { method: "POST", body: formData })
         const data = await response.json()
         if (data.success) {
-          showCardStatus(pasteStatus, RETENTION_HINT, "success")
+          showCardStatus(pasteStatus, ACQUISITION_HINT, "success")
           pasteInput.value = ""
           if (pasteTitle) pasteTitle.value = ""
         } else {
@@ -258,7 +258,7 @@ document.addEventListener("nav", () => {
         })
         const data = await response.json()
         if (data.success) {
-          showCardStatus(urlStatus, RETENTION_HINT, "success")
+          showCardStatus(urlStatus, ACQUISITION_HINT, "success")
           urlInput.value = ""
         } else {
           showCardStatus(urlStatus, "Failed: " + (data.error || "Unknown error"), "error")
@@ -287,7 +287,7 @@ document.addEventListener("nav", () => {
         })
         const data = await response.json()
         if (data.success) {
-          showCardStatus(youtubeStatus, RETENTION_HINT, "success")
+          showCardStatus(youtubeStatus, ACQUISITION_HINT, "success")
           youtubeInput.value = ""
         } else {
           showCardStatus(youtubeStatus, "Failed: " + (data.error || "Unknown error"), "error")
