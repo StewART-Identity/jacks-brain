@@ -3,8 +3,6 @@ import { resolveRelative } from "../util/path"
 import { classNames } from "../util/lang"
 // @ts-ignore
 import darkmodeScript from "./scripts/darkmode.inline"
-// @ts-ignore
-import readermodeScript from "./scripts/readermode.inline"
 
 const ApplicationMenu: QuartzComponent = ({ fileData, displayClass }: QuartzComponentProps) => {
   return (
@@ -15,9 +13,6 @@ const ApplicationMenu: QuartzComponent = ({ fileData, displayClass }: QuartzComp
           <a href={resolveRelative(fileData.slug!, "application/help" as any)}>Help</a>
         </li>
         <li>
-          <a href={resolveRelative(fileData.slug!, "application/readingmode" as any)}>Reading Mode</a>
-        </li>
-        <li>
           <a href={resolveRelative(fileData.slug!, "application/nuke" as any)}>Nuke It From Orbit</a>
         </li>
       </ul>
@@ -25,7 +20,7 @@ const ApplicationMenu: QuartzComponent = ({ fileData, displayClass }: QuartzComp
   )
 }
 
-ApplicationMenu.beforeDOMLoaded = darkmodeScript + "\n" + readermodeScript
+ApplicationMenu.beforeDOMLoaded = darkmodeScript
 
 
 export default (() => ApplicationMenu) satisfies QuartzComponentConstructor
