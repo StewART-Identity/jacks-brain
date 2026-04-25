@@ -76,7 +76,7 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
     // Collection sub-page: render as a real table.
     const showDate = tableConfig.showDate
     return (
-      <div class="table-container collection-table">
+      <div class="table-container jb-table">
         <table>
           <thead>
             <tr>
@@ -194,102 +194,60 @@ PageList.css = `
   margin: 0;
 }
 
-/* Collection sub-page table styling */
-
-.collection-table.table-container {
-  margin: 1rem 0;
-  padding: 0;
-  overflow-x: visible;
-  overflow-y: visible;
-}
-
-.collection-table > table {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-  border-collapse: collapse;
-  table-layout: fixed;
-  background-color: var(--light);
-}
-
-.collection-table th,
-.collection-table td {
-  vertical-align: top;
-  padding: 0.6rem 0.7rem;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  border: 1px solid var(--gray);
-  background-color: var(--light);
-}
-
-.collection-table th {
-  text-align: left;
-  border-bottom: 2px solid var(--gray);
-  font-weight: 600;
-  background-color: var(--lightgray);
-}
-
-/* Alternating row colors for readability. Both fully opaque so the
-   neuron wallpaper doesn't bleed through. */
-.collection-table tbody tr:nth-child(odd) td {
-  background-color: var(--light);
-}
-.collection-table tbody tr:nth-child(even) td {
-  background-color: var(--lightgray);
-}
+/* Collection-table-specific styles. The base look (header band, cell
+   borders, alternating rows, flush-left) comes from jbtable.scss. */
 
 /* Percentage-based column widths so the table never overflows,
    regardless of viewport width. Tags gets the largest share since
    tag pills need horizontal room to look like proper pills.
-   With table-layout: fixed, the widths are honored as ratios. */
+   With table-layout: fixed (set by jbtable.scss), widths are ratios. */
 
 /* Sources & Synthesis (4 columns: Title / Summary / Tags / Date) */
-.collection-table th.col-title,
-.collection-table td.col-title {
+.jb-table th.col-title,
+.jb-table td.col-title {
   width: 18%;
   font-weight: 500;
 }
-.collection-table th.col-summary,
-.collection-table td.col-summary {
+.jb-table th.col-summary,
+.jb-table td.col-summary {
   width: 32%;
 }
-.collection-table th.col-tags,
-.collection-table td.col-tags {
+.jb-table th.col-tags,
+.jb-table td.col-tags {
   width: 35%;
 }
-.collection-table th.col-date,
-.collection-table td.col-date {
+.jb-table th.col-date,
+.jb-table td.col-date {
   width: 15%;
   white-space: nowrap;
 }
 
 /* When Date column is absent (Concepts & Entities), redistribute the
    freed-up space across the remaining three columns. */
-.collection-table > table:not(:has(.col-date)) th.col-title,
-.collection-table > table:not(:has(.col-date)) td.col-title {
+.jb-table > table:not(:has(.col-date)) th.col-title,
+.jb-table > table:not(:has(.col-date)) td.col-title {
   width: 22%;
 }
-.collection-table > table:not(:has(.col-date)) th.col-summary,
-.collection-table > table:not(:has(.col-date)) td.col-summary {
+.jb-table > table:not(:has(.col-date)) th.col-summary,
+.jb-table > table:not(:has(.col-date)) td.col-summary {
   width: 38%;
 }
-.collection-table > table:not(:has(.col-date)) th.col-tags,
-.collection-table > table:not(:has(.col-date)) td.col-tags {
+.jb-table > table:not(:has(.col-date)) th.col-tags,
+.jb-table > table:not(:has(.col-date)) td.col-tags {
   width: 40%;
 }
 
-.collection-table td.col-title a {
+.jb-table td.col-title a {
   text-decoration: none;
 }
 
-.collection-table td.col-summary span.muted {
+.jb-table td.col-summary span.muted {
   color: var(--gray);
   font-style: italic;
 }
 
 /* Tags list inside the table cell — inline-flex, wrap, tight spacing. */
-.collection-table .tags {
+.jb-table .tags {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -297,7 +255,7 @@ PageList.css = `
   flex-wrap: wrap;
   gap: 0.25rem;
 }
-.collection-table .tags > li {
+.jb-table .tags > li {
   margin: 0;
   padding: 0;
 }
