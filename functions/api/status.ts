@@ -2,7 +2,7 @@
  * GET /api/status
  *
  * Returns the true cataloging state of each acquired document by
- * cross-referencing static/originals/ files, content/recall/sources/
+ * cross-referencing static/originals/ files, content/collection/sources/
  * pages, and active workflow runs.
  *
  * States:
@@ -62,7 +62,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         { headers: ghHeaders(GITHUB_TOKEN) },
       ),
       fetch(
-        `https://api.github.com/repos/${GITHUB_REPO}/contents/content/recall/sources`,
+        `https://api.github.com/repos/${GITHUB_REPO}/contents/content/collection/sources`,
         { headers: ghHeaders(GITHUB_TOKEN) },
       ),
       fetch(
