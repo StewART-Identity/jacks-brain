@@ -196,20 +196,25 @@ PageList.css = `
 
 /* Collection sub-page table styling */
 
-.collection-table {
+.collection-table.table-container {
   margin: 1rem 0;
   overflow-x: visible;
+  overflow-y: visible;
 }
 
 .collection-table > table {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .collection-table th,
 .collection-table td {
   vertical-align: top;
   padding: 0.5rem 0.6rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .collection-table th {
@@ -226,26 +231,46 @@ PageList.css = `
   border-bottom: none;
 }
 
-/* Column widths — Title is min-content; Summary takes the rest;
-   Tags is bounded; Date is narrow and nowrap. */
+/* Percentage-based column widths so the table never overflows,
+   regardless of viewport width. Tags gets the largest share since
+   tag pills need horizontal room to look like proper pills.
+   With table-layout: fixed, the widths are honored as ratios. */
+
+/* Sources & Synthesis (4 columns: Title / Summary / Tags / Date) */
 .collection-table th.col-title,
 .collection-table td.col-title {
-  white-space: nowrap;
+  width: 18%;
   font-weight: 500;
   padding-right: 1rem;
 }
 .collection-table th.col-summary,
 .collection-table td.col-summary {
-  width: 100%;
+  width: 32%;
 }
 .collection-table th.col-tags,
 .collection-table td.col-tags {
-  white-space: nowrap;
+  width: 35%;
 }
 .collection-table th.col-date,
 .collection-table td.col-date {
+  width: 15%;
   white-space: nowrap;
   padding-left: 1rem;
+}
+
+/* When Date column is absent (Concepts & Entities), redistribute the
+   freed-up space across the remaining three columns. */
+.collection-table > table:not(:has(.col-date)) th.col-title,
+.collection-table > table:not(:has(.col-date)) td.col-title {
+  width: 22%;
+}
+.collection-table > table:not(:has(.col-date)) th.col-summary,
+.collection-table > table:not(:has(.col-date)) td.col-summary {
+  width: 38%;
+}
+.collection-table > table:not(:has(.col-date)) th.col-tags,
+.collection-table > table:not(:has(.col-date)) td.col-tags {
+  width: 40%;
 }
 
 .collection-table td.col-title a {
