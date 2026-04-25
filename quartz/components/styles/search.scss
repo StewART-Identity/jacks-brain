@@ -86,6 +86,13 @@
     display: none;
     backdrop-filter: blur(4px);
 
+    /* On desktop, leave room for the left sidebar — search shouldn't
+       cover the navigation. */
+    @media all and #{$desktop} {
+      left: 320px;
+      width: calc(100vw - 320px);
+    }
+
     &.active {
       display: inline-block;
     }
