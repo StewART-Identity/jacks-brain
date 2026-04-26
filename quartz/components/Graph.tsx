@@ -19,6 +19,11 @@ export interface D3Config {
   showTags: boolean
   focusOnHover?: boolean
   enableRadial?: boolean
+  // Optional simulation cooling rate. D3's default is 0.0228 (very slow),
+  // which keeps the simulation in perpetual motion on non-trivial graphs.
+  // A higher value (e.g. 0.05) lets the layout settle to rest. Optional so
+  // omitting it preserves the original Quartz behavior.
+  alphaDecay?: number
 }
 
 interface GraphOptions {
