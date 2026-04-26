@@ -32,6 +32,15 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
     // it settle in a few seconds, eliminating the "moving in water"
     // feel where every disturbance ripples forever.
     alphaDecay: 0.05,
+    // Per-tick momentum damping. D3's default 0.4 retains 60% of node
+    // velocity each tick — disturbances propagate several rings before
+    // fading. 0.6 (40% retained) makes nodes "stickier": still responsive
+    // to direct force from a moving neighbor, but motion damps within a
+    // hop or two instead of rippling across the whole graph. Companion
+    // to the alphaTarget(0.3) change in the drag handler — together
+    // they give Aesthete mode a non-watery feel where drags affect a
+    // small local region and settle quickly on release.
+    velocityDecay: 0.6,
   }
 
   return (
