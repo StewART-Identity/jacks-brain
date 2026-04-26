@@ -12,6 +12,27 @@ document.addEventListener("nav", () => {
 
   let pollTimer: ReturnType<typeof setInterval> | null = null
 
+  // Register cleanup with the SPA router. Quartz fires every cleanup fn
+  // before navigating away, then clears the cleanup set. This prevents
+  // (a) the 10-second poll timer from outliving the page it belongs to
+  // and (b) micromorph from getting confused by stale inner DOM when
+  // navigating between pages that share an outer wrapper-div pattern.
+  // Without this, micromorph can leave Retention's children inside the
+  // Acquisition wrapper (or vice versa), producing a page whose URL
+  // and title are right but whose interactive elements are wrong.
+  if (typeof window !== "undefined" && (window as any).addCleanup) {
+    ;(window as any).addCleanup(() => {
+      if (pollTimer) {
+        clearInterval(pollTimer)
+        pollTimer = null
+      }
+      // Clear inner content so micromorph diffs against an empty
+      // container rather than against Acquisition-specific markup.
+      const list = document.getElementById("runs-list")
+      if (list) list.innerHTML = ""
+    })
+  }
+
   async function loadRuns() {
     if (!runsList) return
     try {
