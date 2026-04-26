@@ -16,9 +16,12 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
     repelForce: 0.8,
     centerForce: 0.3,
     linkDistance: 60,
-    // Label text size multiplier. Smaller value means labels stay
-    // readable without dominating the viewport when zoomed in.
-    fontSize: 0.3,
+    // Label text size multiplier. 0.6 matches Quartz's default for
+    // local/global graphs. Earlier we used 0.3 to compensate for a
+    // bug where renderLabels rendered hovered labels too large at
+    // zoom; now that renderLabels is zoom-aware, we can use the
+    // standard size.
+    fontSize: 0.6,
     opacityScale: 1,
     showTags: true,
     removeTags: [],
