@@ -304,16 +304,7 @@ Follow the "Catalog" workflow from CLAUDE.md:
 
 4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/collection/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents. Direct filesystem write.
 
-5. **Update the per-category index files.** This step is mandatory and is what makes the wiki navigable. For every page you created or updated in steps 1–4, ensure the corresponding index file has a matching row. Direct filesystem writes.
-
-   - content/collection/sources/index.md — three columns: Content, Summary, Date. Add or update a row for the source page. Example row: \`| [[collection/sources/${isReView ? existing.filename.replace(/\\.md$/, "") : `${today}-${slug}`}]] | <summary> | ${today} |\`
-   - content/collection/entities/index.md — two columns: Content, Summary. Add or update a row for each entity page touched in step 2.
-   - content/collection/concepts/index.md — two columns: Content, Summary. Add or update a row for each concept page touched in step 3.
-   - content/collection/synthesis/index.md — three columns: Content, Summary, Date. Add or update a row if step 4 produced or modified a synthesis page.
-
-   Read each index file before editing so you preserve any existing rows. Sort rows however the existing file is sorted (typically alphabetical by title, with sources/synthesis often by date desc). The 'summary' you put in the index row should match the page's frontmatter 'summary:' field exactly.
-
-   Do NOT modify content/index.md — it is the user's hand-styled welcome page and is not a catalog.
+5. Do NOT modify content/index.md (the welcome page) or any of the per-category index.md files in collection/ (Sources, Entities, Concepts, Synthesis). The Collection page listings are rendered automatically by Quartz's FolderContent + PageList components from each page's frontmatter — title, summary, dates, tags. The index.md files contribute only the page title and intro paragraph above the auto-generated table; their bodies should stay empty. Putting a markdown table in an index.md would duplicate the auto-rendered listing and create drift.
 
 6. Update the retention log by calling the **append_retention_entry** MCP tool with these arguments:
      - action: "${retentionAction}"
@@ -321,19 +312,7 @@ Follow the "Catalog" workflow from CLAUDE.md:
      - filename: "${originalName}"
    Do NOT edit data/retention-log.md directly with a filesystem write. The MCP tool validates the row format and handles UTF-8 encoding correctly. Each catalog operation appends exactly one retention row, regardless of how many wiki pages were created or updated.
 
-7. **Verify everything landed.** This is the final and most important step — a catalog that produced beautiful prose but didn't update the indexes is an incomplete catalog. Confirm each of the following before reporting completion:
-
-   a. Call the **read_repo_file** MCP tool with path="data/retention-log.md". Confirm the file contains a row matching what you appended in step 6 (action="${retentionAction}", date="${today}", filename="${originalName}"). If the row is missing — for any reason — call append_retention_entry again with the same arguments. The MCP tool is idempotent enough that a duplicate row is much less harmful than a missing one.
-
-   b. Read content/collection/sources/index.md and confirm it lists the source page from step 1.
-
-   c. For every entity page created or updated in step 2, read content/collection/entities/index.md and confirm a matching row exists.
-
-   d. For every concept page created or updated in step 3, read content/collection/concepts/index.md and confirm a matching row exists.
-
-   e. If step 4 produced or modified a synthesis page, read content/collection/synthesis/index.md and confirm a matching row exists.
-
-   If any of (b)–(e) is missing a row, fix the corresponding index file now with a direct filesystem write. Do not report completion until every page you created or updated appears in its respective index file.
+7. **Verify the retention row landed.** Call the **read_repo_file** MCP tool with path="data/retention-log.md". Confirm the file contains a row matching what you appended in step 6 (action="${retentionAction}", date="${today}", filename="${originalName}"). If the row is missing — for any reason — call append_retention_entry again with the same arguments. The MCP tool is idempotent enough that a duplicate row is much less harmful than a missing one. If the row IS present, the catalog is complete; do nothing further.
 
 The original document is available for download at: /api/originals/${originalName}
 Include a link to the original document in the source summary page (e.g., [Download original](/api/originals/${originalName})).
