@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "jacks-brain": {
+      "type": "http",
+      "url": "${MCP_SERVER_URL:-https://jacks-brain-mcp.stewart-identity.workers.dev/}",
+      "headers": {
+        "Authorization": "Bearer ${MCP_SERVICE_TOKEN}"
+      }
+    }
+  }
+}
