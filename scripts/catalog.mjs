@@ -19,6 +19,17 @@
  *
  * Binary files (.docx, .pdf) are converted to text first using pandoc/pdftotext.
  *
+ * MCP integration: when the catalog runs in an environment with .mcp.json
+ * configured (e.g. the catalog GitHub Action), the catalog Claude has
+ * access to the wiki's MCP server tools. The prompt below instructs it
+ * to use:
+ *   - append_retention_entry to update data/retention-log.md (instead of
+ *     filesystem write — gets schema validation and bypasses the git add
+ *     data/ dependency)
+ *   - read_repo_file to verify the retention row landed after committing
+ * Wiki pages themselves (content/) still go through filesystem writes —
+ * those land via `git add content/` and don't benefit from MCP.
+ *
  * Usage:
  *   node scripts/catalog.mjs [file-path]    # catalog a specific file
  *   node scripts/catalog.mjs                # catalog all un-cataloged acquisitions
@@ -212,6 +223,7 @@ function catalogWithClaude(sourcePath) {
   const isReView = existing !== null
   const sourceFilename = isReView ? existing.filename : `${today}-${slug}.md`
   const sourcePagePath = `content/collection/sources/${sourceFilename}`
+  const retentionAction = isReView ? "Re-viewed" : "Cataloged"
 
   // If we converted the file, read it inline to avoid path issues
   let sourceInstruction
@@ -267,6 +279,11 @@ Frontmatter must include (in addition to the standard fields):
 
   const prompt = `You are cataloging a source document into a knowledge wiki.
 
+You have access to MCP tools from the "jacks-brain" MCP server. Use them where the prompt instructs you to. For wiki pages (anything under content/), keep using direct filesystem writes — those land via git commits and don't benefit from MCP. The MCP tools you should use here are:
+
+  - append_retention_entry: write the audit row to data/retention-log.md (step 6 below)
+  - read_repo_file: verify the retention row landed (verify step at the end)
+
 Read the following files to understand the wiki structure and current state:
 1. CLAUDE.md — the wiki schema and conventions
 2. content/index.md — the welcome/landing page (do not modify)
@@ -278,12 +295,24 @@ ${sourceInstruction}
 ${operationNote}
 
 Follow the "Catalog" workflow from CLAUDE.md:
-1. ${isReView ? "Update" : "Create"} the source summary page at the exact path above.
-2. Create or update entity pages in content/collection/entities/ for significant entities mentioned. Always prefer updating over duplicating.
-3. Create or update concept pages in content/collection/concepts/ for significant concepts. Always prefer updating over duplicating.
-4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/collection/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents.
+
+1. ${isReView ? "Update" : "Create"} the source summary page at the exact path above. Use a direct filesystem write.
+
+2. Create or update entity pages in content/collection/entities/ for significant entities mentioned. Always prefer updating over duplicating. Direct filesystem writes.
+
+3. Create or update concept pages in content/collection/concepts/ for significant concepts. Always prefer updating over duplicating. Direct filesystem writes.
+
+4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/collection/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents. Direct filesystem write.
+
 5. Do NOT modify content/index.md (it's the welcome page) or any of the per-category index.md files in collection/ (they are intro-only; the page list is auto-rendered).
-6. Update data/retention-log.md — add a row to the table (after the header row): | ${today} | ${isReView ? "Re-viewed" : "Cataloged"} | ${originalName} |
+
+6. Update the retention log by calling the **append_retention_entry** MCP tool with these arguments:
+     - action: "${retentionAction}"
+     - date: "${today}"
+     - filename: "${originalName}"
+   Do NOT edit data/retention-log.md directly with a filesystem write. The MCP tool validates the row format and handles UTF-8 encoding correctly. Each catalog operation appends exactly one retention row, regardless of how many wiki pages were created or updated.
+
+7. **Verify the retention row landed.** Call the **read_repo_file** MCP tool with path="data/retention-log.md". Confirm the file contains a row matching what you appended in step 6 (action="${retentionAction}", date="${today}", filename="${originalName}"). If the row is missing — for any reason — call append_retention_entry again with the same arguments. The MCP tool is idempotent enough that a duplicate row is much less harmful than a missing one. If the row IS present, the catalog is complete; do nothing further.
 
 The original document is available for download at: /api/originals/${originalName}
 Include a link to the original document in the source summary page (e.g., [Download original](/api/originals/${originalName})).
@@ -297,7 +326,7 @@ IMPORTANT formatting rules:
 - Today's date is ${today}.
 - The source page path is EXACTLY ${sourcePagePath}. Do not add or strip date prefixes from this path.
 
-Write all files directly — do not ask for confirmation.`
+Write all files directly — do not ask for confirmation. Call MCP tools where instructed without asking for confirmation.`
 
   console.log(`Calling Claude Code CLI for: ${relative(ROOT, sourcePath)}`)
 
