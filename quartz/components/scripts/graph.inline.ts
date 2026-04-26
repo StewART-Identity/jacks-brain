@@ -735,6 +735,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     focusOnHover,
     enableRadial,
     alphaDecay,
+    velocityDecay,
   } = JSON.parse(graph.dataset["cfg"]!) as D3Config
 
   const data: Map<SimpleSlug, ContentDetails> = new Map(
@@ -903,6 +904,14 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   // toward an equilibrium they never quite reach. Setting this higher
   // (e.g. 0.05) lets the layout reach rest in a few seconds.
   if (alphaDecay !== undefined) simulation.alphaDecay(alphaDecay)
+
+  // Optional override of D3's per-tick momentum damping. Default is 0.4
+  // (60% of velocity retained per tick), which lets disturbances ripple
+  // far before fading. Higher values (e.g. 0.6) make nodes "stickier" —
+  // motion damps within a hop or two of the disturbance. Combined with
+  // a lower alphaTarget on drag, this controls how far ripples travel
+  // during interactive manipulation.
+  if (velocityDecay !== undefined) simulation.velocityDecay(velocityDecay)
 
   const radius = (Math.min(width, height) / 2) * 0.8
   if (enableRadial) simulation.force("radial", forceRadial(radius).strength(0.2))
@@ -1859,4 +1868,3 @@ document.addEventListener("nav", async (e: CustomEventMap["nav"]) => {
     cleanupLocalGraphs()
     cleanupGlobalGraphs()
   })
-})
