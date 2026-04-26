@@ -112,13 +112,15 @@
 
 /* Alternating opaque row backgrounds.
 
-   Both shades are dark and saturated enough that the neuron wallpaper
-   does not perceptually bleed through. The two stops are close in
-   luminance (only ~2.5% lighter on the even rows) so the stripe reads
-   as "two siblings" rather than "dark row + tinted-glass row". */
+   Both shades sit clearly BELOW the average tone of the neuron
+   wallpaper, so neither row reads as "tinted glass" — the alternation
+   inverts away from the wallpaper rather than toward it. Odd rows are
+   the lighter of the two; even rows step a bit darker. The contrast
+   between the two is small (~4%) so the stripe reads as siblings, not
+   as light-row/dark-row. */
 .table-container.jb-table > table tbody tr:nth-child(odd) td {
   background-color: #1B3F29;
 }
 .table-container.jb-table > table tbody tr:nth-child(even) td {
-  background-color: #1F4429;
+  background-color: #163524;
 }
