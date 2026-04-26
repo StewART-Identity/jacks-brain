@@ -487,6 +487,13 @@ declare global {
     // and resize the pixi renderer accordingly. Used by the fullscreen
     // change handler in PageTitle.tsx.
     __graphResize?: () => void
+    // Tells the current renderGraph to update fx/fy on every node
+    // based on the active saved layout — without tearing down the
+    // canvas and rebuilding the simulation. Used by layout create/
+    // switch/delete operations as a lightweight alternative to the
+    // synthetic-nav approach (which destroyed the canvas, kicking
+    // the user out of fullscreen and risking listener-rewire bugs).
+    __graphRepin?: () => void
   }
 }
 
@@ -1689,6 +1696,51 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     app.renderer.resize(width, height)
   }
 
+  // Expose an in-place re-pin handler. Called by PageTitle when the
+  // user creates, switches, or deletes a saved layout — the graph's
+  // node set hasn't changed, but the active layout has, so each
+  // node's pin target may have changed. We update fx/fy directly on
+  // the existing simulation rather than tearing the whole graph
+  // down and rebuilding it.
+  //
+  // Behavior per node:
+  //   - In active layout: set fx/fy from layout, set x/y for instant
+  //     visual update, increment "did anything change" counter.
+  //   - NOT in active layout: clear fx/fy so the simulation can
+  //     place the node freely. (This matters when the user switches
+  //     from a layout that pinned a node to one that doesn't, OR
+  //     deletes the active layout entirely.)
+  //
+  // After updates, restart the simulation at low alpha so it settles
+  // smoothly into the new pin configuration. Skipped if frozen —
+  // pinned nodes don't move under simulation forces, and unpinned
+  // nodes in a frozen graph just stay where they were last rendered.
+  // Either way, the next animation frame picks up the new positions.
+  window.__graphRepin = () => {
+    const active = getActiveLayout()
+    for (const n of graphData.nodes) {
+      const p = active ? active.positions[n.id] : undefined
+      if (p) {
+        n.fx = p.x
+        n.fy = p.y
+        n.x = p.x
+        n.y = p.y
+      } else {
+        // Release any pin this node had — either because there's no
+        // active layout, or because the active layout doesn't pin
+        // this particular node. The simulation will arrange it from
+        // its current position.
+        n.fx = null
+        n.fy = null
+      }
+    }
+    if (!graphFrozen) {
+      // Low alpha — enough motion to glide into the new pins, not
+      // so much that the whole layout reshuffles dramatically.
+      simulation.alpha(0.3).restart()
+    }
+  }
+
   requestAnimationFrame(animate)
   return () => {
     stopAnimation = true
@@ -1700,6 +1752,9 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     }
     if (window.__graphResize) {
       window.__graphResize = undefined
+    }
+    if (window.__graphRepin) {
+      window.__graphRepin = undefined
     }
   }
 }
