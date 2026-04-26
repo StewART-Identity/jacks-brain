@@ -4,3 +4,4 @@ Audit log of all cataloging operations. Read by /api/retention; rendered by the 
 
 | Date | Action | Details |
 |------|--------|--------|
+| 2026-04-25 | Cataloged | 2026-04-25-Driver-Migration-Husk.docx |
