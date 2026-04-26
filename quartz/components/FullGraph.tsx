@@ -87,9 +87,23 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
         ></div>
       </div>
       <div class="graph-controls">
+        <button type="button" id="graph-freeze-btn" class="graph-ctrl-btn" title="Freeze layout (no physics)" aria-pressed="false">❄</button>
+        <button type="button" id="graph-filter-btn" class="graph-ctrl-btn" title="Filter by synthesis" aria-pressed="false">⚏</button>
         <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
         <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
         <button type="button" id="graph-fullscreen-btn" class="graph-ctrl-btn" title="Full screen">&#x26F6;</button>
+      </div>
+      <div class="graph-filter-panel" id="graph-filter-panel" hidden>
+        <div class="graph-filter-header">
+          <h4>Filter by synthesis</h4>
+          <p class="graph-filter-hint">
+            Uncheck a synthesis to hide its nodes. Pages not part of any synthesis
+            are always visible.
+          </p>
+        </div>
+        <div class="graph-filter-body" id="graph-filter-body">
+          {/* Filled in by PageTitle's nav handler from window.graphFilter */}
+        </div>
       </div>
       <div class="graph-container" data-cfg={JSON.stringify(graphConfig)}></div>
     </div>
@@ -175,6 +189,15 @@ FullGraph.css =
 .graph-ctrl-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+.graph-ctrl-btn[aria-pressed="true"] {
+  /* Active toggle state — distinguish from a momentary click. The
+     freeze button uses this when physics is paused. Border + opacity
+     change so it reads as "engaged" without inventing a new color
+     that fights the existing palette. */
+  opacity: 1;
+  border-color: var(--secondary);
+  color: var(--secondary);
 }
 
 /* ─── Saved layouts toolbar (top-left mirror) ──────────────────────── */
@@ -271,6 +294,110 @@ FullGraph.css =
   position: fixed;
   top: 1rem;
   left: 1rem;
+  z-index: 100;
+}
+
+/* ─── Synthesis filter panel ─────────────────────────────────────────
+   Anchored to the right edge of #full-graph, just inside the right
+   toolbar's column. Hidden by default via the [hidden] attribute; the
+   filter button toggles it. The panel scrolls if the synthesis list
+   gets long. */
+.graph-filter-panel {
+  position: absolute;
+  top: 0.5rem;
+  right: calc(2.8rem + 1rem);  /* clear of the right toolbar's button column */
+  width: 18rem;
+  max-height: calc(100% - 1rem);
+  z-index: 5;
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  font-size: 0.85rem;
+}
+.graph-filter-panel[hidden] {
+  display: none;
+}
+.graph-filter-header {
+  padding: 0.6rem 0.8rem 0.4rem;
+  border-bottom: 1px solid var(--lightgray);
+}
+.graph-filter-header h4 {
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+  color: var(--secondary);
+}
+.graph-filter-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--gray);
+  line-height: 1.3;
+}
+.graph-filter-body {
+  padding: 0.4rem 0.4rem 0.6rem;
+}
+.graph-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.4rem;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+.graph-filter-row:hover {
+  background: var(--lightgray);
+}
+.graph-filter-row input {
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.graph-filter-row-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dark);
+}
+.graph-filter-row-count {
+  flex-shrink: 0;
+  color: var(--gray);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.graph-filter-empty {
+  padding: 0.6rem 0.8rem;
+  color: var(--gray);
+  font-style: italic;
+  font-size: 0.8rem;
+}
+.graph-filter-actions {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.4rem 0.4rem;
+  border-top: 1px solid var(--lightgray);
+  margin-top: 0.3rem;
+}
+.graph-filter-action {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--lightgray);
+  border-radius: 4px;
+  color: var(--dark);
+  padding: 0.3rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.graph-filter-action:hover {
+  background: var(--lightgray);
+}
+#full-graph:fullscreen .graph-filter-panel,
+#full-graph:-webkit-full-screen .graph-filter-panel {
+  position: fixed;
+  top: 1rem;
+  right: calc(2.8rem + 2rem);
   z-index: 100;
 }
 `
