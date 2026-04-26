@@ -26,20 +26,6 @@ document.addEventListener("nav", () => {
   if (!container) return
   const refreshBtn = document.getElementById("refresh-retention-btn")
 
-  // Register cleanup with the SPA router so micromorph doesn't leave
-  // Retention's children inside the wrong page's wrapper. See the
-  // matching cleanup in acquisition.inline.ts for the full bug
-  // description; the short version is that without this, navigating
-  // between Acquisition and Retention via the SPA router produces a
-  // hybrid DOM where the URL is right but the rendered controls are
-  // from the previous page.
-  if (typeof window !== "undefined" && window.addCleanup) {
-    window.addCleanup(function() {
-      const list = document.getElementById("retention-list")
-      if (list) list.innerHTML = ""
-    })
-  }
-
   let allRows = []
   let sortField = "date"
   let sortAsc = false
