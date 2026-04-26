@@ -75,13 +75,58 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
   if (tableConfig) {
     // Collection sub-page: render as a real table.
     //
-    // Column order: Title -> Date -> Summary -> Tags
+    // Column order: Title -> Date -> Summary -> Subjects -> Tags
     // Sortable: Title (alphabetical) and Date (chronological).
     // Default sort applied by the SSR sorter above is "newest first" via
     // byDateAndAlphabeticalFolderFirst. The client-side sort script in
     // PageList.afterDOMLoaded picks up that default and lets the user
     // toggle by clicking a sortable header.
     const showDate = tableConfig.showDate
+
+    // When the page list is empty, show an explanatory notice instead
+    // of the table. Each Collection sub-page's empty state has its own
+    // copy because the reasons for emptiness differ:
+    //
+    // - Sources/Entities/Concepts: empty means "nothing cataloged yet."
+    //   Action: catalog something. The Selection page is the entry
+    //   point.
+    // - Synthesis: empty is the NORMAL state until you have multiple
+    //   sources that connect. The cataloger doesn't manufacture
+    //   synthesis pages; it only creates them when a new source
+    //   genuinely intersects existing wiki content. Saying "catalog
+    //   more" would be misleading — synthesis emerges, it's not
+    //   ordered.
+    //
+    // Subjects pill rendering, tag rendering, etc. are all skipped in
+    // this branch since there's nothing to render in those cells.
+    if (list.length === 0) {
+      const emptyCopy: Record<string, { headline: string; body: string }> = {
+        "collection/sources": {
+          headline: "No sources cataloged yet.",
+          body: "Upload a document via the Selection page to start the cataloging pipeline.",
+        },
+        "collection/entities": {
+          headline: "No entities yet.",
+          body: "Cataloged sources automatically generate entity pages for the people, organizations, tools, and systems they reference. Entities will appear here as you catalog sources.",
+        },
+        "collection/concepts": {
+          headline: "No concepts yet.",
+          body: "Cataloged sources automatically generate concept pages for the ideas, theories, frameworks, and principles they cover. Concepts will appear here as you catalog sources.",
+        },
+        "collection/synthesis": {
+          headline: "No synthesis pages yet.",
+          body: "Synthesis pages emerge organically — the cataloger creates one when a newly cataloged source genuinely connects to or contrasts with existing wiki content. With only a small number of sources cataloged, there may not be cross-cutting material to synthesize. As the collection grows, synthesis pages will start appearing here.",
+        },
+      }
+      const copy = emptyCopy[lookupSlug]
+      return (
+        <div class="jb-empty-state">
+          <h3>{copy.headline}</h3>
+          <p>{copy.body}</p>
+        </div>
+      )
+    }
+
     return (
       <div class="table-container jb-table">
         <table>
@@ -98,6 +143,7 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                 </th>
               )}
               <th class="col-summary">Summary</th>
+              <th class="col-subjects">Subjects</th>
               <th class="col-tags">Tags</th>
             </tr>
           </thead>
@@ -109,6 +155,14 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                   | string
                   | undefined
               const tags = page.frontmatter?.tags ?? []
+              // Subjects: controlled-vocabulary classifications. Read
+              // from frontmatter directly since QuartzPluginData's
+              // typed `frontmatter` only declares the standard fields.
+              // Cast to access the `subjects` field we added.
+              const subjects =
+                ((page.frontmatter as Record<string, unknown> | undefined)?.subjects as
+                  | string[]
+                  | undefined) ?? []
               // ISO timestamp on the row so the client-side sort script
               // can compare dates without re-parsing the formatted date.
               // Empty string for pages with no date so they sort last on
@@ -136,6 +190,17 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                   <td class="col-summary">
                     {summary ? (
                       <span>{summary}</span>
+                    ) : (
+                      <span class="muted">—</span>
+                    )}
+                  </td>
+                  <td class="col-subjects">
+                    {subjects.length > 0 ? (
+                      <ul class="subjects">
+                        {subjects.map((subject) => (
+                          <li>{subject}</li>
+                        ))}
+                      </ul>
                     ) : (
                       <span class="muted">—</span>
                     )}
@@ -219,52 +284,60 @@ PageList.css = `
    borders, alternating rows, flush-left) comes from jbtable.scss. */
 
 /* Percentage-based column widths so the table never overflows,
-   regardless of viewport width. Tags gets the largest share since
-   tag pills need horizontal room to look like proper pills.
-   With table-layout: fixed (set by jbtable.scss), widths are ratios.
+   regardless of viewport width. With table-layout: fixed (set by
+   jbtable.scss), widths are ratios.
 
-   Column order: Title -> Date -> Summary -> Tags. */
+   Column order: Title -> Date -> Summary -> Subjects -> Tags. */
 
-/* Sources & Synthesis (4 columns: Title / Date / Summary / Tags) */
+/* Sources & Synthesis (5 columns: Title / Date / Summary / Subjects / Tags) */
 .jb-table th.col-title,
 .jb-table td.col-title {
-  width: 18%;
+  width: 16%;
   font-weight: 500;
 }
 .jb-table th.col-date,
 .jb-table td.col-date {
-  width: 12%;
+  width: 11%;
   white-space: nowrap;
 }
 .jb-table th.col-summary,
 .jb-table td.col-summary {
-  width: 35%;
+  width: 30%;
+}
+.jb-table th.col-subjects,
+.jb-table td.col-subjects {
+  width: 18%;
 }
 .jb-table th.col-tags,
 .jb-table td.col-tags {
-  width: 35%;
+  width: 25%;
 }
 
 /* When Date column is absent (Concepts & Entities), redistribute the
-   freed-up space across the remaining three columns. */
+   freed-up space across the remaining four columns. */
 .jb-table > table:not(:has(.col-date)) th.col-title,
 .jb-table > table:not(:has(.col-date)) td.col-title {
-  width: 22%;
+  width: 18%;
 }
 .jb-table > table:not(:has(.col-date)) th.col-summary,
 .jb-table > table:not(:has(.col-date)) td.col-summary {
-  width: 38%;
+  width: 32%;
+}
+.jb-table > table:not(:has(.col-date)) th.col-subjects,
+.jb-table > table:not(:has(.col-date)) td.col-subjects {
+  width: 22%;
 }
 .jb-table > table:not(:has(.col-date)) th.col-tags,
 .jb-table > table:not(:has(.col-date)) td.col-tags {
-  width: 40%;
+  width: 28%;
 }
 
 .jb-table td.col-title a {
   text-decoration: none;
 }
 
-.jb-table td.col-summary span.muted {
+.jb-table td.col-summary span.muted,
+.jb-table td.col-subjects span.muted {
   color: var(--gray);
   font-style: italic;
 }
@@ -281,6 +354,56 @@ PageList.css = `
 .jb-table .tags > li {
   margin: 0;
   padding: 0;
+}
+
+/* Subjects list — same shape as tags but unlinked plain pills, with a
+   slightly stronger visual weight (subjects are deliberate; tags are
+   descriptive). The styling is restrained on purpose: subjects
+   shouldn't shout. */
+.jb-table .subjects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.jb-table .subjects > li {
+  margin: 0;
+  padding: 0.05rem 0.4rem;
+  background: var(--lightgray);
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: var(--dark);
+  white-space: nowrap;
+}
+
+/* Empty-state notice shown on Collection sub-pages when there are no
+   pages of that type yet. Replaces the table entirely — when there's
+   nothing to show, the table headers are noise. The message
+   distinguishes "no content yet, you should catalog something" (most
+   sub-pages) from "this is normal, synthesis emerges over time"
+   (synthesis specifically). */
+.jb-empty-state {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  border: 1px dashed var(--lightgray);
+  border-radius: 8px;
+  background: rgba(0, 122, 51, 0.03);
+  text-align: center;
+}
+.jb-empty-state h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: var(--secondary);
+}
+.jb-empty-state p {
+  margin: 0;
+  color: var(--gray);
+  line-height: 1.5;
+  max-width: 36rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 `
 
