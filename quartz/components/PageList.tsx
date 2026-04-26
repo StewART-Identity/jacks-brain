@@ -297,7 +297,7 @@ PageList.css = `
 }
 .jb-table th.col-date,
 .jb-table td.col-date {
-  width: 9%;
+  width: 12%;
   white-space: nowrap;
 }
 .jb-table th.col-summary,
@@ -306,11 +306,11 @@ PageList.css = `
 }
 .jb-table th.col-subjects,
 .jb-table td.col-subjects {
-  width: 16%;
+  width: 18%;
 }
 .jb-table th.col-tags,
 .jb-table td.col-tags {
-  width: 25%;
+  width: 20%;
 }
 
 /* When Date column is absent (Concepts & Entities), redistribute the
@@ -325,11 +325,11 @@ PageList.css = `
 }
 .jb-table > table:not(:has(.col-date)) th.col-subjects,
 .jb-table > table:not(:has(.col-date)) td.col-subjects {
-  width: 18%;
+  width: 20%;
 }
 .jb-table > table:not(:has(.col-date)) th.col-tags,
 .jb-table > table:not(:has(.col-date)) td.col-tags {
-  width: 28%;
+  width: 26%;
 }
 
 .jb-table td.col-title a {
