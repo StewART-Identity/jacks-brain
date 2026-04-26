@@ -868,30 +868,119 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
 
   // ─── Freeze handling ────────────────────────────────────────────────
   //
-  // If the user has freeze on, stop the simulation right away — but
-  // only AFTER pinFromLayout has set fx/fy on pinned nodes, otherwise
-  // a re-render would reset them. We also subscribe to freeze state
-  // changes so the toggle button can pause/resume without forcing a
-  // full re-render. The unsubscribe runs as part of cleanup below.
+  // Freeze means "geometry frozen": when on, the simulation is stopped
+  // AND every rendered node is pinned at its current position. This is
+  // stronger than just stopping the simulation — without pinning, any
+  // alpha tick (from a re-render, or from another node being added)
+  // would let nodes drift. Pinning makes freeze actually mean "this
+  // exact arrangement, until I say otherwise."
+  //
+  // Drag-while-frozen uses a "rigid body" model: drag a node, and its
+  // direct neighbors translate together, preserving relative positions.
+  // Their neighbors-of-neighbors don't move. This is what the user
+  // wants from a layout tool (Obsidian/yEd-style direct manipulation),
+  // not the "drag one node, neighbors stay fixed and lines stretch"
+  // behavior of pure physics-pause.
+
+  // Build a 1-hop adjacency map for fast neighbor lookup at drag-start.
+  // We only build it once per render; the graph topology doesn't change
+  // mid-render. Includes both directions (incoming + outgoing edges)
+  // because the visual notion of "neighbor" is undirected.
+  const adjacency = new Map<string, Set<string>>()
+  for (const n of graphData.nodes) {
+    adjacency.set(n.id as string, new Set<string>())
+  }
+  for (const l of graphData.links) {
+    const sId = (l.source as NodeData).id as string
+    const tId = (l.target as NodeData).id as string
+    adjacency.get(sId)?.add(tId)
+    adjacency.get(tId)?.add(sId)
+  }
+
+  // Pin every rendered node at its current position. Used when entering
+  // freeze mode and at the start of a drag (defensive — if anything
+  // perturbed positions before the drag started, we capture the actual
+  // visual state, not stale fx/fy).
+  const pinAllAtCurrent = () => {
+    for (const n of graphData.nodes) {
+      if (Number.isFinite(n.x) && Number.isFinite(n.y)) {
+        n.fx = n.x
+        n.fy = n.y
+      }
+    }
+  }
+
   if (graphFrozen) {
+    // On render of a frozen graph: pin everyone with valid positions,
+    // then stop the simulation. Order matters — stop before pinning
+    // would race with a final tick.
+    pinAllAtCurrent()
     simulation.stop()
+
+    // Detect "new" nodes: those without saved positions AND without
+    // valid x/y coordinates (because the simulation hasn't run for
+    // them and pinFromLayout had nothing to apply). These get a brief
+    // physics burst so they can find a home in the layout. The
+    // already-pinned existing nodes act as fixed anchors during this
+    // burst, so the user's frozen layout doesn't drift — only the new
+    // nodes move.
+    //
+    // We schedule this on the next animation frame so the canvas has
+    // a chance to render the initial state first; the user sees the
+    // new node briefly settle into place rather than appearing to
+    // teleport from origin to its final spot.
+    const unpinnedNew: NodeData[] = []
+    for (const n of graphData.nodes) {
+      if (n.fx == null && n.fy == null) {
+        unpinnedNew.push(n)
+      }
+    }
+    if (unpinnedNew.length > 0) {
+      requestAnimationFrame(() => {
+        // Re-check that we're still frozen — the user might have
+        // toggled freeze off in the interim, in which case the normal
+        // simulation will handle these nodes.
+        if (!graphFrozen) return
+        simulation.alpha(0.5).restart()
+        // Stop after ~1.5 seconds. By then the brief burst has
+        // settled the new nodes into reasonable positions among the
+        // pinned anchors. We then pin them so they stay put on the
+        // next freeze-time render (e.g., page reload).
+        window.setTimeout(() => {
+          if (!graphFrozen) return
+          for (const n of unpinnedNew) {
+            if (Number.isFinite(n.x) && Number.isFinite(n.y)) {
+              n.fx = n.x
+              n.fy = n.y
+            }
+          }
+          simulation.stop()
+        }, 1500)
+      })
+    }
   }
   const unsubscribeFreeze = (() => {
     const handler = (frozen: boolean) => {
       if (frozen) {
+        // User just turned freeze ON. Capture the current geometry by
+        // pinning everyone at their current visual positions, then
+        // stop the simulation. This is what makes freeze semantically
+        // "freeze the picture" rather than "freeze the forces."
+        pinAllAtCurrent()
         simulation.stop()
       } else {
-        // Restart with a small alpha so the simulation gently re-
-        // settles. Higher values cause a noticeable jolt; this is
-        // enough for the simulation to react to changes (e.g., the
-        // user dragged a node to a new spot while frozen and then
-        // unfroze) without throwing the layout around.
+        // User turned freeze OFF. Don't do anything dramatic — the
+        // pins from freeze-time are still set, so visual positions
+        // are stable. Restart with low alpha so the simulation can
+        // resume responding to changes (e.g., new nodes added). The
+        // pinned nodes won't move because fx/fy override forces.
         simulation.alpha(0.3).restart()
       }
     }
     freezeChangeListeners.add(handler)
     return () => freezeChangeListeners.delete(handler)
   })()
+
 
   // precompute style prop strings as pixi doesn't support css variables
   const cssVars = [
@@ -1183,6 +1272,16 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
 
   let currentTransform = zoomIdentity
+  // Rigid-body state captured at drag-start when frozen. The dragged
+  // node's NodeData reference + a map of every neighbor (1-hop) to
+  // its (offsetX, offsetY) relative to the dragged node's start
+  // position. On drag, each neighbor's new position is dragged.x +
+  // offsetX, dragged.y + offsetY — preserving relative geometry.
+  // Cleared on drag-end. Only used when graphFrozen is true.
+  let rigidBody: {
+    primary: NodeData
+    members: Map<NodeData, { offsetX: number; offsetY: number }>
+  } | null = null
   if (enableDrag) {
     select<HTMLCanvasElement, NodeData | undefined>(app.canvas).call(
       drag<HTMLCanvasElement, NodeData | undefined>()
@@ -1190,9 +1289,8 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
         .subject(() => graphData.nodes.find((n) => n.id === hoveredNodeId))
         .on("start", function dragstarted(event) {
           // When frozen, skip alphaTarget/restart — the whole point of
-          // freeze is "no physics propagation." The dragged node still
-          // moves because we set fx/fy directly below; it just doesn't
-          // perturb its neighbors.
+          // freeze is "no physics propagation." The dragged node + its
+          // neighbors move together via the rigid-body code below.
           if (!event.active && !graphFrozen) simulation.alphaTarget(1).restart()
           event.subject.fx = event.subject.x
           event.subject.fy = event.subject.y
@@ -1202,6 +1300,37 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
             fx: event.subject.fx,
             fy: event.subject.fy,
           }
+
+          // If frozen, capture the rigid body: dragged node + 1-hop
+          // neighbors. Each neighbor's offset is recorded relative to
+          // the dragged node's CURRENT position so the drag handler
+          // can translate them as a unit. We pin every member at its
+          // current position now (defensive — the freeze entry should
+          // already have done this, but a re-render could have
+          // unpinned newly-added nodes).
+          if (graphFrozen) {
+            const primary = event.subject as NodeData
+            const members = new Map<NodeData, { offsetX: number; offsetY: number }>()
+            const neighborIds = adjacency.get(primary.id as string) ?? new Set<string>()
+            for (const n of graphData.nodes) {
+              if (n === primary) continue
+              if (!neighborIds.has(n.id as string)) continue
+              if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) continue
+              members.set(n, {
+                offsetX: (n.x as number) - (primary.x as number),
+                offsetY: (n.y as number) - (primary.y as number),
+              })
+              // Pin the neighbor at its current spot. If the simulation
+              // somehow ticks between drag events, the neighbor stays
+              // put rather than drifting.
+              n.fx = n.x
+              n.fy = n.y
+            }
+            rigidBody = { primary, members }
+          } else {
+            rigidBody = null
+          }
+
           dragStartTime = Date.now()
           dragging = true
         })
@@ -1215,8 +1344,26 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           // dragged node at its new spot. Unfrozen: simulation handles
           // this via its own tick.
           if (graphFrozen) {
-            event.subject.x = event.subject.fx
-            event.subject.y = event.subject.fy
+            const fx = event.subject.fx as number
+            const fy = event.subject.fy as number
+            event.subject.x = fx
+            event.subject.y = fy
+
+            // Translate every rigid-body member by the same delta so
+            // the local geometry is preserved. We compute their new
+            // position from the captured offset rather than from a
+            // delta — this is more robust against floating-point
+            // drift across many drag events.
+            if (rigidBody && rigidBody.primary === event.subject) {
+              for (const [neighbor, off] of rigidBody.members) {
+                const nx = fx + off.offsetX
+                const ny = fy + off.offsetY
+                neighbor.fx = nx
+                neighbor.fy = ny
+                neighbor.x = nx
+                neighbor.y = ny
+              }
+            }
           }
         })
         .on("end", function dragended(event) {
@@ -1235,6 +1382,10 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           if (isClick) {
             event.subject.fx = null
             event.subject.fy = null
+            // Click on a frozen graph still navigates. We DON'T unpin
+            // the rigid-body neighbors here because they were pinned
+            // pre-drag (they were already at their resting positions);
+            // a click that moves nothing shouldn't change the layout.
             const node = graphData.nodes.find((n) => n.id === event.subject.id) as NodeData
             const targ = resolveRelative(fullSlug, node.id)
             window.spaNavigate(new URL(targ, window.location.toString()))
@@ -1243,18 +1394,31 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
             // pin survives the next nav. If no layout is active, the
             // drop-to-stay still works for this render (Tier 1
             // behavior) but is lost on rebuild.
+            //
+            // For frozen rigid-body drags, persist EVERY member, not
+            // just the primary — the user moved the whole group, so
+            // every member's new position needs to be saved.
             const active = getActiveLayout()
             if (active && layoutsState && layoutsState.activeLayout) {
-              const id = event.subject.id as string
-              const x = event.subject.fx as number
-              const y = event.subject.fy as number
-              if (Number.isFinite(x) && Number.isFinite(y)) {
-                active.positions[id] = { x, y }
-                active.updatedAt = nowIso()
-                markDirty()
+              const persistOne = (n: NodeData) => {
+                const id = n.id as string
+                const x = n.fx as number
+                const y = n.fy as number
+                if (Number.isFinite(x) && Number.isFinite(y)) {
+                  active.positions[id] = { x, y }
+                }
               }
+              persistOne(event.subject as NodeData)
+              if (graphFrozen && rigidBody && rigidBody.primary === event.subject) {
+                for (const [neighbor] of rigidBody.members) {
+                  persistOne(neighbor)
+                }
+              }
+              active.updatedAt = nowIso()
+              markDirty()
             }
           }
+          rigidBody = null
         }),
     )
   } else {
