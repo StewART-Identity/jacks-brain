@@ -3,7 +3,7 @@ title: "OpenText Identity Manager"
 summary: "IDM platform with three drivers (HSCAD, UNTAD, UNTADSTU) synchronizing eDirectory identity state to Active Directory domains at UNT System."
 type: entity
 created: 2026-04-25
-updated: 2026-04-25
+updated: 2026-04-26
 tags:
   - idm
   - opentext
@@ -13,6 +13,7 @@ tags:
   - unt-system
 sources:
   - "[[collection/sources/2026-04-25-alma-v2-technical-reference]]"
+  - "[[collection/sources/2026-04-26-driver-migration-husk]]"
 confidence: high
 ---
 
@@ -40,4 +41,6 @@ During reactivation, `untAccountADNoSync` is still set (locking the drivers out)
 
 ## Planned Driver Cleanup
 
-A one-time modification will remove `Login Disabled` and `untAccountEnabled` from the driver filter and output transformation policies. After this change, `loginDisabled` is localized to IDTREE (governing eDirectory authentication only) and `untAccountDisabled` becomes the sole signal that flows through drivers to AD.
+A one-time modification removes `Login Disabled` and `untAccountEnabled` from the driver filter and output transformation policies. After this change, `loginDisabled` is localized to IDTREE (governing eDirectory authentication only) and `untAccountDisabled` becomes the sole signal that flows through drivers to AD.
+
+The execution procedure for this change is documented in [[collection/sources/2026-04-26-driver-migration-husk|Driver Migration Husk — CHG0038717]], which walks through the [[collection/concepts/idm-driver-deployment|import-and-replace workflow]] for all three drivers.

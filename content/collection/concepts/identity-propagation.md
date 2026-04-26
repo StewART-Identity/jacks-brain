@@ -3,7 +3,7 @@ title: "Identity Propagation"
 summary: "Async flow of identity state from a source directory to downstream systems via sync drivers; creates timing and consistency challenges."
 type: concept
 created: 2026-04-25
-updated: 2026-04-25
+updated: 2026-04-26
 tags:
   - identity-propagation
   - directory-sync
@@ -37,6 +37,10 @@ Setting the sync lock *after* verification (not before) ensures the lock capture
 ## Implications for Reactivation
 
 The sync lock creates a deliberate asymmetry in the reactivation workflow. Because `untAccountADNoSync` is still set at reactivation start, IDM drivers are blocked from processing any events for the user's domains. ALMA must therefore re-enable AD accounts directly in Phase 1, bypassing the normal propagation path. The sync lock is removed last, after all systems are verified active, which restores normal IDM operation.
+
+## Driver Configuration and Propagation Behavior
+
+The transformations that govern propagation are defined in the IDM driver configuration. Changes to driver policies — such as which attributes are included in the filter or output transformation — are applied via the [[collection/concepts/idm-driver-deployment|IDM driver deployment]] workflow in Designer. See [[collection/sources/2026-04-26-driver-migration-husk|Driver Migration Husk — CHG0038717]] for the concrete procedure used to update the HSCAD, UNTAD, and UNTADSTU drivers.
 
 ## Relationship to Account Lifecycle Management
 

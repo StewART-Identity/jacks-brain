@@ -3,7 +3,7 @@ title: "UNT System IAM"
 summary: "UNT System's IAM team, maintaining eDirectory, AD, Duo, and ALMA for 72,000+ users across UNT, HSC, and STUDENTS institutions."
 type: entity
 created: 2026-04-25
-updated: 2026-04-25
+updated: 2026-04-26
 tags:
   - unt
   - unt-system
@@ -33,6 +33,7 @@ UNT System IAM is the Identity and Access Management team at the University of N
 
 - `iam-script-gab` — runs ALMA and other batch scripts
 - `iam-app-gab` — runs `iam-apis`, the FastAPI service mediating all directory operations (HTTPS port 8443)
+- `dsnr-idpr-app01` — runs [[collection/entities/opentext-identity-manager|OpenText IDM]] Designer; where driver migrations are executed
 
 ## People
 
