@@ -259,20 +259,21 @@ document.addEventListener("nav", function() {
     if (nameEl) nameEl.textContent = active ? active.name : "No layout";
     renameBtn.disabled = !active;
     deleteBtn.disabled = !active;
-    // Save is enabled when there's something to save AND we're on an
-    // active layout. (Dirty-without-active-layout shouldn't normally
-    // happen — markDirty is only called from operations that require
-    // an active layout — but the && active guard makes the UI honest
-    // about what the button can actually do.)
+    // Save button visual state uses the standard disabled-vs-default
+    // pattern. Disabled (gray) when there's nothing to save OR no
+    // active layout; default (normal opacity) when there's something
+    // to save. The disabled attribute alone drives the visual via
+    // .graph-ctrl-btn:disabled — no special "lit up" affordance for
+    // the dirty state, since that read as "engaged toggle" rather
+    // than "ready to click."
     var dirty = api.isDirty();
     saveBtn.disabled = !active || !dirty;
-    if (dirty && active) {
-      saveBtn.classList.add("graph-layouts-dirty");
-      saveBtn.setAttribute("title", "Save layout (you have unsaved changes)");
-    } else {
-      saveBtn.classList.remove("graph-layouts-dirty");
-      saveBtn.setAttribute("title", "Save layout (no unsaved changes)");
-    }
+    saveBtn.setAttribute(
+      "title",
+      dirty && active
+        ? "Save layout (you have unsaved changes)"
+        : "Save layout (no unsaved changes)"
+    );
   }
 
   function closeMenu() {
