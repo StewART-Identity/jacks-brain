@@ -211,6 +211,22 @@ document.addEventListener("nav", () => {
     refreshBtn.addEventListener("click", loadRetention)
   }
 
+  // Remove the refresh-button click handler before the next SPA navigation.
+  // Without this, every visit to /learn/retention stacks another listener on
+  // the same button, so a single click later fires loadRetention() multiple
+  // times. This is the canonical Quartz pattern -- see e.g.
+  // checkbox.inline.ts and acquisition.inline.ts. The per-row listeners
+  // attached inside renderTable() don't need cleanup -- renderTable() wipes
+  // container.innerHTML on every call, which detaches the elements those
+  // listeners were on, so they're garbage-collected naturally.
+  if (typeof window !== "undefined" && window.addCleanup) {
+    window.addCleanup(function() {
+      if (refreshBtn) {
+        refreshBtn.removeEventListener("click", loadRetention)
+      }
+    })
+  }
+
   loadRetention()
 })
 `
