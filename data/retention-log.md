@@ -5,3 +5,4 @@ Audit log of all cataloging operations. Read by /api/retention; rendered by the 
 | Date | Action | Details |
 |------|--------|--------|
 | 2026-04-26 | Cataloged | 2026-04-26-DSTools-ClearAuthMethods-QuickReferenceGuide.docx |
+| 2026-04-26 | Cataloged | 2026-04-26-IAM_Brief_Deprovisioning_Gap_Analysis.pdf |
