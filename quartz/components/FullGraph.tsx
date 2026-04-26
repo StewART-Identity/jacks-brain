@@ -33,6 +33,59 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
 
   return (
     <div class={displayClass} id="full-graph">
+      <div class="graph-layouts" id="graph-layouts-toolbar">
+        {/*
+          Top-left mirror of the zoom/fullscreen toolbar on the right.
+          Tier 2 saved-layouts UI: dropdown of saved layouts (active
+          name visible, click to open), plus icon buttons for new/rename/
+          delete. PageTitle.tsx wires up the click handlers in its nav
+          callback so the bindings survive SPA navigation correctly.
+        */}
+        <button
+          type="button"
+          id="graph-layouts-current"
+          class="graph-ctrl-btn graph-layouts-current"
+          title="Switch layout"
+        >
+          <span class="graph-layouts-current-name">No layout</span>
+          <span class="graph-layouts-caret" aria-hidden="true">▾</span>
+        </button>
+        <button
+          type="button"
+          id="graph-layouts-new"
+          class="graph-ctrl-btn graph-layouts-icon-btn"
+          title="New layout"
+          aria-label="New layout"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          id="graph-layouts-rename"
+          class="graph-ctrl-btn graph-layouts-icon-btn"
+          title="Rename layout"
+          aria-label="Rename layout"
+          disabled
+        >
+          ✎
+        </button>
+        <button
+          type="button"
+          id="graph-layouts-delete"
+          class="graph-ctrl-btn graph-layouts-icon-btn graph-layouts-danger"
+          title="Delete layout"
+          aria-label="Delete layout"
+          disabled
+        >
+          ✕
+        </button>
+        <div
+          id="graph-layouts-menu"
+          class="graph-layouts-menu"
+          role="menu"
+          hidden
+        ></div>
+      </div>
       <div class="graph-controls">
         <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
         <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
@@ -118,6 +171,107 @@ FullGraph.css =
 }
 .graph-ctrl-btn:hover {
   opacity: 1;
+}
+.graph-ctrl-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ─── Saved layouts toolbar (top-left mirror) ──────────────────────── */
+.graph-layouts {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 5;
+  display: flex;
+  flex-direction: row;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+.graph-layouts-current {
+  /* Override .graph-ctrl-btn's fixed-square sizing so the active layout
+     name has room. Keeps the same height for visual alignment with the
+     icon buttons next to it. */
+  width: auto;
+  min-width: 9rem;
+  max-width: 18rem;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  text-align: left;
+}
+.graph-layouts-current .graph-layouts-current-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.graph-layouts-current .graph-layouts-caret {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+.graph-layouts-icon-btn {
+  font-size: 1rem;
+  /* Icon buttons inherit the .graph-ctrl-btn 2.8rem square — we keep
+     that for visual symmetry with the right-side toolbar. */
+}
+.graph-layouts-danger:hover:not(:disabled) {
+  color: #b00;
+}
+.graph-layouts-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  min-width: 12rem;
+  max-width: 22rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 0.3rem;
+  font-size: 0.9rem;
+}
+.graph-layouts-menu[hidden] {
+  display: none;
+}
+.graph-layouts-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: none;
+  background: transparent;
+  color: var(--dark);
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.graph-layouts-menu-item:hover {
+  background: var(--lightgray);
+}
+.graph-layouts-menu-item.active {
+  font-weight: 600;
+  color: var(--secondary);
+}
+.graph-layouts-menu-empty {
+  padding: 0.5rem 0.6rem;
+  color: var(--gray);
+  font-style: italic;
+}
+
+#full-graph:fullscreen .graph-layouts,
+#full-graph:-webkit-full-screen .graph-layouts {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
 }
 `
 
