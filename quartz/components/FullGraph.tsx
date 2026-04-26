@@ -9,15 +9,26 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
     zoom: true,
     depth: -1,
     scale: 0.5,
-    repelForce: 1.2,
+    // Repulsion strength between nodes. Reduced from 1.2 to 0.8 to take
+    // some of the agitation out of the simulation — at 1.2 nodes were
+    // shoving each other strongly enough that any disturbance propagated
+    // visibly across the whole graph.
+    repelForce: 0.8,
     centerForce: 0.3,
     linkDistance: 60,
-    fontSize: 0.4,
+    // Label text size multiplier. Smaller value means labels stay
+    // readable without dominating the viewport when zoomed in.
+    fontSize: 0.3,
     opacityScale: 1,
     showTags: true,
     removeTags: [],
     focusOnHover: true,
     enableRadial: true,
+    // Cool the simulation down to rest. D3's default 0.0228 keeps the
+    // layout in perpetual motion on graphs of any complexity. 0.05 lets
+    // it settle in a few seconds, eliminating the "moving in water"
+    // feel where every disturbance ripples forever.
+    alphaDecay: 0.05,
   }
 
   return (
