@@ -39,6 +39,8 @@ summary: "One-sentence description (≤140 chars) shown in Collection table list
 type: source | entity | concept | synthesis
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
+subjects:
+  - subject-from-controlled-vocabulary
 tags:
   - relevant-tag
 sources:
@@ -57,6 +59,11 @@ informative on its own — not just the title rephrased. Examples:
 - *OAuth*: "Open standard for delegated access — letting an app access a user's data without their password."
 - *Active Directory*: "Microsoft's directory and credential store; the canonical backend behind enterprise SAML and OAuth flows."
 - *SAML vs. OAuth*: "Comparison of SAML (authentication) and OAuth (authorization) — what each solves, where they overlap, common confusion."
+
+The `subjects` and `tags` fields are both required for every page and
+play different roles. See "Subjects vs. tags" below for the contract;
+in brief, `subjects` is a controlled vocabulary you should bias toward
+reusing, and `tags` is a freeform folksonomy you can populate liberally.
 
 ### Source-page-specific frontmatter
 
@@ -107,6 +114,150 @@ Use `[[relative-path]]` format: `[[collection/concepts/gradient-descent]]`,
 When referencing a page, always use a wikilink. Cross-reference generously —
 links are what make the wiki valuable. Every new page should link to at least
 two existing pages, and you should update existing pages to link back.
+
+## Subjects vs. tags
+
+Every page carries two classification fields with different jobs.
+Understanding the distinction is essential — fill them in poorly and
+the wiki's organizational coherence degrades over time.
+
+### `subjects:` — controlled vocabulary subject headings (ontology)
+
+A *deliberate* classification of what the page is fundamentally about.
+Subjects answer "where does this page belong in the wiki's overall
+organization?" — they place each page within an emerging ontology of
+the wiki's domain.
+
+**Rules for choosing subjects:**
+
+1. **Read existing subjects first.** Before proposing a subject for a
+   new page, query the wiki for the current subject vocabulary.
+   `list_wiki_pages` then `read_wiki_page` for a sampling of pages
+   across types is a reasonable approach. Inspect the `subjects:` field
+   on each.
+
+2. **Bias hard toward reuse.** If an existing subject covers the
+   page's conceptual territory, use it — even if a more descriptive
+   new subject could be coined. The strength of a controlled vocabulary
+   comes from consistency: a subject only earns its keep by being
+   reused across many pages.
+
+3. **One concept per subject.** Subjects must be atomic. Use
+   `identity-management` as a subject and `migration` as a tag — never
+   `identity-management-migrations` as a subject. Compound subjects
+   defeat the controlled vocabulary by inflating it with one-off
+   entries.
+
+4. **Subjects are short — typically one to three per page.** A page
+   with five subjects probably has the wrong subjects (too narrow);
+   reach for tags instead.
+
+5. **Lowercase, kebab-case.** `identity-management`, not
+   `Identity Management` or `identity_management` or `identityManagement`.
+
+6. **New subjects are introduced only when no existing subject fits.**
+   When introducing a new subject, briefly explain in the page body
+   why no existing subject covered the territory. This makes ontology
+   evolution legible to future cataloging — and to the user, who may
+   want to revise.
+
+7. **When uncertain between a broader and a narrower subject, prefer
+   the broader.** A page about provisioning specifically should still
+   take `identity-management` as its subject if that's the closest
+   existing umbrella, with `provisioning` as a tag to capture the
+   specificity. Subjects describe categorical position; tags describe
+   surface detail.
+
+### `tags:` — descriptive keywords (folksonomy)
+
+A free-form list of words and short phrases that describe the page's
+content surface. Tags answer "what is this page about, in detail?" —
+they catch every way a topic might be referenced, regardless of
+conceptual hierarchy.
+
+**Rules for choosing tags:**
+
+1. **Be liberal.** Five to ten tags per page is normal; more is fine
+   if the content warrants. Tags don't carry ontological weight, so
+   over-tagging is far less harmful than over-subjecting.
+
+2. **Tags can be specific or general, technical or thematic.** A page
+   about Active Directory migration can tag `active-directory`,
+   `migration`, `ldap`, `kerberos`, `unt-system`, and any other
+   descriptive term that captures something in the content.
+
+3. **Lowercase, kebab-case.** Same convention as subjects.
+
+4. **Reuse where natural, but don't strain.** If you've used `migration`
+   on three other pages and this page is about something migration-
+   adjacent, use `migration` here too. But tags don't require the
+   ontology-discipline of subjects — coining a new tag is cheap.
+
+### Why both?
+
+Library and information science research shows that
+controlled-vocabulary subject headings and free-text keywords
+*together* produce better retrieval than either alone. Subjects give
+*precision* (find me everything about this topic, regardless of
+phrasing); tags give *recall* (find me everywhere this word appears,
+regardless of categorization). The two-tier system lets you query the
+wiki both ways.
+
+### Examples
+
+A source page documenting a 2026 Entra ID migration runbook:
+
+```yaml
+subjects:
+  - identity-management
+tags:
+  - entra-id
+  - migration
+  - adfs
+  - defederation
+  - cisco-duo
+  - authentication-methods
+  - unt-system
+```
+
+The single subject `identity-management` places this page within the
+wiki's IAM bucket. The seven tags capture the descriptive surface of
+what the page is about — every term someone might search for or
+associate with this content.
+
+A concept page about authentication methods policy:
+
+```yaml
+subjects:
+  - identity-management
+tags:
+  - authentication-methods
+  - entra-id
+  - policy
+  - mfa
+```
+
+Same subject — `identity-management` — because conceptually this is
+also about IAM. Different and fewer tags because a concept page has
+narrower descriptive surface than a source page.
+
+A synthesis page comparing two migrations:
+
+```yaml
+subjects:
+  - identity-management
+  - operations
+tags:
+  - migration
+  - patterns
+  - orphaned-state
+  - entra-id
+  - idm
+```
+
+Two subjects because the synthesis genuinely spans two conceptual
+domains: IAM-as-a-domain and operational-patterns-as-a-domain. Tags
+capture the descriptive specifics of the synthesis.
 
 ## Workflows
 
