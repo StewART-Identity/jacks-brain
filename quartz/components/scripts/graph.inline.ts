@@ -1013,11 +1013,16 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     }
   }
 
+  // Minimum radius bumped from 1 to 2. A 1-pixel orphan node sitting
+  // near a 1-pixel-wide edge is visually indistinguishable from "the
+  // edge crosses there" — it merges into the line. 2 pixels gives the
+  // node a clear identity even when isolated. The sqrt growth means
+  // hub nodes still scale up appropriately; only the floor changed.
   function nodeRadius(d: NodeData) {
     const numLinks = graphData.links.filter(
       (l) => l.source.id === d.id || l.target.id === d.id,
     ).length
-    return 1 + Math.sqrt(numLinks) * 0.5
+    return 2 + Math.sqrt(numLinks) * 0.5
   }
 
   let hoveredNodeId: string | null = null
@@ -1214,6 +1219,14 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
 
   const stage = app.stage
   stage.interactive = false
+  // Pixi only honors zIndex on a parent's children when sortableChildren
+  // is enabled. Without this, draw order is insertion order, which here
+  // is nodes -> labels -> links — meaning links would draw ON TOP of
+  // nodes, making orphan nodes appear to merge into edges they were
+  // visually near. Enabling sort makes the zIndex values below take
+  // effect: links (1) draw first, nodes (2) draw above them, labels
+  // (3) draw above nodes.
+  stage.sortableChildren = true
 
   const labelsContainer = new Container<Text>({ zIndex: 3, isRenderGroup: true })
   const nodesContainer = new Container<Graphics>({ zIndex: 2, isRenderGroup: true })
@@ -1335,29 +1348,41 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           // If frozen, capture the rigid body: dragged node + 1-hop
           // neighbors. Each neighbor's offset is recorded relative to
           // the dragged node's CURRENT position so the drag handler
-          // can translate them as a unit. We pin every member at its
-          // current position now (defensive — the freeze entry should
-          // already have done this, but a re-render could have
-          // unpinned newly-added nodes).
+          // can translate them as a unit.
+          //
+          // EXEMPTION: Single-neighbor nodes drag alone. The whole
+          // point of rigid-body translation is to preserve cluster
+          // SHAPE — but a 2-node "cluster" has no shape worth
+          // preserving, only a relative position. When the user drags
+          // a leaf node off a hub (e.g. a tag with one page, or a
+          // peripheral entity attached to UNT System), they almost
+          // always want to move the leaf without dragging the hub
+          // along. The edge stretches; that's the right outcome.
           if (graphFrozen) {
             const primary = event.subject as NodeData
-            const members = new Map<NodeData, { offsetX: number; offsetY: number }>()
             const neighborIds = adjacency.get(primary.id as string) ?? new Set<string>()
-            for (const n of graphData.nodes) {
-              if (n === primary) continue
-              if (!neighborIds.has(n.id as string)) continue
-              if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) continue
-              members.set(n, {
-                offsetX: (n.x as number) - (primary.x as number),
-                offsetY: (n.y as number) - (primary.y as number),
-              })
-              // Pin the neighbor at its current spot. If the simulation
-              // somehow ticks between drag events, the neighbor stays
-              // put rather than drifting.
-              n.fx = n.x
-              n.fy = n.y
+            if (neighborIds.size === 1) {
+              // Single-neighbor exemption — leave rigidBody null so
+              // the drag handler treats this as a solo move.
+              rigidBody = null
+            } else {
+              const members = new Map<NodeData, { offsetX: number; offsetY: number }>()
+              for (const n of graphData.nodes) {
+                if (n === primary) continue
+                if (!neighborIds.has(n.id as string)) continue
+                if (!Number.isFinite(n.x) || !Number.isFinite(n.y)) continue
+                members.set(n, {
+                  offsetX: (n.x as number) - (primary.x as number),
+                  offsetY: (n.y as number) - (primary.y as number),
+                })
+                // Pin the neighbor at its current spot. If the
+                // simulation somehow ticks between drag events, the
+                // neighbor stays put rather than drifting.
+                n.fx = n.x
+                n.fy = n.y
+              }
+              rigidBody = { primary, members }
             }
-            rigidBody = { primary, members }
           } else {
             rigidBody = null
           }
