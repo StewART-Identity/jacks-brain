@@ -509,9 +509,22 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           stage.scale.set(transform.k, transform.k)
           stage.position.set(transform.x, transform.y)
 
-          // zoom adjusts opacity of labels too
-          const scale = transform.k * opacityScale
-          let scaleOpacity = Math.max((scale - 1) / 3.75, 0)
+          // Inverse-scale labels so they stay roughly constant size on
+          // screen as the user zooms. Without this, labels grow with the
+          // stage and become huge when zoomed in, which destroys the
+          // sense of locality when exploring a clump. The 'scale' here
+          // is the outer config value (line ~80) — the resting target
+          // size that line ~390 applied at label creation. This keeps
+          // labels at that size as the user zooms.
+          for (const label of labelsContainer.children) {
+            label.scale.set(scale / transform.k)
+          }
+
+          // zoom adjusts opacity of labels too. Distinct local name
+          // (not 'scale') so it doesn't shadow the outer scale used
+          // for label sizing above.
+          const opacityScaledZoom = transform.k * opacityScale
+          let scaleOpacity = Math.max((opacityScaledZoom - 1) / 3.75, 0)
           const activeNodes = nodeRenderData.filter((n) => n.active).flatMap((n) => n.label)
 
           for (const label of labelsContainer.children) {
