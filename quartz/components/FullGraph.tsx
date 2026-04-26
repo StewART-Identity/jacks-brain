@@ -264,24 +264,6 @@ FullGraph.css =
 .graph-layouts-danger:hover:not(:disabled) {
   color: #b00;
 }
-
-/* Save button dirty-state indicator. When the save button has class
-   "graph-layouts-dirty", it means there are unsaved changes — light
-   it up the same way [aria-pressed="true"] lights up the freeze
-   button when active, so the visual language across the toolbar
-   stays consistent. PageTitle's wiring adds/removes the class as
-   the layouts API's onDirtyChange fires.
-
-   The :not(:disabled) guard is defensive: we never want a disabled
-   button to look "active" — if there's somehow a dirty state with
-   no active layout, the disabled gray takes precedence over the
-   dirty highlight.
-*/
-.graph-layouts-icon-btn.graph-layouts-dirty:not(:disabled) {
-  opacity: 1;
-  border-color: var(--secondary);
-  color: var(--secondary);
-}
 .graph-layouts-menu {
   position: absolute;
   top: calc(100% + 0.4rem);
