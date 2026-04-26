@@ -1092,29 +1092,21 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     tweens.get("label")?.stop()
     const tweenGroup = new TweenGroup()
 
-    // Both label scales are divided by currentTransform.k because the
-    // stage scales by k (zoom handler does stage.scale.set(k, k)) and
-    // we want labels to stay constant size on screen as the user
-    // zooms. The zoom handler maintains this invariant for resting
-    // labels (label.scale = scale / k → net display = scale = 0.5);
-    // we have to use the same denominator here so hover targets stay
-    // consistent at any zoom level.
-    //
-    // The hover multiplier (5) makes hovered labels ~5x larger than
-    // resting labels — needed for readability at the small base font
-    // size, since resting labels are typically faded out by the
-    // opacity logic and only become useful at hover or very deep
-    // zoom. 5.5 for the actively-hovered node (slightly larger than
-    // its highlighted neighbors), 5.0 for neighbors.
+    // Resting scale = scale / currentTransform.k matches the zoom
+    // handler's calculation. The stage is scaled by transform.k, and
+    // we want labels to stay at a constant on-screen size regardless
+    // of zoom — so we divide our local scale by k. Without this,
+    // labels rendered while zoomed-in get multiplied by both their
+    // local scale AND the stage scale, producing the "huge labels
+    // when zoomed in" bug.
     const restingScale = scale / currentTransform.k
-    const neighborScale = restingScale * 5
-    const hoveredScale = restingScale * 5.5
+    // Hovered node is slightly larger to mark the focus point.
+    const hoveredScale = restingScale * 1.1
     for (const n of nodeRenderData) {
       const nodeId = n.simulationData.id
 
       if (hoveredNodeId === nodeId) {
-        // The hovered node itself: full alpha, slightly larger than
-        // its neighbors so the focus point is visually distinct.
+        // The hovered node itself: full alpha, slightly larger.
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
@@ -1125,14 +1117,14 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           ),
         )
       } else if (hoveredNodeId !== null && hoveredNeighbours.has(nodeId)) {
-        // Neighbors of the hovered node: full alpha at neighbor size
-        // (5x resting). Surfaces "what's connected to this thing"
-        // without requiring the user to hover each neighbor in turn.
+        // Neighbors of the hovered node: full alpha at resting size.
+        // Surfaces "what's connected to this thing" without requiring
+        // the user to hover each neighbor in turn.
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
               alpha: 1,
-              scale: { x: neighborScale, y: neighborScale },
+              scale: { x: restingScale, y: restingScale },
             },
             100,
           ),
