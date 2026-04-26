@@ -40,9 +40,16 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
         {/*
           Top-left mirror of the zoom/fullscreen toolbar on the right.
           Tier 2 saved-layouts UI: dropdown of saved layouts (active
-          name visible, click to open), plus icon buttons for new/rename/
-          delete. PageTitle.tsx wires up the click handlers in its nav
-          callback so the bindings survive SPA navigation correctly.
+          name visible, click to open), plus icon buttons for new/save/
+          rename/delete. PageTitle.tsx wires up the click handlers in
+          its nav callback so the bindings survive SPA navigation
+          correctly.
+
+          Button order is deliberate: the dropdown anchors the toolbar,
+          then "+" creates a new layout, save and rename act on the
+          active layout, delete removes it. Icons stay monochrome and
+          monoline; we don't want a floppy emoji shouting against the
+          rest of the muted icon language.
         */}
         <button
           type="button"
@@ -61,6 +68,16 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
           aria-label="New layout"
         >
           +
+        </button>
+        <button
+          type="button"
+          id="graph-layouts-save"
+          class="graph-ctrl-btn graph-layouts-icon-btn"
+          title="Save layout (no unsaved changes)"
+          aria-label="Save layout"
+          disabled
+        >
+          ⤓
         </button>
         <button
           type="button"
@@ -246,6 +263,24 @@ FullGraph.css =
 }
 .graph-layouts-danger:hover:not(:disabled) {
   color: #b00;
+}
+
+/* Save button dirty-state indicator. When the save button has class
+   "graph-layouts-dirty", it means there are unsaved changes — light
+   it up the same way [aria-pressed="true"] lights up the freeze
+   button when active, so the visual language across the toolbar
+   stays consistent. PageTitle's wiring adds/removes the class as
+   the layouts API's onDirtyChange fires.
+
+   The :not(:disabled) guard is defensive: we never want a disabled
+   button to look "active" — if there's somehow a dirty state with
+   no active layout, the disabled gray takes precedence over the
+   dirty highlight.
+*/
+.graph-layouts-icon-btn.graph-layouts-dirty:not(:disabled) {
+  opacity: 1;
+  border-color: var(--secondary);
+  color: var(--secondary);
 }
 .graph-layouts-menu {
   position: absolute;
