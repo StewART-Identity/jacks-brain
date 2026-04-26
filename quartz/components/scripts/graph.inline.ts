@@ -96,6 +96,72 @@ let layoutsLoadPromise: Promise<LayoutsState> | null = null
 let layoutsDirty = false
 let flushTimer: number | null = null
 
+// ─── Freeze layout (physics pause) ───────────────────────────────────────
+//
+// When frozen, the force simulation is stopped and drags don't restart
+// it. This gives the user direct manipulation: drag a node, only that
+// node moves, no rippling. Persists across reloads via localStorage so
+// the user's preference survives.
+
+const FREEZE_LOCAL_KEY = "graph-frozen"
+let graphFrozen = (function () {
+  try {
+    return localStorage.getItem(FREEZE_LOCAL_KEY) === "true"
+  } catch {
+    return false
+  }
+})()
+const freezeChangeListeners = new Set<(frozen: boolean) => void>()
+function notifyFreezeChange() {
+  for (const fn of freezeChangeListeners) {
+    try {
+      fn(graphFrozen)
+    } catch {
+      // never break callers
+    }
+  }
+}
+
+// ─── Synthesis filter (which clusters are visible) ───────────────────────
+//
+// State is the SET of unchecked synthesis slugs. We track unchecked
+// rather than checked because the default (all visible) is "no
+// unchecked," which matches an empty set — so first-render with no
+// stored preference is correct without a special case.
+//
+// "Free" nodes — pages not in any synthesis cluster — are always
+// visible regardless of filter state. This is the user's choice;
+// see handoff for rationale.
+
+const FILTER_LOCAL_KEY = "graph-filter-unchecked"
+let unchecked: Set<string> = (function () {
+  try {
+    const raw = localStorage.getItem(FILTER_LOCAL_KEY)
+    if (!raw) return new Set<string>()
+    const arr = JSON.parse(raw)
+    return new Set<string>(Array.isArray(arr) ? arr : [])
+  } catch {
+    return new Set<string>()
+  }
+})()
+const filterChangeListeners = new Set<() => void>()
+function notifyFilterChange() {
+  for (const fn of filterChangeListeners) {
+    try {
+      fn()
+    } catch {
+      // never break callers
+    }
+  }
+}
+function persistFilter() {
+  try {
+    localStorage.setItem(FILTER_LOCAL_KEY, JSON.stringify([...unchecked]))
+  } catch {
+    // localStorage unavailable — preference doesn't persist, fine
+  }
+}
+
 // Listeners that the UI registers (in PageTitle's nav handler) to be
 // notified when layout state changes. Module-scope so multiple controls
 // can subscribe.
@@ -332,13 +398,47 @@ interface GraphLayoutsApi {
   onChange: (fn: () => void) => () => void
 }
 
+interface GraphFreezeApi {
+  isFrozen: () => boolean
+  setFrozen: (frozen: boolean) => void
+  toggle: () => boolean
+  onChange: (fn: (frozen: boolean) => void) => () => void
+}
+
+// Synthesis cluster info computed per-render. The UI uses this to
+// build the filter checkbox list.
+interface SynthesisInfo {
+  slug: string  // e.g. "collection/synthesis/orphaned-state-in-iam-migrations"
+  title: string
+  nodeCount: number  // how many nodes are in this cluster (incl. the synthesis itself)
+}
+
+interface GraphFilterApi {
+  isUnchecked: (slug: string) => boolean
+  setChecked: (slug: string, checked: boolean) => void
+  toggle: (slug: string) => void
+  checkAll: () => void
+  uncheckAll: (allSyntheses: string[]) => void
+  // Lists synthesis pages currently in the rendered graph + their
+  // member counts. Returns whatever the most recent renderGraph
+  // computed; empty until a render has happened.
+  getSyntheses: () => SynthesisInfo[]
+  onChange: (fn: () => void) => () => void
+}
+
 declare global {
   interface Window {
     graphLayouts: GraphLayoutsApi
+    graphFreeze: GraphFreezeApi
+    graphFilter: GraphFilterApi
     // Snapshot of currently rendered node positions, populated by the
     // most recent renderGraph call. The "Create layout" button reads
     // this to capture all settled positions.
     __graphPositionSnapshot?: () => Record<string, LayoutPosition>
+    // Tells the current renderGraph to read its container's new size
+    // and resize the pixi renderer accordingly. Used by the fullscreen
+    // change handler in PageTitle.tsx.
+    __graphResize?: () => void
   }
 }
 
@@ -452,6 +552,92 @@ function ensureLayoutsApi() {
 
 ensureLayoutsApi()
 
+function ensureFreezeApi() {
+  if (window.graphFreeze) return
+  window.graphFreeze = {
+    isFrozen() {
+      return graphFrozen
+    },
+    setFrozen(frozen: boolean) {
+      if (frozen === graphFrozen) return
+      graphFrozen = frozen
+      try {
+        localStorage.setItem(FREEZE_LOCAL_KEY, frozen ? "true" : "false")
+      } catch {
+        // localStorage unavailable — preference doesn't persist, fine
+      }
+      notifyFreezeChange()
+    },
+    toggle() {
+      this.setFrozen(!graphFrozen)
+      return graphFrozen
+    },
+    onChange(fn) {
+      freezeChangeListeners.add(fn)
+      return () => freezeChangeListeners.delete(fn)
+    },
+  }
+}
+
+ensureFreezeApi()
+
+// Synthesis info from the most recent renderGraph. The UI reads this
+// to build checkboxes. It's reset every render — no stale state if
+// the wiki adds or removes synthesis pages between renders.
+let currentSyntheses: SynthesisInfo[] = []
+
+function ensureFilterApi() {
+  if (window.graphFilter) return
+  window.graphFilter = {
+    isUnchecked(slug: string) {
+      return unchecked.has(slug)
+    },
+    setChecked(slug: string, checked: boolean) {
+      const wasUnchecked = unchecked.has(slug)
+      if (checked && wasUnchecked) {
+        unchecked.delete(slug)
+        persistFilter()
+        notifyFilterChange()
+      } else if (!checked && !wasUnchecked) {
+        unchecked.add(slug)
+        persistFilter()
+        notifyFilterChange()
+      }
+    },
+    toggle(slug: string) {
+      this.setChecked(slug, unchecked.has(slug))
+    },
+    checkAll() {
+      if (unchecked.size === 0) return
+      unchecked.clear()
+      persistFilter()
+      notifyFilterChange()
+    },
+    uncheckAll(allSyntheses: string[]) {
+      let changed = false
+      for (const s of allSyntheses) {
+        if (!unchecked.has(s)) {
+          unchecked.add(s)
+          changed = true
+        }
+      }
+      if (changed) {
+        persistFilter()
+        notifyFilterChange()
+      }
+    },
+    getSyntheses() {
+      return currentSyntheses.slice()
+    },
+    onChange(fn) {
+      filterChangeListeners.add(fn)
+      return () => filterChangeListeners.delete(fn)
+    },
+  }
+}
+
+ensureFilterApi()
+
 type TweenNode = {
   update: (time: number) => void
   stop: () => void
@@ -551,8 +737,86 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       })),
   }
 
-  const width = graph.offsetWidth
-  const height = Math.max(graph.offsetHeight, 250)
+  // ─── Compute synthesis clusters ────────────────────────────────────
+  //
+  // A synthesis cluster is the synthesis page itself plus everything
+  // reachable from it via outgoing wikilinks (transitive closure). We
+  // BFS from each synthesis page across the FULL content index — not
+  // just the current graph's neighbourhood — so memberships reflect
+  // wiki structure rather than what happens to be visible.
+  //
+  // Then we map cluster membership onto graphData.nodes so the
+  // animate loop can hide nodes whose syntheses are unchecked.
+  // "Free" nodes (in zero clusters) are always visible per the user's
+  // chosen semantics (see handoff).
+  const synthesisSlugs: SimpleSlug[] = []
+  for (const k of data.keys()) {
+    if (k.startsWith("collection/synthesis/") && !k.endsWith("/index")) {
+      synthesisSlugs.push(k)
+    }
+  }
+  // Per-cluster membership: clusterMembers[synthesisSlug] = Set of node slugs
+  const clusterMembers = new Map<string, Set<string>>()
+  for (const sSlug of synthesisSlugs) {
+    const visited = new Set<string>()
+    const queue: SimpleSlug[] = [sSlug]
+    while (queue.length > 0) {
+      const cur = queue.shift()!
+      if (visited.has(cur)) continue
+      visited.add(cur)
+      const details = data.get(cur)
+      if (!details) continue
+      for (const link of details.links ?? []) {
+        if (!visited.has(link)) queue.push(link)
+      }
+    }
+    clusterMembers.set(sSlug, visited)
+  }
+  // Per-node membership: nodeClusters[nodeId] = Set of synthesis slugs
+  // it belongs to. Empty set means "free" — always visible.
+  const nodeClusters = new Map<string, Set<string>>()
+  for (const n of graphData.nodes) {
+    const memberships = new Set<string>()
+    for (const [sSlug, members] of clusterMembers) {
+      if (members.has(n.id)) memberships.add(sSlug)
+    }
+    nodeClusters.set(n.id, memberships)
+  }
+  // Publish info for the UI. Counts include only nodes currently in
+  // graphData.nodes (the rendered set), not the full reachable set —
+  // because that's what's actually on screen.
+  currentSyntheses = synthesisSlugs.map((sSlug) => {
+    let nodeCount = 0
+    for (const n of graphData.nodes) {
+      if (nodeClusters.get(n.id)?.has(sSlug)) nodeCount++
+    }
+    return {
+      slug: sSlug,
+      title: data.get(sSlug)?.title ?? sSlug,
+      nodeCount,
+    }
+  }).sort((a, b) => a.title.localeCompare(b.title))
+  notifyFilterChange()
+
+  // Visibility predicate consulted by the animate loop. Free nodes
+  // (zero memberships) are always visible. Nodes with memberships are
+  // visible if at least one of their synthesis clusters is checked
+  // (i.e., not in the unchecked set).
+  const isNodeVisible = (nodeId: string): boolean => {
+    const memberships = nodeClusters.get(nodeId)
+    if (!memberships || memberships.size === 0) return true
+    for (const sSlug of memberships) {
+      if (!unchecked.has(sSlug)) return true
+    }
+    return false
+  }
+
+  // width/height are mutable so the canvas can be resized in response
+  // to fullscreen toggles or window resizes. The animate loop uses these
+  // to compute (x + width/2, y + height/2) for screen positioning, so
+  // updating them shifts the drawing to stay centered in the viewport.
+  let width = graph.offsetWidth
+  let height = Math.max(graph.offsetHeight, 250)
 
   // we virtualize the simulation and use pixi to actually render it
   const simulation: Simulation<NodeData, LinkData> = forceSimulation<NodeData>(graphData.nodes)
@@ -601,6 +865,33 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     }
   }
   pinFromLayout()
+
+  // ─── Freeze handling ────────────────────────────────────────────────
+  //
+  // If the user has freeze on, stop the simulation right away — but
+  // only AFTER pinFromLayout has set fx/fy on pinned nodes, otherwise
+  // a re-render would reset them. We also subscribe to freeze state
+  // changes so the toggle button can pause/resume without forcing a
+  // full re-render. The unsubscribe runs as part of cleanup below.
+  if (graphFrozen) {
+    simulation.stop()
+  }
+  const unsubscribeFreeze = (() => {
+    const handler = (frozen: boolean) => {
+      if (frozen) {
+        simulation.stop()
+      } else {
+        // Restart with a small alpha so the simulation gently re-
+        // settles. Higher values cause a noticeable jolt; this is
+        // enough for the simulation to react to changes (e.g., the
+        // user dragged a node to a new spot while frozen and then
+        // unfroze) without throwing the layout around.
+        simulation.alpha(0.3).restart()
+      }
+    }
+    freezeChangeListeners.add(handler)
+    return () => freezeChangeListeners.delete(handler)
+  })()
 
   // precompute style prop strings as pixi doesn't support css variables
   const cssVars = [
@@ -713,11 +1004,25 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       const nodeId = n.simulationData.id
 
       if (hoveredNodeId === nodeId) {
+        // The hovered node itself: full alpha and slightly larger.
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
               alpha: 1,
               scale: { x: activeScale, y: activeScale },
+            },
+            100,
+          ),
+        )
+      } else if (hoveredNodeId !== null && hoveredNeighbours.has(nodeId)) {
+        // Neighbors of the hovered node: full alpha at default size.
+        // This is what surfaces "what's connected to this thing"
+        // without requiring the user to hover each neighbor in turn.
+        tweenGroup.add(
+          new Tweened<Text>(n.label).to(
+            {
+              alpha: 1,
+              scale: { x: defaultScale, y: defaultScale },
             },
             100,
           ),
@@ -884,7 +1189,11 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
         .container(() => app.canvas)
         .subject(() => graphData.nodes.find((n) => n.id === hoveredNodeId))
         .on("start", function dragstarted(event) {
-          if (!event.active) simulation.alphaTarget(1).restart()
+          // When frozen, skip alphaTarget/restart — the whole point of
+          // freeze is "no physics propagation." The dragged node still
+          // moves because we set fx/fy directly below; it just doesn't
+          // perturb its neighbors.
+          if (!event.active && !graphFrozen) simulation.alphaTarget(1).restart()
           event.subject.fx = event.subject.x
           event.subject.fy = event.subject.y
           event.subject.__initialDragPos = {
@@ -900,9 +1209,18 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           const initPos = event.subject.__initialDragPos
           event.subject.fx = initPos.x + (event.x - initPos.x) / currentTransform.k
           event.subject.fy = initPos.y + (event.y - initPos.y) / currentTransform.k
+          // When frozen, the simulation isn't ticking, so the animate
+          // loop won't update visual positions on its own. We need to
+          // copy fx/fy into x/y so the next animation frame draws the
+          // dragged node at its new spot. Unfrozen: simulation handles
+          // this via its own tick.
+          if (graphFrozen) {
+            event.subject.x = event.subject.fx
+            event.subject.y = event.subject.fy
+          }
         })
         .on("end", function dragended(event) {
-          if (!event.active) simulation.alphaTarget(0)
+          if (!event.active && !graphFrozen) simulation.alphaTarget(0)
           dragging = false
 
           // If the time between mousedown and mouseup is short, treat
@@ -1003,6 +1321,10 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     for (const l of linkRenderData) {
       const linkData = l.simulationData
       l.gfx.clear()
+      // Hide edges where either endpoint is filtered out — drawing a
+      // line between two invisible nodes (or one visible and one
+      // invisible) would leave dangling stubs across the canvas.
+      if (!l.gfx.visible) continue
       l.gfx.moveTo(linkData.source.x! + width / 2, linkData.source.y! + height / 2)
       l.gfx
         .lineTo(linkData.target.x! + width / 2, linkData.target.y! + height / 2)
@@ -1013,6 +1335,28 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     app.renderer.render(stage)
     requestAnimationFrame(animate)
   }
+
+  // Apply current filter state to nodes and links. Called once during
+  // render setup, then again whenever the filter changes so the user
+  // can check/uncheck without a full re-render.
+  const applyFilterVisibility = () => {
+    for (const n of nodeRenderData) {
+      const visible = isNodeVisible(n.simulationData.id)
+      n.gfx.visible = visible
+      if (n.label) n.label.visible = visible
+    }
+    for (const l of linkRenderData) {
+      const srcVisible = isNodeVisible(l.simulationData.source.id)
+      const tgtVisible = isNodeVisible(l.simulationData.target.id)
+      l.gfx.visible = srcVisible && tgtVisible
+    }
+  }
+  applyFilterVisibility()
+  const unsubscribeFilter = (() => {
+    const handler = () => applyFilterVisibility()
+    filterChangeListeners.add(handler)
+    return () => filterChangeListeners.delete(handler)
+  })()
 
   // Expose a snapshot helper so the "Create layout" UI can capture
   // current node positions. Last renderGraph wins — if both a local
@@ -1031,12 +1375,33 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     return out
   }
 
+  // Expose a resize handler so external triggers (fullscreenchange in
+  // PageTitle) can tell the canvas to fit a new container size. We
+  // update the closure-scoped width/height — the animate loop uses
+  // those for centering — and resize the pixi renderer + the d3-zoom
+  // extent. Nodes' simulation coordinates are absolute (centered on
+  // (0,0) by forceCenter) so we don't need to reposition them; we just
+  // need the canvas to redraw at the new viewport size.
+  window.__graphResize = () => {
+    const newWidth = graph.offsetWidth
+    const newHeight = Math.max(graph.offsetHeight, 250)
+    if (newWidth === width && newHeight === height) return
+    width = newWidth
+    height = newHeight
+    app.renderer.resize(width, height)
+  }
+
   requestAnimationFrame(animate)
   return () => {
     stopAnimation = true
+    unsubscribeFreeze()
+    unsubscribeFilter()
     app.destroy()
     if (window.__graphPositionSnapshot) {
       window.__graphPositionSnapshot = undefined
+    }
+    if (window.__graphResize) {
+      window.__graphResize = undefined
     }
   }
 }
