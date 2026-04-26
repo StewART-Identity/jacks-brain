@@ -9,3 +9,4 @@ Audit log of all cataloging operations. Read by /api/retention; rendered by the 
 | 2026-04-25 | Cataloged | 2026-04-25-jacks-rules-for-website-design.md |
 | 2026-04-25 | Cataloged | 2026-04-25-ALMA_v2_Technical_Reference.docx |
 | 2026-04-25 | Cataloged | 2026-04-25-IAM_Brief_Deprovisioning_Gap_Analysis.pdf |
+| 2026-04-25 | Cataloged | 2026-04-26-Authentication-Methods-Migration-Summary.docx |
