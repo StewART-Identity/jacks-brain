@@ -306,11 +306,11 @@ PageList.css = `
 }
 .jb-table th.col-subjects,
 .jb-table td.col-subjects {
-  width: 18%;
+  width: 20%;
 }
 .jb-table th.col-tags,
 .jb-table td.col-tags {
-  width: 20%;
+  width: 18%;
 }
 
 /* When Date column is absent (Concepts & Entities), redistribute the
@@ -325,11 +325,11 @@ PageList.css = `
 }
 .jb-table > table:not(:has(.col-date)) th.col-subjects,
 .jb-table > table:not(:has(.col-date)) td.col-subjects {
-  width: 20%;
+  width: 22%;
 }
 .jb-table > table:not(:has(.col-date)) th.col-tags,
 .jb-table > table:not(:has(.col-date)) td.col-tags {
-  width: 26%;
+  width: 24%;
 }
 
 .jb-table td.col-title a {
@@ -515,6 +515,5 @@ document.addEventListener("nav", () => {
     activeHeader.classList.add("sort-active")
     const indEl = activeHeader.querySelector(".sort-indicator")
     if (indEl) indEl.textContent = indicator(sortAsc)
-  }
-})
+  }})
 `
