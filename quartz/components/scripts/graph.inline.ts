@@ -96,6 +96,40 @@ let layoutsLoadPromise: Promise<LayoutsState> | null = null
 let layoutsDirty = false
 let flushTimer: number | null = null
 
+// Listeners that fire whenever layoutsDirty transitions. The toolbar UI
+// uses this to keep the "save" button's visual state in sync with
+// reality — highlighted when there are unsaved changes, dimmed when
+// everything has been flushed to git.
+//
+// We notify on every setDirty call, even no-op ones (true -> true), so
+// listeners that need to confirm "yes still dirty" can treat each event
+// as authoritative. The cost is negligible; the UI's onChange handler is
+// trivial.
+const dirtyChangeListeners = new Set<(dirty: boolean) => void>()
+function notifyDirtyChange() {
+  for (const fn of dirtyChangeListeners) {
+    try {
+      fn(layoutsDirty)
+    } catch {
+      // never break callers
+    }
+  }
+}
+// Single point of truth for the dirty flag. Replaces direct writes to
+// layoutsDirty so the listener gets fired automatically. Internal-only;
+// the public API exposes isDirty() (read) and flushNow() (which clears).
+function setDirty(value: boolean) {
+  if (layoutsDirty === value) {
+    // Still notify — a listener registering after the flag was first
+    // set still gets a "current state" callback this way when something
+    // re-affirms the value.
+    notifyDirtyChange()
+    return
+  }
+  layoutsDirty = value
+  notifyDirtyChange()
+}
+
 // ─── Freeze layout (physics pause) ───────────────────────────────────────
 //
 // When frozen, the force simulation is stopped and drags don't restart
@@ -310,11 +344,14 @@ function flushLayouts(viaBeacon: boolean): boolean {
     const blob = new Blob([body], { type: "text/plain" })
     const ok = navigator.sendBeacon("/api/graph-layouts", blob)
     if (ok) {
-      layoutsDirty = false
-      // We can't read the response sha back from a beacon. The next
-      // GET on a fresh page load will pick up the new sha; in between,
-      // we may run with a stale sha and 409 on the next non-beacon
-      // write — at which point the client should refetch and retry.
+      // Beacon write succeeded (browser accepted it) — clear the dirty
+      // flag and notify listeners so the UI's save indicator goes
+      // dim. We can't read the response sha back from a beacon. The
+      // next GET on a fresh page load will pick up the new sha; in
+      // between, we may run with a stale sha and 409 on the next
+      // non-beacon write — at which point the client should refetch
+      // and retry.
+      setDirty(false)
     }
     return ok
   }
@@ -329,7 +366,11 @@ function flushLayouts(viaBeacon: boolean): boolean {
   })
     .then(async (res) => {
       if (res.ok) {
-        layoutsDirty = false
+        // Successful save — clear dirty flag and notify the UI's save
+        // indicator. Order matters: clear THEN parse the body, because
+        // we want the indicator to clear immediately even if response
+        // parsing fails for some reason.
+        setDirty(false)
         try {
           const json = (await res.json()) as { sha?: string | null }
           if (layoutsState && json && typeof json.sha === "string") {
@@ -374,7 +415,7 @@ function cancelScheduledFlush() {
 }
 
 function markDirty() {
-  layoutsDirty = true
+  setDirty(true)
   scheduleFlush()
   if (layoutsState) writeLayoutsCache(layoutsState)
 }
@@ -396,6 +437,13 @@ interface GraphLayoutsApi {
   renameLayout: (id: string, newName: string) => boolean
   deleteLayout: (id: string) => boolean
   onChange: (fn: () => void) => () => void
+  // Sprint D additions: dirty state + manual save trigger. The toolbar's
+  // save button reads isDirty() to decide its visual state, calls
+  // flushNow() on click, and subscribes via onDirtyChange to update its
+  // appearance in real time as the underlying state changes.
+  isDirty: () => boolean
+  flushNow: () => boolean
+  onDirtyChange: (fn: (dirty: boolean) => void) => () => void
 }
 
 interface GraphFreezeApi {
@@ -530,6 +578,23 @@ function ensureLayoutsApi() {
     onChange(fn) {
       layoutChangeListeners.add(fn)
       return () => layoutChangeListeners.delete(fn)
+    },
+    // ── Sprint D additions ────────────────────────────────────────
+    isDirty() {
+      return layoutsDirty
+    },
+    flushNow() {
+      // Cancel the debounced flush so we don't double-fire if a save
+      // is already pending. The actual flushLayouts call below will
+      // handle the dirty=false transition on success via setDirty.
+      cancelScheduledFlush()
+      // Returns whether a flush was attempted; false means there was
+      // nothing to save (already clean) or no state loaded yet.
+      return flushLayouts(false)
+    },
+    onDirtyChange(fn) {
+      dirtyChangeListeners.add(fn)
+      return () => dirtyChangeListeners.delete(fn)
     },
   }
 
