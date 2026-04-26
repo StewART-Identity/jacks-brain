@@ -1407,7 +1407,17 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           // When frozen, skip alphaTarget/restart — the whole point of
           // freeze is "no physics propagation." The dragged node + its
           // neighbors move together via the rigid-body code below.
-          if (!event.active && !graphFrozen) simulation.alphaTarget(1).restart()
+          //
+          // alphaTarget(0.3) instead of d3's customary alphaTarget(1).
+          // 1 over-heats the simulation: ripples propagate too far
+          // during drag, and after release the simulation needs to
+          // cool from full alpha back to 0 — which at our alphaDecay
+          // (0.05) takes a couple of seconds of visible drift. 0.3 is
+          // enough to make the drag feel responsive (the dragged
+          // node's neighbors gently follow physics) without entering
+          // the overheated state. Same value the freeze toggle uses
+          // when settling on unfreeze, for consistency.
+          if (!event.active && !graphFrozen) simulation.alphaTarget(0.3).restart()
           event.subject.fx = event.subject.x
           event.subject.fy = event.subject.y
           event.subject.__initialDragPos = {
