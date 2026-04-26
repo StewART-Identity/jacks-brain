@@ -56,12 +56,28 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Stage wiki pages (content/) and the retention log (data/).
+          #
+          # Wiki pages: this is the primary path. The catalog Claude writes
+          # them via filesystem, and this commit picks them up.
+          #
+          # Retention log: this is a FALLBACK path. The catalog Claude is
+          # expected to write retention entries via the append_retention_entry
+          # MCP tool, which makes its own GitHub commit. The `data/` in the
+          # `git add` below catches retention writes only when the catalog
+          # Claude bypasses MCP and falls back to direct filesystem write —
+          # defense-in-depth during the MCP-integrated pipeline's bedding-in
+          # period. Most clean runs will produce no diff for data/ here
+          # (the MCP commit already landed retention via a separate path).
           git add content/ data/
           if git diff --staged --quiet; then
             echo "No changes to commit."
           else
             git commit -m "catalog: auto-generated wiki pages from acquired documents"
-            # Pull any commits that landed while we were processing, then push
+            # Pull any commits that landed while we were processing, then push.
+            # The MCP-side append_retention_entry commit can land between our
+            # checkout and our push — that's the most common reason this loop
+            # actually does any work.
             for i in 1 2 3 4; do
               git pull --rebase origin main && git push origin main && exit 0
               echo "Push attempt $i failed, retrying in $((i * 2))s..."
