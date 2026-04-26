@@ -14,13 +14,13 @@ content/                # The wiki — you own this layer entirely
     retention.md        # Chronological audit log of cataloged documents
   collection/
     sources/            # One summary page per cataloged source
-      index.md          # Sources catalog (auto-rendered, do maintain rows here)
+      index.md          # Sources page — intro only; table auto-rendered
     entities/           # People, organizations, tools, systems
-      index.md          # Entities catalog
+      index.md          # Entities page — intro only; table auto-rendered
     concepts/           # Ideas, theories, frameworks, principles
-      index.md          # Concepts catalog
+      index.md          # Concepts page — intro only; table auto-rendered
     synthesis/          # Cross-cutting analysis, comparisons, theses
-      index.md          # Synthesis catalog
+      index.md          # Synthesis page — intro only; table auto-rendered
 static/originals/       # Immutable source documents — never modify these
 CLAUDE.md               # This file — read-only during operations
 ```
@@ -117,11 +117,11 @@ appearing in `static/originals/` is an *acquisition* — the upstream step
 the human performs before cataloging.)
 
 The catalog has three phases: **register, enrich, verify.** Registration
-gets the document into the audit trail and the per-category indexes
-quickly; enrichment fills in the substantive content; verification
-confirms nothing was missed. Do them in order — registration is cheap
-and recoverable, enrichment is expensive and shouldn't run if
-registration failed, and verification depends on both.
+gets the document into the audit trail; enrichment fills in the
+substantive content; verification confirms nothing was missed. Do them
+in order — registration is cheap and recoverable, enrichment is
+expensive and shouldn't run if registration failed, and verification
+depends on both.
 
 #### Register
 
@@ -142,52 +142,55 @@ registration failed, and verification depends on both.
    action (`Cataloged` for an initial, `Re-viewed` for a re-view) and
    the original filename from `static/originals/`.
 
-6. Update `content/collection/sources/index.md` with the new or changed row.
-
 #### Enrich
 
-7. For each significant entity mentioned: create or update its page in
-   `content/collection/entities/`. Update `content/collection/entities/index.md`
-   accordingly.
+6. For each significant entity mentioned: create or update its page in
+   `content/collection/entities/`. Prefer enriching an existing page
+   over creating a near-duplicate.
 
-8. For each significant concept: create or update its page in
-   `content/collection/concepts/`. Update `content/collection/concepts/index.md`
-   accordingly.
+7. For each significant concept: create or update its page in
+   `content/collection/concepts/`. Prefer enriching an existing page
+   over creating a near-duplicate.
 
-9. If the source connects to or contrasts with existing wiki content,
-   create or update a synthesis page in `content/collection/synthesis/`,
-   and update `content/collection/synthesis/index.md`.
+8. If the source connects to or contrasts with existing wiki content,
+   create or update a synthesis page in `content/collection/synthesis/`.
+   Good synthesis pages compare sources, identify patterns, or surface
+   tensions between documents.
 
 #### Verify
 
-10. Read back what was committed. Specifically:
-    - `data/retention-log.md` contains a row for this catalog.
-    - `content/collection/sources/index.md` lists the new or updated source.
-    - Each entity and concept page created in steps 7–8 appears in its
-      respective index file.
+9. Confirm the retention row landed. Use `read_repo_file` to read
+   `data/retention-log.md` (it lives outside `content/`, so
+   `read_wiki_page` doesn't reach it) and check that the row you
+   appended in step 5 is present. If it isn't, call
+   `append_retention_entry` again with the same arguments — the tool
+   is idempotent enough that a duplicate row is much less harmful than
+   a missing one. If `read_repo_file` is not available in the current
+   session, ask the user to confirm the retention entry landed before
+   reporting completion.
 
-    Use the `read_repo_file` tool to read `data/retention-log.md` (it lives
-    outside `content/`, so `read_wiki_page` doesn't reach it). If
-    `read_repo_file` is not available in the current session, ask the
-    user to confirm the retention entry landed before reporting completion.
-
-    If any of these are missing, fix them now before reporting completion.
-    The wiki's audit and navigation depend on these being in sync; a
-    catalog that produced beautiful prose but didn't update the indexes
-    is an incomplete catalog.
-
-11. Report what you created and updated.
+10. Report what you created and updated.
 
 A single source typically touches 5–15 pages. Take your time. Quality of
 cross-references matters more than speed.
+
+Do NOT modify any of the per-category `index.md` files in `collection/`,
+or `content/index.md` (the welcome page). The Collection page listings
+are rendered automatically by Quartz's `FolderContent` + `PageList`
+components from each page's frontmatter — title, summary, dates, tags.
+The index files contribute only the page title and intro paragraph
+above the auto-generated table; their bodies stay empty. Putting a
+markdown table in an index.md would duplicate the auto-rendered listing
+and create drift between the two views.
 
 ### Query
 
 Trigger: user asks a question about the wiki's domain.
 
-1. Read the relevant per-category index file(s) to find pages
-   (`content/collection/sources/index.md`, `collection/concepts/index.md`, etc.).
-2. Read those pages.
+1. Find candidate pages with `list_wiki_pages` (filter by prefix:
+   `content/collection/sources/`, `content/collection/entities/`,
+   `content/collection/concepts/`, `content/collection/synthesis/`).
+2. Read the relevant pages with `read_wiki_page`.
 3. Synthesize an answer with `[[wikilinks]]` to supporting pages.
 4. If the answer is substantial and reusable, offer to file it as a new
    synthesis page. Good answers shouldn't disappear into chat history.
@@ -204,31 +207,34 @@ Check for and report:
 - Missing cross-references
 - Broken wikilinks
 - Pages missing required frontmatter fields
-- Per-category index files out of sync with actual pages
 
 Suggest fixes. Ask before applying them.
 
 ## Per-category index format
 
-Each `collection/<category>/index.md` is a flat table of the pages in that
-category. The wiki has no top-level master catalog; per-category indexes
-are authoritative. `content/index.md` is a hand-styled welcome page and
-should not be turned into a catalog.
+Each `collection/<category>/index.md` is intro-only — a title and a
+one-paragraph description of what the category contains. The page
+listing below the intro is rendered automatically by Quartz's
+`FolderContent` + `PageList` components from page frontmatter (title,
+summary, dates, tags). Do not put a markdown table in the body — the
+auto-rendered table would duplicate it.
 
 ```markdown
 ---
 title: "Sources"
 ---
 
-Acquired documents and their cataloging status.
-
-| Content | Summary | Date |
-|---------|---------|------|
-| [[collection/sources/2026-04-14-example]] | Brief description | 2026-04-14 |
+Acquired documents and their cataloging status. Click a filename to
+download the original.
 ```
 
-(Entities and Concepts indexes have two columns; Sources and Synthesis
-have three including the date.)
+The auto-rendered table includes Title, Summary, and Tags for every
+category, plus a Date column on Sources and Synthesis. The Title column
+is sortable alphabetically; the Date column (when present) is sortable
+chronologically.
+
+`content/index.md` is a hand-styled welcome page and should never be
+turned into a catalog.
 
 ## Retention log format
 
