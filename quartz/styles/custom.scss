@@ -309,14 +309,22 @@ figure[data-rehype-pretty-code-figure] {
 
 
 /* ==========================================================================
-   Tables
+   Tables — generic styling for default markdown tables.
+
+   This block intentionally excludes `.table-container.jb-table` so the
+   six wiki data tables (Acquisition, Retention, Sources, Entities,
+   Concepts, Synthesis) own their styling entirely via _jbtable.scss.
+   Without `:not(.jb-table)` here, the dark-theme `tr:nth-child(even) td`
+   rule below sets a 40%-alpha green that beats jbtable's opaque colors
+   in the cascade — both selectors apply, but `:root[saved-theme="dark"]`
+   wins. Excluding jb-table at this level keeps the boundary clean.
    ========================================================================== */
 
-.table-container > table {
+.table-container:not(.jb-table) > table {
   border-radius: 8px;
   overflow: hidden;
 }
-:root:not([saved-theme="dark"]) .table-container > table {
+:root:not([saved-theme="dark"]) .table-container:not(.jb-table) > table {
   th {
     background: $green-600;
     color: $stone-50;
@@ -326,7 +334,7 @@ figure[data-rehype-pretty-code-figure] {
     background: rgba($green-100, 0.3);
   }
 }
-:root[saved-theme="dark"] .table-container > table {
+:root[saved-theme="dark"] .table-container:not(.jb-table) > table {
   th {
     background: $green-800;
     color: $brass-100;
