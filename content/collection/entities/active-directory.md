@@ -15,6 +15,7 @@ sources:
   - "[[collection/sources/2026-04-23-img-2369]]"
   - "[[collection/sources/2026-04-25-alma-v2-technical-reference]]"
   - "[[collection/sources/2026-04-25-iam-brief-deprovisioning-gap-analysis]]"
+  - "[[collection/sources/2026-04-25-authentication-methods-migration-summary]]"
 confidence: high
 ---
 
@@ -41,6 +42,12 @@ At [[collection/entities/unt-system-iam|UNT System IAM]], Active Directory is de
 [[collection/entities/alma|ALMA]] manages the AD account state through the `userAccountControl` attribute, specifically bit 2 (`UF_ACCOUNTDISABLE`): setting it disables the account; clearing it re-enables it. During inactivity deactivation, ALMA lets IDM propagation set this bit (via the `DeactivateAccounts` output transformation that sets `dirxml-uACAccountDisable=true`). During reactivation, because the `untAccountADNoSync` sync lock is still active at that stage, ALMA re-enables AD accounts directly via the `/reactivate/ad` endpoint rather than through IDM.
 
 When an AD account is disabled, it cannot authenticate in [[collection/concepts/saml|SAML]] flows (where the IdP validates credentials against AD) or [[collection/concepts/oauth|OAuth]] flows (where the Authorization Server uses AD for user validation). Account lifecycle management is therefore the enforcement layer beneath these authentication protocols. See [[collection/concepts/account-lifecycle-management|account lifecycle management]] and [[collection/synthesis/unt-iam-identity-infrastructure|UNT IAM Identity Infrastructure]] for broader context.
+
+## ADFS and the Entra ID Migration
+
+Active Directory Federation Services (ADFS) is a Windows Server role that provides federation and SSO by acting as an on-premises [[collection/concepts/saml|SAML]] Identity Provider, validating credentials against AD and issuing assertions to cloud services like Microsoft 365. [[collection/entities/unt-system-iam|UNT System]] operated ADFS as its primary IdP for M365 services until January 28, 2026.
+
+On January 28, 2026, UNT System de-federated from ADFS and enabled Password Hash Sync with [[collection/entities/microsoft-entra-id|Microsoft Entra ID]]. Rather than ADFS proxying authentication, Entra ID now validates users directly against synchronized password hashes. This moves credential validation from an on-premises ADFS server to Microsoft's cloud platform and removes the on-premises ADFS dependency for M365 access. See [[collection/synthesis/unt-mfa-migration-entra-id|UNT MFA Migration — Entra ID Analysis]] for the migration context.
 
 ## AD Offboarding Gap
 

@@ -13,6 +13,7 @@ sources:
   - "[[collection/sources/2026-04-25-alma-v2-technical-reference]]"
   - "[[collection/sources/2026-04-25-iam-team-knowledge-ui-vocabulary-and-conventions-for-web-interfaces]]"
   - "[[collection/sources/2026-04-25-jacks-rules-for-website-design]]"
+  - "[[collection/sources/2026-04-25-authentication-methods-migration-summary]]"
 confidence: high
 ---
 
@@ -25,7 +26,8 @@ UNT System IAM is the Identity and Access Management team at the University of N
 | [[collection/entities/edirectory-idtree\|eDirectory (IDTREE)]] | Central identity store and source of truth |
 | [[collection/entities/active-directory\|Active Directory]] | Three domain deployments: HSC, STUDENTS, UNT |
 | [[collection/entities/opentext-identity-manager\|OpenText IDM]] | Asynchronous sync from IDTREE to AD via three drivers |
-| [[collection/entities/cisco-duo\|Cisco Duo]] | Multi-factor authentication |
+| [[collection/entities/cisco-duo\|Cisco Duo]] | Multi-factor authentication; configured as Entra ID External Authentication Method since Jan 2026 |
+| [[collection/entities/microsoft-entra-id\|Microsoft Entra ID]] | Cloud identity platform; replaced ADFS as primary IdP for M365 services (Jan 28, 2026) |
 | [[collection/entities/alma\|ALMA]] | Account lifecycle management automation |
 | [[collection/entities/iam-toolbox\|IAM Toolbox]] | Internal React/TypeScript web application |
 
