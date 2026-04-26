@@ -27,6 +27,7 @@
  *
  * What gets reset to empty templates:
  *   - data/retention-log.md             (the audit log — keep file, empty table)
+ *   - data/graph-layouts.json           (Graph View saved layouts — keep file, empty state)
  *   - content/learn/retention.md        (the page intro — keep file, no table)
  *   - content/collection/sources/index.md     (intro only — table auto-rendered)
  *   - content/collection/entities/index.md    (intro only — table auto-rendered)
@@ -106,6 +107,9 @@ const RESET_TEMPLATES: Record<string, string> = {
 
   "data/retention-log.md":
     `# Retention Log\n\nAudit log of all cataloging operations. Read by /api/retention; rendered by the RetentionList component on /learn/retention. Do not delete this file — nuke resets it to an empty table instead.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
+
+  "data/graph-layouts.json":
+    `{\n  "layouts": {},\n  "activeLayout": null\n}\n`,
 
   "content/collection/sources/index.md":
     `---\ntitle: "Sources"\n---\n\nAcquired documents and their cataloging status. Click a filename to download the original.\n`,
@@ -282,10 +286,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const newTree: NewTreeResponse = await newTreeRes.json()
 
     // ── Subrequest 5: create commit ───────────────────────────────────────
+    const templateCount = Object.keys(RESET_TEMPLATES).length
     const newCommitRes = await ghFetch(`${api}/git/commits`, GITHUB_TOKEN, {
       method: "POST",
       body: JSON.stringify({
-        message: `nuke: wipe wiki content (${toDelete} files deleted, 5 templates reset)`,
+        message: `nuke: wipe wiki content (${toDelete} files deleted, ${templateCount} templates reset)`,
         tree: newTree.sha,
         parents: [currentCommitSha],
       }),
@@ -323,11 +328,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       success: true,
       deleted: toDelete,
       commit: newCommit.sha,
-      message: `Deleted ${toDelete} files. Reset 5 template files. New commit: ${newCommit.sha.slice(0, 7)}`,
+      message: `Deleted ${toDelete} files. Reset ${templateCount} template files. New commit: ${newCommit.sha.slice(0, 7)}`,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error"
     return Response.json({ error: message }, { status: 500 })
   }
 }
-
