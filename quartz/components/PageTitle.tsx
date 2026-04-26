@@ -236,6 +236,17 @@ document.addEventListener("nav", function() {
   var menu = document.getElementById("graph-layouts-menu");
   if (!currentBtn || !newBtn || !saveBtn || !renameBtn || !deleteBtn || !menu) return;
 
+  // Apply pinned positions from the active saved layout to the
+  // currently-rendered graph in place, without tearing down the
+  // canvas. Used after create/switch/delete operations. Falls back
+  // to no-op if the helper isn't installed yet (graph hasn't
+  // finished its first render).
+  function repin() {
+    if (window.__graphRepin) {
+      window.__graphRepin();
+    }
+  }
+
   // Render the toolbar's visible state from the current layouts API.
   // Called on initial load AND on every state change (via api.onChange
   // and api.onDirtyChange). The render is cheap (a few attribute
@@ -297,14 +308,13 @@ document.addEventListener("nav", function() {
         item.addEventListener("click", function() {
           api.switchLayout(id);
           closeMenu();
-          // Trigger a re-render of the graph so pins reapply. The
-          // simulation rebuild on every nav handles this for us when
-          // the user navigates, but for an in-place layout switch we
-          // dispatch a synthetic nav event with the current URL so
-          // the graph re-renders without an actual navigation.
-          document.dispatchEvent(new CustomEvent("nav", {
-            detail: { url: window.location.pathname.replace(/^\\//, "") }
-          }));
+          // Apply pins from the newly-active layout in place.
+          // Replaces the older synthetic-nav pattern that destroyed
+          // and rebuilt the canvas just to make pins take effect —
+          // that approach kicked the user out of fullscreen mode
+          // and was implicated in the freeze-button-stops-working
+          // bug.
+          repin();
         });
         menu.appendChild(item);
       });
@@ -340,10 +350,13 @@ document.addEventListener("nav", function() {
       window.alert("Couldn't create layout — name may be empty or invalid.");
       return;
     }
-    // Trigger re-render so pins apply immediately.
-    document.dispatchEvent(new CustomEvent("nav", {
-      detail: { url: window.location.pathname.replace(/^\\//, "") }
-    }));
+    // Apply pins from the newly-created (and now-active) layout in
+    // place. The snapshot we just captured is already the layout's
+    // contents, so this is mostly a no-op visually — but it ensures
+    // every node's fx/fy reflects the layout, including the implicit
+    // "release pin" path for any nodes that were drag-pinned but not
+    // included in the snapshot.
+    repin();
   };
   newBtn.addEventListener("click", onNewClick);
   window.addCleanup(function() { newBtn.removeEventListener("click", onNewClick); });
@@ -380,10 +393,9 @@ document.addEventListener("nav", function() {
     if (!current) return;
     if (!window.confirm("Delete layout \\"" + current.name + "\\"? This can't be undone.")) return;
     api.deleteLayout(id);
-    // Re-render so pins clear.
-    document.dispatchEvent(new CustomEvent("nav", {
-      detail: { url: window.location.pathname.replace(/^\\//, "") }
-    }));
+    // Active layout is now null. Repin clears every fx/fy so the
+    // simulation can place nodes freely. No more synthetic nav.
+    repin();
   };
   deleteBtn.addEventListener("click", onDeleteClick);
   window.addCleanup(function() { deleteBtn.removeEventListener("click", onDeleteClick); });
