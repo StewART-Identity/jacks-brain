@@ -2,25 +2,32 @@ document.addEventListener("nav", () => {
   const runsList = document.getElementById("runs-list")
   if (!runsList) return
 
-  const refreshRunsBtn = document.getElementById("refresh-runs-btn") as HTMLButtonElement | null
-  if (refreshRunsBtn) {
-    refreshRunsBtn.addEventListener("click", () => {
-      runsList.innerHTML = '<p class="muted">Loading...</p>'
-      loadRuns()
-    })
-  }
-
   let pollTimer: ReturnType<typeof setInterval> | null = null
 
-  // Register cleanup with the SPA router so the 10-second status poll
-  // doesn't outlive the page it belongs to. Without this, every SPA
-  // visit to Acquisition while a run is active would leave a polling
-  // setInterval running forever in the background.
+  const refreshRunsBtn = document.getElementById("refresh-runs-btn") as HTMLButtonElement | null
+  const onRefreshClick = () => {
+    runsList.innerHTML = '<p class="muted">Loading...</p>'
+    loadRuns()
+  }
+  if (refreshRunsBtn) {
+    refreshRunsBtn.addEventListener("click", onRefreshClick)
+  }
+
+  // Register cleanup with the SPA router. Two reasons:
+  //   1. The 10-second poll timer must not outlive the page it belongs to.
+  //   2. The refresh-button click handler must be removed before the next
+  //      SPA navigation, otherwise every visit to /learn/acquisition stacks
+  //      another listener on the same button (and on a return visit, every
+  //      previous handler still fires on a single click). This is the
+  //      canonical Quartz pattern -- see e.g. checkbox.inline.ts.
   if (typeof window !== "undefined" && (window as any).addCleanup) {
     ;(window as any).addCleanup(() => {
       if (pollTimer) {
         clearInterval(pollTimer)
         pollTimer = null
+      }
+      if (refreshRunsBtn) {
+        refreshRunsBtn.removeEventListener("click", onRefreshClick)
       }
     })
   }
