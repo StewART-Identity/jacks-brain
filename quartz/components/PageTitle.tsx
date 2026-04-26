@@ -66,6 +66,26 @@ document.addEventListener("nav", function() {
     fsBtn.addEventListener("click", onFsClick);
     window.addCleanup(function() { fsBtn.removeEventListener("click", onFsClick); });
   }
+
+  // Fullscreen toggle changes the canvas's container size, but the
+  // pixi renderer's pixel buffer was sized for the original 70vh
+  // viewport. Without this, the canvas bitmap gets CSS-stretched to
+  // fill the screen, producing the "huge zoomed-in labels" effect.
+  // Wait one frame after the change so the CSS layout has settled,
+  // then call the graph's resize handler. fullscreenchange fires for
+  // both enter and exit, so this also fixes the inverse "tiny graph
+  // in upper-left" problem on exit.
+  var onFsChange = function() {
+    requestAnimationFrame(function() {
+      if (window.__graphResize) window.__graphResize();
+    });
+  };
+  document.addEventListener("fullscreenchange", onFsChange);
+  document.addEventListener("webkitfullscreenchange", onFsChange);
+  window.addCleanup(function() {
+    document.removeEventListener("fullscreenchange", onFsChange);
+    document.removeEventListener("webkitfullscreenchange", onFsChange);
+  });
   function simulateZoom(direction) {
     var canvas = graphEl.querySelector("canvas");
     if (!canvas) return;
@@ -87,6 +107,118 @@ document.addEventListener("nav", function() {
     var onZoomOut = function() { simulateZoom(1); };
     zoomOutBtn.addEventListener("click", onZoomOut);
     window.addCleanup(function() { zoomOutBtn.removeEventListener("click", onZoomOut); });
+  }
+
+  // ── Freeze toggle ──────────────────────────────────────────────────
+  // Pauses the d3 force simulation so drags don't ripple through the
+  // graph. The setting persists in localStorage; the button reflects
+  // current state via aria-pressed and the active styling.
+  var freezeBtn = document.getElementById("graph-freeze-btn");
+  if (freezeBtn && window.graphFreeze) {
+    var freezeApi = window.graphFreeze;
+    var renderFreeze = function() {
+      var pressed = freezeApi.isFrozen();
+      freezeBtn.setAttribute("aria-pressed", pressed ? "true" : "false");
+      // Title updates to indicate what the click will do, not the
+      // current state — clearer affordance than "Frozen / Unfrozen".
+      freezeBtn.setAttribute("title", pressed ? "Unfreeze layout (resume physics)" : "Freeze layout (no physics)");
+    };
+    var onFreezeClick = function() { freezeApi.toggle(); };
+    freezeBtn.addEventListener("click", onFreezeClick);
+    var unsubFreeze = freezeApi.onChange(renderFreeze);
+    window.addCleanup(function() {
+      freezeBtn.removeEventListener("click", onFreezeClick);
+      unsubFreeze();
+    });
+    renderFreeze();
+  }
+
+  // ── Synthesis filter panel ─────────────────────────────────────────
+  // Toggleable panel listing synthesis pages. Each row is a checkbox
+  // + the synthesis title + member count. Unchecking a synthesis hides
+  // its nodes (and any edges touching them). Free nodes always visible.
+  var filterBtn = document.getElementById("graph-filter-btn");
+  var filterPanel = document.getElementById("graph-filter-panel");
+  var filterBody = document.getElementById("graph-filter-body");
+  if (filterBtn && filterPanel && filterBody && window.graphFilter) {
+    var filterApi = window.graphFilter;
+
+    var renderFilterBody = function() {
+      var syntheses = filterApi.getSyntheses();
+      while (filterBody.firstChild) filterBody.removeChild(filterBody.firstChild);
+      if (syntheses.length === 0) {
+        var empty = document.createElement("div");
+        empty.className = "graph-filter-empty";
+        empty.textContent = "No synthesis pages in the wiki yet. Filter unavailable until at least one synthesis is cataloged.";
+        filterBody.appendChild(empty);
+        return;
+      }
+      syntheses.forEach(function(s) {
+        var row = document.createElement("label");
+        row.className = "graph-filter-row";
+        var input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = !filterApi.isUnchecked(s.slug);
+        input.addEventListener("change", function() {
+          filterApi.setChecked(s.slug, input.checked);
+        });
+        var name = document.createElement("span");
+        name.className = "graph-filter-row-name";
+        name.textContent = s.title;
+        name.title = s.title;
+        var count = document.createElement("span");
+        count.className = "graph-filter-row-count";
+        count.textContent = String(s.nodeCount);
+        count.title = s.nodeCount + " node" + (s.nodeCount === 1 ? "" : "s");
+        row.appendChild(input);
+        row.appendChild(name);
+        row.appendChild(count);
+        filterBody.appendChild(row);
+      });
+
+      // Action buttons: select all / clear all. Helpful when there
+      // are many syntheses; harmless when there are few.
+      var actions = document.createElement("div");
+      actions.className = "graph-filter-actions";
+      var checkAllBtn = document.createElement("button");
+      checkAllBtn.type = "button";
+      checkAllBtn.className = "graph-filter-action";
+      checkAllBtn.textContent = "Show all";
+      checkAllBtn.addEventListener("click", function() { filterApi.checkAll(); });
+      var uncheckAllBtn = document.createElement("button");
+      uncheckAllBtn.type = "button";
+      uncheckAllBtn.className = "graph-filter-action";
+      uncheckAllBtn.textContent = "Hide all";
+      uncheckAllBtn.addEventListener("click", function() {
+        filterApi.uncheckAll(syntheses.map(function(s) { return s.slug; }));
+      });
+      actions.appendChild(checkAllBtn);
+      actions.appendChild(uncheckAllBtn);
+      filterBody.appendChild(actions);
+    };
+
+    var onFilterBtnClick = function() {
+      var willOpen = filterPanel.hasAttribute("hidden");
+      if (willOpen) {
+        filterPanel.removeAttribute("hidden");
+        filterBtn.setAttribute("aria-pressed", "true");
+        renderFilterBody();
+      } else {
+        filterPanel.setAttribute("hidden", "");
+        filterBtn.setAttribute("aria-pressed", "false");
+      }
+    };
+    filterBtn.addEventListener("click", onFilterBtnClick);
+    var unsubFilter = filterApi.onChange(function() {
+      // Re-render the panel body so checkbox states stay in sync if
+      // they're changed programmatically (e.g., another tab via the
+      // shared localStorage key, or the show-all/hide-all actions).
+      if (!filterPanel.hasAttribute("hidden")) renderFilterBody();
+    });
+    window.addCleanup(function() {
+      filterBtn.removeEventListener("click", onFilterBtnClick);
+      unsubFilter();
+    });
   }
 
   // ── Left toolbar: saved layouts ────────────────────────────────────
