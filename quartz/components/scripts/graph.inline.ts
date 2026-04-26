@@ -1056,6 +1056,11 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
 
   let dragStartTime = 0
   let dragging = false
+  // Current d3-zoom transform. Declared up here (rather than near the
+  // zoom handler) because renderLabels and the label-creation loop
+  // both need to read its .k value to compute label scale, and they
+  // run before the zoom handler is wired up.
+  let currentTransform = zoomIdentity
 
   function renderLinks() {
     tweens.get("link")?.stop()
@@ -1087,41 +1092,59 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     tweens.get("label")?.stop()
     const tweenGroup = new TweenGroup()
 
-    const defaultScale = 1 / scale
-    const activeScale = defaultScale * 1.1
+    // Both label scales are divided by currentTransform.k because the
+    // stage scales by k (zoom handler does stage.scale.set(k, k)) and
+    // we want labels to stay constant size on screen as the user
+    // zooms. The zoom handler maintains this invariant for resting
+    // labels (label.scale = scale / k → net display = scale = 0.5);
+    // we have to use the same denominator here so hover targets stay
+    // consistent at any zoom level.
+    //
+    // The hover multiplier (5) makes hovered labels ~5x larger than
+    // resting labels — needed for readability at the small base font
+    // size, since resting labels are typically faded out by the
+    // opacity logic and only become useful at hover or very deep
+    // zoom. 5.5 for the actively-hovered node (slightly larger than
+    // its highlighted neighbors), 5.0 for neighbors.
+    const restingScale = scale / currentTransform.k
+    const neighborScale = restingScale * 5
+    const hoveredScale = restingScale * 5.5
     for (const n of nodeRenderData) {
       const nodeId = n.simulationData.id
 
       if (hoveredNodeId === nodeId) {
-        // The hovered node itself: full alpha and slightly larger.
+        // The hovered node itself: full alpha, slightly larger than
+        // its neighbors so the focus point is visually distinct.
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
               alpha: 1,
-              scale: { x: activeScale, y: activeScale },
+              scale: { x: hoveredScale, y: hoveredScale },
             },
             100,
           ),
         )
       } else if (hoveredNodeId !== null && hoveredNeighbours.has(nodeId)) {
-        // Neighbors of the hovered node: full alpha at default size.
-        // This is what surfaces "what's connected to this thing"
+        // Neighbors of the hovered node: full alpha at neighbor size
+        // (5x resting). Surfaces "what's connected to this thing"
         // without requiring the user to hover each neighbor in turn.
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
               alpha: 1,
-              scale: { x: defaultScale, y: defaultScale },
+              scale: { x: neighborScale, y: neighborScale },
             },
             100,
           ),
         )
       } else {
+        // Non-active labels: keep current alpha (the zoom handler
+        // sets this based on zoom level), tween to resting scale.
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
               alpha: n.label.alpha,
-              scale: { x: defaultScale, y: defaultScale },
+              scale: { x: restingScale, y: restingScale },
             },
             100,
           ),
@@ -1209,7 +1232,12 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       },
       resolution: window.devicePixelRatio * 4,
     })
-    label.scale.set(1 / scale)
+    // Initial label scale matches the zoom handler's formula so the
+    // very first hover (before any zoom event has fired) doesn't jump
+    // to a different size than what subsequent hovers use. Using
+    // currentTransform.k (which is 1 at zoomIdentity) yields the same
+    // value as `scale / transform.k` at zoom level 1.
+    label.scale.set(scale / currentTransform.k)
 
     let oldLabelOpacity = 0
     const isTagNode = nodeId.startsWith("tags/")
@@ -1271,7 +1299,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     linkRenderData.push(linkRenderDatum)
   }
 
-  let currentTransform = zoomIdentity
   // Rigid-body state captured at drag-start when frozen. The dragged
   // node's NodeData reference + a map of every neighbor (1-hop) to
   // its (offsetX, offsetY) relative to the dragged node's start
