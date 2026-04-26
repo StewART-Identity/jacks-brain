@@ -1055,6 +1055,13 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
 
   let dragStartTime = 0
+  // Cursor position at drag-start, in d3-event coordinates. Used by
+  // dragend to compute total cursor movement so we can distinguish
+  // "click" (no movement) from "drag" (any movement). Distance-based
+  // detection is more reliable than time-based — it works for fast
+  // drags and slow clicks alike.
+  let dragStartX = 0
+  let dragStartY = 0
   let dragging = false
   // Current d3-zoom transform. Declared up here (rather than near the
   // zoom handler) because renderLabels and the label-creation loop
@@ -1095,18 +1102,23 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     // Resting scale = scale / currentTransform.k matches the zoom
     // handler's calculation. The stage is scaled by transform.k, and
     // we want labels to stay at a constant on-screen size regardless
-    // of zoom — so we divide our local scale by k. Without this,
-    // labels rendered while zoomed-in get multiplied by both their
-    // local scale AND the stage scale, producing the "huge labels
-    // when zoomed in" bug.
+    // of zoom — so we divide our local scale by k.
+    //
+    // The hover/neighbor multipliers (3 / 3.3) bump the visual size up
+    // to a readable level when the user is examining a node. At resting
+    // (no hover, no proximity), labels are alpha-faded by the zoom
+    // handler's opacity logic, so their tiny size doesn't matter
+    // visually. On hover, alpha goes to 1 and the size needs to be
+    // big enough to actually read.
     const restingScale = scale / currentTransform.k
-    // Hovered node is slightly larger to mark the focus point.
-    const hoveredScale = restingScale * 1.1
+    const neighborScale = restingScale * 3
+    const hoveredScale = restingScale * 3.3
     for (const n of nodeRenderData) {
       const nodeId = n.simulationData.id
 
       if (hoveredNodeId === nodeId) {
-        // The hovered node itself: full alpha, slightly larger.
+        // The hovered node itself: full alpha, slightly larger than its
+        // neighbors so the focus point is visually distinct.
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
@@ -1117,14 +1129,14 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           ),
         )
       } else if (hoveredNodeId !== null && hoveredNeighbours.has(nodeId)) {
-        // Neighbors of the hovered node: full alpha at resting size.
+        // Neighbors of the hovered node: full alpha at neighbor size.
         // Surfaces "what's connected to this thing" without requiring
         // the user to hover each neighbor in turn.
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
               alpha: 1,
-              scale: { x: restingScale, y: restingScale },
+              scale: { x: neighborScale, y: neighborScale },
             },
             100,
           ),
@@ -1350,6 +1362,13 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
             rigidBody = null
           }
 
+          // Capture the initial cursor position so dragend can measure
+          // total cursor movement. This is what distinguishes "click"
+          // (essentially no movement) from "drag" (any meaningful
+          // movement). Time-based detection misses fast-but-real drags
+          // and slow-but-still-clicks.
+          dragStartX = event.x
+          dragStartY = event.y
           dragStartTime = Date.now()
           dragging = true
         })
@@ -1389,15 +1408,21 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           if (!event.active && !graphFrozen) simulation.alphaTarget(0)
           dragging = false
 
-          // If the time between mousedown and mouseup is short, treat
-          // this as a click (navigate to the node's page) and release
-          // the pin — clicks shouldn't accidentally lock nodes in place.
-          // If it was a real drag, leave fx/fy set so the node stays
-          // where the user dropped it. This is what eliminates the
-          // rubber-band snap-back: the node's pinned coordinates remain
-          // active after the drag, and the simulation works around it
-          // instead of pulling it back to a force-balanced position.
-          const isClick = Date.now() - dragStartTime < 500
+          // Distinguish click from drag by total cursor movement.
+          // A "click" is when the cursor barely moved (under 5 stage
+          // pixels). Anything more is a real drag, even if it happened
+          // fast — clicking and accidentally moving 50 pixels in 200ms
+          // should still be a drag.
+          //
+          // The 500ms time threshold remains as a backstop for the
+          // edge case where the user holds the mouse button for a
+          // long time without moving (e.g. waiting for a popover to
+          // appear). Without it, "press and hold" would be ambiguous.
+          // Distance is the primary test; time is the override.
+          const dx = event.x - dragStartX
+          const dy = event.y - dragStartY
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          const isClick = dist < 5 && Date.now() - dragStartTime < 500
           if (isClick) {
             event.subject.fx = null
             event.subject.fy = null
