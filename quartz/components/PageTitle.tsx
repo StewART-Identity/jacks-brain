@@ -230,13 +230,16 @@ document.addEventListener("nav", function() {
 
   var currentBtn = document.getElementById("graph-layouts-current");
   var newBtn = document.getElementById("graph-layouts-new");
+  var saveBtn = document.getElementById("graph-layouts-save");
   var renameBtn = document.getElementById("graph-layouts-rename");
   var deleteBtn = document.getElementById("graph-layouts-delete");
   var menu = document.getElementById("graph-layouts-menu");
-  if (!currentBtn || !newBtn || !renameBtn || !deleteBtn || !menu) return;
+  if (!currentBtn || !newBtn || !saveBtn || !renameBtn || !deleteBtn || !menu) return;
 
   // Render the toolbar's visible state from the current layouts API.
-  // Called on initial load AND on every state change (via api.onChange).
+  // Called on initial load AND on every state change (via api.onChange
+  // and api.onDirtyChange). The render is cheap (a few attribute
+  // updates) so we don't bother to diff what changed.
   function render() {
     var state = api.getState();
     var activeId = state.activeLayout;
@@ -245,6 +248,20 @@ document.addEventListener("nav", function() {
     if (nameEl) nameEl.textContent = active ? active.name : "No layout";
     renameBtn.disabled = !active;
     deleteBtn.disabled = !active;
+    // Save is enabled when there's something to save AND we're on an
+    // active layout. (Dirty-without-active-layout shouldn't normally
+    // happen — markDirty is only called from operations that require
+    // an active layout — but the && active guard makes the UI honest
+    // about what the button can actually do.)
+    var dirty = api.isDirty();
+    saveBtn.disabled = !active || !dirty;
+    if (dirty && active) {
+      saveBtn.classList.add("graph-layouts-dirty");
+      saveBtn.setAttribute("title", "Save layout (you have unsaved changes)");
+    } else {
+      saveBtn.classList.remove("graph-layouts-dirty");
+      saveBtn.setAttribute("title", "Save layout (no unsaved changes)");
+    }
   }
 
   function closeMenu() {
@@ -331,6 +348,17 @@ document.addEventListener("nav", function() {
   newBtn.addEventListener("click", onNewClick);
   window.addCleanup(function() { newBtn.removeEventListener("click", onNewClick); });
 
+  // Save button: explicitly trigger a flush. The dirty-state listener
+  // (registered below) will clear the highlight and disable the button
+  // when the flush completes successfully. If flushNow is called while
+  // we're already clean, it's a no-op — flushLayouts internally returns
+  // false for already-clean state.
+  var onSaveClick = function() {
+    api.flushNow();
+  };
+  saveBtn.addEventListener("click", onSaveClick);
+  window.addCleanup(function() { saveBtn.removeEventListener("click", onSaveClick); });
+
   var onRenameClick = function() {
     var state = api.getState();
     var id = state.activeLayout;
@@ -363,6 +391,14 @@ document.addEventListener("nav", function() {
   // Subscribe to layout state changes so the toolbar reflects them.
   var unsubscribe = api.onChange(render);
   window.addCleanup(unsubscribe);
+
+  // Subscribe to dirty-state changes — the save button highlight and
+  // its disabled state both depend on this. Calling render() re-reads
+  // both isDirty() and the active layout, so the same handler covers
+  // every state transition. The Set semantics in onDirtyChange mean
+  // re-firing for a value the listener already saw is harmless.
+  var unsubDirty = api.onDirtyChange(render);
+  window.addCleanup(unsubDirty);
 
   // Initial render. ensureLoaded resolves immediately if already
   // loaded, otherwise kicks off the network fetch and re-renders when
