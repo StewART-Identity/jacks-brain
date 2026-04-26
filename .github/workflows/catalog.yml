@@ -43,6 +43,8 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           USER_TIMEZONE: ${{ vars.USER_TIMEZONE }}
+          MCP_SERVICE_TOKEN: ${{ secrets.MCP_SERVICE_TOKEN }}
+          MCP_SERVER_URL: https://jacks-brain-mcp.stewart-identity.workers.dev/
         run: |
           if [ -n "${{ inputs.file_path }}" ]; then
             node scripts/catalog.mjs "${{ inputs.file_path }}"
