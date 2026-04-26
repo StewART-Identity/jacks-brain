@@ -87,6 +87,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     showTags,
     focusOnHover,
     enableRadial,
+    alphaDecay,
   } = JSON.parse(graph.dataset["cfg"]!) as D3Config
 
   const data: Map<SimpleSlug, ContentDetails> = new Map(
@@ -170,6 +171,13 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     .force("center", forceCenter().strength(centerForce))
     .force("link", forceLink(graphData.links).distance(linkDistance))
     .force("collide", forceCollide<NodeData>((n) => nodeRadius(n)).iterations(3))
+
+  // Optional override of D3's simulation cooling rate. The default 0.0228
+  // is too slow for graphs of any complexity — the simulation never
+  // settles, producing a perpetual "moving in water" feel as nodes drift
+  // toward an equilibrium they never quite reach. Setting this higher
+  // (e.g. 0.05) lets the layout reach rest in a few seconds.
+  if (alphaDecay !== undefined) simulation.alphaDecay(alphaDecay)
 
   const radius = (Math.min(width, height) / 2) * 0.8
   if (enableRadial) simulation.force("radial", forceRadial(radius).strength(0.2))
@@ -475,12 +483,20 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
         })
         .on("end", function dragended(event) {
           if (!event.active) simulation.alphaTarget(0)
-          event.subject.fx = null
-          event.subject.fy = null
           dragging = false
 
-          // if the time between mousedown and mouseup is short, we consider it a click
-          if (Date.now() - dragStartTime < 500) {
+          // If the time between mousedown and mouseup is short, treat
+          // this as a click (navigate to the node's page) and release
+          // the pin — clicks shouldn't accidentally lock nodes in place.
+          // If it was a real drag, leave fx/fy set so the node stays
+          // where the user dropped it. This is what eliminates the
+          // rubber-band snap-back: the node's pinned coordinates remain
+          // active after the drag, and the simulation works around it
+          // instead of pulling it back to a force-balanced position.
+          const isClick = Date.now() - dragStartTime < 500
+          if (isClick) {
+            event.subject.fx = null
+            event.subject.fy = null
             const node = graphData.nodes.find((n) => n.id === event.subject.id) as NodeData
             const targ = resolveRelative(fullSlug, node.id)
             window.spaNavigate(new URL(targ, window.location.toString()))
