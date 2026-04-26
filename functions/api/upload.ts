@@ -6,13 +6,52 @@
  * automatically on push.
  *
  * Requires env vars (set in Cloudflare Pages dashboard):
- *   GITHUB_TOKEN  — fine-grained PAT with contents:write + actions:write
- *   GITHUB_REPO   — e.g. "StewART-Identity/jacks-brain"
+ *   GITHUB_TOKEN   — fine-grained PAT with contents:write + actions:write
+ *   GITHUB_REPO    — e.g. "StewART-Identity/jacks-brain"
+ *   USER_TIMEZONE  — IANA timezone for date-prefixing uploads (e.g.
+ *                    "America/New_York"). Optional; falls back to UTC.
+ *                    See todayInUserTimezone() below for why this matters.
  */
 
 interface Env {
   GITHUB_TOKEN: string
   GITHUB_REPO: string
+  USER_TIMEZONE?: string
+}
+
+/**
+ * Today's date in YYYY-MM-DD form, computed in the configured user timezone
+ * (USER_TIMEZONE env var). Falls back to UTC if not set.
+ *
+ * Why not `new Date().toISOString().slice(0,10)`: that gives UTC, which
+ * differs from the user's local date for several hours every evening.
+ * An upload at 9 PM EDT on April 25 would get a 2026-04-26 filename
+ * prefix because UTC has already rolled over. This bug produced exactly
+ * such a filename in production today (2026-04-26-Driver-Migration-Husk.docx
+ * for an upload that happened on April 25 EDT). The bug also propagated
+ * to the catalog pipeline because catalog.mjs uses the filename's date
+ * prefix as the source page's permanent slug component.
+ *
+ * Same fix and pattern as catalog.mjs's todayInUserTimezone(). Pages
+ * Functions run on the Workers runtime, where Intl.DateTimeFormat with
+ * IANA timezones is supported.
+ */
+function todayInUserTimezone(env: Env): string {
+  const tz = env.USER_TIMEZONE || "UTC"
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date())
+  } catch {
+    // Invalid timezone string — fall back to UTC. We swallow the specific
+    // error because there's no good way to surface it to the upload caller,
+    // and an upload with a UTC-prefixed filename is much better than a
+    // failed upload.
+    return new Date().toISOString().slice(0, 10)
+  }
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -43,8 +82,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
     )
 
-    // Build filename: use original name, or generate a date-prefixed one
-    const today = new Date().toISOString().slice(0, 10)
+    // Build filename: use original name, or generate a date-prefixed one.
+    // The date prefix uses the configured user timezone — see the
+    // todayInUserTimezone() docstring for the bug history.
+    const today = todayInUserTimezone(context.env)
     const originalName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-")
     const filename = originalName.startsWith(today) ? originalName : `${today}-${originalName}`
     const path = `static/originals/${filename}`
