@@ -28,10 +28,10 @@
  * What gets reset to empty templates:
  *   - data/retention-log.md             (the audit log — keep file, empty table)
  *   - content/learn/retention.md        (the page intro — keep file, no table)
- *   - content/collection/sources/index.md
- *   - content/collection/entities/index.md
- *   - content/collection/concepts/index.md
- *   - content/collection/synthesis/index.md
+ *   - content/collection/sources/index.md     (intro only — table auto-rendered)
+ *   - content/collection/entities/index.md    (intro only — table auto-rendered)
+ *   - content/collection/concepts/index.md    (intro only — table auto-rendered)
+ *   - content/collection/synthesis/index.md   (intro only — table auto-rendered)
  *
  * What is preserved (NOT touched):
  *   - content/index.md (the custom landing page)
@@ -95,6 +95,11 @@ const WIPE_DIRS = [
 // NOTE: content/index.md is NOT in this list. It's the user's custom
 // landing page (hero image + welcome text). A fresh empty-state template
 // would destroy that design. Nuke leaves the landing page alone.
+//
+// The four collection index templates are intro-only — the listing on
+// each Collection sub-page is rendered automatically by Quartz's
+// FolderContent + PageList components from page frontmatter. No markdown
+// table goes in the body. See CLAUDE.md "Per-category index format".
 const RESET_TEMPLATES: Record<string, string> = {
   "content/learn/retention.md":
     `---\ntitle: "Retention"\n---\n\nPermanent record of every document retained in the wiki. Click a title to rename it — the underlying filename is preserved.\n`,
@@ -103,16 +108,16 @@ const RESET_TEMPLATES: Record<string, string> = {
     `# Retention Log\n\nAudit log of all cataloging operations. Read by /api/retention; rendered by the RetentionList component on /learn/retention. Do not delete this file — nuke resets it to an empty table instead.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
 
   "content/collection/sources/index.md":
-    `---\ntitle: "Sources"\n---\n\nAcquired documents and their cataloging status. Click a filename to download the original.\n\n| Content | Summary | Date |\n|---------|---------|------|\n`,
+    `---\ntitle: "Sources"\n---\n\nAcquired documents and their cataloging status. Click a filename to download the original.\n`,
 
   "content/collection/entities/index.md":
-    `---\ntitle: "Entities"\n---\n\nPeople, organizations, tools, and systems referenced across sources.\n\n| Content | Summary |\n|---------|--------|\n`,
+    `---\ntitle: "Entities"\n---\n\nPeople, organizations, tools, and systems referenced across sources.\n`,
 
   "content/collection/concepts/index.md":
-    `---\ntitle: "Concepts"\n---\n\nIdeas, theories, frameworks, and principles extracted from sources.\n\n| Content | Summary |\n|---------|--------|\n`,
+    `---\ntitle: "Concepts"\n---\n\nIdeas, theories, frameworks, and principles extracted from sources.\n`,
 
   "content/collection/synthesis/index.md":
-    `---\ntitle: "Synthesis"\n---\n\nCross-cutting analysis, comparisons, and theses drawn from multiple sources.\n\n| Content | Summary | Date |\n|---------|---------|------|\n`,
+    `---\ntitle: "Synthesis"\n---\n\nCross-cutting analysis, comparisons, and theses drawn from multiple sources.\n`,
 }
 
 // ─── HTTP helper ───────────────────────────────────────────────────────────
