@@ -164,7 +164,7 @@ FullGraph.css =
 }
 .graph-ctrl-btn {
   background: var(--light);
-  border: 1px solid var(--lightgray);
+  border: 2px solid var(--lightgray);
   border-radius: 8px;
   color: var(--dark);
   font-size: 1.5rem;
@@ -447,7 +447,7 @@ FullGraph.css =
 }
 .graph-modal-btn {
   background: var(--light);
-  border: 1px solid var(--lightgray);
+  border: 2px solid var(--lightgray);
   border-radius: 6px;
   color: var(--dark);
   font-family: inherit;
