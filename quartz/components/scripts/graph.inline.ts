@@ -157,6 +157,23 @@ function persistFilter() {
   } catch {}
 }
 
+const LABELS_ALWAYS_ON_KEY = "graph-labels-always-on"
+let labelsAlwaysOn = (function () {
+  try {
+    return localStorage.getItem(LABELS_ALWAYS_ON_KEY) === "true"
+  } catch {
+    return false
+  }
+})()
+const labelsAlwaysOnChangeListeners = new Set<(on: boolean) => void>()
+function notifyLabelsAlwaysOnChange() {
+  for (const fn of labelsAlwaysOnChangeListeners) {
+    try {
+      fn(labelsAlwaysOn)
+    } catch {}
+  }
+}
+
 const layoutChangeListeners = new Set<() => void>()
 function notifyLayoutChange() {
   for (const fn of layoutChangeListeners) {
@@ -416,11 +433,19 @@ interface GraphFilterApi {
   onChange: (fn: () => void) => () => void
 }
 
+interface GraphLabelsApi {
+  isAlwaysOn: () => boolean
+  setAlwaysOn: (on: boolean) => void
+  toggle: () => boolean
+  onChange: (fn: (on: boolean) => void) => () => void
+}
+
 declare global {
   interface Window {
     graphLayouts: GraphLayoutsApi
     graphFreeze: GraphFreezeApi
     graphFilter: GraphFilterApi
+    graphLabels: GraphLabelsApi
     __graphPositionSnapshot?: () => Record<string, LayoutPosition>
     __graphResize?: () => void
     __graphRepin?: () => void
@@ -803,6 +828,33 @@ function ensureFilterApi() {
 
 ensureFilterApi()
 
+function ensureLabelsApi() {
+  if (window.graphLabels) return
+  window.graphLabels = {
+    isAlwaysOn() {
+      return labelsAlwaysOn
+    },
+    setAlwaysOn(on: boolean) {
+      if (on === labelsAlwaysOn) return
+      labelsAlwaysOn = on
+      try {
+        localStorage.setItem(LABELS_ALWAYS_ON_KEY, on ? "true" : "false")
+      } catch {}
+      notifyLabelsAlwaysOnChange()
+    },
+    toggle() {
+      this.setAlwaysOn(!labelsAlwaysOn)
+      return labelsAlwaysOn
+    },
+    onChange(fn) {
+      labelsAlwaysOnChangeListeners.add(fn)
+      return () => labelsAlwaysOnChangeListeners.delete(fn)
+    },
+  }
+}
+
+ensureLabelsApi()
+
 type TweenNode = {
   update: (time: number) => void
   stop: () => void
@@ -1158,8 +1210,10 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     tweens.get("label")?.stop()
     const tweenGroup = new TweenGroup()
 
-    const restingScale = scale / currentTransform.k
-    const neighborScale = restingScale * 3
+    // Bumped from `scale / currentTransform.k` because the previous
+    // resting size was effectively invisible at full-screen zoom.
+    const restingScale = (scale * 1.4) / currentTransform.k
+    const neighborScale = restingScale * 3.3
     const hoveredScale = restingScale * 3.3
     for (const n of nodeRenderData) {
       const nodeId = n.simulationData.id
@@ -1180,6 +1234,20 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
             {
               alpha: 1,
               scale: { x: neighborScale, y: neighborScale },
+            },
+            100,
+          ),
+        )
+      } else if (labelsAlwaysOn) {
+        // Toggle on: render every "other" label at hovered size,
+        // full opacity. Hover bloom is still honored above; this
+        // branch only fires when the label is neither hovered
+        // nor a neighbor of the hovered node.
+        tweenGroup.add(
+          new Tweened<Text>(n.label).to(
+            {
+              alpha: 1,
+              scale: { x: hoveredScale, y: hoveredScale },
             },
             100,
           ),
@@ -1277,7 +1345,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       },
       resolution: window.devicePixelRatio * 4,
     })
-    label.scale.set(scale / currentTransform.k)
+    label.scale.set((scale * 1.4) / currentTransform.k)
 
     let oldLabelOpacity = 0
     const isTagNode = nodeId.startsWith("tags/")
@@ -1482,7 +1550,17 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           stage.position.set(transform.x, transform.y)
 
           for (const label of labelsContainer.children) {
-            label.scale.set(scale / transform.k)
+            label.scale.set((scale * 1.4) / transform.k)
+          }
+
+          // When labelsAlwaysOn is set, every label stays at full
+          // opacity regardless of zoom — the resting-fade behavior
+          // is exactly what the toggle is meant to suppress.
+          if (labelsAlwaysOn) {
+            for (const label of labelsContainer.children) {
+              label.alpha = 1
+            }
+            return
           }
 
           const opacityScaledZoom = transform.k * opacityScale
@@ -1544,6 +1622,22 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     return () => filterChangeListeners.delete(handler)
   })()
 
+  // When the labelsAlwaysOn toggle flips, push the change through
+  // renderPixiFromD3 so existing labels animate to their new state
+  // without waiting for the next hover or zoom event.
+  const unsubscribeLabelsAlwaysOn = (() => {
+    const handler = () => {
+      if (labelsAlwaysOn) {
+        for (const label of labelsContainer.children) {
+          label.alpha = 1
+        }
+      }
+      renderPixiFromD3()
+    }
+    labelsAlwaysOnChangeListeners.add(handler)
+    return () => labelsAlwaysOnChangeListeners.delete(handler)
+  })()
+
   window.__graphPositionSnapshot = () => {
     const out: Record<string, LayoutPosition> = {}
     for (const n of graphData.nodes) {
@@ -1589,6 +1683,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     stopAnimation = true
     unsubscribeFreeze()
     unsubscribeFilter()
+    unsubscribeLabelsAlwaysOn()
     app.destroy()
     if (window.__graphPositionSnapshot) {
       window.__graphPositionSnapshot = undefined
