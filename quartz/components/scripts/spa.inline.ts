@@ -43,33 +43,6 @@ function notifyNav(url: FullSlug) {
 const cleanupFns: Set<(...args: any[]) => void> = new Set()
 window.addCleanup = (fn) => cleanupFns.add(fn)
 
-// Navigation guards — components can register async functions that
-// run before SPA navigation proceeds. Each guard resolves to true
-// (allow nav) or false (cancel nav). Any single guard returning false
-// aborts the navigation.
-//
-// Why a global Set: components like the graph view need to prompt
-// "save your unsaved changes?" before the user clicks away. The
-// click listener in createRouter() consults this Set after
-// preventDefault but before calling navigate(). graph.inline.ts
-// registers its confirmLeaveIfDirty guard; other components can do
-// the same without modifying this file again.
-//
-// Lazily initialized on first access so components loading in any
-// order can register without depending on spa.inline.ts having run
-// first.
-declare global {
-  interface Window {
-    spaNavigateGuards?: Set<() => Promise<boolean>>
-  }
-}
-function getNavGuards(): Set<() => Promise<boolean>> {
-  if (!window.spaNavigateGuards) {
-    window.spaNavigateGuards = new Set()
-  }
-  return window.spaNavigateGuards
-}
-
 function startLoading() {
   const loadingBar = document.createElement("div")
   loadingBar.className = "navigation-progress"
@@ -187,34 +160,12 @@ function createRouter() {
         return
       }
 
-      // Run any registered navigation guards. If any returns false,
-      // abort the navigation. Guards are async — they typically show
-      // a modal and wait for the user's choice. We run them
-      // sequentially so a "Cancel" in the first one short-circuits
-      // before subsequent guards can interrupt the user again.
-      const guards = window.spaNavigateGuards
-      if (guards && guards.size > 0) {
-        for (const guard of guards) {
-          try {
-            const allow = await guard()
-            if (!allow) return
-          } catch {
-            // A throwing guard shouldn't block navigation — that
-            // would strand the user. Treat it as "allow" and move on.
-          }
-        }
-      }
-
       navigate(url, false)
     })
 
     window.addEventListener("popstate", (event) => {
       const { url } = getOpts(event) ?? {}
       if (window.location.hash && window.location.pathname === url?.pathname) return
-      // popstate is intentionally not guarded — by the time it fires,
-      // the browser has already changed the URL. Trying to "stay"
-      // would mean pushing the URL back, which feels wrong for the
-      // back/forward case (which is rare and deliberate).
       navigate(new URL(window.location.toString()), true)
       return
     })
@@ -261,7 +212,3 @@ if (!customElements.get("route-announcer")) {
     },
   )
 }
-
-// Suppress unused-warning — getNavGuards is exposed to other modules
-// via window.spaNavigateGuards but isn't called from inside this file.
-void getNavGuards
