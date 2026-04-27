@@ -3,7 +3,7 @@ title: "Graph View"
 summary: "Interactive map of all wiki pages and their connections. Best in fullscreen mode."
 type: concept
 created: 2026-04-26
-updated: 2026-04-26
+updated: 2026-04-27
 subjects:
   - operations
 tags:
@@ -35,11 +35,22 @@ Interactive map of all pages and their connections. Click a node to navigate to 
 ## Interactions
 
 - **Click** a node — navigate to that page.
-- **Drag** a node — move it around. When the graph is unfrozen, the simulation will gently re-flow around your change. When frozen, the node stays exactly where you drop it (and its neighbors come along, preserving the cluster's shape).
-- **Freeze** (toolbar) — pause the physics simulation entirely. Useful when you've arranged a layout you want to keep.
-- **Save layout** (toolbar) — capture the current arrangement as a named layout that survives navigation and reloads. Useful for building "views" of the graph that emphasize different relationships.
 - **Zoom** — scroll wheel or pinch.
 - **Pan** — click-and-drag the empty canvas.
+- **Drag** a node — move it. The behavior depends on the toolbar's **drag-mode** toggle (the snowflake button); see below.
+- **Save layout** (toolbar) — capture the current arrangement as a named layout that survives navigation and reloads. Useful for building "views" of the graph that emphasize different relationships.
+
+## Drag modes
+
+The graph has two drag modes, toggled by the snowflake button in the top-right toolbar.
+
+**Single-drag** (default, button not pressed). Drag a node and only that node moves; its neighbors stay put. Edges stretch to follow because they're attached at both ends, but the surrounding graph holds still. This is the calm default — useful for nudging individual nodes into place without disturbing what's around them.
+
+When the page first loads, you'll see a brief physics animation as the graph finds its initial shape. Once it settles, the layout locks: the simulation is no longer pushing nodes around, and your drags only affect the node you're holding.
+
+**Group-drag** (button pressed, snowflake lit). Drag a node and its 1-hop neighbors come along as a rigid cluster, preserving the local geometry. Useful when you want to relocate a whole subgraph as a unit — e.g. moving a hub and its satellites to a less crowded part of the canvas.
+
+A small exception: if a node has only one neighbor, group-drag falls back to single-drag for that node. Otherwise dragging a leaf would always drag its hub along, which is rarely what you want.
 
 ## Why graphs help here
 
