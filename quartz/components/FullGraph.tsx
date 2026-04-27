@@ -83,6 +83,7 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
       <div class="graph-controls">
         <button type="button" id="graph-fullscreen-btn" class="graph-ctrl-btn" title="Full screen">&#x26F6;</button>
         <button type="button" id="graph-freeze-btn" class="graph-ctrl-btn" title="Drag mode: single (click for group)" aria-pressed="false">❄</button>
+        <button type="button" id="graph-labels-btn" class="graph-ctrl-btn" title="Show all labels" aria-pressed="false">Aa</button>
         <button type="button" id="graph-filter-btn" class="graph-ctrl-btn" title="Filter by synthesis" aria-pressed="false">⚏</button>
         <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
         <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
@@ -114,7 +115,7 @@ FullGraph.css =
 #full-graph > .graph-container {
   border-radius: 8px;
   border: 1px solid var(--lightgray);
-  background-color: var(--light);
+  background-color: #15321F;
   box-sizing: border-box;
   height: 70vh;
   width: 100%;
@@ -132,7 +133,7 @@ FullGraph.css =
 }
 #full-graph:fullscreen,
 #full-graph:-webkit-full-screen {
-  background: var(--light);
+  background: #15321F;
   width: 100vw;
   height: 100vh;
   padding: 0;
