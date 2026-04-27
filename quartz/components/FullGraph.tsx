@@ -116,11 +116,11 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
         ></div>
       </div>
       <div class="graph-controls">
+        <button type="button" id="graph-fullscreen-btn" class="graph-ctrl-btn" title="Full screen">&#x26F6;</button>
         <button type="button" id="graph-freeze-btn" class="graph-ctrl-btn" title="Drag mode: single (click for group)" aria-pressed="false">❄</button>
         <button type="button" id="graph-filter-btn" class="graph-ctrl-btn" title="Filter by synthesis" aria-pressed="false">⚏</button>
         <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
         <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
-        <button type="button" id="graph-fullscreen-btn" class="graph-ctrl-btn" title="Full screen">&#x26F6;</button>
       </div>
       <div class="graph-filter-panel" id="graph-filter-panel" hidden>
         <div class="graph-filter-header">
