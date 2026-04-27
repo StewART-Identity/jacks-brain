@@ -20,6 +20,8 @@ import { registerEscapeHandler, removeAllChildren } from "./util"
 import { FullSlug, SimpleSlug, getFullSlug, resolveRelative, simplifySlug } from "../../util/path"
 import { D3Config } from "../Graph"
 
+console.log("[graph] module loading")
+
 type GraphicsInfo = {
   color: string
   gfx: Graphics
@@ -616,6 +618,7 @@ async function confirmLeaveIfDirty(action: LeaveAction): Promise<LeaveOutcome> {
 }
 
 function ensureLayoutsApi() {
+  console.log("[graph] ensureLayoutsApi called, graphLayouts exists?", !!window.graphLayouts)
   if (window.graphLayouts) return
   window.graphLayouts = {
     getState() {
@@ -720,12 +723,6 @@ function ensureLayoutsApi() {
     }
   })
 
-  // Register the SPA-nav guard so any in-page link click — sidebar,
-  // hamburger, home logo, anything that triggers SPA navigation —
-  // routes through the save-before-leave prompt when the layout is
-  // dirty. spa.inline.ts consults window.spaNavigateGuards in its
-  // click listener; each guard returns true to allow nav, false to
-  // cancel.
   if (!window.spaNavigateGuards) {
     window.spaNavigateGuards = new Set()
   }
@@ -733,6 +730,7 @@ function ensureLayoutsApi() {
     const outcome = await confirmLeaveIfDirty("spa-nav")
     return outcome === "proceed"
   })
+  console.log("[graph] guard registered, total guards now=", window.spaNavigateGuards.size)
 }
 
 ensureLayoutsApi()
