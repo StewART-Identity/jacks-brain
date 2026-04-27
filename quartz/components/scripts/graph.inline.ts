@@ -855,37 +855,6 @@ function ensureLabelsApi() {
 
 ensureLabelsApi()
 
-// Sync the labels-toggle button DOM (aria-pressed, title) with the
-// current labelsAlwaysOn state. Idempotent — safe to call repeatedly.
-function syncLabelsButton() {
-  const btn = document.getElementById("graph-labels-btn")
-  if (!btn) return
-  btn.setAttribute("aria-pressed", labelsAlwaysOn ? "true" : "false")
-  btn.setAttribute(
-    "title",
-    labelsAlwaysOn ? "Hide all labels" : "Show all labels",
-  )
-}
-
-// Module-scope click delegation for the labels toggle. Survives SPA
-// navigation because the listener is on document, not on the button
-// itself (which gets re-created on each page render). Click bubbles
-// up; we match by id and dispatch.
-document.addEventListener("click", (e) => {
-  const target = e.target
-  if (!(target instanceof Element)) return
-  const btn = target.closest("#graph-labels-btn")
-  if (!btn) return
-  e.preventDefault()
-  window.graphLabels.toggle()
-})
-
-// Keep the button DOM in sync with the API. Fires on load and every
-// nav (button gets re-rendered with default aria-pressed="false").
-labelsAlwaysOnChangeListeners.add(() => {
-  syncLabelsButton()
-})
-
 type TweenNode = {
   update: (time: number) => void
   stop: () => void
@@ -1653,15 +1622,44 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     return () => filterChangeListeners.delete(handler)
   })()
 
+  // Wire the Aa toolbar button directly to graphLabels.toggle.
+  // Direct addEventListener (not delegation) — delegation didn't
+  // fire for reasons unclear; this pattern matches the rest of the
+  // listeners in renderGraph and gets cleaned up the same way.
+  const labelsBtn = document.getElementById("graph-labels-btn")
+  const onLabelsBtnClick = (e: MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    window.graphLabels.toggle()
+  }
+  if (labelsBtn) {
+    labelsBtn.addEventListener("click", onLabelsBtnClick)
+    // Sync DOM state with persisted localStorage value on render.
+    labelsBtn.setAttribute("aria-pressed", labelsAlwaysOn ? "true" : "false")
+    labelsBtn.setAttribute(
+      "title",
+      labelsAlwaysOn ? "Hide all labels" : "Show all labels",
+    )
+  }
+
   // When the labelsAlwaysOn toggle flips, push the change through
   // renderPixiFromD3 so existing labels animate to their new state
-  // without waiting for the next hover or zoom event.
+  // without waiting for the next hover or zoom event. Also keep the
+  // button DOM in sync with the new state.
   const unsubscribeLabelsAlwaysOn = (() => {
     const handler = () => {
       if (labelsAlwaysOn) {
         for (const label of labelsContainer.children) {
           label.alpha = 1
         }
+      }
+      const btn = document.getElementById("graph-labels-btn")
+      if (btn) {
+        btn.setAttribute("aria-pressed", labelsAlwaysOn ? "true" : "false")
+        btn.setAttribute(
+          "title",
+          labelsAlwaysOn ? "Hide all labels" : "Show all labels",
+        )
       }
       renderPixiFromD3()
     }
@@ -1709,18 +1707,15 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     }
   }
 
-  // Sync labels-toggle button to current state on every render.
-  // Necessary because micromorph re-renders the button DOM with the
-  // default aria-pressed="false", and we want it to reflect the
-  // persisted localStorage value.
-  syncLabelsButton()
-
   requestAnimationFrame(animate)
   return () => {
     stopAnimation = true
     unsubscribeFreeze()
     unsubscribeFilter()
     unsubscribeLabelsAlwaysOn()
+    if (labelsBtn) {
+      labelsBtn.removeEventListener("click", onLabelsBtnClick)
+    }
     app.destroy()
     if (window.__graphPositionSnapshot) {
       window.__graphPositionSnapshot = undefined
