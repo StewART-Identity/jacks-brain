@@ -760,6 +760,24 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     }
   }
 
+  // Option B: pin every node once when the simulation first cools to
+  // rest. After this, drags only move the dragged node — neighbors
+  // stay put because they're pinned. This is the "calm Aesthete"
+  // default Jack discovered by accident when toggling Philistine on
+  // and off, and decided he wanted as the base behavior.
+  //
+  // The flag prevents re-firing on subsequent settles — a drag
+  // re-heats the simulation (alphaTarget 0.3) and cools again, which
+  // would fire 'end' a second time. We don't want to re-pin then,
+  // because the dragged node has its own fx/fy from the drag handler.
+  let calmPinApplied = false
+  simulation.on("end", () => {
+    if (calmPinApplied) return
+    if (graphFrozen) return
+    pinAllAtCurrent()
+    calmPinApplied = true
+  })
+
   if (graphFrozen) {
     pinAllAtCurrent()
     simulation.stop()
