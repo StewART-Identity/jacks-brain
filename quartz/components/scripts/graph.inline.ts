@@ -1216,6 +1216,20 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
             }
           }
           rigidBody = null
+
+          // Clear hover state on drag-end. While dragging, the dragged
+          // node was visually "in the foreground" with its neighbors
+          // highlighted; the rest of the graph was dimmed (the standard
+          // hover effect). Normally pointerleave fires when the cursor
+          // moves off a node, but during a drag the cursor stays over
+          // the dragged node — so on release, no leave event fires and
+          // the rest of the graph stays hazy until the user clicks
+          // somewhere to clear it. Force-clear here. If the cursor is
+          // genuinely still over a node, the next pointerover will
+          // re-establish hover state immediately; the user won't see a
+          // flicker.
+          updateHoverInfo(null)
+          renderPixiFromD3()
         }),
     )
   } else {
