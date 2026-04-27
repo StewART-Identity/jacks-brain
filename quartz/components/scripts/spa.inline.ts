@@ -43,16 +43,6 @@ function notifyNav(url: FullSlug) {
 const cleanupFns: Set<(...args: any[]) => void> = new Set()
 window.addCleanup = (fn) => cleanupFns.add(fn)
 
-// Navigation guards. Components register async functions here that
-// run before SPA navigation completes; each returns true to allow
-// nav, false to cancel. The graph view registers a guard that shows
-// the save-before-leave modal when the layout is dirty.
-declare global {
-  interface Window {
-    spaNavigateGuards?: Set<() => Promise<boolean>>
-  }
-}
-
 function startLoading() {
   const loadingBar = document.createElement("div")
   loadingBar.className = "navigation-progress"
@@ -168,27 +158,6 @@ function createRouter() {
         el?.scrollIntoView()
         history.pushState({}, "", url)
         return
-      }
-
-      // Run any registered nav guards before continuing. A single
-      // false result cancels the navigation; the user stays on the
-      // current page. Logging is temporary — once the prompt flow is
-      // confirmed working we'll strip these.
-      const guards = window.spaNavigateGuards
-      const guardCount = guards ? guards.size : 0
-      console.log("[spa-nav] click intercepted, guards=", guardCount, "url=", url.pathname)
-      if (guards && guards.size > 0) {
-        for (const guard of guards) {
-          try {
-            const allow = await guard()
-            console.log("[spa-nav] guard returned", allow)
-            if (!allow) return
-          } catch (err) {
-            // A throwing guard shouldn't strand the user — treat as
-            // "allow" and continue.
-            console.warn("[spa-nav] guard threw, allowing nav", err)
-          }
-        }
       }
 
       navigate(url, false)
