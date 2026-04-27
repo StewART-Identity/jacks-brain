@@ -77,11 +77,24 @@ type LayoutsState = {
 }
 
 const LAYOUTS_LOCAL_KEY = "graph-layouts-cache"
+const LAYOUTS_DIRTY_KEY = "graph-layouts-dirty"
 const LAYOUTS_FLUSH_DEBOUNCE_MS = 3000
 
 let layoutsState: LayoutsState | null = null
 let layoutsLoadPromise: Promise<LayoutsState> | null = null
-let layoutsDirty = false
+// layoutsDirty seeds from localStorage so unsaved changes from a
+// previous session persist across reloads. Without this, a tab close
+// would wipe the dirty flag and the next load would treat the cached
+// state as already-saved — fine until the user opens the tab on
+// another device, where the server would have older data than what
+// the user expected.
+let layoutsDirty = (function () {
+  try {
+    return localStorage.getItem(LAYOUTS_DIRTY_KEY) === "true"
+  } catch {
+    return false
+  }
+})()
 let flushTimer: number | null = null
 
 const dirtyChangeListeners = new Set<(dirty: boolean) => void>()
@@ -98,6 +111,15 @@ function setDirty(value: boolean) {
     return
   }
   layoutsDirty = value
+  // Persist alongside the regular cache so the dirty state survives
+  // reloads — pairs with the seed-from-localStorage init above.
+  try {
+    if (value) {
+      localStorage.setItem(LAYOUTS_DIRTY_KEY, "true")
+    } else {
+      localStorage.removeItem(LAYOUTS_DIRTY_KEY)
+    }
+  } catch {}
   notifyDirtyChange()
 }
 
@@ -202,6 +224,16 @@ function loadLayouts(): Promise<LayoutsState> {
   const cached = readLayoutsCache()
   if (cached) {
     layoutsState = cached
+    // If the cached state has unsaved changes, DO NOT overwrite it
+    // from the server — that would silently throw away the user's
+    // work. The local cache is the source of truth until the user
+    // either saves it or discards it via the prompt.
+    //
+    // If clean, refetch as before so server-side changes (e.g., from
+    // another device) eventually appear.
+    if (layoutsDirty) {
+      return Promise.resolve(cached)
+    }
     layoutsLoadPromise = fetchLayoutsFromApi()
       .then((fresh) => {
         layoutsState = fresh
@@ -317,8 +349,11 @@ function cancelScheduledFlush() {
 }
 
 function markDirty() {
+  // Pure dirty marker — does NOT trigger a flush. Saves are now
+  // exclusively user-initiated (save button, fullscreen-exit prompt,
+  // layout-switch prompt). The localStorage cache write keeps the
+  // user's in-progress work safe across tab close / reload.
   setDirty(true)
-  scheduleFlush()
   if (layoutsState) writeLayoutsCache(layoutsState)
 }
 
@@ -384,9 +419,19 @@ function ensureLayoutsApi() {
     },
     switchLayout(id) {
       if (!layoutsState) return
+      // No more auto-flush on switch. The UI layer is responsible for
+      // showing a save-before-switch prompt when the active layout is
+      // dirty. By the time switchLayout is called here, that
+      // negotiation has already happened (or there were no unsaved
+      // changes to negotiate over).
+      //
+      // SAFETY GUARD: until the UI prompt lands (separate commit),
+      // refuse to switch when dirty rather than silently discard the
+      // user's unsaved work. The dropdown click will be a no-op; the
+      // user has to save (or the prompt will be added) before switching.
       if (layoutsDirty) {
-        cancelScheduledFlush()
-        flushLayouts(true)
+        console.warn("[graph] switchLayout refused: unsaved changes")
+        return
       }
       if (id !== null && !(id in layoutsState.layouts)) return
       layoutsState.activeLayout = id
@@ -462,17 +507,24 @@ function ensureLayoutsApi() {
     },
   }
 
-  const onContextLoss = () => {
+  // Browser-native "Leave site? Changes you may not be saved" prompt
+  // when the tab is closed or refreshed with unsaved changes. We don't
+  // get to customize the text — modern browsers ignore custom strings
+  // for security — but the prompt itself fires reliably.
+  //
+  // The previous implementation silently saved via sendBeacon on
+  // pagehide/visibilitychange. That violated "user controls when data
+  // persists," so it's gone. Local cache (writeLayoutsCache in
+  // markDirty) plus the dirty flag's own localStorage key together
+  // ensure unsaved work survives across tab close even without a
+  // server flush.
+  window.addEventListener("beforeunload", (e) => {
     if (layoutsDirty) {
-      cancelScheduledFlush()
-      flushLayouts(true)
+      e.preventDefault()
+      // Required for some browsers to actually show the prompt:
+      e.returnValue = ""
     }
-  }
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") onContextLoss()
   })
-  window.addEventListener("pagehide", onContextLoss)
-  window.addEventListener("beforeunload", onContextLoss)
 }
 
 ensureLayoutsApi()
