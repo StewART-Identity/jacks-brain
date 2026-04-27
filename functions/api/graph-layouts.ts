@@ -107,9 +107,15 @@ function isSafeSlugKey(s: unknown): s is string {
   // Position keys are page slugs; they appear in the JSON file as object
   // keys. Allow the slug character set plus '/' for nested slugs (e.g.
   // "tags/foo"). No leading dots, no '..'.
+  //
+  // Special case: '/' alone is the legitimate slug for the wiki root
+  // (the home/index page). Quartz's path utility produces it. We allow
+  // it explicitly while still rejecting any *other* leading-slash key
+  // as a path-traversal guard ("/etc/passwd", "/../foo", etc).
   if (typeof s !== "string" || s.length === 0 || s.length > 300) return false
   if (s.includes("..")) return false
-  if (s.startsWith(".") || s.startsWith("/")) return false
+  if (s.startsWith(".")) return false
+  if (s !== "/" && s.startsWith("/")) return false
   return /^[a-z0-9._/-]+$/i.test(s)
 }
 
