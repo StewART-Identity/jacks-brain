@@ -421,6 +421,7 @@ declare global {
     graphLayouts: GraphLayoutsApi
     graphFreeze: GraphFreezeApi
     graphFilter: GraphFilterApi
+    spaNavigateGuards?: Set<() => Promise<boolean>>
     __graphPositionSnapshot?: () => Record<string, LayoutPosition>
     __graphResize?: () => void
     __graphRepin?: () => void
@@ -717,6 +718,20 @@ function ensureLayoutsApi() {
       e.preventDefault()
       e.returnValue = ""
     }
+  })
+
+  // Register the SPA-nav guard so any in-page link click — sidebar,
+  // hamburger, home logo, anything that triggers SPA navigation —
+  // routes through the save-before-leave prompt when the layout is
+  // dirty. spa.inline.ts consults window.spaNavigateGuards in its
+  // click listener; each guard returns true to allow nav, false to
+  // cancel.
+  if (!window.spaNavigateGuards) {
+    window.spaNavigateGuards = new Set()
+  }
+  window.spaNavigateGuards.add(async () => {
+    const outcome = await confirmLeaveIfDirty("spa-nav")
+    return outcome === "proceed"
   })
 }
 
