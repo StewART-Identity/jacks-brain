@@ -331,6 +331,57 @@ function flushLayouts(viaBeacon: boolean): boolean {
   return true
 }
 
+// Async variant of flushLayouts. Resolves true on success, false on
+// any failure (network error, HTTP non-2xx, validation rejection).
+// The save-before-leave prompt awaits this so it can show an error
+// state and keep the modal open if the save failed — instead of the
+// fire-and-forget flushLayouts behavior, which would let the user
+// "save" successfully on the UI side while the server actually
+// rejected the payload.
+async function flushLayoutsAsync(): Promise<boolean> {
+  if (!layoutsDirty || !layoutsState) return true // nothing to save = success
+  const body = buildPostBody(layoutsState)
+  try {
+    const res = await fetch("/api/graph-layouts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body,
+    })
+    if (res.ok) {
+      setDirty(false)
+      try {
+        const json = (await res.json()) as { sha?: string | null }
+        if (layoutsState && json && typeof json.sha === "string") {
+          layoutsState.sha = json.sha
+          writeLayoutsCache(layoutsState)
+        }
+      } catch {}
+      return true
+    }
+    // Non-2xx — could be validation (400), auth (403), conflict (409),
+    // or a server-side problem. Caller will show the error in the
+    // modal and let the user try again or pick discard / cancel.
+    return false
+  } catch {
+    return false
+  }
+}
+
+// Throw away in-progress changes and reload from the server. Used
+// when the user picks "Discard" in the save-before-leave prompt.
+// Soft-discard: we mutate the in-memory state, write the fresh cache,
+// clear the dirty flag, then notify any listeners. The graph itself
+// re-pins via window.__graphRepin (set up in renderGraph). Caller is
+// responsible for invoking that after this resolves.
+async function discardLayoutChanges(): Promise<void> {
+  const fresh = await fetchLayoutsFromApi()
+  layoutsState = fresh
+  writeLayoutsCache(fresh)
+  setDirty(false)
+  notifyLayoutChange()
+}
+
 function scheduleFlush() {
   if (flushTimer !== null) {
     clearTimeout(flushTimer)
@@ -368,8 +419,22 @@ interface GraphLayoutsApi {
   onChange: (fn: () => void) => () => void
   isDirty: () => boolean
   flushNow: () => boolean
+  flushNowAsync: () => Promise<boolean>
+  discardChanges: () => Promise<void>
+  confirmLeaveIfDirty: (action: LeaveAction) => Promise<LeaveOutcome>
   onDirtyChange: (fn: (dirty: boolean) => void) => () => void
 }
+
+// LeaveAction tells confirmLeaveIfDirty which copy to show in the
+// modal. The three callers (fullscreen exit, layout switch, in-graph
+// navigation) get phrasing tailored to what's about to happen.
+type LeaveAction = "exit-fullscreen" | "switch-layout" | "spa-nav"
+
+// LeaveOutcome is what the caller does next:
+//   - "proceed" means "go ahead, do the thing you were about to do"
+//     (returned for save-success, discard, and not-dirty)
+//   - "cancel" means "stop, do not proceed"
+type LeaveOutcome = "proceed" | "cancel"
 
 interface GraphFreezeApi {
   isFrozen: () => boolean
@@ -405,6 +470,232 @@ declare global {
   }
 }
 
+// ─── Save-before-leave confirmation modal ────────────────────────────
+//
+// One modal, three callers (fullscreen exit, layout switch, in-graph
+// navigation). Module-scope DOM and state. Promise-based so callers
+// can `await confirmLeaveIfDirty(...)` and act on the result.
+//
+// Why a custom modal instead of window.confirm(): three options needed
+// (Save / Discard / Cancel), not the binary OK/Cancel that confirm()
+// gives. Plus we need to show an error in the modal if Save fails,
+// and stay open while the user retries.
+
+interface ModalElements {
+  overlay: HTMLDivElement
+  title: HTMLHeadingElement
+  message: HTMLParagraphElement
+  layoutName: HTMLElement
+  error: HTMLDivElement
+  saveBtn: HTMLButtonElement
+  discardBtn: HTMLButtonElement
+  cancelBtn: HTMLButtonElement
+}
+
+let modalEls: ModalElements | null = null
+
+function ensureModalDom(): ModalElements {
+  if (modalEls) return modalEls
+
+  const overlay = document.createElement("div")
+  overlay.id = "graph-confirm-modal"
+  overlay.className = "graph-modal-overlay"
+  overlay.hidden = true
+
+  // Inline the structure rather than using innerHTML to keep
+  // references and avoid a parse step. The classes are styled by
+  // FullGraph.tsx's CSS block.
+  const card = document.createElement("div")
+  card.className = "graph-modal-card"
+  card.setAttribute("role", "dialog")
+  card.setAttribute("aria-modal", "true")
+  card.setAttribute("aria-labelledby", "graph-modal-title")
+
+  const title = document.createElement("h3")
+  title.id = "graph-modal-title"
+  title.className = "graph-modal-title"
+  title.textContent = "Unsaved changes"
+
+  const message = document.createElement("p")
+  message.className = "graph-modal-message"
+  // The layout name lives in its own span so we can update it
+  // without rebuilding the surrounding sentence.
+  const layoutName = document.createElement("strong")
+  layoutName.className = "graph-modal-layout-name"
+
+  const error = document.createElement("div")
+  error.className = "graph-modal-error"
+  error.hidden = true
+
+  const buttons = document.createElement("div")
+  buttons.className = "graph-modal-buttons"
+
+  const cancelBtn = document.createElement("button")
+  cancelBtn.type = "button"
+  cancelBtn.className = "graph-modal-btn"
+  cancelBtn.textContent = "Cancel"
+
+  const discardBtn = document.createElement("button")
+  discardBtn.type = "button"
+  discardBtn.className = "graph-modal-btn graph-modal-btn-discard"
+  discardBtn.textContent = "Discard"
+
+  const saveBtn = document.createElement("button")
+  saveBtn.type = "button"
+  saveBtn.className = "graph-modal-btn graph-modal-btn-primary"
+  saveBtn.textContent = "Save"
+
+  buttons.appendChild(cancelBtn)
+  buttons.appendChild(discardBtn)
+  buttons.appendChild(saveBtn)
+
+  card.appendChild(title)
+  card.appendChild(message)
+  card.appendChild(error)
+  card.appendChild(buttons)
+  overlay.appendChild(card)
+  document.body.appendChild(overlay)
+
+  modalEls = { overlay, title, message, layoutName, error, saveBtn, discardBtn, cancelBtn }
+  return modalEls
+}
+
+// Phrasing for each leave-action. Kept short — long modal copy gets
+// ignored. The active layout name is interpolated into the message
+// at show-time.
+function modalCopyForAction(action: LeaveAction): { title: string; lead: string } {
+  switch (action) {
+    case "exit-fullscreen":
+      return {
+        title: "Exit fullscreen with unsaved changes?",
+        lead: "You have unsaved changes to ",
+      }
+    case "switch-layout":
+      return {
+        title: "Switch layouts with unsaved changes?",
+        lead: "You have unsaved changes to ",
+      }
+    case "spa-nav":
+      return {
+        title: "Leave with unsaved changes?",
+        lead: "You have unsaved changes to ",
+      }
+  }
+}
+
+// Returns "proceed" if the user wants to continue (saved or discarded
+// successfully, or wasn't dirty to begin with), or "cancel" if they
+// backed out. Caller is responsible for what "proceed" means.
+async function confirmLeaveIfDirty(action: LeaveAction): Promise<LeaveOutcome> {
+  if (!layoutsDirty) return "proceed"
+  const els = ensureModalDom()
+
+  const active = getActiveLayout()
+  const layoutLabel = active?.name ?? "this layout"
+  const copy = modalCopyForAction(action)
+  els.title.textContent = copy.title
+  // Rebuild the message paragraph: "You have unsaved changes to <n>."
+  while (els.message.firstChild) els.message.removeChild(els.message.firstChild)
+  els.message.appendChild(document.createTextNode(copy.lead))
+  els.layoutName.textContent = layoutLabel
+  els.message.appendChild(els.layoutName)
+  els.message.appendChild(document.createTextNode("."))
+
+  els.error.hidden = true
+  els.error.textContent = ""
+  els.saveBtn.disabled = false
+  els.discardBtn.disabled = false
+  els.cancelBtn.disabled = false
+  els.overlay.hidden = false
+
+  // Focus the safe option (Cancel) on open so an accidental Enter
+  // doesn't immediately confirm. Save is destructive in the wrong
+  // direction (commits half-finished work to server); Discard is
+  // destructive in the other direction (drops unsaved work). Cancel
+  // is the only no-op default.
+  els.cancelBtn.focus()
+
+  return new Promise<LeaveOutcome>((resolve) => {
+    const cleanup = () => {
+      els.overlay.hidden = true
+      els.saveBtn.removeEventListener("click", onSave)
+      els.discardBtn.removeEventListener("click", onDiscard)
+      els.cancelBtn.removeEventListener("click", onCancel)
+      els.overlay.removeEventListener("click", onOverlayClick)
+      document.removeEventListener("keydown", onKeyDown)
+    }
+
+    const onSave = async () => {
+      els.saveBtn.disabled = true
+      els.discardBtn.disabled = true
+      els.cancelBtn.disabled = true
+      els.error.hidden = true
+      els.saveBtn.textContent = "Saving…"
+      const ok = await flushLayoutsAsync()
+      if (ok) {
+        cleanup()
+        els.saveBtn.textContent = "Save"
+        resolve("proceed")
+      } else {
+        // Save failed — keep modal open so the user can try again,
+        // discard, or cancel. The error message is intentionally
+        // generic; the network tab has the specifics if they need
+        // them.
+        els.saveBtn.textContent = "Save"
+        els.error.textContent =
+          "Couldn't save your changes. Try again, or discard / cancel."
+        els.error.hidden = false
+        els.saveBtn.disabled = false
+        els.discardBtn.disabled = false
+        els.cancelBtn.disabled = false
+      }
+    }
+
+    const onDiscard = async () => {
+      els.saveBtn.disabled = true
+      els.discardBtn.disabled = true
+      els.cancelBtn.disabled = true
+      els.discardBtn.textContent = "Discarding…"
+      try {
+        await discardLayoutChanges()
+        // Repin the live graph(s) from the freshly-loaded server
+        // state. __graphRepin is set up by renderGraph; it might be
+        // unset if no graph is currently rendered, in which case
+        // we just skip — the next render will pick up the fresh
+        // state on its own.
+        if (window.__graphRepin) window.__graphRepin()
+      } catch {}
+      els.discardBtn.textContent = "Discard"
+      cleanup()
+      resolve("proceed")
+    }
+
+    const onCancel = () => {
+      cleanup()
+      resolve("cancel")
+    }
+
+    const onOverlayClick = (e: MouseEvent) => {
+      // Click on the dim background (but not the card itself) =
+      // cancel. Same convention as most modals.
+      if (e.target === els.overlay) onCancel()
+    }
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault()
+        onCancel()
+      }
+    }
+
+    els.saveBtn.addEventListener("click", onSave)
+    els.discardBtn.addEventListener("click", onDiscard)
+    els.cancelBtn.addEventListener("click", onCancel)
+    els.overlay.addEventListener("click", onOverlayClick)
+    document.addEventListener("keydown", onKeyDown)
+  })
+}
+
 function ensureLayoutsApi() {
   if (window.graphLayouts) return
   window.graphLayouts = {
@@ -419,20 +710,11 @@ function ensureLayoutsApi() {
     },
     switchLayout(id) {
       if (!layoutsState) return
-      // No more auto-flush on switch. The UI layer is responsible for
-      // showing a save-before-switch prompt when the active layout is
-      // dirty. By the time switchLayout is called here, that
-      // negotiation has already happened (or there were no unsaved
-      // changes to negotiate over).
-      //
-      // SAFETY GUARD: until the UI prompt lands (separate commit),
-      // refuse to switch when dirty rather than silently discard the
-      // user's unsaved work. The dropdown click will be a no-op; the
-      // user has to save (or the prompt will be added) before switching.
-      if (layoutsDirty) {
-        console.warn("[graph] switchLayout refused: unsaved changes")
-        return
-      }
+      // No more auto-flush on switch. The UI layer (PageTitle.tsx)
+      // calls confirmLeaveIfDirty before switching, so by the time
+      // we get here the user has either saved, discarded, or
+      // confirmed they're OK with the dirty state staying. We just
+      // do the switch.
       if (id !== null && !(id in layoutsState.layouts)) return
       layoutsState.activeLayout = id
       markDirty()
@@ -500,6 +782,16 @@ function ensureLayoutsApi() {
     flushNow() {
       cancelScheduledFlush()
       return flushLayouts(false)
+    },
+    flushNowAsync() {
+      cancelScheduledFlush()
+      return flushLayoutsAsync()
+    },
+    discardChanges() {
+      return discardLayoutChanges()
+    },
+    confirmLeaveIfDirty(action) {
+      return confirmLeaveIfDirty(action)
     },
     onDirtyChange(fn) {
       dirtyChangeListeners.add(fn)
@@ -1245,7 +1537,15 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
             event.subject.fy = null
             const node = graphData.nodes.find((n) => n.id === event.subject.id) as NodeData
             const targ = resolveRelative(fullSlug, node.id)
-            window.spaNavigate(new URL(targ, window.location.toString()))
+            // Navigate via SPA, but only after the dirty-check prompt
+            // (if any) resolves. The IIFE is here because d3 drag
+            // handlers aren't async.
+            void (async () => {
+              const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
+              if (outcome === "proceed") {
+                window.spaNavigate(new URL(targ, window.location.toString()))
+              }
+            })()
           } else {
             const active = getActiveLayout()
             if (active && layoutsState && layoutsState.activeLayout) {
@@ -1286,9 +1586,12 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     )
   } else {
     for (const node of nodeRenderData) {
-      node.gfx.on("click", () => {
+      node.gfx.on("click", async () => {
         const targ = resolveRelative(fullSlug, node.simulationData.id)
-        window.spaNavigate(new URL(targ, window.location.toString()))
+        const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
+        if (outcome === "proceed") {
+          window.spaNavigate(new URL(targ, window.location.toString()))
+        }
       })
     }
   }
@@ -1499,7 +1802,7 @@ document.addEventListener("nav", async (e: CustomEventMap["nav"]) => {
     if (e.key === "g" && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
       e.preventDefault()
       const anyGlobalGraphOpen = containers.some((container) =>
-        container.classList.contains("active"),
+        container.classList.contains(",
       )
       anyGlobalGraphOpen ? hideGlobalGraph() : renderGlobalGraph()
     }
