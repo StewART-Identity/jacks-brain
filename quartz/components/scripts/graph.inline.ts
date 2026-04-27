@@ -444,6 +444,15 @@ interface ModalElements {
 let modalEls: ModalElements | null = null
 
 function ensureModalDom(): ModalElements {
+  // If we have a cached modal but it's been detached from the
+  // document (typically because Quartz's SPA layer replaced
+  // document.body during navigation), throw away the cache and
+  // rebuild. Otherwise we'd return a reference to a dead element
+  // whose listeners never fire and whose visibility changes have
+  // no effect on the page the user is looking at.
+  if (modalEls && !document.body.contains(modalEls.overlay)) {
+    modalEls = null
+  }
   if (modalEls) return modalEls
 
   const overlay = document.createElement("div")
