@@ -3,7 +3,7 @@
     "jacklayout2": {
       "name": "JackLayout2",
       "createdAt": "2026-04-27T18:07:06.419Z",
-      "updatedAt": "2026-04-27T23:09:40.977Z",
+      "updatedAt": "2026-04-27T23:19:53.600Z",
       "positions": {
         "application/help": {
           "x": 710.1144599168772,
@@ -110,7 +110,7 @@
           "y": 506.5258683663561
         },
         "visualize/graph-view": {
-          "x": 1114.3538981750567,
+          "x": 1109.975457893892,
           "y": 320.6600184295577
         },
         "visualize/": {
