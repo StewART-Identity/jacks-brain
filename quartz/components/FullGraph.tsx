@@ -83,7 +83,7 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
       <div class="graph-controls">
         <button type="button" id="graph-fullscreen-btn" class="graph-ctrl-btn" title="Full screen">&#x26F6;</button>
         <button type="button" id="graph-freeze-btn" class="graph-ctrl-btn" title="Drag mode: single (click for group)" aria-pressed="false">❄</button>
-        <button type="button" id="graph-labels-btn" class="graph-ctrl-btn" title="Show all labels" aria-pressed="false">Aa</button>
+        <button type="button" id="graph-labels-btn" class="graph-ctrl-btn graph-ctrl-btn-text" title="Show all labels" aria-pressed="false">Aa</button>
         <button type="button" id="graph-filter-btn" class="graph-ctrl-btn" title="Filter by synthesis" aria-pressed="false">⚏</button>
         <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
         <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
@@ -115,7 +115,7 @@ FullGraph.css =
 #full-graph > .graph-container {
   border-radius: 8px;
   border: 1px solid var(--lightgray);
-  background-color: #15321F;
+  background-color: var(--light);
   box-sizing: border-box;
   height: 70vh;
   width: 100%;
@@ -133,7 +133,7 @@ FullGraph.css =
 }
 #full-graph:fullscreen,
 #full-graph:-webkit-full-screen {
-  background: #15321F;
+  background: var(--light);
   width: 100vw;
   height: 100vh;
   padding: 0;
@@ -188,6 +188,14 @@ FullGraph.css =
   opacity: 1;
   border-color: var(--secondary);
   color: var(--secondary);
+}
+/* For control buttons whose label is letters (e.g. "Aa") rather
+   than a single icon glyph. Smaller font so the text fits and
+   centers neatly inside the 2.8rem square. */
+.graph-ctrl-btn-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .graph-layouts {
