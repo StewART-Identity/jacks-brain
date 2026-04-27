@@ -80,6 +80,14 @@ const LAYOUTS_LOCAL_KEY = "graph-layouts-cache"
 const LAYOUTS_DIRTY_KEY = "graph-layouts-dirty"
 const LAYOUTS_FLUSH_DEBOUNCE_MS = 3000
 
+// Double-click detection window for node navigation. A second click
+// on the same node within this many ms counts as a double-click and
+// triggers navigation (with the save-before-leave prompt). Anything
+// slower than this is treated as two separate single-clicks (each
+// just unpins). 400ms matches the OS-level double-click default on
+// most platforms.
+const NODE_DOUBLE_CLICK_MS = 400
+
 let layoutsState: LayoutsState | null = null
 let layoutsLoadPromise: Promise<LayoutsState> | null = null
 let layoutsDirty = (function () {
@@ -90,6 +98,12 @@ let layoutsDirty = (function () {
   }
 })()
 let flushTimer: number | null = null
+
+// Last node-click bookkeeping for double-click detection. Module-scope
+// so it survives across the multiple gfx click handlers within a render.
+// Reset on a render boundary by setting lastClickNodeId to null below.
+let lastClickNodeId: string | null = null
+let lastClickTime = 0
 
 const dirtyChangeListeners = new Set<(dirty: boolean) => void>()
 function notifyDirtyChange() {
@@ -421,6 +435,7 @@ declare global {
     graphLayouts: GraphLayoutsApi
     graphFreeze: GraphFreezeApi
     graphFilter: GraphFilterApi
+    spaNavigateGuards?: Set<() => Promise<boolean>>
     __graphPositionSnapshot?: () => Record<string, LayoutPosition>
     __graphResize?: () => void
     __graphRepin?: () => void
@@ -717,6 +732,20 @@ function ensureLayoutsApi() {
       e.preventDefault()
       e.returnValue = ""
     }
+  })
+
+  // Register the SPA-nav guard so any in-page link click — sidebar,
+  // hamburger, home logo, anything that triggers SPA navigation —
+  // routes through the save-before-leave prompt when the layout is
+  // dirty. spa.inline.ts consults window.spaNavigateGuards in its
+  // click listener; each guard returns true to allow nav, false to
+  // cancel.
+  if (!window.spaNavigateGuards) {
+    window.spaNavigateGuards = new Set()
+  }
+  window.spaNavigateGuards.add(async () => {
+    const outcome = await confirmLeaveIfDirty("spa-nav")
+    return outcome === "proceed"
   })
 }
 
@@ -1124,6 +1153,30 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     }
   }
 
+  // Reset double-click bookkeeping on each render — a fresh graph
+  // shouldn't inherit a half-completed double-click intent from the
+  // previous one.
+  lastClickNodeId = null
+  lastClickTime = 0
+
+  // Helper used by both drag-end and the no-drag click handler.
+  // Returns true if this click completes a double-click (and thus
+  // navigation should fire); false if it's the first click of a
+  // potential double or just a single click.
+  function recordClickAndCheckDouble(nodeId: string): boolean {
+    const now = Date.now()
+    const isDouble =
+      lastClickNodeId === nodeId && now - lastClickTime < NODE_DOUBLE_CLICK_MS
+    if (isDouble) {
+      lastClickNodeId = null
+      lastClickTime = 0
+      return true
+    }
+    lastClickNodeId = nodeId
+    lastClickTime = now
+    return false
+  }
+
   let dragStartTime = 0
   let dragStartX = 0
   let dragStartY = 0
@@ -1419,16 +1472,27 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           const dist = Math.sqrt(dx * dx + dy * dy)
           const isClick = dist < 5 && Date.now() - dragStartTime < 500
           if (isClick) {
+            // Single click: unpin the node so it floats back into the
+            // simulation. Useful affordance — sometimes you want to
+            // release a node that you (or a previous session) pinned.
+            //
+            // If this click completes a double-click on the same node,
+            // additionally fire the navigation prompt and follow the
+            // link. The unpin is harmless in that case (we're leaving
+            // the page anyway), so we don't try to undo it.
             event.subject.fx = null
             event.subject.fy = null
-            const node = graphData.nodes.find((n) => n.id === event.subject.id) as NodeData
-            const targ = resolveRelative(fullSlug, node.id)
-            void (async () => {
-              const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
-              if (outcome === "proceed") {
-                window.spaNavigate(new URL(targ, window.location.toString()))
-              }
-            })()
+            const nodeId = event.subject.id as string
+            if (recordClickAndCheckDouble(nodeId)) {
+              const node = graphData.nodes.find((n) => n.id === nodeId) as NodeData
+              const targ = resolveRelative(fullSlug, node.id)
+              void (async () => {
+                const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
+                if (outcome === "proceed") {
+                  window.spaNavigate(new URL(targ, window.location.toString()))
+                }
+              })()
+            }
           } else {
             const active = getActiveLayout()
             if (active && layoutsState && layoutsState.activeLayout) {
@@ -1457,8 +1521,13 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
         }),
     )
   } else {
+    // Drag-disabled mode (rare — used by some embedded graph configs).
+    // Same double-click-to-navigate behavior, since there's no drag
+    // gesture to disambiguate from.
     for (const node of nodeRenderData) {
       node.gfx.on("click", async () => {
+        const nodeId = node.simulationData.id as string
+        if (!recordClickAndCheckDouble(nodeId)) return
         const targ = resolveRelative(fullSlug, node.simulationData.id)
         const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
         if (outcome === "proceed") {
