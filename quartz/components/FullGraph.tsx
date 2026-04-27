@@ -116,7 +116,7 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
         ></div>
       </div>
       <div class="graph-controls">
-        <button type="button" id="graph-freeze-btn" class="graph-ctrl-btn" title="Freeze layout (no physics)" aria-pressed="false">❄</button>
+        <button type="button" id="graph-freeze-btn" class="graph-ctrl-btn" title="Drag mode: single (click for group)" aria-pressed="false">❄</button>
         <button type="button" id="graph-filter-btn" class="graph-ctrl-btn" title="Filter by synthesis" aria-pressed="false">⚏</button>
         <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
         <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
@@ -221,9 +221,10 @@ FullGraph.css =
 }
 .graph-ctrl-btn[aria-pressed="true"] {
   /* Active toggle state — distinguish from a momentary click. The
-     freeze button uses this when physics is paused. Border + opacity
-     change so it reads as "engaged" without inventing a new color
-     that fights the existing palette. */
+     drag-mode button uses this when the graph is in group-drag (was
+     called "frozen" pre-Option B). Border + opacity change so it reads
+     as "engaged" without inventing a new color that fights the
+     existing palette. */
   opacity: 1;
   border-color: var(--secondary);
   color: var(--secondary);
