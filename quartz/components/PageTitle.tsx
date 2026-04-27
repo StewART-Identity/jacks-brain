@@ -109,10 +109,13 @@ document.addEventListener("nav", function() {
     window.addCleanup(function() { zoomOutBtn.removeEventListener("click", onZoomOut); });
   }
 
-  // ── Freeze toggle ──────────────────────────────────────────────────
-  // Pauses the d3 force simulation so drags don't ripple through the
-  // graph. The setting persists in localStorage; the button reflects
-  // current state via aria-pressed and the active styling.
+  // ── Drag-mode toggle ───────────────────────────────────────────────
+  // Toggles between single-drag (default — drag a node, only that node
+  // moves) and group-drag (drag a node, its 1-hop neighbors come along
+  // as a rigid cluster). Internally the API is still called graphFreeze
+  // for legacy reasons; pressed=true means group-drag. The setting
+  // persists in localStorage; the button reflects state via aria-pressed
+  // and the active styling.
   var freezeBtn = document.getElementById("graph-freeze-btn");
   if (freezeBtn && window.graphFreeze) {
     var freezeApi = window.graphFreeze;
@@ -120,8 +123,10 @@ document.addEventListener("nav", function() {
       var pressed = freezeApi.isFrozen();
       freezeBtn.setAttribute("aria-pressed", pressed ? "true" : "false");
       // Title updates to indicate what the click will do, not the
-      // current state — clearer affordance than "Frozen / Unfrozen".
-      freezeBtn.setAttribute("title", pressed ? "Unfreeze layout (resume physics)" : "Freeze layout (no physics)");
+      // current state — clearer affordance than naming the state
+      // directly. Pressed = group-drag is active; not pressed =
+      // single-drag is active (the calm default).
+      freezeBtn.setAttribute("title", pressed ? "Drag mode: group (click for single)" : "Drag mode: single (click for group)");
     };
     var onFreezeClick = function() { freezeApi.toggle(); };
     freezeBtn.addEventListener("click", onFreezeClick);
