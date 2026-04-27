@@ -20,8 +20,6 @@ import { registerEscapeHandler, removeAllChildren } from "./util"
 import { FullSlug, SimpleSlug, getFullSlug, resolveRelative, simplifySlug } from "../../util/path"
 import { D3Config } from "../Graph"
 
-console.log("[graph] module loading")
-
 type GraphicsInfo = {
   color: string
   gfx: Graphics
@@ -423,7 +421,6 @@ declare global {
     graphLayouts: GraphLayoutsApi
     graphFreeze: GraphFreezeApi
     graphFilter: GraphFilterApi
-    spaNavigateGuards?: Set<() => Promise<boolean>>
     __graphPositionSnapshot?: () => Record<string, LayoutPosition>
     __graphResize?: () => void
     __graphRepin?: () => void
@@ -444,15 +441,6 @@ interface ModalElements {
 let modalEls: ModalElements | null = null
 
 function ensureModalDom(): ModalElements {
-  // If we have a cached modal but it's been detached from the
-  // document (typically because Quartz's SPA layer replaced
-  // document.body during navigation), throw away the cache and
-  // rebuild. Otherwise we'd return a reference to a dead element
-  // whose listeners never fire and whose visibility changes have
-  // no effect on the page the user is looking at.
-  if (modalEls && !document.body.contains(modalEls.overlay)) {
-    modalEls = null
-  }
   if (modalEls) return modalEls
 
   const overlay = document.createElement("div")
@@ -627,7 +615,6 @@ async function confirmLeaveIfDirty(action: LeaveAction): Promise<LeaveOutcome> {
 }
 
 function ensureLayoutsApi() {
-  console.log("[graph] ensureLayoutsApi called, graphLayouts exists?", !!window.graphLayouts)
   if (window.graphLayouts) return
   window.graphLayouts = {
     getState() {
@@ -731,15 +718,6 @@ function ensureLayoutsApi() {
       e.returnValue = ""
     }
   })
-
-  if (!window.spaNavigateGuards) {
-    window.spaNavigateGuards = new Set()
-  }
-  window.spaNavigateGuards.add(async () => {
-    const outcome = await confirmLeaveIfDirty("spa-nav")
-    return outcome === "proceed"
-  })
-  console.log("[graph] guard registered, total guards now=", window.spaNavigateGuards.size)
 }
 
 ensureLayoutsApi()
