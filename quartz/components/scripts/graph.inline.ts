@@ -80,12 +80,6 @@ const LAYOUTS_LOCAL_KEY = "graph-layouts-cache"
 const LAYOUTS_DIRTY_KEY = "graph-layouts-dirty"
 const LAYOUTS_FLUSH_DEBOUNCE_MS = 3000
 
-// Double-click detection window for node navigation. A second click
-// on the same node within this many ms counts as a double-click and
-// triggers navigation (with the save-before-leave prompt). Anything
-// slower than this is treated as two separate single-clicks (each
-// just unpins). 400ms matches the OS-level double-click default on
-// most platforms.
 const NODE_DOUBLE_CLICK_MS = 400
 
 let layoutsState: LayoutsState | null = null
@@ -99,11 +93,15 @@ let layoutsDirty = (function () {
 })()
 let flushTimer: number | null = null
 
-// Last node-click bookkeeping for double-click detection. Module-scope
-// so it survives across the multiple gfx click handlers within a render.
-// Reset on a render boundary by setting lastClickNodeId to null below.
 let lastClickNodeId: string | null = null
 let lastClickTime = 0
+// Pending deferred-unpin timer. Set when a first click arrives so the
+// unpin happens AFTER the double-click window expires; cancelled if a
+// second click arrives in time. Without this, the unpin fires
+// synchronously on the first click and the simulation drifts the
+// node out from under the cursor before the second tap can land.
+let pendingUnpinTimer: number | null = null
+let pendingUnpinNode: NodeData | null = null
 
 const dirtyChangeListeners = new Set<(dirty: boolean) => void>()
 function notifyDirtyChange() {
@@ -734,12 +732,6 @@ function ensureLayoutsApi() {
     }
   })
 
-  // Register the SPA-nav guard so any in-page link click — sidebar,
-  // hamburger, home logo, anything that triggers SPA navigation —
-  // routes through the save-before-leave prompt when the layout is
-  // dirty. spa.inline.ts consults window.spaNavigateGuards in its
-  // click listener; each guard returns true to allow nav, false to
-  // cancel.
   if (!window.spaNavigateGuards) {
     window.spaNavigateGuards = new Set()
   }
@@ -1154,15 +1146,47 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
 
   // Reset double-click bookkeeping on each render — a fresh graph
-  // shouldn't inherit a half-completed double-click intent from the
-  // previous one.
+  // shouldn't inherit a half-completed double-click intent or a
+  // pending unpin from the previous one.
   lastClickNodeId = null
   lastClickTime = 0
+  if (pendingUnpinTimer !== null) {
+    clearTimeout(pendingUnpinTimer)
+    pendingUnpinTimer = null
+  }
+  pendingUnpinNode = null
 
-  // Helper used by both drag-end and the no-drag click handler.
-  // Returns true if this click completes a double-click (and thus
-  // navigation should fire); false if it's the first click of a
-  // potential double or just a single click.
+  // Schedule a deferred unpin for the given node. If a second click
+  // arrives within the double-click window, the caller cancels this
+  // timer and navigates instead.
+  function scheduleDeferredUnpin(node: NodeData) {
+    if (pendingUnpinTimer !== null) {
+      clearTimeout(pendingUnpinTimer)
+    }
+    pendingUnpinNode = node
+    pendingUnpinTimer = window.setTimeout(() => {
+      pendingUnpinTimer = null
+      if (pendingUnpinNode) {
+        pendingUnpinNode.fx = null
+        pendingUnpinNode.fy = null
+        pendingUnpinNode = null
+      }
+    }, NODE_DOUBLE_CLICK_MS)
+  }
+
+  function cancelDeferredUnpin() {
+    if (pendingUnpinTimer !== null) {
+      clearTimeout(pendingUnpinTimer)
+      pendingUnpinTimer = null
+    }
+    pendingUnpinNode = null
+  }
+
+  // Returns true if this click completes a double-click on the same
+  // node (so the caller should navigate); false if it's the first
+  // click of a potential double or just a single click. The caller
+  // is responsible for scheduling the deferred unpin when this
+  // returns false.
   function recordClickAndCheckDouble(nodeId: string): boolean {
     const now = Date.now()
     const isDouble =
@@ -1472,19 +1496,21 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           const dist = Math.sqrt(dx * dx + dy * dy)
           const isClick = dist < 5 && Date.now() - dragStartTime < 500
           if (isClick) {
-            // Single click: unpin the node so it floats back into the
-            // simulation. Useful affordance — sometimes you want to
-            // release a node that you (or a previous session) pinned.
+            // Tap on a node. Two cases:
             //
-            // If this click completes a double-click on the same node,
-            // additionally fire the navigation prompt and follow the
-            // link. The unpin is harmless in that case (we're leaving
-            // the page anyway), so we don't try to undo it.
-            event.subject.fx = null
-            event.subject.fy = null
-            const nodeId = event.subject.id as string
+            // - First tap: schedule a deferred unpin (NODE_DOUBLE_CLICK_MS
+            //   from now) and record the click. We DO NOT unpin
+            //   synchronously — the simulation would drift the node
+            //   out from under the cursor and the second tap of a
+            //   double-click would land somewhere else (or nowhere).
+            //
+            // - Second tap on same node within the window: cancel the
+            //   pending unpin so the node stays put while we navigate.
+            //   Fire the save-before-leave prompt and follow the link.
+            const node = event.subject as NodeData
+            const nodeId = node.id as string
             if (recordClickAndCheckDouble(nodeId)) {
-              const node = graphData.nodes.find((n) => n.id === nodeId) as NodeData
+              cancelDeferredUnpin()
               const targ = resolveRelative(fullSlug, node.id)
               void (async () => {
                 const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
@@ -1492,6 +1518,8 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
                   window.spaNavigate(new URL(targ, window.location.toString()))
                 }
               })()
+            } else {
+              scheduleDeferredUnpin(node)
             }
           } else {
             const active = getActiveLayout()
@@ -1521,13 +1549,14 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
         }),
     )
   } else {
-    // Drag-disabled mode (rare — used by some embedded graph configs).
-    // Same double-click-to-navigate behavior, since there's no drag
-    // gesture to disambiguate from.
     for (const node of nodeRenderData) {
       node.gfx.on("click", async () => {
         const nodeId = node.simulationData.id as string
-        if (!recordClickAndCheckDouble(nodeId)) return
+        if (!recordClickAndCheckDouble(nodeId)) {
+          // First click in drag-disabled mode: nothing to unpin
+          // (the node was never pinned by drag), so just record.
+          return
+        }
         const targ = resolveRelative(fullSlug, node.simulationData.id)
         const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
         if (outcome === "proceed") {
