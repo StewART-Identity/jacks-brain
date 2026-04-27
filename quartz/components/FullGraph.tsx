@@ -9,57 +9,22 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
     zoom: true,
     depth: -1,
     scale: 0.5,
-    // Repulsion strength between nodes. Reduced from 1.2 to 0.8 to take
-    // some of the agitation out of the simulation — at 1.2 nodes were
-    // shoving each other strongly enough that any disturbance propagated
-    // visibly across the whole graph.
     repelForce: 0.8,
     centerForce: 0.3,
     linkDistance: 60,
-    // Label text size multiplier. 0.6 matches Quartz's default for
-    // local/global graphs. Earlier we used 0.3 to compensate for a
-    // bug where renderLabels rendered hovered labels too large at
-    // zoom; now that renderLabels is zoom-aware, we can use the
-    // standard size.
     fontSize: 0.6,
     opacityScale: 1,
     showTags: true,
     removeTags: [],
     focusOnHover: true,
     enableRadial: true,
-    // Cool the simulation down to rest. D3's default 0.0228 keeps the
-    // layout in perpetual motion on graphs of any complexity. 0.05 lets
-    // it settle in a few seconds, eliminating the "moving in water"
-    // feel where every disturbance ripples forever.
     alphaDecay: 0.05,
-    // Per-tick momentum damping. D3's default 0.4 retains 60% of node
-    // velocity each tick — disturbances propagate several rings before
-    // fading. 0.6 (40% retained) makes nodes "stickier": still responsive
-    // to direct force from a moving neighbor, but motion damps within a
-    // hop or two instead of rippling across the whole graph. Companion
-    // to the alphaTarget(0.3) change in the drag handler — together
-    // they give Aesthete mode a non-watery feel where drags affect a
-    // small local region and settle quickly on release.
     velocityDecay: 0.6,
   }
 
   return (
     <div class={displayClass} id="full-graph">
       <div class="graph-layouts" id="graph-layouts-toolbar">
-        {/*
-          Top-left mirror of the zoom/fullscreen toolbar on the right.
-          Tier 2 saved-layouts UI: dropdown of saved layouts (active
-          name visible, click to open), plus icon buttons for new/save/
-          rename/delete. PageTitle.tsx wires up the click handlers in
-          its nav callback so the bindings survive SPA navigation
-          correctly.
-
-          Button order is deliberate: the dropdown anchors the toolbar,
-          then "+" creates a new layout, save and rename act on the
-          active layout, delete removes it. Icons stay monochrome and
-          monoline; we don't want a floppy emoji shouting against the
-          rest of the muted icon language.
-        */}
         <button
           type="button"
           id="graph-layouts-current"
@@ -131,7 +96,6 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
           </p>
         </div>
         <div class="graph-filter-body" id="graph-filter-body">
-          {/* Filled in by PageTitle's nav handler from window.graphFilter */}
         </div>
       </div>
       <div class="graph-container" data-cfg={JSON.stringify(graphConfig)}></div>
@@ -220,17 +184,11 @@ FullGraph.css =
   cursor: not-allowed;
 }
 .graph-ctrl-btn[aria-pressed="true"] {
-  /* Active toggle state — distinguish from a momentary click. The
-     drag-mode button uses this when the graph is in group-drag (was
-     called "frozen" pre-Option B). Border + opacity change so it reads
-     as "engaged" without inventing a new color that fights the
-     existing palette. */
   opacity: 1;
   border-color: var(--secondary);
   color: var(--secondary);
 }
 
-/* ─── Saved layouts toolbar (top-left mirror) ──────────────────────── */
 .graph-layouts {
   position: absolute;
   top: 0.5rem;
@@ -242,9 +200,6 @@ FullGraph.css =
   align-items: flex-start;
 }
 .graph-layouts-current {
-  /* Override .graph-ctrl-btn's fixed-square sizing so the active layout
-     name has room. Keeps the same height for visual alignment with the
-     icon buttons next to it. */
   width: auto;
   min-width: 9rem;
   max-width: 18rem;
@@ -268,8 +223,6 @@ FullGraph.css =
 }
 .graph-layouts-icon-btn {
   font-size: 1rem;
-  /* Icon buttons inherit the .graph-ctrl-btn 2.8rem square — we keep
-     that for visual symmetry with the right-side toolbar. */
 }
 .graph-layouts-danger:hover:not(:disabled) {
   color: #b00;
@@ -327,15 +280,10 @@ FullGraph.css =
   z-index: 100;
 }
 
-/* ─── Synthesis filter panel ─────────────────────────────────────────
-   Anchored to the right edge of #full-graph, just inside the right
-   toolbar's column. Hidden by default via the [hidden] attribute; the
-   filter button toggles it. The panel scrolls if the synthesis list
-   gets long. */
 .graph-filter-panel {
   position: absolute;
   top: 0.5rem;
-  right: calc(2.8rem + 1rem);  /* clear of the right toolbar's button column */
+  right: calc(2.8rem + 1rem);
   width: 18rem;
   max-height: calc(100% - 1rem);
   z-index: 5;
@@ -429,6 +377,96 @@ FullGraph.css =
   top: 1rem;
   right: calc(2.8rem + 2rem);
   z-index: 100;
+}
+
+/* ─── Save-before-leave confirmation modal ─────────────────────────
+   The modal is appended to document.body by graph.inline.ts so it can
+   render above #full-graph in fullscreen mode. The z-index of 1000
+   beats the fullscreen toolbar (z 100) and any other in-graph layer.
+
+   Styling follows the same palette as the toolbar buttons. Dark dim
+   over the page, light card with secondary-color accent on the
+   primary action. */
+.graph-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.graph-modal-overlay[hidden] {
+  display: none;
+}
+.graph-modal-card {
+  background: var(--light);
+  color: var(--dark);
+  border-radius: 10px;
+  border: 1px solid var(--lightgray);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  padding: 1.4rem 1.6rem 1.2rem;
+  min-width: 22rem;
+  max-width: 32rem;
+  font-size: 0.95rem;
+}
+.graph-modal-title {
+  margin: 0 0 0.6rem;
+  font-size: 1.1rem;
+  color: var(--secondary);
+}
+.graph-modal-message {
+  margin: 0 0 1rem;
+  line-height: 1.4;
+}
+.graph-modal-error {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.7rem;
+  background: rgba(176, 0, 0, 0.07);
+  border: 1px solid rgba(176, 0, 0, 0.3);
+  border-radius: 6px;
+  color: #b00;
+  font-size: 0.85rem;
+}
+.graph-modal-error[hidden] {
+  display: none;
+}
+.graph-modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.graph-modal-btn {
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 6px;
+  color: var(--dark);
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.graph-modal-btn:hover:not(:disabled) {
+  background: var(--lightgray);
+}
+.graph-modal-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.graph-modal-btn-discard:hover:not(:disabled) {
+  color: #b00;
+  border-color: rgba(176, 0, 0, 0.4);
+}
+.graph-modal-btn-primary {
+  background: var(--secondary);
+  border-color: var(--secondary);
+  color: var(--light);
+}
+.graph-modal-btn-primary:hover:not(:disabled) {
+  background: var(--secondary);
+  filter: brightness(1.1);
+  border-color: var(--secondary);
 }
 `
 
