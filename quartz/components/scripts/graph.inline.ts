@@ -80,8 +80,6 @@ const LAYOUTS_LOCAL_KEY = "graph-layouts-cache"
 const LAYOUTS_DIRTY_KEY = "graph-layouts-dirty"
 const LAYOUTS_FLUSH_DEBOUNCE_MS = 3000
 
-const NODE_DOUBLE_CLICK_MS = 400
-
 let layoutsState: LayoutsState | null = null
 let layoutsLoadPromise: Promise<LayoutsState> | null = null
 let layoutsDirty = (function () {
@@ -92,16 +90,6 @@ let layoutsDirty = (function () {
   }
 })()
 let flushTimer: number | null = null
-
-let lastClickNodeId: string | null = null
-let lastClickTime = 0
-// Pending deferred-unpin timer. Set when a first click arrives so the
-// unpin happens AFTER the double-click window expires; cancelled if a
-// second click arrives in time. Without this, the unpin fires
-// synchronously on the first click and the simulation drifts the
-// node out from under the cursor before the second tap can land.
-let pendingUnpinTimer: number | null = null
-let pendingUnpinNode: NodeData | null = null
 
 const dirtyChangeListeners = new Set<(dirty: boolean) => void>()
 function notifyDirtyChange() {
@@ -433,7 +421,6 @@ declare global {
     graphLayouts: GraphLayoutsApi
     graphFreeze: GraphFreezeApi
     graphFilter: GraphFilterApi
-    spaNavigateGuards?: Set<() => Promise<boolean>>
     __graphPositionSnapshot?: () => Record<string, LayoutPosition>
     __graphResize?: () => void
     __graphRepin?: () => void
@@ -730,14 +717,6 @@ function ensureLayoutsApi() {
       e.preventDefault()
       e.returnValue = ""
     }
-  })
-
-  if (!window.spaNavigateGuards) {
-    window.spaNavigateGuards = new Set()
-  }
-  window.spaNavigateGuards.add(async () => {
-    const outcome = await confirmLeaveIfDirty("spa-nav")
-    return outcome === "proceed"
   })
 }
 
@@ -1145,62 +1124,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     }
   }
 
-  // Reset double-click bookkeeping on each render — a fresh graph
-  // shouldn't inherit a half-completed double-click intent or a
-  // pending unpin from the previous one.
-  lastClickNodeId = null
-  lastClickTime = 0
-  if (pendingUnpinTimer !== null) {
-    clearTimeout(pendingUnpinTimer)
-    pendingUnpinTimer = null
-  }
-  pendingUnpinNode = null
-
-  // Schedule a deferred unpin for the given node. If a second click
-  // arrives within the double-click window, the caller cancels this
-  // timer and navigates instead.
-  function scheduleDeferredUnpin(node: NodeData) {
-    if (pendingUnpinTimer !== null) {
-      clearTimeout(pendingUnpinTimer)
-    }
-    pendingUnpinNode = node
-    pendingUnpinTimer = window.setTimeout(() => {
-      pendingUnpinTimer = null
-      if (pendingUnpinNode) {
-        pendingUnpinNode.fx = null
-        pendingUnpinNode.fy = null
-        pendingUnpinNode = null
-      }
-    }, NODE_DOUBLE_CLICK_MS)
-  }
-
-  function cancelDeferredUnpin() {
-    if (pendingUnpinTimer !== null) {
-      clearTimeout(pendingUnpinTimer)
-      pendingUnpinTimer = null
-    }
-    pendingUnpinNode = null
-  }
-
-  // Returns true if this click completes a double-click on the same
-  // node (so the caller should navigate); false if it's the first
-  // click of a potential double or just a single click. The caller
-  // is responsible for scheduling the deferred unpin when this
-  // returns false.
-  function recordClickAndCheckDouble(nodeId: string): boolean {
-    const now = Date.now()
-    const isDouble =
-      lastClickNodeId === nodeId && now - lastClickTime < NODE_DOUBLE_CLICK_MS
-    if (isDouble) {
-      lastClickNodeId = null
-      lastClickTime = 0
-      return true
-    }
-    lastClickNodeId = nodeId
-    lastClickTime = now
-    return false
-  }
-
   let dragStartTime = 0
   let dragStartX = 0
   let dragStartY = 0
@@ -1496,31 +1419,16 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           const dist = Math.sqrt(dx * dx + dy * dy)
           const isClick = dist < 5 && Date.now() - dragStartTime < 500
           if (isClick) {
-            // Tap on a node. Two cases:
-            //
-            // - First tap: schedule a deferred unpin (NODE_DOUBLE_CLICK_MS
-            //   from now) and record the click. We DO NOT unpin
-            //   synchronously — the simulation would drift the node
-            //   out from under the cursor and the second tap of a
-            //   double-click would land somewhere else (or nowhere).
-            //
-            // - Second tap on same node within the window: cancel the
-            //   pending unpin so the node stays put while we navigate.
-            //   Fire the save-before-leave prompt and follow the link.
-            const node = event.subject as NodeData
-            const nodeId = node.id as string
-            if (recordClickAndCheckDouble(nodeId)) {
-              cancelDeferredUnpin()
-              const targ = resolveRelative(fullSlug, node.id)
-              void (async () => {
-                const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
-                if (outcome === "proceed") {
-                  window.spaNavigate(new URL(targ, window.location.toString()))
-                }
-              })()
-            } else {
-              scheduleDeferredUnpin(node)
-            }
+            event.subject.fx = null
+            event.subject.fy = null
+            const node = graphData.nodes.find((n) => n.id === event.subject.id) as NodeData
+            const targ = resolveRelative(fullSlug, node.id)
+            void (async () => {
+              const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
+              if (outcome === "proceed") {
+                window.spaNavigate(new URL(targ, window.location.toString()))
+              }
+            })()
           } else {
             const active = getActiveLayout()
             if (active && layoutsState && layoutsState.activeLayout) {
@@ -1551,12 +1459,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   } else {
     for (const node of nodeRenderData) {
       node.gfx.on("click", async () => {
-        const nodeId = node.simulationData.id as string
-        if (!recordClickAndCheckDouble(nodeId)) {
-          // First click in drag-disabled mode: nothing to unpin
-          // (the node was never pinned by drag), so just record.
-          return
-        }
         const targ = resolveRelative(fullSlug, node.simulationData.id)
         const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
         if (outcome === "proceed") {
