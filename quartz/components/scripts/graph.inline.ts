@@ -1210,11 +1210,13 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     tweens.get("label")?.stop()
     const tweenGroup = new TweenGroup()
 
-    // Bumped from `scale / currentTransform.k` because the previous
-    // resting size was effectively invisible at full-screen zoom.
-    const restingScale = (scale * 1.4) / currentTransform.k
-    const neighborScale = restingScale * 3.3
-    const hoveredScale = restingScale * 3.3
+    // Resting size doubled from the previous (scale * 1.4) bump.
+    // Hover/neighbor multiplier reduced from 3.3 to 2.8 because the
+    // larger resting size means the hover bloom doesn't need to be
+    // as dramatic to read as a focus signal.
+    const restingScale = (scale * 2.8) / currentTransform.k
+    const neighborScale = restingScale * 2.8
+    const hoveredScale = restingScale * 2.8
     for (const n of nodeRenderData) {
       const nodeId = n.simulationData.id
 
@@ -1239,10 +1241,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           ),
         )
       } else if (labelsAlwaysOn) {
-        // Toggle on: render every "other" label at hovered size,
-        // full opacity. Hover bloom is still honored above; this
-        // branch only fires when the label is neither hovered
-        // nor a neighbor of the hovered node.
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
@@ -1345,7 +1343,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       },
       resolution: window.devicePixelRatio * 4,
     })
-    label.scale.set((scale * 1.4) / currentTransform.k)
+    label.scale.set((scale * 2.8) / currentTransform.k)
 
     let oldLabelOpacity = 0
     const isTagNode = nodeId.startsWith("tags/")
@@ -1374,7 +1372,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       })
 
     if (isTagNode) {
-      gfx.stroke({ width: 2, color: computedStyleMap["--tertiary"] })
+      gfx.stroke({ width: 3, color: computedStyleMap["--tertiary"] })
     }
 
     nodesContainer.addChild(gfx)
@@ -1550,12 +1548,9 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           stage.position.set(transform.x, transform.y)
 
           for (const label of labelsContainer.children) {
-            label.scale.set((scale * 1.4) / transform.k)
+            label.scale.set((scale * 2.8) / transform.k)
           }
 
-          // When labelsAlwaysOn is set, every label stays at full
-          // opacity regardless of zoom — the resting-fade behavior
-          // is exactly what the toggle is meant to suppress.
           if (labelsAlwaysOn) {
             for (const label of labelsContainer.children) {
               label.alpha = 1
@@ -1595,7 +1590,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       l.gfx.moveTo(linkData.source.x! + width / 2, linkData.source.y! + height / 2)
       l.gfx
         .lineTo(linkData.target.x! + width / 2, linkData.target.y! + height / 2)
-        .stroke({ alpha: l.alpha, width: 1, color: l.color })
+        .stroke({ alpha: l.alpha, width: 2, color: l.color })
     }
 
     tweens.forEach((t) => t.update(time))
@@ -1622,10 +1617,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     return () => filterChangeListeners.delete(handler)
   })()
 
-  // Wire the Aa toolbar button directly to graphLabels.toggle.
-  // Direct addEventListener (not delegation) — delegation didn't
-  // fire for reasons unclear; this pattern matches the rest of the
-  // listeners in renderGraph and gets cleaned up the same way.
   const labelsBtn = document.getElementById("graph-labels-btn")
   const onLabelsBtnClick = (e: MouseEvent) => {
     e.preventDefault()
@@ -1634,7 +1625,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
   if (labelsBtn) {
     labelsBtn.addEventListener("click", onLabelsBtnClick)
-    // Sync DOM state with persisted localStorage value on render.
     labelsBtn.setAttribute("aria-pressed", labelsAlwaysOn ? "true" : "false")
     labelsBtn.setAttribute(
       "title",
@@ -1642,10 +1632,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     )
   }
 
-  // When the labelsAlwaysOn toggle flips, push the change through
-  // renderPixiFromD3 so existing labels animate to their new state
-  // without waiting for the next hover or zoom event. Also keep the
-  // button DOM in sync with the new state.
   const unsubscribeLabelsAlwaysOn = (() => {
     const handler = () => {
       if (labelsAlwaysOn) {
