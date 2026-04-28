@@ -2043,8 +2043,28 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     const row = rowForDim(dim)
     if (p) {
       p.hidden = false
+      // Defer the position calculation by one animation frame so the
+      // browser has finished laying out the freshly-unhidden panel.
+      // On the very first reveal of an L2 panel, calling
+      // panel.offsetHeight immediately after `hidden = false` can
+      // return a stale or zero value because the layout pass hasn't
+      // run yet — which made the first-open panel land at top:0 (the
+      // clamp) instead of centered on the row. After one rAF tick
+      // the browser has computed real dimensions and the centering
+      // math works correctly. Subsequent reveals don't have this
+      // problem (the panel is already laid out from a prior show),
+      // but using rAF unconditionally keeps the flow simple.
       if (row) {
-        positionL2Panel(p, row)
+        requestAnimationFrame(() => {
+          // Re-check that the panel is still the active L2 in case
+          // the user hovered to a different row in the intervening
+          // frame. If activeFilterDim no longer matches `dim`, the
+          // panel was hidden by a subsequent showL2ForDim call and
+          // positioning it would expose a hidden panel.
+          if (!p.hidden) {
+            positionL2Panel(p, row)
+          }
+        })
       }
     }
     row?.classList.add("active")
