@@ -157,12 +157,6 @@ function persistFilter() {
   } catch {}
 }
 
-// Subjects filter — parallel structure to the synthesis filter above.
-// Stored under its own localStorage key so the two filters persist
-// independently. As of this iteration the subjects roster is REAL
-// subjects only — pages with no subjects are governed exclusively by
-// the loners filter (below), and don't appear in the subjects panel
-// at all.
 const SUBJECTS_FILTER_LOCAL_KEY = "graph-subjects-unchecked"
 let subjectsUnchecked: Set<string> = (function () {
   try {
@@ -191,11 +185,6 @@ function persistSubjectsFilter() {
   } catch {}
 }
 
-// Loners filter — third independent dimension. Persists individual
-// node slugs (not subject names). A "loner" is any node whose
-// frontmatter has no `subjects` field — including tag nodes, which
-// have no frontmatter at all. Unchecking a loner row hides just that
-// one node.
 const LONERS_FILTER_LOCAL_KEY = "graph-loners-unchecked"
 let lonersUnchecked: Set<string> = (function () {
   try {
@@ -223,6 +212,47 @@ function persistLonersFilter() {
     )
   } catch {}
 }
+
+// ─── Master enable flags per dimension (Phase 2) ─────────────────
+// One boolean per filter dimension. When false, that whole dimension
+// hides every node it governs (Synthesis hides synthesis-clustered
+// nodes; Subjects hides nodes with subjects; Loners hides loner
+// nodes). Default true (enabled). Independent of the per-item
+// checkbox state in the L2 panels.
+function makeMasterFlag(key: string) {
+  let value = (function () {
+    try {
+      const raw = localStorage.getItem(key)
+      // Default to true (enabled) if unset.
+      return raw === null ? true : raw === "true"
+    } catch {
+      return true
+    }
+  })()
+  const listeners = new Set<(v: boolean) => void>()
+  return {
+    get: () => value,
+    set: (v: boolean) => {
+      if (v === value) return
+      value = v
+      try {
+        localStorage.setItem(key, v ? "true" : "false")
+      } catch {}
+      for (const fn of listeners) {
+        try {
+          fn(v)
+        } catch {}
+      }
+    },
+    onChange: (fn: (v: boolean) => void) => {
+      listeners.add(fn)
+      return () => listeners.delete(fn)
+    },
+  }
+}
+const synthesisMaster = makeMasterFlag("graph-master-synthesis")
+const subjectsMaster = makeMasterFlag("graph-master-subjects")
+const lonersMaster = makeMasterFlag("graph-master-loners")
 
 const LABELS_ALWAYS_ON_KEY = "graph-labels-always-on"
 let labelsAlwaysOn = (function () {
@@ -517,10 +547,6 @@ interface GraphSubjectsApi {
 }
 
 interface LonerInfo {
-  // The node's slug (the same id used everywhere else in this file).
-  // Tag nodes have ids like "tags/foo"; their display title is
-  // rendered as "#foo" in the panel, matching how they're drawn on
-  // the canvas.
   slug: string
   title: string
 }
@@ -1207,9 +1233,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }).sort((a, b) => a.title.localeCompare(b.title))
   notifyFilterChange()
 
-  // Subjects index — for each node, which subjects does it belong to?
-  // Real subjects only this iteration. Subject-less nodes go to the
-  // loners roster instead and are not represented in nodeSubjects.
   const nodeSubjects = new Map<string, Set<string>>()
   for (const n of graphData.nodes) {
     const subj = data.get(n.id)?.subjects
@@ -1218,10 +1241,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       for (const s of subj) set.add(s)
       nodeSubjects.set(n.id, set)
     }
-    // No entry → node is a loner, governed by the loners filter.
   }
-  // Subjects roster: every distinct subject seen across all nodes,
-  // counted, sorted alphabetically. Loners no longer appear here.
   const subjectCounts = new Map<string, number>()
   for (const subSet of nodeSubjects.values()) {
     for (const s of subSet) {
@@ -1233,9 +1253,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     .sort((a, b) => a.title.localeCompare(b.title))
   notifySubjectsFilterChange()
 
-  // Loners roster: every node not in nodeSubjects. Sorted by title
-  // (with tag nodes rendered as "#tag" the same way the canvas
-  // labels them).
   currentLoners = graphData.nodes
     .filter((n) => !nodeSubjects.has(n.id))
     .map((n) => {
@@ -1248,11 +1265,17 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     .sort((a, b) => a.title.localeCompare(b.title))
   notifyLonersFilterChange()
 
+  // Visibility check now combines master flags with per-item state.
+  // A node passes a dimension check iff:
+  //   1. The dimension's master flag is true (dimension is enabled), AND
+  //   2. The per-item check passes (existing logic)
+  // If the master flag is false, all nodes governed by that dimension
+  // are hidden regardless of L2 state.
   const isNodeVisible = (nodeId: string): boolean => {
-    // Synthesis filter. Lenient: hide only if the node has
-    // synthesis memberships AND every one is unchecked.
+    // Synthesis dimension governs nodes with synthesis memberships.
     const memberships = nodeClusters.get(nodeId)
     if (memberships && memberships.size > 0) {
+      if (!synthesisMaster.get()) return false
       let anyChecked = false
       for (const sSlug of memberships) {
         if (!unchecked.has(sSlug)) {
@@ -1262,11 +1285,12 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       }
       if (!anyChecked) return false
     }
-    // Subjects vs. Loners are mutually exclusive — a node either
-    // has subjects (governed by the subjects filter) or it
-    // doesn't (governed by the loners filter).
+    // Subjects vs Loners are mutually exclusive — a node either has
+    // subjects (governed by Subjects) or it doesn't (governed by
+    // Loners).
     const subSet = nodeSubjects.get(nodeId)
     if (subSet && subSet.size > 0) {
+      if (!subjectsMaster.get()) return false
       let anyChecked = false
       for (const s of subSet) {
         if (!subjectsUnchecked.has(s)) {
@@ -1276,7 +1300,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       }
       if (!anyChecked) return false
     } else {
-      // Loner. Hidden iff its slug is in the loners-unchecked set.
+      if (!lonersMaster.get()) return false
       if (lonersUnchecked.has(nodeId)) return false
     }
     return true
@@ -1486,14 +1510,9 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     tweens.get("label")?.stop()
     const tweenGroup = new TweenGroup()
 
-    // Resting size — Jack confirmed liked. ~scale*2.8/k.
     const restingScale = (scale * 2.8) / currentTransform.k
-    // Hovered: scale*2.8*1.7/k. Neighbor: one notch smaller.
     const neighborScale = restingScale * 1.5
     const hoveredScale = restingScale * 1.7
-    // Toggle-on size: between resting (1.0) and hovered (1.7).
-    // Comfortable readable size that still leaves room for hover
-    // bloom on top.
     const toggleOnScale = restingScale * 1.4
     for (const n of nodeRenderData) {
       const nodeId = n.simulationData.id
@@ -1763,12 +1782,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           const dist = Math.sqrt(dx * dx + dy * dy)
           const isClick = dist < 5 && Date.now() - dragStartTime < 500
           if (isClick) {
-            // Don't unpin yet — leave the node fixed at its current
-            // position while we await the modal. Unpin only on
-            // "proceed", inside the async block. This prevents the
-            // flier-node bug where a double-click sends a freshly
-            // unpinned node sailing across the canvas under physics
-            // while the modal is still pending.
             const subject = event.subject as NodeData
             const node = graphData.nodes.find((n) => n.id === subject.id) as NodeData
             const targ = resolveRelative(fullSlug, node.id)
@@ -1896,9 +1909,9 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     }
   }
   applyFilterVisibility()
-  // All three filters share the same visibility apply path. Cheap
-  // enough at our graph sizes to recompute everything on every
-  // change.
+  // All filter changes (synthesis, subjects, loners, master flags)
+  // route through applyFilterVisibility. Cheap enough to recompute
+  // everything on every change at our graph sizes.
   const unsubscribeFilter = (() => {
     const handler = () => applyFilterVisibility()
     filterChangeListeners.add(handler)
@@ -1914,21 +1927,9 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     lonersFilterChangeListeners.add(handler)
     return () => lonersFilterChangeListeners.delete(handler)
   })()
-
-  const labelsBtn = document.getElementById("graph-labels-btn")
-  const onLabelsBtnClick = (e: MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    window.graphLabels.toggle()
-  }
-  if (labelsBtn) {
-    labelsBtn.addEventListener("click", onLabelsBtnClick)
-    labelsBtn.setAttribute("aria-pressed", labelsAlwaysOn ? "true" : "false")
-    labelsBtn.setAttribute(
-      "title",
-      labelsAlwaysOn ? "Hide all labels" : "Show all labels",
-    )
-  }
+  const unsubscribeSynthesisMaster = synthesisMaster.onChange(() => applyFilterVisibility())
+  const unsubscribeSubjectsMaster = subjectsMaster.onChange(() => applyFilterVisibility())
+  const unsubscribeLonersMaster = lonersMaster.onChange(() => applyFilterVisibility())
 
   const unsubscribeLabelsAlwaysOn = (() => {
     const handler = () => {
@@ -1937,39 +1938,226 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           label.alpha = 1
         }
       }
-      const btn = document.getElementById("graph-labels-btn")
-      if (btn) {
-        btn.setAttribute("aria-pressed", labelsAlwaysOn ? "true" : "false")
-        btn.setAttribute(
-          "title",
-          labelsAlwaysOn ? "Hide all labels" : "Show all labels",
-        )
-      }
+      // Sync the Display menu's checkbox to the underlying state.
+      const cb = document.getElementById("graph-display-labels-cb") as HTMLInputElement | null
+      if (cb) cb.checked = labelsAlwaysOn
       renderPixiFromD3()
     }
     labelsAlwaysOnChangeListeners.add(handler)
     return () => labelsAlwaysOnChangeListeners.delete(handler)
   })()
 
-  // ─── Filter buttons + panels (Synthesis / Subjects / Loners) ─────
-  // Three independent toolbar buttons, three independent panels.
-  // Mutual exclusion: opening any panel closes the other two so
-  // they never fight for screen real estate. Each panel has its
-  // own Check all / Uncheck all controls.
-  const synthesisBtn = document.getElementById("graph-filter-btn")
+  // ─── Cascade menu wiring ──────────────────────────────────────
+  // Two L1 menus (Display, Filter), three L2 panels (Synthesis,
+  // Subjects, Loners). State machine:
+  //   - cascadeOpen: "display" | "filter" | null
+  //   - activeFilterDim: "synthesis" | "subjects" | "loners" | null
+  //   - hoverSwitchTimer: debounce switching L2 panel on hover
+  //   - leaveCloseTimer: debounce closing on full mouse-leave
+  type CascadeOpen = "display" | "filter" | null
+  type FilterDim = "synthesis" | "subjects" | "loners"
+  let cascadeOpen: CascadeOpen = null
+  let activeFilterDim: FilterDim | null = null
+  let hoverSwitchTimer: number | null = null
+  let leaveCloseTimer: number | null = null
+
+  const HOVER_SWITCH_MS = 150
+  const LEAVE_CLOSE_MS = 500
+
+  const filterBtn = document.getElementById("graph-filter-btn")
+  const displayBtn = document.getElementById("graph-display-btn")
+  const filterCascadeMenu = document.getElementById("graph-filter-cascade-menu")
+  const displayMenu = document.getElementById("graph-display-menu")
   const synthesisPanel = document.getElementById("graph-filter-panel")
   const synthesisBody = document.getElementById("graph-filter-body")
-  const subjectsBtn = document.getElementById("graph-subjects-btn")
   const subjectsPanel = document.getElementById("graph-subjects-panel")
   const subjectsBody = document.getElementById("graph-subjects-body")
-  const lonersBtn = document.getElementById("graph-loners-btn")
   const lonersPanel = document.getElementById("graph-loners-panel")
   const lonersBody = document.getElementById("graph-loners-body")
+  const filterRowSynthesis = document.getElementById("graph-filter-cascade-row-synthesis")
+  const filterRowSubjects = document.getElementById("graph-filter-cascade-row-subjects")
+  const filterRowLoners = document.getElementById("graph-filter-cascade-row-loners")
+  const masterSynthesisCb = document.getElementById("graph-filter-master-synthesis-cb") as HTMLInputElement | null
+  const masterSubjectsCb = document.getElementById("graph-filter-master-subjects-cb") as HTMLInputElement | null
+  const masterLonersCb = document.getElementById("graph-filter-master-loners-cb") as HTMLInputElement | null
+  const displayLabelsCb = document.getElementById("graph-display-labels-cb") as HTMLInputElement | null
 
-  // Generic panel-body renderer. Each filter panel has the same
-  // layout: list of <label> rows with checkbox + name + (optional)
-  // count, followed by a Check all / Uncheck all action row. We
-  // parameterize over which API and which roster to read.
+  const panelForDim = (dim: FilterDim) => {
+    if (dim === "synthesis") return synthesisPanel
+    if (dim === "subjects") return subjectsPanel
+    return lonersPanel
+  }
+  const rowForDim = (dim: FilterDim) => {
+    if (dim === "synthesis") return filterRowSynthesis
+    if (dim === "subjects") return filterRowSubjects
+    return filterRowLoners
+  }
+
+  const hideAllL2Panels = () => {
+    if (synthesisPanel) synthesisPanel.hidden = true
+    if (subjectsPanel) subjectsPanel.hidden = true
+    if (lonersPanel) lonersPanel.hidden = true
+  }
+  const clearActiveRowHighlights = () => {
+    filterRowSynthesis?.classList.remove("active")
+    filterRowSubjects?.classList.remove("active")
+    filterRowLoners?.classList.remove("active")
+  }
+  const showL2ForDim = (dim: FilterDim) => {
+    hideAllL2Panels()
+    clearActiveRowHighlights()
+    const p = panelForDim(dim)
+    if (p) p.hidden = false
+    rowForDim(dim)?.classList.add("active")
+    activeFilterDim = dim
+  }
+
+  const setCascadeOpen = (which: CascadeOpen) => {
+    cascadeOpen = which
+    // Toolbar button aria-expanded reflects which is open.
+    if (filterBtn) {
+      filterBtn.setAttribute("aria-expanded", which === "filter" ? "true" : "false")
+    }
+    if (displayBtn) {
+      displayBtn.setAttribute("aria-expanded", which === "display" ? "true" : "false")
+    }
+    if (filterCascadeMenu) filterCascadeMenu.hidden = which !== "filter"
+    if (displayMenu) displayMenu.hidden = which !== "display"
+    if (which !== "filter") {
+      hideAllL2Panels()
+      clearActiveRowHighlights()
+      activeFilterDim = null
+    }
+  }
+
+  const closeAllCascades = () => {
+    if (hoverSwitchTimer !== null) {
+      window.clearTimeout(hoverSwitchTimer)
+      hoverSwitchTimer = null
+    }
+    if (leaveCloseTimer !== null) {
+      window.clearTimeout(leaveCloseTimer)
+      leaveCloseTimer = null
+    }
+    setCascadeOpen(null)
+  }
+
+  // Toolbar button click handlers — toggle their cascade open/closed.
+  const onFilterBtnClick = (e: MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setCascadeOpen(cascadeOpen === "filter" ? null : "filter")
+  }
+  const onDisplayBtnClick = (e: MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setCascadeOpen(cascadeOpen === "display" ? null : "display")
+  }
+  filterBtn?.addEventListener("click", onFilterBtnClick)
+  displayBtn?.addEventListener("click", onDisplayBtnClick)
+
+  // L1 row hover — switches active L2 panel after a 150ms debounce
+  // so passing the cursor across rows en route to L2 doesn't churn.
+  const onRowMouseEnter = (dim: FilterDim) => {
+    if (hoverSwitchTimer !== null) {
+      window.clearTimeout(hoverSwitchTimer)
+    }
+    if (activeFilterDim === dim) return
+    hoverSwitchTimer = window.setTimeout(() => {
+      hoverSwitchTimer = null
+      if (cascadeOpen === "filter") {
+        showL2ForDim(dim)
+      }
+    }, HOVER_SWITCH_MS)
+  }
+  filterRowSynthesis?.addEventListener("mouseenter", () => onRowMouseEnter("synthesis"))
+  filterRowSubjects?.addEventListener("mouseenter", () => onRowMouseEnter("subjects"))
+  filterRowLoners?.addEventListener("mouseenter", () => onRowMouseEnter("loners"))
+
+  // Cascade-wide leave handling. We track mouseenter on each cascade
+  // element to cancel the leave-close timer, and mouseleave on each
+  // to start it. Combined with click-outside as a hard close.
+  const cascadeElements = [
+    filterCascadeMenu,
+    displayMenu,
+    synthesisPanel,
+    subjectsPanel,
+    lonersPanel,
+  ].filter((el): el is HTMLElement => el !== null)
+
+  const cancelLeaveClose = () => {
+    if (leaveCloseTimer !== null) {
+      window.clearTimeout(leaveCloseTimer)
+      leaveCloseTimer = null
+    }
+  }
+  const scheduleLeaveClose = () => {
+    cancelLeaveClose()
+    leaveCloseTimer = window.setTimeout(() => {
+      leaveCloseTimer = null
+      closeAllCascades()
+    }, LEAVE_CLOSE_MS)
+  }
+  for (const el of cascadeElements) {
+    el.addEventListener("mouseenter", cancelLeaveClose)
+    el.addEventListener("mouseleave", scheduleLeaveClose)
+  }
+  // The toolbar buttons that own these cascades also count as
+  // "inside" for leave purposes — moving from button to menu shouldn't
+  // schedule a close.
+  filterBtn?.addEventListener("mouseenter", cancelLeaveClose)
+  filterBtn?.addEventListener("mouseleave", scheduleLeaveClose)
+  displayBtn?.addEventListener("mouseenter", cancelLeaveClose)
+  displayBtn?.addEventListener("mouseleave", scheduleLeaveClose)
+
+  // Click-outside hard-closes both cascades immediately.
+  const onDocumentClick = (e: MouseEvent) => {
+    if (cascadeOpen === null) return
+    const target = e.target as Node | null
+    if (!target) return
+    const insideCascade =
+      filterBtn?.contains(target) ||
+      displayBtn?.contains(target) ||
+      cascadeElements.some((el) => el.contains(target))
+    if (!insideCascade) {
+      closeAllCascades()
+    }
+  }
+  document.addEventListener("click", onDocumentClick)
+
+  // Master checkbox wiring — initialize from persisted state, listen
+  // for changes, and propagate user toggles back to the master flag.
+  const syncMasterCheckboxes = () => {
+    if (masterSynthesisCb) masterSynthesisCb.checked = synthesisMaster.get()
+    if (masterSubjectsCb) masterSubjectsCb.checked = subjectsMaster.get()
+    if (masterLonersCb) masterLonersCb.checked = lonersMaster.get()
+  }
+  syncMasterCheckboxes()
+  masterSynthesisCb?.addEventListener("change", () => {
+    synthesisMaster.set(masterSynthesisCb.checked)
+  })
+  masterSubjectsCb?.addEventListener("change", () => {
+    subjectsMaster.set(masterSubjectsCb.checked)
+  })
+  masterLonersCb?.addEventListener("change", () => {
+    lonersMaster.set(masterLonersCb.checked)
+  })
+  // Stop propagation on the checkbox itself so clicking it doesn't
+  // bubble to the row's hover handlers or trigger the click-outside
+  // close.
+  for (const cb of [masterSynthesisCb, masterSubjectsCb, masterLonersCb, displayLabelsCb]) {
+    cb?.addEventListener("click", (e) => e.stopPropagation())
+  }
+
+  // Display menu Aa toggle — mirrors the existing labelsAlwaysOn API.
+  if (displayLabelsCb) {
+    displayLabelsCb.checked = labelsAlwaysOn
+    displayLabelsCb.addEventListener("change", () => {
+      window.graphLabels.setAlwaysOn(displayLabelsCb.checked)
+    })
+  }
+
+  // ─── L2 panel rendering (existing logic) ─────────────────────
   type PanelRow = { slug: string; title: string; count?: number }
   const renderPanelBody = (
     body: HTMLElement,
@@ -2068,7 +2256,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     if (!lonersBody) return
     renderPanelBody(
       lonersBody,
-      // Loners rows have no count — each row IS one node.
       currentLoners.map((l) => ({ slug: l.slug, title: l.title })),
       (s) => window.graphLoners.isUnchecked(s),
       (s, c) => window.graphLoners.setChecked(s, c),
@@ -2081,68 +2268,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   renderSubjectsPanel()
   renderLonersPanel()
 
-  const setBtnPressed = (btn: HTMLElement | null, open: boolean) => {
-    if (btn) btn.setAttribute("aria-pressed", open ? "true" : "false")
-  }
-
-  const closePanel = (
-    panel: HTMLElement | null,
-    btn: HTMLElement | null,
-  ) => {
-    if (panel && !panel.hidden) panel.hidden = true
-    setBtnPressed(btn, false)
-  }
-  const closeOtherPanels = (which: "synthesis" | "subjects" | "loners") => {
-    if (which !== "synthesis") closePanel(synthesisPanel, synthesisBtn)
-    if (which !== "subjects") closePanel(subjectsPanel, subjectsBtn)
-    if (which !== "loners") closePanel(lonersPanel, lonersBtn)
-  }
-
-  const onSynthesisBtnClick = (e: MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (!synthesisPanel) return
-    const willOpen = synthesisPanel.hidden
-    synthesisPanel.hidden = !willOpen
-    setBtnPressed(synthesisBtn, willOpen)
-    if (willOpen) closeOtherPanels("synthesis")
-  }
-  const onSubjectsBtnClick = (e: MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (!subjectsPanel) return
-    const willOpen = subjectsPanel.hidden
-    subjectsPanel.hidden = !willOpen
-    setBtnPressed(subjectsBtn, willOpen)
-    if (willOpen) closeOtherPanels("subjects")
-  }
-  const onLonersBtnClick = (e: MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (!lonersPanel) return
-    const willOpen = lonersPanel.hidden
-    lonersPanel.hidden = !willOpen
-    setBtnPressed(lonersBtn, willOpen)
-    if (willOpen) closeOtherPanels("loners")
-  }
-
-  if (synthesisBtn) {
-    synthesisBtn.addEventListener("click", onSynthesisBtnClick)
-    setBtnPressed(synthesisBtn, synthesisPanel ? !synthesisPanel.hidden : false)
-  }
-  if (subjectsBtn) {
-    subjectsBtn.addEventListener("click", onSubjectsBtnClick)
-    setBtnPressed(subjectsBtn, subjectsPanel ? !subjectsPanel.hidden : false)
-  }
-  if (lonersBtn) {
-    lonersBtn.addEventListener("click", onLonersBtnClick)
-    setBtnPressed(lonersBtn, lonersPanel ? !lonersPanel.hidden : false)
-  }
-
-  // Re-render each panel whenever its underlying state changes
-  // (a row is checked/unchecked elsewhere, the roster recomputes
-  // after a graph re-render, etc.). Cheap; rebuilds the whole
-  // list each time.
   const unsubscribeSynthesisPanel = (() => {
     const handler = () => renderSynthesisPanel()
     filterChangeListeners.add(handler)
@@ -2206,22 +2331,18 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     unsubscribeFilter()
     unsubscribeSubjectsFilter()
     unsubscribeLonersFilter()
+    unsubscribeSynthesisMaster()
+    unsubscribeSubjectsMaster()
+    unsubscribeLonersMaster()
     unsubscribeSynthesisPanel()
     unsubscribeSubjectsPanel()
     unsubscribeLonersPanel()
     unsubscribeLabelsAlwaysOn()
-    if (labelsBtn) {
-      labelsBtn.removeEventListener("click", onLabelsBtnClick)
-    }
-    if (synthesisBtn) {
-      synthesisBtn.removeEventListener("click", onSynthesisBtnClick)
-    }
-    if (subjectsBtn) {
-      subjectsBtn.removeEventListener("click", onSubjectsBtnClick)
-    }
-    if (lonersBtn) {
-      lonersBtn.removeEventListener("click", onLonersBtnClick)
-    }
+    if (hoverSwitchTimer !== null) window.clearTimeout(hoverSwitchTimer)
+    if (leaveCloseTimer !== null) window.clearTimeout(leaveCloseTimer)
+    document.removeEventListener("click", onDocumentClick)
+    filterBtn?.removeEventListener("click", onFilterBtnClick)
+    displayBtn?.removeEventListener("click", onDisplayBtnClick)
     app.destroy()
     if (window.__graphPositionSnapshot) {
       window.__graphPositionSnapshot = undefined
