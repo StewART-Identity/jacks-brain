@@ -3,7 +3,7 @@
     "jacklayout2": {
       "name": "JackLayout2",
       "createdAt": "2026-04-27T18:07:06.419Z",
-      "updatedAt": "2026-04-28T22:09:52.756Z",
+      "updatedAt": "2026-04-28T22:20:08.705Z",
       "positions": {
         "application/help": {
           "x": 797.5413358542044,
@@ -30,8 +30,8 @@
           "y": -231.7796011956092
         },
         "collection/entities/active-directory": {
-          "x": -2722.663761834821,
-          "y": -1503.4884573744202
+          "x": -2853.015386554715,
+          "y": -1900.6061978001444
         },
         "collection/entities/cisco-duo": {
           "x": -3219.5106052007923,
