@@ -1981,42 +1981,21 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
 
   // ─── L2 panel positioning ────────────────────────────────────
-  // Center the L2 panel vertically on its triggering L1 row, then
-  // clamp so the panel never overflows the canvas (graph) edges. If
-  // the panel is taller than the canvas allows when centered, it
-  // slides up to fit; if it's tall enough that even pinning to the
-  // top would overflow, the existing max-height CSS rule takes over
-  // and adds scrolling.
-  //
-  // All measurements use getBoundingClientRect (viewport coords) and
-  // then convert to coords relative to #full-graph (which is the L2
-  // panel's offsetParent). The translated top is what we set on the
-  // panel's style.top. The CSS rule for .graph-filter-panel still
-  // owns left positioning; we only override top.
   const positionL2Panel = (panel: HTMLElement, row: HTMLElement) => {
     const fullGraph = document.getElementById("full-graph")
     if (!fullGraph) return
     const canvasRect = fullGraph.getBoundingClientRect()
     const rowRect = row.getBoundingClientRect()
 
-    // panel.offsetHeight is measured AFTER unhiding, so the panel is
-    // mounted but hidden=false at this point. The CSS max-height rule
-    // (calc(100% - 1rem)) caps this for tall panels like Loners.
     const panelHeight = panel.offsetHeight
     const canvasHeight = canvasRect.height
 
-    // Center of the L1 row in viewport coords:
     const rowCenterY = rowRect.top + rowRect.height / 2
-    // Convert to canvas-relative:
     const rowCenterRelativeToCanvas = rowCenterY - canvasRect.top
 
-    // Desired top: center the panel on the row.
     let desiredTop = rowCenterRelativeToCanvas - panelHeight / 2
 
-    // Clamp to canvas. The minimum top is 0.5rem (matching the
-    // toolbar's top margin); the maximum is canvas-height minus
-    // panel-height minus 0.5rem.
-    const minTop = 8 // ~0.5rem in px
+    const minTop = 8
     const maxTop = canvasHeight - panelHeight - 8
     if (desiredTop < minTop) desiredTop = minTop
     if (desiredTop > maxTop) desiredTop = Math.max(minTop, maxTop)
@@ -2030,7 +2009,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     const p = panelForDim(dim)
     const row = rowForDim(dim)
     if (p) {
-      // Unhide first so offsetHeight is meaningful for positioning.
       p.hidden = false
       if (row) {
         positionL2Panel(p, row)
@@ -2198,6 +2176,65 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     handler(graphFrozen)
     return () => freezeChangeListeners.delete(handler)
   })()
+
+  // ─── Display button highlight ────────────────────────────────
+  // Mirrors the freeze pattern: the Aa button shows aria-pressed=true
+  // when "Always show labels" is on. CSS gives it the yellow-border
+  // highlight via the existing .graph-ctrl-btn[aria-pressed="true"]
+  // rule. setCascadeOpen separately handles aria-expanded for the
+  // open/closed menu state — these compose without conflict.
+  const unsubscribeDisplayBtnHighlight = (() => {
+    const handler = (on: boolean) => {
+      if (displayBtn) displayBtn.setAttribute("aria-pressed", on ? "true" : "false")
+    }
+    labelsAlwaysOnChangeListeners.add(handler)
+    handler(labelsAlwaysOn)
+    return () => labelsAlwaysOnChangeListeners.delete(handler)
+  })()
+
+  // ─── Filter button highlight ─────────────────────────────────
+  // Highlights the funnel button whenever ANY filter dimension is
+  // actively hiding nodes from the graph. "Active" means either:
+  //   - any of the three master flags is OFF (suppressing a whole
+  //     dimension), or
+  //   - any individual L2 checkbox is unchecked (in any of the three
+  //     unchecked sets).
+  // When all six conditions are off (everything visible), the button
+  // returns to its neutral state. This recomputes on any of the six
+  // change events: 3 master flags + 3 individual filter sets.
+  const isAnyFilterActive = () => {
+    if (!synthesisMaster.get() || !subjectsMaster.get() || !lonersMaster.get()) {
+      return true
+    }
+    if (unchecked.size > 0 || subjectsUnchecked.size > 0 || lonersUnchecked.size > 0) {
+      return true
+    }
+    return false
+  }
+  const updateFilterBtnHighlight = () => {
+    if (filterBtn) {
+      filterBtn.setAttribute("aria-pressed", isAnyFilterActive() ? "true" : "false")
+    }
+  }
+  updateFilterBtnHighlight()
+  const unsubscribeFilterBtnHighlightSyn = (() => {
+    const handler = () => updateFilterBtnHighlight()
+    filterChangeListeners.add(handler)
+    return () => filterChangeListeners.delete(handler)
+  })()
+  const unsubscribeFilterBtnHighlightSub = (() => {
+    const handler = () => updateFilterBtnHighlight()
+    subjectsFilterChangeListeners.add(handler)
+    return () => subjectsFilterChangeListeners.delete(handler)
+  })()
+  const unsubscribeFilterBtnHighlightLon = (() => {
+    const handler = () => updateFilterBtnHighlight()
+    lonersFilterChangeListeners.add(handler)
+    return () => lonersFilterChangeListeners.delete(handler)
+  })()
+  const unsubscribeFilterBtnHighlightSynM = synthesisMaster.onChange(() => updateFilterBtnHighlight())
+  const unsubscribeFilterBtnHighlightSubM = subjectsMaster.onChange(() => updateFilterBtnHighlight())
+  const unsubscribeFilterBtnHighlightLonM = lonersMaster.onChange(() => updateFilterBtnHighlight())
 
   // ─── L2 panel rendering (existing logic) ─────────────────────
   type PanelRow = { slug: string; title: string; count?: number }
@@ -2371,6 +2408,13 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     stopAnimation = true
     unsubscribeFreeze()
     unsubscribeFreezeCheckboxSync()
+    unsubscribeDisplayBtnHighlight()
+    unsubscribeFilterBtnHighlightSyn()
+    unsubscribeFilterBtnHighlightSub()
+    unsubscribeFilterBtnHighlightLon()
+    unsubscribeFilterBtnHighlightSynM()
+    unsubscribeFilterBtnHighlightSubM()
+    unsubscribeFilterBtnHighlightLonM()
     unsubscribeFilter()
     unsubscribeSubjectsFilter()
     unsubscribeLonersFilter()
