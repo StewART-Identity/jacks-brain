@@ -73,7 +73,10 @@ const sidebarLeft = [
     title: "Visualize",
     slug: "visualize",
     defaultState: "open",
-    links: [{ title: "Graph View", slug: "visualize/graph-view" }],
+    links: [
+      { title: "Graph View", slug: "visualize/graph-view" },
+      { title: "Graph Help", slug: "visualize/graph-help" },
+    ],
   }),
   Component.ApplicationMenu(),
   Component.Search(),
