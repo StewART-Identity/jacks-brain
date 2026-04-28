@@ -1927,8 +1927,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   })()
 
   // ─── Cascade menu wiring ──────────────────────────────────────
-  // Three L1 menus (Freeze, Display, Filter), three L2 panels
-  // (Synthesis, Subjects, Loners — under Filter only).
   type CascadeOpen = "freeze" | "display" | "filter" | null
   type FilterDim = "synthesis" | "subjects" | "loners"
   let cascadeOpen: CascadeOpen = null
@@ -1981,12 +1979,64 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     filterRowSubjects?.classList.remove("active")
     filterRowLoners?.classList.remove("active")
   }
+
+  // ─── L2 panel positioning ────────────────────────────────────
+  // Center the L2 panel vertically on its triggering L1 row, then
+  // clamp so the panel never overflows the canvas (graph) edges. If
+  // the panel is taller than the canvas allows when centered, it
+  // slides up to fit; if it's tall enough that even pinning to the
+  // top would overflow, the existing max-height CSS rule takes over
+  // and adds scrolling.
+  //
+  // All measurements use getBoundingClientRect (viewport coords) and
+  // then convert to coords relative to #full-graph (which is the L2
+  // panel's offsetParent). The translated top is what we set on the
+  // panel's style.top. The CSS rule for .graph-filter-panel still
+  // owns left positioning; we only override top.
+  const positionL2Panel = (panel: HTMLElement, row: HTMLElement) => {
+    const fullGraph = document.getElementById("full-graph")
+    if (!fullGraph) return
+    const canvasRect = fullGraph.getBoundingClientRect()
+    const rowRect = row.getBoundingClientRect()
+
+    // panel.offsetHeight is measured AFTER unhiding, so the panel is
+    // mounted but hidden=false at this point. The CSS max-height rule
+    // (calc(100% - 1rem)) caps this for tall panels like Loners.
+    const panelHeight = panel.offsetHeight
+    const canvasHeight = canvasRect.height
+
+    // Center of the L1 row in viewport coords:
+    const rowCenterY = rowRect.top + rowRect.height / 2
+    // Convert to canvas-relative:
+    const rowCenterRelativeToCanvas = rowCenterY - canvasRect.top
+
+    // Desired top: center the panel on the row.
+    let desiredTop = rowCenterRelativeToCanvas - panelHeight / 2
+
+    // Clamp to canvas. The minimum top is 0.5rem (matching the
+    // toolbar's top margin); the maximum is canvas-height minus
+    // panel-height minus 0.5rem.
+    const minTop = 8 // ~0.5rem in px
+    const maxTop = canvasHeight - panelHeight - 8
+    if (desiredTop < minTop) desiredTop = minTop
+    if (desiredTop > maxTop) desiredTop = Math.max(minTop, maxTop)
+
+    panel.style.top = `${desiredTop}px`
+  }
+
   const showL2ForDim = (dim: FilterDim) => {
     hideAllL2Panels()
     clearActiveRowHighlights()
     const p = panelForDim(dim)
-    if (p) p.hidden = false
-    rowForDim(dim)?.classList.add("active")
+    const row = rowForDim(dim)
+    if (p) {
+      // Unhide first so offsetHeight is meaningful for positioning.
+      p.hidden = false
+      if (row) {
+        positionL2Panel(p, row)
+      }
+    }
+    row?.classList.add("active")
     activeFilterDim = dim
   }
 
@@ -2023,12 +2073,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     setCascadeOpen(null)
   }
 
-  // Toolbar button click handlers — toggle their cascade open/closed.
-  // For Freeze, we use { capture: true } and stopImmediatePropagation
-  // to override the legacy click-to-toggle wiring that lives elsewhere
-  // in the build pipeline. Capture phase fires before bubble, so our
-  // handler runs first; stopImmediatePropagation prevents the legacy
-  // bubble-phase listener from running.
   const onFilterBtnClick = (e: MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -2113,7 +2157,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
   document.addEventListener("click", onDocumentClick)
 
-  // Master checkbox wiring
   const syncMasterCheckboxes = () => {
     if (masterSynthesisCb) masterSynthesisCb.checked = synthesisMaster.get()
     if (masterSubjectsCb) masterSubjectsCb.checked = subjectsMaster.get()
@@ -2133,7 +2176,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     cb?.addEventListener("click", (e) => e.stopPropagation())
   }
 
-  // Display menu Aa toggle
   if (displayLabelsCb) {
     displayLabelsCb.checked = labelsAlwaysOn
     displayLabelsCb.addEventListener("change", () => {
@@ -2141,18 +2183,12 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     })
   }
 
-  // Freeze menu group-drag toggle. Drives window.graphFreeze.toggle()
-  // (the same API the legacy button used to call directly). The
-  // unsubscribeFreeze handler above keeps the simulation in sync.
   if (freezeModeCb) {
     freezeModeCb.checked = graphFrozen
     freezeModeCb.addEventListener("change", () => {
       window.graphFreeze.setFrozen(freezeModeCb.checked)
     })
   }
-  // Sync the freeze checkbox + button aria-pressed when freeze state
-  // changes (e.g., from another tab's localStorage write, or from a
-  // future graphFreeze.setFrozen call elsewhere).
   const unsubscribeFreezeCheckboxSync = (() => {
     const handler = (frozen: boolean) => {
       if (freezeModeCb) freezeModeCb.checked = frozen
