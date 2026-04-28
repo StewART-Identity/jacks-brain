@@ -405,7 +405,7 @@ FullGraph.css =
   position: absolute;
   top: 0.5rem;
   right: calc(2.8rem + 1rem);
-  width: 22rem;
+  width: 28rem;
   max-height: calc(100% - 1rem);
   z-index: 5;
   background: var(--light);
