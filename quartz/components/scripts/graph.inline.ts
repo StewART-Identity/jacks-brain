@@ -1084,6 +1084,81 @@ function ensureLabelsApi() {
 
 ensureLabelsApi()
 
+// ─── SPA navigation guard ─────────────────────────────────────
+// Catches clicks on internal <a> links anywhere in the document
+// before the SPA router (spa.inline.ts) sees them. If layouts are
+// dirty, swallows the click, runs the modal, and on "proceed"
+// navigates programmatically.
+//
+// Why capture phase: the SPA router uses a window-level click
+// listener at bubble phase. By installing at document capture
+// phase, we run first and can call stopImmediatePropagation to
+// keep the SPA router from acting on this click. Same trick we
+// used for the Freeze button to override its legacy handler.
+//
+// Why install once at module scope rather than per-renderGraph
+// invocation: the guard is global behavior that should apply
+// regardless of whether a graph is currently mounted on the page.
+// If layoutsDirty is false, the guard short-circuits cheaply.
+//
+// Skipped clicks: modifier keys (ctrl/meta/shift), middle-click
+// (open in new tab), target="_blank", external links, and links
+// with data-router-ignore — same exclusions the SPA router uses.
+function ensureSpaNavGuard() {
+  if ((window as any).__graphSpaNavGuardInstalled) return
+  ;(window as any).__graphSpaNavGuardInstalled = true
+
+  const isLocalUrl = (href: string): boolean => {
+    try {
+      return new URL(href).origin === window.location.origin
+    } catch {
+      return false
+    }
+  }
+
+  document.addEventListener(
+    "click",
+    (event: MouseEvent) => {
+      if (!layoutsDirty) return
+
+      // Skip clicks that the SPA router would also skip
+      if (event.ctrlKey || event.metaKey || event.shiftKey) return
+      if (event.button !== 0) return // left-click only
+
+      const target = event.target
+      if (!(target instanceof Element)) return
+      const a = target.closest("a")
+      if (!a) return
+      if (a.getAttribute("target") === "_blank") return
+      if ("routerIgnore" in (a as HTMLAnchorElement).dataset) return
+
+      const href = (a as HTMLAnchorElement).href
+      if (!href || !isLocalUrl(href)) return
+
+      // Don't intercept same-page hash-only nav (no actual page change)
+      const url = new URL(href)
+      const samePage =
+        url.origin === window.location.origin &&
+        url.pathname === window.location.pathname
+      if (samePage && url.hash) return
+
+      // Got a navigation we want to guard. Stop the SPA router.
+      event.preventDefault()
+      event.stopImmediatePropagation()
+
+      void (async () => {
+        const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
+        if (outcome === "proceed" && typeof window.spaNavigate === "function") {
+          window.spaNavigate(url)
+        }
+      })()
+    },
+    { capture: true },
+  )
+}
+
+ensureSpaNavGuard()
+
 type TweenNode = {
   update: (time: number) => void
   stop: () => void
