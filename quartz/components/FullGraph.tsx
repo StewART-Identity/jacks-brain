@@ -438,8 +438,11 @@ FullGraph.css =
   color: var(--gray);
   line-height: 1.3;
 }
+/* Body padding bumped on the left side so checkboxes (which Quartz's
+   global form styling sometimes renders larger than expected) don't
+   get clipped against the panel border. */
 .graph-filter-body {
-  padding: 0.4rem 0.4rem 0.6rem;
+  padding: 0.4rem 0.4rem 0.6rem 0.8rem;
 }
 /* Row layout: checkbox column-aligned on the left, name allowed
    to wrap to multiple lines if it's too long for the panel width.
@@ -448,7 +451,7 @@ FullGraph.css =
 .graph-filter-row {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: 0.6rem;
   padding: 0.4rem 0.4rem;
   border-radius: 4px;
   cursor: pointer;
@@ -457,10 +460,16 @@ FullGraph.css =
 .graph-filter-row:hover {
   background: var(--lightgray);
 }
-.graph-filter-row input {
+/* Constrain checkbox to a known size so it can't exceed the layout
+   space we've allocated for it. Without this, browser/theme defaults
+   can render the checkbox larger than expected and bleed it past the
+   panel's left edge. */
+.graph-filter-row input[type="checkbox"] {
   margin: 0;
   flex-shrink: 0;
   cursor: pointer;
+  width: 1rem;
+  height: 1rem;
   /* Nudge the checkbox down slightly so it visually centers with
      the first line of text, since align-items is flex-start. */
   margin-top: 0.15rem;
