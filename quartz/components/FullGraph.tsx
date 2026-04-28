@@ -3,6 +3,28 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
 import script from "./scripts/graph.inline"
 import style from "./styles/graph.scss"
 
+// Lucide-style funnel/filter icon, inlined as raw SVG so we can use
+// it inside the vanilla-TS toolbar buttons without pulling React.
+// The letter overlay (Y / S / L) sits at the bottom-right of the
+// button so the three filter buttons read distinctly when stacked.
+const FilterIcon = ({ letter }: { letter: string }) => (
+  <span class="graph-filter-icon-wrap" aria-hidden="true">
+    <svg
+      class="graph-filter-icon-svg"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+    </svg>
+    <span class="graph-filter-icon-letter">{letter}</span>
+  </span>
+)
+
 const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   const graphConfig = {
     drag: true,
@@ -84,8 +106,36 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
         <button type="button" id="graph-fullscreen-btn" class="graph-ctrl-btn" title="Full screen">&#x26F6;</button>
         <button type="button" id="graph-freeze-btn" class="graph-ctrl-btn" title="Drag mode: single (click for group)" aria-pressed="false">❄</button>
         <button type="button" id="graph-labels-btn" class="graph-ctrl-btn graph-ctrl-btn-text" title="Show all labels" aria-pressed="false">Aa</button>
-        <button type="button" id="graph-filter-btn" class="graph-ctrl-btn" title="Filter by synthesis" aria-pressed="false">⚏</button>
-        <button type="button" id="graph-subjects-btn" class="graph-ctrl-btn graph-ctrl-btn-text" title="Filter by subject" aria-pressed="false">S</button>
+        <button
+          type="button"
+          id="graph-filter-btn"
+          class="graph-ctrl-btn graph-ctrl-btn-filter"
+          title="Filter by synthesis"
+          aria-label="Filter by synthesis"
+          aria-pressed="false"
+        >
+          <FilterIcon letter="Y" />
+        </button>
+        <button
+          type="button"
+          id="graph-subjects-btn"
+          class="graph-ctrl-btn graph-ctrl-btn-filter"
+          title="Filter by subject"
+          aria-label="Filter by subject"
+          aria-pressed="false"
+        >
+          <FilterIcon letter="S" />
+        </button>
+        <button
+          type="button"
+          id="graph-loners-btn"
+          class="graph-ctrl-btn graph-ctrl-btn-filter"
+          title="Filter loners"
+          aria-label="Filter loners"
+          aria-pressed="false"
+        >
+          <FilterIcon letter="L" />
+        </button>
         <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
         <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
       </div>
@@ -105,11 +155,21 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
           <h4>Filter by subject</h4>
           <p class="graph-filter-hint">
             Uncheck a subject to hide its pages. Pages with multiple subjects
-            stay visible until all of their subjects are unchecked. Pages with
-            no subject are grouped under <strong>Loners</strong>.
+            stay visible until all of their subjects are unchecked.
           </p>
         </div>
         <div class="graph-filter-body" id="graph-subjects-body">
+        </div>
+      </div>
+      <div class="graph-filter-panel" id="graph-loners-panel" hidden>
+        <div class="graph-filter-header">
+          <h4>Loners</h4>
+          <p class="graph-filter-hint">
+            Pages with no subject and tag nodes that don't belong to any subject
+            cluster. Uncheck individual loners to hide them.
+          </p>
+        </div>
+        <div class="graph-filter-body" id="graph-loners-body">
         </div>
       </div>
       <div class="graph-container" data-cfg={JSON.stringify(graphConfig)}></div>
@@ -211,6 +271,45 @@ FullGraph.css =
   letter-spacing: 0.02em;
 }
 
+/* Filter buttons share a funnel icon with a small letter overlay
+   in the bottom-right corner so the three filter buttons (Synthesis
+   / Subjects / Loners) are visually distinguishable when stacked.
+   The button itself stays 2.8rem so toolbar rhythm is preserved. */
+.graph-ctrl-btn-filter {
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.graph-filter-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.graph-filter-icon-svg {
+  width: 1.4rem;
+  height: 1.4rem;
+  stroke: currentColor;
+}
+.graph-filter-icon-letter {
+  position: absolute;
+  bottom: 0.15rem;
+  right: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  color: currentColor;
+  letter-spacing: 0;
+  /* Subtle background plate so the letter doesn't visually merge
+     with the funnel's lower stem. */
+  background: var(--light);
+  padding: 0.05rem 0.18rem;
+  border-radius: 3px;
+}
+
 .graph-layouts {
   position: absolute;
   top: 0.5rem;
@@ -306,7 +405,7 @@ FullGraph.css =
   position: absolute;
   top: 0.5rem;
   right: calc(2.8rem + 1rem);
-  width: 18rem;
+  width: 22rem;
   max-height: calc(100% - 1rem);
   z-index: 5;
   background: var(--light);
