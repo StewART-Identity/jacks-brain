@@ -2014,26 +2014,32 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
 
   // ─── L2 panel positioning ────────────────────────────────────
+  // Center the L2 panel vertically on its triggering L1 row using
+  // CSS transform — no offsetHeight measurement required. We set
+  // `top` to the row's center point (canvas-relative) and let the
+  // browser shift the panel up by half its own height via
+  // translateY(-50%) at paint time. This eliminates the entire
+  // class of "did the layout finish?" race conditions that bit us
+  // when measuring offsetHeight on a freshly-unhidden element.
+  //
+  // The L1 menu is laid out by the time the user can hover a row,
+  // so getBoundingClientRect on the row is always reliable. The
+  // panel's actual height is whatever it ends up being — the CSS
+  // max-height: calc(100% - 1rem) rule already prevents real
+  // overflow on the tall Loners panel, so the worst case for very
+  // tall content is a panel cropped at canvas edges (still readable,
+  // no layout breakage).
   const positionL2Panel = (panel: HTMLElement, row: HTMLElement) => {
     const fullGraph = document.getElementById("full-graph")
     if (!fullGraph) return
     const canvasRect = fullGraph.getBoundingClientRect()
     const rowRect = row.getBoundingClientRect()
 
-    const panelHeight = panel.offsetHeight
-    const canvasHeight = canvasRect.height
-
     const rowCenterY = rowRect.top + rowRect.height / 2
     const rowCenterRelativeToCanvas = rowCenterY - canvasRect.top
 
-    let desiredTop = rowCenterRelativeToCanvas - panelHeight / 2
-
-    const minTop = 8
-    const maxTop = canvasHeight - panelHeight - 8
-    if (desiredTop < minTop) desiredTop = minTop
-    if (desiredTop > maxTop) desiredTop = Math.max(minTop, maxTop)
-
-    panel.style.top = `${desiredTop}px`
+    panel.style.top = `${rowCenterRelativeToCanvas}px`
+    panel.style.transform = "translateY(-50%)"
   }
 
   const showL2ForDim = (dim: FilterDim) => {
@@ -2043,28 +2049,8 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     const row = rowForDim(dim)
     if (p) {
       p.hidden = false
-      // Defer the position calculation by one animation frame so the
-      // browser has finished laying out the freshly-unhidden panel.
-      // On the very first reveal of an L2 panel, calling
-      // panel.offsetHeight immediately after `hidden = false` can
-      // return a stale or zero value because the layout pass hasn't
-      // run yet — which made the first-open panel land at top:0 (the
-      // clamp) instead of centered on the row. After one rAF tick
-      // the browser has computed real dimensions and the centering
-      // math works correctly. Subsequent reveals don't have this
-      // problem (the panel is already laid out from a prior show),
-      // but using rAF unconditionally keeps the flow simple.
       if (row) {
-        requestAnimationFrame(() => {
-          // Re-check that the panel is still the active L2 in case
-          // the user hovered to a different row in the intervening
-          // frame. If activeFilterDim no longer matches `dim`, the
-          // panel was hidden by a subsequent showL2ForDim call and
-          // positioning it would expose a hidden panel.
-          if (!p.hidden) {
-            positionL2Panel(p, row)
-          }
-        })
+        positionL2Panel(p, row)
       }
     }
     row?.classList.add("active")
