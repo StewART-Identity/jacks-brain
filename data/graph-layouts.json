@@ -3,7 +3,7 @@
     "jacklayout2": {
       "name": "JackLayout2",
       "createdAt": "2026-04-27T18:07:06.419Z",
-      "updatedAt": "2026-04-28T00:14:32.801Z",
+      "updatedAt": "2026-04-28T00:30:38.054Z",
       "positions": {
         "application/help": {
           "x": 710.1144599168772,
@@ -78,8 +78,8 @@
           "y": 21.460286465151498
         },
         "collection/synthesis/unt-system-iam-infrastructure-gaps": {
-          "x": -593.0271433288128,
-          "y": -1121.790016817964
+          "x": -696.6502299830385,
+          "y": -1057.5728926942186
         },
         "/": {
           "x": 958.9172163467979,
