@@ -1212,10 +1212,13 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
 
     // Resting size — Jack confirmed liked. ~scale*2.8/k.
     const restingScale = (scale * 2.8) / currentTransform.k
-    // Hovered: scale*2.8*1.7/k = ~4.76 — close to old known-good 4.62.
-    // Neighbor: one notch smaller than hovered, per Jack's preference.
+    // Hovered: scale*2.8*1.7/k. Neighbor: one notch smaller.
     const neighborScale = restingScale * 1.5
     const hoveredScale = restingScale * 1.7
+    // Toggle-on size: between resting (1.0) and hovered (1.7).
+    // Comfortable readable size that still leaves room for hover
+    // bloom on top.
+    const toggleOnScale = restingScale * 1.4
     for (const n of nodeRenderData) {
       const nodeId = n.simulationData.id
 
@@ -1240,14 +1243,11 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           ),
         )
       } else if (labelsAlwaysOn) {
-        // Aa toggle: render at hovered size so all labels read at
-        // the same scale a hovered label would. Bigger than resting,
-        // smaller than was previously shipped.
         tweenGroup.add(
           new Tweened<Text>(n.label).to(
             {
               alpha: 1,
-              scale: { x: hoveredScale, y: hoveredScale },
+              scale: { x: toggleOnScale, y: toggleOnScale },
             },
             100,
           ),
