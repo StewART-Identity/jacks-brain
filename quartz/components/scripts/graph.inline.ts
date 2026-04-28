@@ -1464,6 +1464,16 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   let dragStartY = 0
   let dragging = false
   let currentTransform = zoomIdentity
+  // ─── Double-click guard ─────────────────────────────────────
+  // Tracks the timestamp of the last click on a node. If a second
+  // click arrives within DOUBLE_CLICK_THRESHOLD_MS, it's treated as
+  // a double-click and the second click is dropped entirely — no
+  // fx/fy mutation, no spaNavigate. Without this guard, the second
+  // click would null fx/fy on a node that already initiated nav,
+  // causing the simulation to fling the unanchored node off-canvas
+  // before the SPA transition completes ("flyer" bug).
+  let lastNodeClickTime = 0
+  const DOUBLE_CLICK_THRESHOLD_MS = 300
 
   function renderLinks() {
     tweens.get("link")?.stop()
@@ -1765,6 +1775,20 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           const dist = Math.sqrt(dx * dx + dy * dy)
           const isClick = dist < 5 && Date.now() - dragStartTime < 500
           if (isClick) {
+            // Drop the second click of a rapid double-click. Without
+            // this, two near-simultaneous clicks both initiate the
+            // navigation flow, both null fx/fy on the node, and the
+            // unanchored node gets flung off-canvas by the simulation
+            // before the SPA transition lands.
+            const now = Date.now()
+            if (now - lastNodeClickTime < DOUBLE_CLICK_THRESHOLD_MS) {
+              rigidBody = null
+              updateHoverInfo(null)
+              renderPixiFromD3()
+              return
+            }
+            lastNodeClickTime = now
+
             const subject = event.subject as NodeData
             const node = graphData.nodes.find((n) => n.id === subject.id) as NodeData
             const targ = resolveRelative(fullSlug, node.id)
@@ -1806,6 +1830,15 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   } else {
     for (const node of nodeRenderData) {
       node.gfx.on("click", async () => {
+        // Same double-click guard as the drag-end click path. This
+        // branch only fires when drag is disabled in the config —
+        // currently unused but kept consistent.
+        const now = Date.now()
+        if (now - lastNodeClickTime < DOUBLE_CLICK_THRESHOLD_MS) {
+          return
+        }
+        lastNodeClickTime = now
+
         const targ = resolveRelative(fullSlug, node.simulationData.id)
         const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
         if (outcome === "proceed") {
@@ -2178,11 +2211,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   })()
 
   // ─── Display button highlight ────────────────────────────────
-  // Mirrors the freeze pattern: the Aa button shows aria-pressed=true
-  // when "Always show labels" is on. CSS gives it the yellow-border
-  // highlight via the existing .graph-ctrl-btn[aria-pressed="true"]
-  // rule. setCascadeOpen separately handles aria-expanded for the
-  // open/closed menu state — these compose without conflict.
   const unsubscribeDisplayBtnHighlight = (() => {
     const handler = (on: boolean) => {
       if (displayBtn) displayBtn.setAttribute("aria-pressed", on ? "true" : "false")
@@ -2193,15 +2221,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   })()
 
   // ─── Filter button highlight ─────────────────────────────────
-  // Highlights the funnel button whenever ANY filter dimension is
-  // actively hiding nodes from the graph. "Active" means either:
-  //   - any of the three master flags is OFF (suppressing a whole
-  //     dimension), or
-  //   - any individual L2 checkbox is unchecked (in any of the three
-  //     unchecked sets).
-  // When all six conditions are off (everything visible), the button
-  // returns to its neutral state. This recomputes on any of the six
-  // change events: 3 master flags + 3 individual filter sets.
   const isAnyFilterActive = () => {
     if (!synthesisMaster.get() || !subjectsMaster.get() || !lonersMaster.get()) {
       return true
