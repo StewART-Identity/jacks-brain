@@ -1487,13 +1487,20 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           const dist = Math.sqrt(dx * dx + dy * dy)
           const isClick = dist < 5 && Date.now() - dragStartTime < 500
           if (isClick) {
-            event.subject.fx = null
-            event.subject.fy = null
-            const node = graphData.nodes.find((n) => n.id === event.subject.id) as NodeData
+            // Don't unpin yet — leave the node fixed at its current
+            // position while we await the modal. Unpin only on
+            // "proceed", inside the async block. This prevents the
+            // flier-node bug where a double-click sends a freshly
+            // unpinned node sailing across the canvas under physics
+            // while the modal is still pending.
+            const subject = event.subject as NodeData
+            const node = graphData.nodes.find((n) => n.id === subject.id) as NodeData
             const targ = resolveRelative(fullSlug, node.id)
             void (async () => {
               const outcome = await window.graphLayouts.confirmLeaveIfDirty("spa-nav")
               if (outcome === "proceed") {
+                subject.fx = null
+                subject.fy = null
                 window.spaNavigate(new URL(targ, window.location.toString()))
               }
             })()
