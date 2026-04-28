@@ -3,28 +3,6 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
 import script from "./scripts/graph.inline"
 import style from "./styles/graph.scss"
 
-// Lucide-style funnel/filter icon, inlined as raw SVG so we can use
-// it inside the vanilla-TS toolbar buttons without pulling React.
-// The letter overlay (Y / S / L) sits at the bottom-right of the
-// button so the three filter buttons read distinctly when stacked.
-const FilterIcon = ({ letter }: { letter: string }) => (
-  <span class="graph-filter-icon-wrap" aria-hidden="true">
-    <svg
-      class="graph-filter-icon-svg"
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-    </svg>
-    <span class="graph-filter-icon-letter">{letter}</span>
-  </span>
-)
-
 const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   const graphConfig = {
     drag: true,
@@ -105,40 +83,77 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
       <div class="graph-controls">
         <button type="button" id="graph-fullscreen-btn" class="graph-ctrl-btn" title="Full screen">&#x26F6;</button>
         <button type="button" id="graph-freeze-btn" class="graph-ctrl-btn" title="Drag mode: single (click for group)" aria-pressed="false">❄</button>
-        <button type="button" id="graph-labels-btn" class="graph-ctrl-btn graph-ctrl-btn-text" title="Show all labels" aria-pressed="false">Aa</button>
+        <button
+          type="button"
+          id="graph-display-btn"
+          class="graph-ctrl-btn graph-ctrl-btn-text"
+          title="Display options"
+          aria-label="Display options"
+          aria-haspopup="menu"
+          aria-expanded="false"
+        >
+          Aa
+        </button>
         <button
           type="button"
           id="graph-filter-btn"
           class="graph-ctrl-btn graph-ctrl-btn-filter"
-          title="Filter by synthesis"
-          aria-label="Filter by synthesis"
-          aria-pressed="false"
+          title="Filter"
+          aria-label="Filter"
+          aria-haspopup="menu"
+          aria-expanded="false"
         >
-          <FilterIcon letter="Y" />
-        </button>
-        <button
-          type="button"
-          id="graph-subjects-btn"
-          class="graph-ctrl-btn graph-ctrl-btn-filter"
-          title="Filter by subject"
-          aria-label="Filter by subject"
-          aria-pressed="false"
-        >
-          <FilterIcon letter="S" />
-        </button>
-        <button
-          type="button"
-          id="graph-loners-btn"
-          class="graph-ctrl-btn graph-ctrl-btn-filter"
-          title="Filter loners"
-          aria-label="Filter loners"
-          aria-pressed="false"
-        >
-          <FilterIcon letter="L" />
+          <span class="graph-filter-icon-wrap" aria-hidden="true">
+            <svg
+              class="graph-filter-icon-svg"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
+          </span>
         </button>
         <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
         <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
       </div>
+
+      {/* Display cascade — L1 menu containing display toggles. Sits
+          one level deep, no L2. Anchored to the right of the toolbar
+          column. */}
+      <div class="graph-cascade-menu graph-display-menu" id="graph-display-menu" role="menu" hidden>
+        <div class="graph-cascade-row" id="graph-display-row-labels" role="menuitemcheckbox" aria-checked="false">
+          <input type="checkbox" id="graph-display-labels-cb" class="graph-cascade-row-checkbox" />
+          <span class="graph-cascade-row-name">Always show labels</span>
+        </div>
+      </div>
+
+      {/* Filter cascade — L1 menu with three master rows. Each row
+          has a master-enable checkbox, a name, and a chevron
+          indicating an L2 panel exists. Hovering a row opens the
+          corresponding L2 panel to the right. */}
+      <div class="graph-cascade-menu graph-filter-cascade-menu" id="graph-filter-cascade-menu" role="menu" hidden>
+        <div class="graph-cascade-row" id="graph-filter-cascade-row-synthesis" role="menuitem" data-dim="synthesis">
+          <input type="checkbox" class="graph-cascade-row-checkbox" id="graph-filter-master-synthesis-cb" />
+          <span class="graph-cascade-row-name">Synthesis</span>
+          <span class="graph-cascade-row-chevron" aria-hidden="true">▸</span>
+        </div>
+        <div class="graph-cascade-row" id="graph-filter-cascade-row-subjects" role="menuitem" data-dim="subjects">
+          <input type="checkbox" class="graph-cascade-row-checkbox" id="graph-filter-master-subjects-cb" />
+          <span class="graph-cascade-row-name">Subjects</span>
+          <span class="graph-cascade-row-chevron" aria-hidden="true">▸</span>
+        </div>
+        <div class="graph-cascade-row" id="graph-filter-cascade-row-loners" role="menuitem" data-dim="loners">
+          <input type="checkbox" class="graph-cascade-row-checkbox" id="graph-filter-master-loners-cb" />
+          <span class="graph-cascade-row-name">Loners</span>
+          <span class="graph-cascade-row-chevron" aria-hidden="true">▸</span>
+        </div>
+      </div>
+
       <div class="graph-filter-panel" id="graph-filter-panel" hidden>
         <div class="graph-filter-header">
           <h4>Filter by synthesis</h4>
@@ -223,12 +238,9 @@ FullGraph.css =
 #full-graph:-webkit-full-screen > .graph-controls {
   position: fixed;
   top: 1rem;
-  /* Phase 1: control toolbar moved to the LEFT side. Filter panels
-     will cascade rightward from here, NeXT-style. */
   left: 1rem;
   z-index: 100;
 }
-/* Vertical control toolbar — now on the LEFT side of the canvas. */
 .graph-controls {
   position: absolute;
   top: 0.5rem;
@@ -260,24 +272,18 @@ FullGraph.css =
   opacity: 0.3;
   cursor: not-allowed;
 }
-.graph-ctrl-btn[aria-pressed="true"] {
+.graph-ctrl-btn[aria-pressed="true"],
+.graph-ctrl-btn[aria-expanded="true"] {
   opacity: 1;
   border-color: var(--secondary);
   color: var(--secondary);
 }
-/* For control buttons whose label is letters (e.g. "Aa") rather
-   than a single icon glyph. Smaller font so the text fits and
-   centers neatly inside the 2.8rem square. */
 .graph-ctrl-btn-text {
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
-/* Filter buttons share a funnel icon with a small letter overlay
-   in the bottom-right corner so the three filter buttons (Synthesis
-   / Subjects / Loners) are visually distinguishable when stacked.
-   The button itself stays 2.8rem so toolbar rhythm is preserved. */
 .graph-ctrl-btn-filter {
   padding: 0;
   display: inline-flex;
@@ -297,26 +303,7 @@ FullGraph.css =
   height: 1.4rem;
   stroke: currentColor;
 }
-.graph-filter-icon-letter {
-  position: absolute;
-  bottom: 0.15rem;
-  right: 0.25rem;
-  font-size: 0.65rem;
-  font-weight: 700;
-  line-height: 1;
-  color: currentColor;
-  letter-spacing: 0;
-  /* Subtle background plate so the letter doesn't visually merge
-     with the funnel's lower stem. */
-  background: var(--light);
-  padding: 0.05rem 0.18rem;
-  border-radius: 3px;
-}
 
-/* Layouts toolbar — now on the RIGHT side of the canvas. The
-   horizontal flex direction is preserved; only the anchor side
-   moves. align-items: flex-end so the dropdown menu (which is
-   positioned with right: 0) lines up with the rightmost button. */
 .graph-layouts {
   position: absolute;
   top: 0.5rem;
@@ -355,11 +342,6 @@ FullGraph.css =
 .graph-layouts-danger:hover:not(:disabled) {
   color: #b00;
 }
-/* Layouts dropdown menu — anchored to the RIGHT now since the
-   layouts toolbar is on the right side. Without this it would
-   open leftward from the dropdown button and look fine, but
-   right-anchoring keeps it from drifting off-canvas if the
-   toolbar grows. */
 .graph-layouts-menu {
   position: absolute;
   top: calc(100% + 0.4rem);
@@ -413,16 +395,106 @@ FullGraph.css =
   z-index: 100;
 }
 
-/* Filter panel: cascades RIGHTWARD from the left-side toolbar.
-   width adapts to viewport — on wide screens 22rem (comfortable),
-   on narrower viewports it shrinks to fit. The 6rem deduction
-   accounts for the toolbar column on the left and a small right
-   margin so the panel never overflows past the canvas edge. */
+/* ─── L1 cascade menus (Display, Filter) ──────────────────────────
+   Compact single-column menus that anchor to the right of the
+   toolbar column. The Display menu sits at top: 5.6rem (aligned
+   with the Aa button), Filter at top: 8.8rem (aligned with the
+   funnel button). Each row has a checkbox on the left and an
+   optional chevron on the right indicating an L2 panel exists. */
+.graph-cascade-menu {
+  position: absolute;
+  left: calc(2.8rem + 1rem);
+  z-index: 6;
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  padding: 0.3rem;
+  font-size: 0.9rem;
+  min-width: 11rem;
+}
+.graph-cascade-menu[hidden] {
+  display: none;
+}
+/* Display menu sits beside the Aa button (3rd in the toolbar).
+   Toolbar starts at top:0.5rem with 0.4rem gaps and 2.8rem buttons.
+   3rd button starts at: 0.5 + 2*(2.8+0.4) = 6.9rem.
+   But align with the button center vertically by lifting slightly:
+   we use top: 5.6rem (aligned roughly with the 3rd button). */
+#graph-display-menu {
+  top: 5.6rem;
+}
+/* Filter menu sits beside the funnel button (4th in the toolbar).
+   4th button starts at: 0.5 + 3*(2.8+0.4) = 10.1rem -> use 8.8rem
+   to align with button top edge. */
+#graph-filter-cascade-menu {
+  top: 8.8rem;
+}
+
+#full-graph:fullscreen #graph-display-menu,
+#full-graph:-webkit-full-screen #graph-display-menu {
+  position: fixed;
+  top: calc(1rem + 5.1rem);
+  left: calc(1rem + 2.8rem + 0.5rem);
+  z-index: 100;
+}
+#full-graph:fullscreen #graph-filter-cascade-menu,
+#full-graph:-webkit-full-screen #graph-filter-cascade-menu {
+  position: fixed;
+  top: calc(1rem + 8.3rem);
+  left: calc(1rem + 2.8rem + 0.5rem);
+  z-index: 100;
+}
+
+.graph-cascade-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 4px;
+  cursor: default;
+  user-select: none;
+  color: var(--dark);
+}
+.graph-cascade-row:hover,
+.graph-cascade-row.active {
+  background: var(--lightgray);
+}
+.graph-cascade-row-checkbox {
+  margin: 0;
+  flex-shrink: 0;
+  cursor: pointer;
+  width: 1rem;
+  height: 1rem;
+}
+.graph-cascade-row-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.graph-cascade-row-chevron {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: var(--gray);
+  margin-left: 0.4rem;
+}
+.graph-cascade-row.active .graph-cascade-row-chevron {
+  color: var(--secondary);
+}
+
+/* ─── L2 filter panels ─────────────────────────────────────────
+   Now positioned to the right of the L1 cascade menu rather than
+   directly to the right of the toolbar. The L1 menu sits at
+   left: calc(2.8rem + 1rem), is min-width 11rem, plus a 0.5rem
+   gap = approximate left offset of 13.7rem from the canvas edge.
+   We use 14rem so the L2 panel starts comfortably to the right
+   of any L1 menu width. */
 .graph-filter-panel {
   position: absolute;
   top: 0.5rem;
-  left: calc(2.8rem + 1rem);
-  width: min(22rem, calc(100vw - 6rem));
+  left: calc(2.8rem + 1rem + 11rem + 0.5rem);
+  width: min(22rem, calc(100vw - 18rem));
   max-height: calc(100% - 1rem);
   z-index: 5;
   background: var(--light);
@@ -450,16 +522,9 @@ FullGraph.css =
   color: var(--gray);
   line-height: 1.3;
 }
-/* Body padding bumped on the left side so checkboxes (which Quartz's
-   global form styling sometimes renders larger than expected) don't
-   get clipped against the panel border. */
 .graph-filter-body {
   padding: 0.4rem 0.4rem 0.6rem 0.8rem;
 }
-/* Row layout: checkbox column-aligned on the left, name allowed
-   to wrap to multiple lines if it's too long for the panel width.
-   align-items: flex-start so the checkbox sits at the top of a
-   wrapped row rather than vertically centered against a tall name. */
 .graph-filter-row {
   display: flex;
   align-items: flex-start;
@@ -472,27 +537,18 @@ FullGraph.css =
 .graph-filter-row:hover {
   background: var(--lightgray);
 }
-/* Constrain checkbox to a known size so it can't exceed the layout
-   space we've allocated for it. Without this, browser/theme defaults
-   can render the checkbox larger than expected and bleed it past the
-   panel's left edge. */
 .graph-filter-row input[type="checkbox"] {
   margin: 0;
   flex-shrink: 0;
   cursor: pointer;
   width: 1rem;
   height: 1rem;
-  /* Nudge the checkbox down slightly so it visually centers with
-     the first line of text, since align-items is flex-start. */
   margin-top: 0.15rem;
 }
 .graph-filter-row-name {
   flex: 1;
   min-width: 0;
   color: var(--dark);
-  /* Wrap long names instead of truncating. word-break is the
-     fallback for slugs with no spaces (e.g. "#iam-scripts-
-     provisioning") so they break mid-token rather than overflowing. */
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -507,8 +563,6 @@ FullGraph.css =
   color: var(--gray);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
-  /* Match the checkbox vertical nudge so the count lines up with
-     the first line of a wrapped name. */
   margin-top: 0.15rem;
 }
 .graph-filter-empty {
@@ -541,18 +595,11 @@ FullGraph.css =
 #full-graph:-webkit-full-screen .graph-filter-panel {
   position: fixed;
   top: 1rem;
-  left: calc(2.8rem + 2rem);
+  left: calc(1rem + 2.8rem + 0.5rem + 11rem + 0.5rem);
   z-index: 100;
 }
 
-/* ─── Save-before-leave confirmation modal ─────────────────────────
-   The modal is appended to document.body by graph.inline.ts so it can
-   render above #full-graph in fullscreen mode. The z-index of 1000
-   beats the fullscreen toolbar (z 100) and any other in-graph layer.
-
-   Styling follows the same palette as the toolbar buttons. Dark dim
-   over the page, light card with secondary-color accent on the
-   primary action. */
+/* ─── Save-before-leave confirmation modal ───────────────────── */
 .graph-modal-overlay {
   position: fixed;
   inset: 0;
