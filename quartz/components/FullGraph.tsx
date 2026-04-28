@@ -80,9 +80,28 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
           hidden
         ></div>
       </div>
+      {/* Toolbar order (top to bottom):
+          1. Fullscreen
+          2. Zoom in (+)
+          3. Zoom out (−)
+          4. Freeze (snowflake)   — opens Freeze cascade menu
+          5. Display (Aa)         — opens Display cascade menu
+          6. Filter (funnel)      — opens Filter cascade menu */}
       <div class="graph-controls">
         <button type="button" id="graph-fullscreen-btn" class="graph-ctrl-btn" title="Full screen">&#x26F6;</button>
-        <button type="button" id="graph-freeze-btn" class="graph-ctrl-btn" title="Drag mode: single (click for group)" aria-pressed="false">❄</button>
+        <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
+        <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
+        <button
+          type="button"
+          id="graph-freeze-btn"
+          class="graph-ctrl-btn"
+          title="Freeze options"
+          aria-label="Freeze options"
+          aria-haspopup="menu"
+          aria-expanded="false"
+        >
+          ❄
+        </button>
         <button
           type="button"
           id="graph-display-btn"
@@ -118,13 +137,17 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
             </svg>
           </span>
         </button>
-        <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
-        <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
       </div>
 
-      {/* Display cascade — L1 menu containing display toggles. Sits
-          one level deep, no L2. Anchored to the right of the toolbar
-          column. */}
+      {/* Freeze cascade menu — currently one row, room for more
+          freeze-related toggles in the future. */}
+      <div class="graph-cascade-menu graph-freeze-menu" id="graph-freeze-menu" role="menu" hidden>
+        <div class="graph-cascade-row" role="menuitemcheckbox">
+          <input type="checkbox" id="graph-freeze-mode-cb" class="graph-cascade-row-checkbox" />
+          <span class="graph-cascade-row-name">Group-drag mode</span>
+        </div>
+      </div>
+
       <div class="graph-cascade-menu graph-display-menu" id="graph-display-menu" role="menu" hidden>
         <div class="graph-cascade-row" id="graph-display-row-labels" role="menuitemcheckbox" aria-checked="false">
           <input type="checkbox" id="graph-display-labels-cb" class="graph-cascade-row-checkbox" />
@@ -132,10 +155,6 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
         </div>
       </div>
 
-      {/* Filter cascade — L1 menu with three master rows. Each row
-          has a master-enable checkbox, a name, and a chevron
-          indicating an L2 panel exists. Hovering a row opens the
-          corresponding L2 panel to the right. */}
       <div class="graph-cascade-menu graph-filter-cascade-menu" id="graph-filter-cascade-menu" role="menu" hidden>
         <div class="graph-cascade-row" id="graph-filter-cascade-row-synthesis" role="menuitem" data-dim="synthesis">
           <input type="checkbox" class="graph-cascade-row-checkbox" id="graph-filter-master-synthesis-cb" />
@@ -395,12 +414,24 @@ FullGraph.css =
   z-index: 100;
 }
 
-/* ─── L1 cascade menus (Display, Filter) ──────────────────────────
-   Compact single-column menus that anchor to the right of the
-   toolbar column. The Display menu sits at top: 5.6rem (aligned
-   with the Aa button), Filter at top: 8.8rem (aligned with the
-   funnel button). Each row has a checkbox on the left and an
-   optional chevron on the right indicating an L2 panel exists. */
+/* ─── L1 cascade menus (Freeze, Display, Filter) ──────────────────
+   Each cascade menu is positioned vertically centered against its
+   trigger button. Buttons are 2.8rem tall with 0.4rem gap, starting
+   at top:0.5rem. Button N (1-indexed) starts at top:
+     0.5 + (N - 1) * (2.8 + 0.4) = 0.5 + (N-1) * 3.2 rem
+
+   New toolbar order (1-indexed):
+     1. Fullscreen   (top: 0.5rem)
+     2. Zoom in      (top: 3.7rem)
+     3. Zoom out     (top: 6.9rem)
+     4. Freeze       (top: 10.1rem) ← center: 11.5rem
+     5. Display (Aa) (top: 13.3rem) ← center: 14.7rem
+     6. Filter       (top: 16.5rem) ← center: 17.9rem
+
+   Single-row menus (Freeze, Display) are about 2.4rem tall, so
+   top = button-center - 1.2rem.
+   Multi-row Filter menu has 3 rows × ~2.4rem = ~7rem total, so
+   top = button-center - 3.5rem. */
 .graph-cascade-menu {
   position: absolute;
   left: calc(2.8rem + 1rem);
@@ -416,32 +447,38 @@ FullGraph.css =
 .graph-cascade-menu[hidden] {
   display: none;
 }
-/* Display menu sits beside the Aa button (3rd in the toolbar).
-   Toolbar starts at top:0.5rem with 0.4rem gaps and 2.8rem buttons.
-   3rd button starts at: 0.5 + 2*(2.8+0.4) = 6.9rem.
-   But align with the button center vertically by lifting slightly:
-   we use top: 5.6rem (aligned roughly with the 3rd button). */
-#graph-display-menu {
-  top: 5.6rem;
+#graph-freeze-menu {
+  /* Freeze button center: 10.1 + 1.4 = 11.5rem; menu ~2.4rem tall */
+  top: 10.3rem;
 }
-/* Filter menu sits beside the funnel button (4th in the toolbar).
-   4th button starts at: 0.5 + 3*(2.8+0.4) = 10.1rem -> use 8.8rem
-   to align with button top edge. */
+#graph-display-menu {
+  /* Display button center: 13.3 + 1.4 = 14.7rem; menu ~2.4rem tall */
+  top: 13.5rem;
+}
 #graph-filter-cascade-menu {
-  top: 8.8rem;
+  /* Filter button center: 16.5 + 1.4 = 17.9rem; menu ~7rem tall;
+     center menu vertically against the funnel button. */
+  top: 14.4rem;
 }
 
+#full-graph:fullscreen #graph-freeze-menu,
+#full-graph:-webkit-full-screen #graph-freeze-menu {
+  position: fixed;
+  top: calc(1rem + 9.8rem);
+  left: calc(1rem + 2.8rem + 0.5rem);
+  z-index: 100;
+}
 #full-graph:fullscreen #graph-display-menu,
 #full-graph:-webkit-full-screen #graph-display-menu {
   position: fixed;
-  top: calc(1rem + 5.1rem);
+  top: calc(1rem + 13rem);
   left: calc(1rem + 2.8rem + 0.5rem);
   z-index: 100;
 }
 #full-graph:fullscreen #graph-filter-cascade-menu,
 #full-graph:-webkit-full-screen #graph-filter-cascade-menu {
   position: fixed;
-  top: calc(1rem + 8.3rem);
+  top: calc(1rem + 13.9rem);
   left: calc(1rem + 2.8rem + 0.5rem);
   z-index: 100;
 }
@@ -483,13 +520,6 @@ FullGraph.css =
   color: var(--secondary);
 }
 
-/* ─── L2 filter panels ─────────────────────────────────────────
-   Now positioned to the right of the L1 cascade menu rather than
-   directly to the right of the toolbar. The L1 menu sits at
-   left: calc(2.8rem + 1rem), is min-width 11rem, plus a 0.5rem
-   gap = approximate left offset of 13.7rem from the canvas edge.
-   We use 14rem so the L2 panel starts comfortably to the right
-   of any L1 menu width. */
 .graph-filter-panel {
   position: absolute;
   top: 0.5rem;
