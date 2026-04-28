@@ -85,6 +85,7 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
         <button type="button" id="graph-freeze-btn" class="graph-ctrl-btn" title="Drag mode: single (click for group)" aria-pressed="false">❄</button>
         <button type="button" id="graph-labels-btn" class="graph-ctrl-btn graph-ctrl-btn-text" title="Show all labels" aria-pressed="false">Aa</button>
         <button type="button" id="graph-filter-btn" class="graph-ctrl-btn" title="Filter by synthesis" aria-pressed="false">⚏</button>
+        <button type="button" id="graph-subjects-btn" class="graph-ctrl-btn graph-ctrl-btn-text" title="Filter by subject" aria-pressed="false">S</button>
         <button type="button" id="graph-zoom-in" class="graph-ctrl-btn" title="Zoom in">+</button>
         <button type="button" id="graph-zoom-out" class="graph-ctrl-btn" title="Zoom out">&minus;</button>
       </div>
@@ -97,6 +98,18 @@ const FullGraph: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
           </p>
         </div>
         <div class="graph-filter-body" id="graph-filter-body">
+        </div>
+      </div>
+      <div class="graph-filter-panel" id="graph-subjects-panel" hidden>
+        <div class="graph-filter-header">
+          <h4>Filter by subject</h4>
+          <p class="graph-filter-hint">
+            Uncheck a subject to hide its pages. Pages with multiple subjects
+            stay visible until all of their subjects are unchecked. Pages with
+            no subject are grouped under <strong>Loners</strong>.
+          </p>
+        </div>
+        <div class="graph-filter-body" id="graph-subjects-body">
         </div>
       </div>
       <div class="graph-container" data-cfg={JSON.stringify(graphConfig)}></div>
@@ -347,6 +360,10 @@ FullGraph.css =
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--dark);
+}
+.graph-filter-row-name-loners {
+  font-style: italic;
+  color: var(--gray);
 }
 .graph-filter-row-count {
   flex-shrink: 0;
