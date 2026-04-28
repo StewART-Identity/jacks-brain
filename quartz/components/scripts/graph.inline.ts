@@ -157,6 +157,40 @@ function persistFilter() {
   } catch {}
 }
 
+// Subjects filter — parallel structure to the synthesis filter above.
+// Stored under its own localStorage key so the two filters persist
+// independently. The special slug "__loners__" represents the
+// synthetic bucket for nodes with no subjects in their frontmatter
+// (including tag nodes, which never have frontmatter).
+const SUBJECTS_FILTER_LOCAL_KEY = "graph-subjects-unchecked"
+const LONERS_SLUG = "__loners__"
+let subjectsUnchecked: Set<string> = (function () {
+  try {
+    const raw = localStorage.getItem(SUBJECTS_FILTER_LOCAL_KEY)
+    if (!raw) return new Set<string>()
+    const arr = JSON.parse(raw)
+    return new Set<string>(Array.isArray(arr) ? arr : [])
+  } catch {
+    return new Set<string>()
+  }
+})()
+const subjectsFilterChangeListeners = new Set<() => void>()
+function notifySubjectsFilterChange() {
+  for (const fn of subjectsFilterChangeListeners) {
+    try {
+      fn()
+    } catch {}
+  }
+}
+function persistSubjectsFilter() {
+  try {
+    localStorage.setItem(
+      SUBJECTS_FILTER_LOCAL_KEY,
+      JSON.stringify([...subjectsUnchecked]),
+    )
+  } catch {}
+}
+
 const LABELS_ALWAYS_ON_KEY = "graph-labels-always-on"
 let labelsAlwaysOn = (function () {
   try {
@@ -433,6 +467,26 @@ interface GraphFilterApi {
   onChange: (fn: () => void) => () => void
 }
 
+interface SubjectInfo {
+  // For real subjects this is the subject string itself (e.g.
+  // "operations"). For the Loners bucket this is the constant
+  // LONERS_SLUG ("__loners__"), which is what gets persisted in
+  // localStorage if Loners is unchecked.
+  slug: string
+  title: string
+  nodeCount: number
+}
+
+interface GraphSubjectsApi {
+  isUnchecked: (slug: string) => boolean
+  setChecked: (slug: string, checked: boolean) => void
+  toggle: (slug: string) => void
+  checkAll: () => void
+  uncheckAll: (allSubjects: string[]) => void
+  getSubjects: () => SubjectInfo[]
+  onChange: (fn: () => void) => () => void
+}
+
 interface GraphLabelsApi {
   isAlwaysOn: () => boolean
   setAlwaysOn: (on: boolean) => void
@@ -445,6 +499,7 @@ declare global {
     graphLayouts: GraphLayoutsApi
     graphFreeze: GraphFreezeApi
     graphFilter: GraphFilterApi
+    graphSubjects: GraphSubjectsApi
     graphLabels: GraphLabelsApi
     __graphPositionSnapshot?: () => Record<string, LayoutPosition>
     __graphResize?: () => void
@@ -775,6 +830,7 @@ function ensureFreezeApi() {
 ensureFreezeApi()
 
 let currentSyntheses: SynthesisInfo[] = []
+let currentSubjects: SubjectInfo[] = []
 
 function ensureFilterApi() {
   if (window.graphFilter) return
@@ -827,6 +883,58 @@ function ensureFilterApi() {
 }
 
 ensureFilterApi()
+
+function ensureSubjectsApi() {
+  if (window.graphSubjects) return
+  window.graphSubjects = {
+    isUnchecked(slug: string) {
+      return subjectsUnchecked.has(slug)
+    },
+    setChecked(slug: string, checked: boolean) {
+      const wasUnchecked = subjectsUnchecked.has(slug)
+      if (checked && wasUnchecked) {
+        subjectsUnchecked.delete(slug)
+        persistSubjectsFilter()
+        notifySubjectsFilterChange()
+      } else if (!checked && !wasUnchecked) {
+        subjectsUnchecked.add(slug)
+        persistSubjectsFilter()
+        notifySubjectsFilterChange()
+      }
+    },
+    toggle(slug: string) {
+      this.setChecked(slug, subjectsUnchecked.has(slug))
+    },
+    checkAll() {
+      if (subjectsUnchecked.size === 0) return
+      subjectsUnchecked.clear()
+      persistSubjectsFilter()
+      notifySubjectsFilterChange()
+    },
+    uncheckAll(allSubjects: string[]) {
+      let changed = false
+      for (const s of allSubjects) {
+        if (!subjectsUnchecked.has(s)) {
+          subjectsUnchecked.add(s)
+          changed = true
+        }
+      }
+      if (changed) {
+        persistSubjectsFilter()
+        notifySubjectsFilterChange()
+      }
+    },
+    getSubjects() {
+      return currentSubjects.slice()
+    },
+    onChange(fn) {
+      subjectsFilterChangeListeners.add(fn)
+      return () => subjectsFilterChangeListeners.delete(fn)
+    },
+  }
+}
+
+ensureSubjectsApi()
 
 function ensureLabelsApi() {
   if (window.graphLabels) return
@@ -997,13 +1105,75 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }).sort((a, b) => a.title.localeCompare(b.title))
   notifyFilterChange()
 
-  const isNodeVisible = (nodeId: string): boolean => {
-    const memberships = nodeClusters.get(nodeId)
-    if (!memberships || memberships.size === 0) return true
-    for (const sSlug of memberships) {
-      if (!unchecked.has(sSlug)) return true
+  // Subjects index — for each node, which subjects does it belong to?
+  // A node with no subjects in its frontmatter (or no contentIndex
+  // entry at all, e.g. tag nodes) lands in the synthetic Loners
+  // bucket. The bucket slug LONERS_SLUG is the value persisted in
+  // localStorage if Loners is unchecked, distinct from any real
+  // subject string.
+  const nodeSubjects = new Map<string, Set<string>>()
+  for (const n of graphData.nodes) {
+    const subj = data.get(n.id)?.subjects
+    const set = new Set<string>()
+    if (subj && subj.length > 0) {
+      for (const s of subj) set.add(s)
+    } else {
+      set.add(LONERS_SLUG)
     }
-    return false
+    nodeSubjects.set(n.id, set)
+  }
+  // Build the subject roster: every real subject seen across all
+  // nodes, plus a Loners entry if any node landed there. Sorted
+  // alphabetically by title; Loners always pinned to the bottom of
+  // the list because it's the catch-all bucket.
+  const subjectCounts = new Map<string, number>()
+  for (const subSet of nodeSubjects.values()) {
+    for (const s of subSet) {
+      subjectCounts.set(s, (subjectCounts.get(s) ?? 0) + 1)
+    }
+  }
+  const realSubjects: SubjectInfo[] = []
+  let lonersInfo: SubjectInfo | null = null
+  for (const [s, count] of subjectCounts) {
+    if (s === LONERS_SLUG) {
+      lonersInfo = { slug: LONERS_SLUG, title: "Loners", nodeCount: count }
+    } else {
+      realSubjects.push({ slug: s, title: s, nodeCount: count })
+    }
+  }
+  realSubjects.sort((a, b) => a.title.localeCompare(b.title))
+  currentSubjects = lonersInfo ? [...realSubjects, lonersInfo] : realSubjects
+  notifySubjectsFilterChange()
+
+  const isNodeVisible = (nodeId: string): boolean => {
+    // Synthesis filter (existing). Lenient: a node is hidden by
+    // the synthesis filter only if it has at least one synthesis
+    // membership AND every one of its memberships is unchecked.
+    const memberships = nodeClusters.get(nodeId)
+    if (memberships && memberships.size > 0) {
+      let anyChecked = false
+      for (const sSlug of memberships) {
+        if (!unchecked.has(sSlug)) {
+          anyChecked = true
+          break
+        }
+      }
+      if (!anyChecked) return false
+    }
+    // Subjects filter (new). Same lenient logic. Every node has at
+    // least one subject (real or Loners), so we always evaluate.
+    const subSet = nodeSubjects.get(nodeId)
+    if (subSet && subSet.size > 0) {
+      let anyChecked = false
+      for (const s of subSet) {
+        if (!subjectsUnchecked.has(s)) {
+          anyChecked = true
+          break
+        }
+      }
+      if (!anyChecked) return false
+    }
+    return true
   }
 
   let width = graph.offsetWidth
@@ -1625,6 +1795,14 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     filterChangeListeners.add(handler)
     return () => filterChangeListeners.delete(handler)
   })()
+  // Subjects filter shares the same visibility apply path — any
+  // change to either filter recomputes visibility for every node
+  // and link. Cheap enough at our graph sizes to do unconditionally.
+  const unsubscribeSubjectsFilter = (() => {
+    const handler = () => applyFilterVisibility()
+    subjectsFilterChangeListeners.add(handler)
+    return () => subjectsFilterChangeListeners.delete(handler)
+  })()
 
   const labelsBtn = document.getElementById("graph-labels-btn")
   const onLabelsBtnClick = (e: MouseEvent) => {
@@ -1660,6 +1838,113 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     }
     labelsAlwaysOnChangeListeners.add(handler)
     return () => labelsAlwaysOnChangeListeners.delete(handler)
+  })()
+
+  // ─── Subjects filter button + panel ──────────────────────────────
+  // Wired the same way as the Aa button: direct attachment inside
+  // renderGraph (module-scope click delegation didn't fire reliably
+  // for the Aa case, and we kept that lesson here). Mutual exclusion
+  // with the synthesis panel — opening one closes the other so they
+  // never fight for the same screen real estate.
+  const subjectsBtn = document.getElementById("graph-subjects-btn")
+  const subjectsPanel = document.getElementById("graph-subjects-panel")
+  const subjectsBody = document.getElementById("graph-subjects-body")
+  const synthesisPanel = document.getElementById("graph-filter-panel")
+  const synthesisBtn = document.getElementById("graph-filter-btn")
+
+  const renderSubjectsPanel = () => {
+    if (!subjectsBody) return
+    while (subjectsBody.firstChild) subjectsBody.removeChild(subjectsBody.firstChild)
+
+    if (currentSubjects.length === 0) {
+      const empty = document.createElement("div")
+      empty.className = "graph-filter-empty"
+      empty.textContent = "No subjects in this graph yet."
+      subjectsBody.appendChild(empty)
+      return
+    }
+
+    for (const info of currentSubjects) {
+      const row = document.createElement("label")
+      row.className = "graph-filter-row"
+      const cb = document.createElement("input")
+      cb.type = "checkbox"
+      cb.checked = !subjectsUnchecked.has(info.slug)
+      cb.addEventListener("change", () => {
+        window.graphSubjects.setChecked(info.slug, cb.checked)
+      })
+      const name = document.createElement("span")
+      name.className = "graph-filter-row-name"
+      if (info.slug === LONERS_SLUG) {
+        name.classList.add("graph-filter-row-name-loners")
+      }
+      name.textContent = info.title
+      const count = document.createElement("span")
+      count.className = "graph-filter-row-count"
+      count.textContent = String(info.nodeCount)
+      row.appendChild(cb)
+      row.appendChild(name)
+      row.appendChild(count)
+      subjectsBody.appendChild(row)
+    }
+
+    const actions = document.createElement("div")
+    actions.className = "graph-filter-actions"
+    const allBtn = document.createElement("button")
+    allBtn.type = "button"
+    allBtn.className = "graph-filter-action"
+    allBtn.textContent = "Check all"
+    allBtn.addEventListener("click", () => window.graphSubjects.checkAll())
+    const noneBtn = document.createElement("button")
+    noneBtn.type = "button"
+    noneBtn.className = "graph-filter-action"
+    noneBtn.textContent = "Uncheck all"
+    noneBtn.addEventListener("click", () =>
+      window.graphSubjects.uncheckAll(currentSubjects.map((s) => s.slug)),
+    )
+    actions.appendChild(allBtn)
+    actions.appendChild(noneBtn)
+    subjectsBody.appendChild(actions)
+  }
+  renderSubjectsPanel()
+
+  const setSubjectsBtnPressed = (open: boolean) => {
+    if (subjectsBtn) {
+      subjectsBtn.setAttribute("aria-pressed", open ? "true" : "false")
+    }
+  }
+  const setSynthesisBtnPressed = (open: boolean) => {
+    if (synthesisBtn) {
+      synthesisBtn.setAttribute("aria-pressed", open ? "true" : "false")
+    }
+  }
+
+  const onSubjectsBtnClick = (e: MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!subjectsPanel) return
+    const willOpen = subjectsPanel.hidden
+    subjectsPanel.hidden = !willOpen
+    setSubjectsBtnPressed(willOpen)
+    // Close the synthesis panel if we just opened the subjects one.
+    if (willOpen && synthesisPanel && !synthesisPanel.hidden) {
+      synthesisPanel.hidden = true
+      setSynthesisBtnPressed(false)
+    }
+  }
+  if (subjectsBtn) {
+    subjectsBtn.addEventListener("click", onSubjectsBtnClick)
+    setSubjectsBtnPressed(subjectsPanel ? !subjectsPanel.hidden : false)
+  }
+
+  // Re-render the subjects panel whenever the underlying state
+  // changes (a subject is checked/unchecked elsewhere, the roster
+  // recomputes after a graph re-render, etc.). Cheap; rebuilds the
+  // whole list each time.
+  const unsubscribeSubjectsPanel = (() => {
+    const handler = () => renderSubjectsPanel()
+    subjectsFilterChangeListeners.add(handler)
+    return () => subjectsFilterChangeListeners.delete(handler)
   })()
 
   window.__graphPositionSnapshot = () => {
@@ -1707,9 +1992,14 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     stopAnimation = true
     unsubscribeFreeze()
     unsubscribeFilter()
+    unsubscribeSubjectsFilter()
+    unsubscribeSubjectsPanel()
     unsubscribeLabelsAlwaysOn()
     if (labelsBtn) {
       labelsBtn.removeEventListener("click", onLabelsBtnClick)
+    }
+    if (subjectsBtn) {
+      subjectsBtn.removeEventListener("click", onSubjectsBtnClick)
     }
     app.destroy()
     if (window.__graphPositionSnapshot) {
