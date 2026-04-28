@@ -170,7 +170,7 @@ FullGraph.css =
   font-size: 1.5rem;
   padding: 0.4rem 0.6rem;
   cursor: pointer;
-  opacity: 0.9;
+  opacity: 0.95;
   transition: opacity 0.15s ease;
   line-height: 1;
   width: 2.8rem;
