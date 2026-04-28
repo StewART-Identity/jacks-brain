@@ -401,11 +401,16 @@ FullGraph.css =
   z-index: 100;
 }
 
+/* Filter panel: width adapts to viewport. On wide screens it's
+   22rem (comfortable). On narrow screens (mobile, half-screen
+   browser) it shrinks down to whatever fits, accounting for the
+   toolbar column on the right and a small left margin. This avoids
+   the panel ever overflowing past the canvas edge. */
 .graph-filter-panel {
   position: absolute;
   top: 0.5rem;
   right: calc(2.8rem + 1rem);
-  width: 28rem;
+  width: min(22rem, calc(100vw - 6rem));
   max-height: calc(100% - 1rem);
   z-index: 5;
   background: var(--light);
@@ -436,9 +441,13 @@ FullGraph.css =
 .graph-filter-body {
   padding: 0.4rem 0.4rem 0.6rem;
 }
+/* Row layout: checkbox column-aligned on the left, name allowed
+   to wrap to multiple lines if it's too long for the panel width.
+   align-items: flex-start so the checkbox sits at the top of a
+   wrapped row rather than vertically centered against a tall name. */
 .graph-filter-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   padding: 0.4rem 0.4rem;
   border-radius: 4px;
@@ -452,13 +461,21 @@ FullGraph.css =
   margin: 0;
   flex-shrink: 0;
   cursor: pointer;
+  /* Nudge the checkbox down slightly so it visually centers with
+     the first line of text, since align-items is flex-start. */
+  margin-top: 0.15rem;
 }
 .graph-filter-row-name {
   flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
   color: var(--dark);
+  /* Wrap long names instead of truncating. word-break is the
+     fallback for slugs with no spaces (e.g. "#iam-scripts-
+     provisioning") so they break mid-token rather than overflowing. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.3;
 }
 .graph-filter-row-name-loners {
   font-style: italic;
@@ -469,6 +486,9 @@ FullGraph.css =
   color: var(--gray);
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
+  /* Match the checkbox vertical nudge so the count lines up with
+     the first line of a wrapped name. */
+  margin-top: 0.15rem;
 }
 .graph-filter-empty {
   padding: 0.6rem 0.8rem;
