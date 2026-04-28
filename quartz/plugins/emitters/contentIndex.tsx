@@ -15,6 +15,7 @@ export type ContentDetails = {
   title: string
   links: SimpleSlug[]
   tags: string[]
+  subjects?: string[]
   content: string
   richContent?: string
   date?: Date
@@ -92,6 +93,22 @@ function generateRSSFeed(cfg: GlobalConfiguration, idx: ContentIndexMap, limit?:
   </rss>`
 }
 
+// Pull `subjects` out of frontmatter, normalizing to a clean string[].
+// Frontmatter parsing (gray-matter) leaves `subjects` as whatever YAML
+// gave it — usually string[], occasionally a single string. We coerce
+// to array, stringify, trim, and drop empties.
+function extractSubjects(frontmatter: { [key: string]: unknown } | undefined): string[] | undefined {
+  if (!frontmatter) return undefined
+  const raw = frontmatter.subjects
+  if (raw === undefined || raw === null) return undefined
+  const arr = Array.isArray(raw) ? raw : [raw]
+  const cleaned = arr
+    .filter((s) => typeof s === "string" || typeof s === "number")
+    .map((s) => String(s).trim())
+    .filter((s) => s.length > 0)
+  return cleaned.length > 0 ? cleaned : undefined
+}
+
 export const ContentIndex: QuartzEmitterPlugin<Partial<Options>> = (opts) => {
   opts = { ...defaultOptions, ...opts }
   return {
@@ -109,6 +126,7 @@ export const ContentIndex: QuartzEmitterPlugin<Partial<Options>> = (opts) => {
             title: file.data.frontmatter?.title!,
             links: file.data.links ?? [],
             tags: file.data.frontmatter?.tags ?? [],
+            subjects: extractSubjects(file.data.frontmatter),
             content: file.data.text ?? "",
             richContent: opts?.rssFullHtml
               ? escapeHTML(toHtml(tree as Root, { allowDangerousHtml: true }))
