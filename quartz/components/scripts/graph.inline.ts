@@ -213,17 +213,10 @@ function persistLonersFilter() {
   } catch {}
 }
 
-// ─── Master enable flags per dimension (Phase 2) ─────────────────
-// One boolean per filter dimension. When false, that whole dimension
-// hides every node it governs (Synthesis hides synthesis-clustered
-// nodes; Subjects hides nodes with subjects; Loners hides loner
-// nodes). Default true (enabled). Independent of the per-item
-// checkbox state in the L2 panels.
 function makeMasterFlag(key: string) {
   let value = (function () {
     try {
       const raw = localStorage.getItem(key)
-      // Default to true (enabled) if unset.
       return raw === null ? true : raw === "true"
     } catch {
       return true
@@ -1265,14 +1258,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     .sort((a, b) => a.title.localeCompare(b.title))
   notifyLonersFilterChange()
 
-  // Visibility check now combines master flags with per-item state.
-  // A node passes a dimension check iff:
-  //   1. The dimension's master flag is true (dimension is enabled), AND
-  //   2. The per-item check passes (existing logic)
-  // If the master flag is false, all nodes governed by that dimension
-  // are hidden regardless of L2 state.
   const isNodeVisible = (nodeId: string): boolean => {
-    // Synthesis dimension governs nodes with synthesis memberships.
     const memberships = nodeClusters.get(nodeId)
     if (memberships && memberships.size > 0) {
       if (!synthesisMaster.get()) return false
@@ -1285,9 +1271,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
       }
       if (!anyChecked) return false
     }
-    // Subjects vs Loners are mutually exclusive — a node either has
-    // subjects (governed by Subjects) or it doesn't (governed by
-    // Loners).
     const subSet = nodeSubjects.get(nodeId)
     if (subSet && subSet.size > 0) {
       if (!subjectsMaster.get()) return false
@@ -1909,9 +1892,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     }
   }
   applyFilterVisibility()
-  // All filter changes (synthesis, subjects, loners, master flags)
-  // route through applyFilterVisibility. Cheap enough to recompute
-  // everything on every change at our graph sizes.
   const unsubscribeFilter = (() => {
     const handler = () => applyFilterVisibility()
     filterChangeListeners.add(handler)
@@ -1938,7 +1918,6 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
           label.alpha = 1
         }
       }
-      // Sync the Display menu's checkbox to the underlying state.
       const cb = document.getElementById("graph-display-labels-cb") as HTMLInputElement | null
       if (cb) cb.checked = labelsAlwaysOn
       renderPixiFromD3()
@@ -1948,13 +1927,9 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   })()
 
   // ─── Cascade menu wiring ──────────────────────────────────────
-  // Two L1 menus (Display, Filter), three L2 panels (Synthesis,
-  // Subjects, Loners). State machine:
-  //   - cascadeOpen: "display" | "filter" | null
-  //   - activeFilterDim: "synthesis" | "subjects" | "loners" | null
-  //   - hoverSwitchTimer: debounce switching L2 panel on hover
-  //   - leaveCloseTimer: debounce closing on full mouse-leave
-  type CascadeOpen = "display" | "filter" | null
+  // Three L1 menus (Freeze, Display, Filter), three L2 panels
+  // (Synthesis, Subjects, Loners — under Filter only).
+  type CascadeOpen = "freeze" | "display" | "filter" | null
   type FilterDim = "synthesis" | "subjects" | "loners"
   let cascadeOpen: CascadeOpen = null
   let activeFilterDim: FilterDim | null = null
@@ -1964,8 +1939,10 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   const HOVER_SWITCH_MS = 150
   const LEAVE_CLOSE_MS = 500
 
+  const freezeBtn = document.getElementById("graph-freeze-btn")
   const filterBtn = document.getElementById("graph-filter-btn")
   const displayBtn = document.getElementById("graph-display-btn")
+  const freezeMenu = document.getElementById("graph-freeze-menu")
   const filterCascadeMenu = document.getElementById("graph-filter-cascade-menu")
   const displayMenu = document.getElementById("graph-display-menu")
   const synthesisPanel = document.getElementById("graph-filter-panel")
@@ -1981,6 +1958,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   const masterSubjectsCb = document.getElementById("graph-filter-master-subjects-cb") as HTMLInputElement | null
   const masterLonersCb = document.getElementById("graph-filter-master-loners-cb") as HTMLInputElement | null
   const displayLabelsCb = document.getElementById("graph-display-labels-cb") as HTMLInputElement | null
+  const freezeModeCb = document.getElementById("graph-freeze-mode-cb") as HTMLInputElement | null
 
   const panelForDim = (dim: FilterDim) => {
     if (dim === "synthesis") return synthesisPanel
@@ -2014,13 +1992,16 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
 
   const setCascadeOpen = (which: CascadeOpen) => {
     cascadeOpen = which
-    // Toolbar button aria-expanded reflects which is open.
+    if (freezeBtn) {
+      freezeBtn.setAttribute("aria-expanded", which === "freeze" ? "true" : "false")
+    }
     if (filterBtn) {
       filterBtn.setAttribute("aria-expanded", which === "filter" ? "true" : "false")
     }
     if (displayBtn) {
       displayBtn.setAttribute("aria-expanded", which === "display" ? "true" : "false")
     }
+    if (freezeMenu) freezeMenu.hidden = which !== "freeze"
     if (filterCascadeMenu) filterCascadeMenu.hidden = which !== "filter"
     if (displayMenu) displayMenu.hidden = which !== "display"
     if (which !== "filter") {
@@ -2043,6 +2024,11 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
 
   // Toolbar button click handlers — toggle their cascade open/closed.
+  // For Freeze, we use { capture: true } and stopImmediatePropagation
+  // to override the legacy click-to-toggle wiring that lives elsewhere
+  // in the build pipeline. Capture phase fires before bubble, so our
+  // handler runs first; stopImmediatePropagation prevents the legacy
+  // bubble-phase listener from running.
   const onFilterBtnClick = (e: MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -2053,11 +2039,16 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     e.stopPropagation()
     setCascadeOpen(cascadeOpen === "display" ? null : "display")
   }
+  const onFreezeBtnClick = (e: MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    e.stopImmediatePropagation()
+    setCascadeOpen(cascadeOpen === "freeze" ? null : "freeze")
+  }
   filterBtn?.addEventListener("click", onFilterBtnClick)
   displayBtn?.addEventListener("click", onDisplayBtnClick)
+  freezeBtn?.addEventListener("click", onFreezeBtnClick, { capture: true })
 
-  // L1 row hover — switches active L2 panel after a 150ms debounce
-  // so passing the cursor across rows en route to L2 doesn't churn.
   const onRowMouseEnter = (dim: FilterDim) => {
     if (hoverSwitchTimer !== null) {
       window.clearTimeout(hoverSwitchTimer)
@@ -2074,10 +2065,8 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   filterRowSubjects?.addEventListener("mouseenter", () => onRowMouseEnter("subjects"))
   filterRowLoners?.addEventListener("mouseenter", () => onRowMouseEnter("loners"))
 
-  // Cascade-wide leave handling. We track mouseenter on each cascade
-  // element to cancel the leave-close timer, and mouseleave on each
-  // to start it. Combined with click-outside as a hard close.
   const cascadeElements = [
+    freezeMenu,
     filterCascadeMenu,
     displayMenu,
     synthesisPanel,
@@ -2102,20 +2091,19 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     el.addEventListener("mouseenter", cancelLeaveClose)
     el.addEventListener("mouseleave", scheduleLeaveClose)
   }
-  // The toolbar buttons that own these cascades also count as
-  // "inside" for leave purposes — moving from button to menu shouldn't
-  // schedule a close.
+  freezeBtn?.addEventListener("mouseenter", cancelLeaveClose)
+  freezeBtn?.addEventListener("mouseleave", scheduleLeaveClose)
   filterBtn?.addEventListener("mouseenter", cancelLeaveClose)
   filterBtn?.addEventListener("mouseleave", scheduleLeaveClose)
   displayBtn?.addEventListener("mouseenter", cancelLeaveClose)
   displayBtn?.addEventListener("mouseleave", scheduleLeaveClose)
 
-  // Click-outside hard-closes both cascades immediately.
   const onDocumentClick = (e: MouseEvent) => {
     if (cascadeOpen === null) return
     const target = e.target as Node | null
     if (!target) return
     const insideCascade =
+      freezeBtn?.contains(target) ||
       filterBtn?.contains(target) ||
       displayBtn?.contains(target) ||
       cascadeElements.some((el) => el.contains(target))
@@ -2125,8 +2113,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   }
   document.addEventListener("click", onDocumentClick)
 
-  // Master checkbox wiring — initialize from persisted state, listen
-  // for changes, and propagate user toggles back to the master flag.
+  // Master checkbox wiring
   const syncMasterCheckboxes = () => {
     if (masterSynthesisCb) masterSynthesisCb.checked = synthesisMaster.get()
     if (masterSubjectsCb) masterSubjectsCb.checked = subjectsMaster.get()
@@ -2142,20 +2129,39 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   masterLonersCb?.addEventListener("change", () => {
     lonersMaster.set(masterLonersCb.checked)
   })
-  // Stop propagation on the checkbox itself so clicking it doesn't
-  // bubble to the row's hover handlers or trigger the click-outside
-  // close.
-  for (const cb of [masterSynthesisCb, masterSubjectsCb, masterLonersCb, displayLabelsCb]) {
+  for (const cb of [masterSynthesisCb, masterSubjectsCb, masterLonersCb, displayLabelsCb, freezeModeCb]) {
     cb?.addEventListener("click", (e) => e.stopPropagation())
   }
 
-  // Display menu Aa toggle — mirrors the existing labelsAlwaysOn API.
+  // Display menu Aa toggle
   if (displayLabelsCb) {
     displayLabelsCb.checked = labelsAlwaysOn
     displayLabelsCb.addEventListener("change", () => {
       window.graphLabels.setAlwaysOn(displayLabelsCb.checked)
     })
   }
+
+  // Freeze menu group-drag toggle. Drives window.graphFreeze.toggle()
+  // (the same API the legacy button used to call directly). The
+  // unsubscribeFreeze handler above keeps the simulation in sync.
+  if (freezeModeCb) {
+    freezeModeCb.checked = graphFrozen
+    freezeModeCb.addEventListener("change", () => {
+      window.graphFreeze.setFrozen(freezeModeCb.checked)
+    })
+  }
+  // Sync the freeze checkbox + button aria-pressed when freeze state
+  // changes (e.g., from another tab's localStorage write, or from a
+  // future graphFreeze.setFrozen call elsewhere).
+  const unsubscribeFreezeCheckboxSync = (() => {
+    const handler = (frozen: boolean) => {
+      if (freezeModeCb) freezeModeCb.checked = frozen
+      if (freezeBtn) freezeBtn.setAttribute("aria-pressed", frozen ? "true" : "false")
+    }
+    freezeChangeListeners.add(handler)
+    handler(graphFrozen)
+    return () => freezeChangeListeners.delete(handler)
+  })()
 
   // ─── L2 panel rendering (existing logic) ─────────────────────
   type PanelRow = { slug: string; title: string; count?: number }
@@ -2328,6 +2334,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
   return () => {
     stopAnimation = true
     unsubscribeFreeze()
+    unsubscribeFreezeCheckboxSync()
     unsubscribeFilter()
     unsubscribeSubjectsFilter()
     unsubscribeLonersFilter()
@@ -2343,6 +2350,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
     document.removeEventListener("click", onDocumentClick)
     filterBtn?.removeEventListener("click", onFilterBtnClick)
     displayBtn?.removeEventListener("click", onDisplayBtnClick)
+    freezeBtn?.removeEventListener("click", onFreezeBtnClick, { capture: true } as EventListenerOptions)
     app.destroy()
     if (window.__graphPositionSnapshot) {
       window.__graphPositionSnapshot = undefined
