@@ -223,13 +223,16 @@ FullGraph.css =
 #full-graph:-webkit-full-screen > .graph-controls {
   position: fixed;
   top: 1rem;
-  right: 1rem;
+  /* Phase 1: control toolbar moved to the LEFT side. Filter panels
+     will cascade rightward from here, NeXT-style. */
+  left: 1rem;
   z-index: 100;
 }
+/* Vertical control toolbar — now on the LEFT side of the canvas. */
 .graph-controls {
   position: absolute;
   top: 0.5rem;
-  right: 0.5rem;
+  left: 0.5rem;
   z-index: 5;
   display: flex;
   flex-direction: column;
@@ -310,10 +313,14 @@ FullGraph.css =
   border-radius: 3px;
 }
 
+/* Layouts toolbar — now on the RIGHT side of the canvas. The
+   horizontal flex direction is preserved; only the anchor side
+   moves. align-items: flex-end so the dropdown menu (which is
+   positioned with right: 0) lines up with the rightmost button. */
 .graph-layouts {
   position: absolute;
   top: 0.5rem;
-  left: 0.5rem;
+  right: 0.5rem;
   z-index: 5;
   display: flex;
   flex-direction: row;
@@ -348,10 +355,15 @@ FullGraph.css =
 .graph-layouts-danger:hover:not(:disabled) {
   color: #b00;
 }
+/* Layouts dropdown menu — anchored to the RIGHT now since the
+   layouts toolbar is on the right side. Without this it would
+   open leftward from the dropdown button and look fine, but
+   right-anchoring keeps it from drifting off-canvas if the
+   toolbar grows. */
 .graph-layouts-menu {
   position: absolute;
   top: calc(100% + 0.4rem);
-  left: 0;
+  right: 0;
   background: var(--light);
   border: 1px solid var(--lightgray);
   border-radius: 8px;
@@ -397,19 +409,19 @@ FullGraph.css =
 #full-graph:-webkit-full-screen .graph-layouts {
   position: fixed;
   top: 1rem;
-  left: 1rem;
+  right: 1rem;
   z-index: 100;
 }
 
-/* Filter panel: width adapts to viewport. On wide screens it's
-   22rem (comfortable). On narrow screens (mobile, half-screen
-   browser) it shrinks down to whatever fits, accounting for the
-   toolbar column on the right and a small left margin. This avoids
-   the panel ever overflowing past the canvas edge. */
+/* Filter panel: cascades RIGHTWARD from the left-side toolbar.
+   width adapts to viewport — on wide screens 22rem (comfortable),
+   on narrower viewports it shrinks to fit. The 6rem deduction
+   accounts for the toolbar column on the left and a small right
+   margin so the panel never overflows past the canvas edge. */
 .graph-filter-panel {
   position: absolute;
   top: 0.5rem;
-  right: calc(2.8rem + 1rem);
+  left: calc(2.8rem + 1rem);
   width: min(22rem, calc(100vw - 6rem));
   max-height: calc(100% - 1rem);
   z-index: 5;
@@ -529,7 +541,7 @@ FullGraph.css =
 #full-graph:-webkit-full-screen .graph-filter-panel {
   position: fixed;
   top: 1rem;
-  right: calc(2.8rem + 2rem);
+  left: calc(2.8rem + 2rem);
   z-index: 100;
 }
 
