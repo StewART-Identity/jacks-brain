@@ -19,6 +19,20 @@ const Acquisition: QuartzComponent = ({ displayClass }: QuartzComponentProps) =>
           <p class="muted">Loading...</p>
         </div>
       </div>
+      {/* Floating selection bar — visibility controlled by acquisition.inline.ts.
+          Sits at the bottom of the page when one or more PENDING checkboxes
+          are selected. */}
+      <div id="queue-selection-bar" class="queue-selection-bar" hidden>
+        <span class="queue-selection-count">
+          <span id="queue-selection-count-num">0</span> selected
+        </span>
+        <button id="queue-clear-selection-btn" class="queue-bar-btn-secondary">
+          Clear
+        </button>
+        <button id="queue-remove-btn" class="queue-bar-btn-primary">
+          Remove from queue
+        </button>
+      </div>
     </div>
   )
 }
