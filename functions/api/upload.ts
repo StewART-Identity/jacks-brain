@@ -2,12 +2,14 @@
  * POST /api/upload
  *
  * Accepts a file via multipart form data, commits the original to
- * raw/queue/ in the GitHub repo. The catalog workflow's queue-trigger
- * path will then promote the file to static/originals/ in FIFO order
+ * static/queue/ in the GitHub repo. The catalog workflow's queue-trigger
+ * path will then promote the file to static/in-flight/ in FIFO order
  * (immediately if no catalog is currently running, otherwise after the
- * currently-running catalog completes).
+ * currently-running catalog completes), where the catalog phase reads
+ * it and writes wiki pages, finally moving it to static/originals/ as
+ * the cataloged corpus.
  *
- * Why raw/queue/ instead of static/originals/:
+ * Why static/queue/ instead of static/originals/:
  * Every acquisition path (this endpoint, MCP acquire_for_catalog, and
  * direct git push) now uses the queue as the universal entry point. The
  * catalog workflow promotes one file at a time, which serializes all
@@ -99,9 +101,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const today = todayInUserTimezone(context.env)
     const originalName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-")
     const filename = originalName.startsWith(today) ? originalName : `${today}-${originalName}`
-    // Stage in raw/queue/ — the catalog workflow's queue-trigger path will
-    // promote it to static/originals/ when ready.
-    const path = `raw/queue/${filename}`
+    // Stage in static/queue/ — the catalog workflow's queue-trigger path
+    // will promote it through static/in-flight/ to static/originals/.
+    const path = `static/queue/${filename}`
 
     // Commit the file to the repo via GitHub Contents API
     const commitResponse = await fetch(
