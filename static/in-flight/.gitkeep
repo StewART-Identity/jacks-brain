@@ -1,0 +1,21 @@
+# This directory holds the file CURRENTLY being cataloged.
+#
+# Three-directory model for the cataloging pipeline:
+#   raw/queue/         — PENDING. Staged, not yet promoted.
+#   static/in-flight/  — IN_PROGRESS. Currently being cataloged.
+#   static/originals/  — CATALOGED. Completed files stay here permanently.
+#
+# At most one file should ever be in this directory at a time. If you
+# see more than one, something has gone wrong (a workflow run died
+# mid-catalog and a manual recovery is needed, OR a concurrency-group
+# misconfiguration let two runs race).
+#
+# Recovery from a stuck file:
+#   - Move it back to raw/queue/ to retry.
+#   - Move it to static/originals/ to mark as failed (status=FAILED on
+#     the Acquisition page, since no source page will exist).
+#   - Or delete it entirely if it shouldn't be cataloged at all.
+#
+# Files in this directory ARE downloadable via /api/originals/<filename>
+# (the download endpoint checks both static/originals/ and
+# static/in-flight/), so you can inspect what's mid-catalog if needed.
