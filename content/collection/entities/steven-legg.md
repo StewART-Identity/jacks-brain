@@ -1,0 +1,37 @@
+---
+title: "Steven Legg"
+summary: "Australian engineer at eB2Bcom who edited RFC 4517 (LDAP syntaxes and matching rules), part of the 2006 RFC 4510 LDAPv3 revision series."
+type: entity
+created: 2026-05-02
+updated: 2026-05-02
+subjects:
+  - directory-services
+tags:
+  - ldap
+  - ldapv3
+  - ietf
+  - rfc
+  - ldap-schema
+  - syntaxes
+  - matching-rules
+  - asn1
+confidence: high
+sources:
+  - "[[collection/sources/2026-05-02-rfc4517-txt]]"
+---
+
+Steven Legg is an engineer at eB2Bcom (Box Hill North, Victoria, Australia) who edited [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] — the 2006 IETF standards-track specification of [[collection/concepts/ldap-syntaxes|LDAP attribute syntaxes]] and [[collection/concepts/ldap-matching-rules|matching rules]]. RFC 4517 is part of the RFC 4510 technical specification series that obsoleted the original 1997 LDAPv3 RFCs (2251–2256).
+
+## RFC Authorship
+
+| RFC | Title | Role |
+|-----|-------|------|
+| RFC 4517 (2006) | LDAP: Syntaxes and Matching Rules | Editor |
+
+RFC 4517's acknowledgments attribute the document primarily to a revision of RFC 2252 by M. Wahl, A. Coulbeck, [[collection/entities/tim-howes|T. Howes]], and S. Kille. [[collection/entities/kurt-zeilenga|Kurt Zeilenga]] and Jim Sermersheim are credited for significant contributions to the revision.
+
+## Context Within the RFC 4510 Series
+
+Legg's contribution sits at the data-type layer of the [[collection/concepts/ldap|LDAP]] stack — defining what attribute values look like (syntaxes) and how they compare (matching rules). This layer is foundational but distinct from the protocol operations (RFC 4511), directory information models (RFC 4512), and authentication ([[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]]) that [[collection/entities/kurt-zeilenga|Kurt Zeilenga]] primarily drove within the same RFC 4510 series effort.
+
+Where Zeilenga's work on RFC 4512 defines *how attributes are declared* (attribute type definitions, object classes, schema publication), Legg's RFC 4517 defines *what attribute values consist of* — the syntax and comparison semantics that attribute type definitions reference. The two documents are tightly coupled: an attribute type definition in RFC 4512 ABNF references syntax OIDs and matching rule names that are specified in RFC 4517.

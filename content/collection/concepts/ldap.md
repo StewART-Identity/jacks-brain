@@ -25,12 +25,15 @@ tags:
   - object-class
   - ldap-schema
   - attribute-selection
+  - syntaxes
+  - matching-rules
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4517-txt]]"
 ---
 
 LDAP (Lightweight Directory Access Protocol) is a TCP/IP protocol for reading and modifying directory services — hierarchical databases optimized for read-heavy workloads such as user accounts, group memberships, and organizational data. LDAPv3, defined in RFC 2251 (December 1997), is the version in current widespread use.
@@ -71,6 +74,16 @@ LDAP authentication uses the Bind operation, which supports two methods:
 Transport security is established via the [[collection/concepts/ldap-tls|StartTLS]] extended operation (OID `1.3.6.1.4.1.1466.20037`), which upgrades a plaintext LDAP session to TLS in-flight. [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] (June 2006) specifies all authentication methods, the StartTLS procedure, server identity verification, and the authorization state model.
 
 Every LDAP session has an associated authorization state that starts anonymous. The Bind operation moves the session to an authenticated state; StartTLS establishment or closure may also affect authorization state. The authorization identity may differ from the authentication identity — SASL permits proxy scenarios where a server authenticates with its own credentials but acts on behalf of another identity.
+
+## Schema: Syntaxes and Matching Rules
+
+Every LDAP attribute has a **syntax** — a data type constraining the structure and format of its values — and optionally one or more **matching rules** defining how values are compared. [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] (June 2006, edited by [[collection/entities/steven-legg|Steven Legg]]) defines 34 syntaxes and 32 matching rules for LDAP directories.
+
+The key architectural point: syntaxes and matching rules are **separately defined**. The Directory String syntax permits UTF-8 text; whether that text compares case-sensitively (`caseExactMatch`) or case-insensitively (`caseIgnoreMatch`) is a separately specified matching rule. This allows multiple matching rules to apply to the same syntax.
+
+Common syntaxes include [[collection/concepts/ldap-syntaxes|Directory String]], [[collection/concepts/ldap-syntaxes|DN]], [[collection/concepts/ldap-syntaxes|Generalized Time]], Integer, Boolean, and OID. Each syntax has a unique dotted-decimal OID and an LDAP-specific encoding (usually human-readable ABNF) that differs from the BER encoding used by X.500.
+
+[[collection/concepts/ldap-matching-rules|Matching rules]] operate in three modes — equality, ordering, and substrings — and string rules apply Unicode string preparation algorithms (RFC 4518) before comparison. The `distinguishedNameMatch` rule is particularly complex: it compares DNs structurally by RDN and AVA, recursively invoking each AVA attribute type's own equality rule.
 
 ## Authentication Caveat (Historical)
 

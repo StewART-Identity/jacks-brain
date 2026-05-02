@@ -27,6 +27,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4517-txt]]"
 ---
 
 [[collection/concepts/ldap|LDAPv3]] (RFC 2251, December 1997) was deliberately designed to be extensible: the `LDAPMessage` format includes a `controls` field that allows any operation to carry additional semantics defined in separate specifications. [[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]] (September 1999) demonstrates this extensibility model in practice, adding [[collection/concepts/ldap-paged-results|paged result retrieval]] — a capability the core protocol intentionally deferred.
@@ -52,6 +53,7 @@ The LDAP companion RFCs in this wiki address different layers of the protocol st
 | [[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]] (1999) | Operation control | `controls` field | Paginated retrieval via an opaque server-issued cookie |
 | [[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]] (2006) | Attribute selection | `supportedFeatures` OID | `@classname` shorthand returning all attributes of an [[collection/concepts/ldap-object-classes|object class]] |
 | [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] (2006) | Authentication | StartTLS + SASL Bind | Authentication methods, StartTLS procedure, [[collection/concepts/sasl|SASL]] integration, authorization state model |
+| [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] (2006) | Data types | Normative spec | 34 [[collection/concepts/ldap-syntaxes|syntaxes]] and 32 [[collection/concepts/ldap-matching-rules|matching rules]]; the type system underlying all attribute definitions |
 
 RFC 2254 and [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] occupy the same layer — both are purely developer-convenience documents: no new query semantics, only a string encoding of what ASN.1 BER already expresses. RFC 4515's main contribution was formalizing what RFC 2254 described informally: the `valueencoding` ABNF rule makes the UTF-8 encoding requirement derivable from the grammar rather than buried in prose. RFC 2696 genuinely extends protocol behavior, introducing a stateful server-side construct (the paged search session) with no equivalent in the core protocol. RFC 4529 falls between: it extends the `attributeSelector` ABNF production without adding a new operation or state — the expansion is computed at request time from the server's schema knowledge.
 

@@ -16,6 +16,7 @@ tags:
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4517-txt]]"
 ---
 
 Kurt D. Zeilenga is an engineer at the [[collection/entities/openldap-foundation|OpenLDAP Foundation]] and the primary author of the RFC 4510 series — the 2006 revision of the LDAPv3 Technical Specification that replaced the original December 1997 RFCs (2251–2256) originally driven by [[collection/entities/netscape-communications|Netscape Communications]] engineers including [[collection/entities/tim-howes|Tim Howes]].
@@ -30,6 +31,8 @@ Zeilenga is sole or lead author on a substantial portion of the LDAPv3 specifica
 | RFC 4510 (2006) | LDAP Technical Specification Road Map | Editor |
 | RFC 4512 (2006) | LDAP: Directory Information Models | Author |
 | RFC 4516 (2006) | LDAP: Uniform Resource Locator | Co-editor |
+| RFC 4517 (2006) | LDAP: Syntaxes and Matching Rules | Significant contributor |
+| RFC 4518 (2006) | LDAP: Internationalized String Preparation | Author |
 | RFC 4520 (2006) | IANA Considerations for LDAP | Author |
 | RFC 4527 (2006) | LDAP Read Entry Controls | Author |
 | RFC 4529 (2006) | Requesting Attributes by Object Class in LDAP | Author |
