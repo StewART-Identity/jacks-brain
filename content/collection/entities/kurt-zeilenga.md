@@ -23,6 +23,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4519-txt]]"
   - "[[collection/sources/2026-05-02-rfc3062-txt]]"
   - "[[collection/sources/2026-05-02-rfc4370-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4533-txt]]"
 ---
 
 Kurt D. Zeilenga is an engineer at the [[collection/entities/openldap-foundation|OpenLDAP Foundation]] and the primary author of the RFC 4510 series — the 2006 revision of the LDAPv3 Technical Specification that replaced the original December 1997 RFCs (2251–2256) originally driven by [[collection/entities/netscape-communications|Netscape Communications]] engineers including [[collection/entities/tim-howes|Tim Howes]].
@@ -45,6 +46,7 @@ Zeilenga is sole or lead author on a substantial portion of the LDAPv3 specifica
 | RFC 4527 (2006) | LDAP Read Entry Controls | Author |
 | RFC 4519 (2006) | LDAP: Schema for User Applications | Acknowledged contributor |
 | RFC 4529 (2006) | Requesting Attributes by Object Class in LDAP | Author |
+| [[collection/sources/2026-05-02-rfc4533-txt\|RFC 4533 (2006)]] | LDAP Content Synchronization Operation | Co-author (with [[collection/entities/jong-hyuk-choi\|Jong Hyuk Choi]], IBM) |
 
 His email as listed in the RFCs: `Kurt@OpenLDAP.org`.
 
@@ -59,3 +61,5 @@ Note: RFC 4516 ([[collection/concepts/ldap-url|LDAP URL format]]) is sometimes l
 Zeilenga is acknowledged in [[collection/sources/2026-05-02-rfc4519-txt|RFC 4519]] (LDAP Schema for User Applications) alongside [[collection/entities/steven-legg|Steven Legg]] for "significant contribution" to the revision — the update of [[collection/sources/2026-05-02-rfc2256-txt|RFC 2256]] by [[collection/entities/mark-wahl|Mark Wahl]] that carries the standard [[collection/concepts/x500-user-schema|X.500 user schema]] forward into the 2006 series.
 
 Zeilenga is also credited in the acknowledgements of [[collection/sources/2026-05-02-rfc4370-txt|RFC 4370]] (LDAP Proxied Authorization Control) alongside [[collection/entities/mark-smith|Mark Smith]], [[collection/entities/mark-wahl|Mark Wahl]], [[collection/entities/jim-sermersheim|Jim Sermersheim]], and [[collection/entities/steven-legg|Steven Legg]] — reflecting his role as a reviewer across the broader LDAP standards community during the 2006 period.
+
+[[collection/sources/2026-05-02-rfc4533-txt|RFC 4533]] (Content Synchronization Operation) was co-authored with [[collection/entities/jong-hyuk-choi|Jong Hyuk Choi]] of [[collection/entities/ibm-corporation|IBM Corporation]]. Published Experimental in June 2006 — simultaneously with the RFC 4510 series — it defines [[collection/concepts/ldap-content-synchronization|SyncRepl]], which became the de facto LDAP synchronization mechanism despite not being the IETF LDUP working group's consensus solution. The protocol OIDs are in the [[collection/entities/openldap-foundation|OpenLDAP Foundation]]'s arc (`1.3.6.1.4.1.4203.1.9.1`), consistent with Zeilenga's use of that allocation for LDAP extension prototyping.
