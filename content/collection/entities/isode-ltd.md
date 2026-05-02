@@ -38,3 +38,7 @@ By December 1997, the organization had reorganized as **Isode Ltd.**, located at
 - **[[collection/sources/2026-05-02-rfc2253-txt|RFC 2253]]** — UTF-8 String Representation of [[collection/concepts/distinguished-name|Distinguished Names]]
 
 Isode's involvement spans both LDAPv2 and LDAPv3, reflecting a continuous organizational interest in standardized directory access. Its product line in high-assurance messaging systems depends on interoperable directory naming (distinguished names, [[collection/concepts/ldap-syntaxes|DN syntax]]), making LDAP standardization directly relevant to its commercial positioning.
+
+## QUIPU and X.500 Heritage
+
+The ISODE software suite included "QUIPU" — an early and influential X.500 directory implementation. [[collection/sources/2026-05-02-rfc2256-txt|RFC 2256]] (the 1997 summary of the X.500 user schema for LDAPv3) explicitly credits QUIPU as the basis for its syntax definitions, reflecting how the ISO/[[collection/entities/itu-t|ITU-T]] X.500 standards and their early ISODE implementations co-evolved. This heritage links Isode directly to the [[collection/concepts/x500-user-schema|X.500 user schema]] that all LDAPv3 servers implement today.

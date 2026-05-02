@@ -53,3 +53,7 @@ Object class hierarchies form single-inheritance trees. A class with `SUP otherC
 ## Relevance to Attribute Selection
 
 [[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]] directly leverages the `MUST`/`MAY`/`SUP` semantics: the `@classname` shorthand in an LDAP search attribute list expands to every attribute the named object class permits (directly or via `SUP`). Object class definitions thus become the authoritative expansion map for what `@country` or `@organization` will return. See also [[collection/concepts/ldap-search-filters|LDAP search filters]] for how entries are selected before attribute projection applies.
+
+## Standard User Object Classes
+
+The object classes most commonly encountered in practice — `person`, `organizationalPerson`, `organization`, `organizationalUnit`, `country`, `locality`, `groupOfNames`, `groupOfUniqueNames`, and PKI auxiliary classes like `certificationAuthority` — are defined in [[collection/sources/2026-05-02-rfc2256-txt|RFC 2256]] (1997) and its 2006 successor RFC 4519. These form the [[collection/concepts/x500-user-schema|X.500 user schema]]: the standard vocabulary for representing people, organizations, and locations in any LDAP directory. The definitions originate from the ISO/[[collection/entities/itu-t|ITU-T]] X.500 series (X.520, X.521) and were compiled for LDAPv3 use by [[collection/entities/mark-wahl|Mark Wahl]].

@@ -23,6 +23,7 @@ tags:
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
+  - "[[collection/sources/2026-05-02-rfc2256-txt]]"
 ---
 
 [[collection/concepts/ldap|LDAP]] schema is not a monolithic data model. It is a four-layer architecture in which each layer depends on the one below it, and each layer is independently extensible via OID-registered definitions. Understanding the layering explains both why LDAP schema is so flexible and why schema design errors propagate in surprising ways.
@@ -63,7 +64,7 @@ The four-layer schema architecture is defined across multiple RFCs in the 2006 R
 |-------|-----------|--------|
 | Syntaxes + Matching Rules | [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] | [[collection/entities/steven-legg|Steven Legg]] |
 | Attribute Types + Object Classes | RFC 4512 | [[collection/entities/kurt-zeilenga|Kurt Zeilenga]] |
-| User-facing schema (cn, sn, dc, etc.) | RFC 4519 | A. Sciberras |
+| User-facing schema (cn, sn, dc, etc.) | RFC 4519 (2006); originally [[collection/sources/2026-05-02-rfc2256-txt|RFC 2256]] (1997) | A. Sciberras; originally [[collection/entities/mark-wahl|Mark Wahl]] |
 | DN string representation | RFC 4514 | Kurt Zeilenga |
 
 RFC 4517 and RFC 4512 are tightly coupled: an attribute type definition in RFC 4512's ABNF (`AttributeTypeDescription`) references syntax OIDs and matching rule names that are specified in RFC 4517. Neither document is self-contained without the other.
