@@ -12,15 +12,16 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
           type="text"
           id="file-title"
           class="paste-title-input"
-          placeholder="Title (optional — used for filename, e.g. 'SAML vs OAuth diagram')"
+          placeholder="Title (optional — used for filename, single file only)"
         />
         <div class="upload-zone" id="drop-zone">
           <div class="upload-icon">&#8693;</div>
-          <p class="upload-label">Drop a file here</p>
+          <p class="upload-label">Drop files here</p>
           <p class="upload-sub">or click to browse — also supports paste (Ctrl+V) for images</p>
           <input
             type="file"
             id="file-input"
+            multiple
             accept=".md,.txt,.pdf,.html,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp"
           />
         </div>
