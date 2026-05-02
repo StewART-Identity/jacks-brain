@@ -15,6 +15,11 @@ tags:
   - ber
   - rfc
   - authentication
+  - tls
+  - starttls
+  - sasl
+  - bind
+  - security
   - ldap-controls
   - paged-results
   - object-class
@@ -25,6 +30,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4513-txt]]"
 ---
 
 LDAP (Lightweight Directory Access Protocol) is a TCP/IP protocol for reading and modifying directory services — hierarchical databases optimized for read-heavy workloads such as user accounts, group memberships, and organizational data. LDAPv3, defined in RFC 2251 (December 1997), is the version in current widespread use.
@@ -55,6 +61,17 @@ LDAP is the protocol layer underneath much of enterprise identity infrastructure
 - **LDAPv2** — RFC 1777; string filter syntax in RFC 1960
 - **LDAPv3** — RFC 2251–2256 (December 1997), adding SASL authentication, referrals, controls, and extensible matching; authored largely by [[collection/entities/netscape-communications|Netscape Communications]] engineers including [[collection/entities/tim-howes|Tim Howes]]
 
-## Authentication Caveat
+## Authentication and Security
 
-At the time of the LDAPv3 standardization, mandatory authentication mechanisms were not yet standardized. The IESG approved the protocol for read-only deployment and interoperability testing, explicitly discouraging update-capable deployments — a caution documented in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254's IESG note]].
+LDAP authentication uses the Bind operation, which supports two methods:
+
+- **Simple authentication**: Three mechanisms — anonymous (empty name + empty password), unauthenticated (non-empty name + empty password, for tracing only), and name/password (credentials transmitted in cleartext, requiring TLS protection)
+- **SASL authentication**: Pluggable framework (RFC 4422) supporting EXTERNAL, DIGEST-MD5, PLAIN, and others; [[collection/concepts/sasl|SASL]] allows negotiating optional data integrity and confidentiality layers
+
+Transport security is established via the [[collection/concepts/ldap-tls|StartTLS]] extended operation (OID `1.3.6.1.4.1.1466.20037`), which upgrades a plaintext LDAP session to TLS in-flight. [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] (June 2006) specifies all authentication methods, the StartTLS procedure, server identity verification, and the authorization state model.
+
+Every LDAP session has an associated authorization state that starts anonymous. The Bind operation moves the session to an authenticated state; StartTLS establishment or closure may also affect authorization state. The authorization identity may differ from the authentication identity — SASL permits proxy scenarios where a server authenticates with its own credentials but acts on behalf of another identity.
+
+## Authentication Caveat (Historical)
+
+At the time of the LDAPv3 standardization in 1997, mandatory authentication mechanisms were not yet standardized. The IESG approved the protocol for read-only deployment and interoperability testing, explicitly discouraging update-capable deployments — a caution documented in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254's IESG note]]. This gap was resolved in 2006 by [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]], which established name/password-over-TLS as the mandatory-to-implement password mechanism and defined clear behavior for all authentication cases. [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] acknowledged the closure by removing the IESG note.

@@ -26,6 +26,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4513-txt]]"
 ---
 
 [[collection/concepts/ldap|LDAPv3]] (RFC 2251, December 1997) was deliberately designed to be extensible: the `LDAPMessage` format includes a `controls` field that allows any operation to carry additional semantics defined in separate specifications. [[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]] (September 1999) demonstrates this extensibility model in practice, adding [[collection/concepts/ldap-paged-results|paged result retrieval]] — a capability the core protocol intentionally deferred.
@@ -40,7 +41,7 @@ RFC 2251 Section 4.1.12 defines `controls` as an optional sequence of `Control` 
 
 This design separates *what operations are possible* (the core protocol) from *how those operations are augmented* (controls defined in companion RFCs). The core could be finalized without resolving every operational concern.
 
-## Four Cataloged RFCs, Three Layers
+## Five Cataloged RFCs, Four Layers
 
 The LDAP companion RFCs in this wiki address different layers of the protocol stack and use different extensibility mechanisms:
 
@@ -50,6 +51,7 @@ The LDAP companion RFCs in this wiki address different layers of the protocol st
 | [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] (2006) | Query syntax | ABNF extension | Revised string representation — explicit UTF-8, formal `valueencoding` rule |
 | [[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]] (1999) | Operation control | `controls` field | Paginated retrieval via an opaque server-issued cookie |
 | [[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]] (2006) | Attribute selection | `supportedFeatures` OID | `@classname` shorthand returning all attributes of an [[collection/concepts/ldap-object-classes|object class]] |
+| [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] (2006) | Authentication | StartTLS + SASL Bind | Authentication methods, StartTLS procedure, [[collection/concepts/sasl|SASL]] integration, authorization state model |
 
 RFC 2254 and [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] occupy the same layer — both are purely developer-convenience documents: no new query semantics, only a string encoding of what ASN.1 BER already expresses. RFC 4515's main contribution was formalizing what RFC 2254 described informally: the `valueencoding` ABNF rule makes the UTF-8 encoding requirement derivable from the grammar rather than buried in prose. RFC 2696 genuinely extends protocol behavior, introducing a stateful server-side construct (the paged search session) with no equivalent in the core protocol. RFC 4529 falls between: it extends the `attributeSelector` ABNF production without adding a new operation or state — the expansion is computed at request time from the server's schema knowledge.
 
@@ -79,4 +81,4 @@ RFC 4529 shows a complementary pattern: extend the grammar productions of an exi
 2. **Controls mechanism** (RFC 2696): per-operation augmentation with optional criticality enforcement
 3. **Grammar + feature OID** (RFC 4529): grammar extension with upfront capability negotiation via `supportedFeatures`
 
-This is in tension with the IESG's caution embedded in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (discouraging update-capable deployments until authentication was standardized): the extensibility model assumes implementations will converge, but the authentication gap meant the protocol could be extended in many directions simultaneously while a critical baseline remained unresolved. [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] quietly closed this loop — the 2006 revision removed the IESG note entirely, acknowledging that RFC 4513's authentication mechanisms had resolved the concern that made RFC 2254 hesitant.
+This is in tension with the IESG's caution embedded in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (discouraging update-capable deployments until authentication was standardized): the extensibility model assumes implementations will converge, but the authentication gap meant the protocol could be extended in many directions simultaneously while a critical baseline remained unresolved. [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] quietly closed this loop — the 2006 revision removed the IESG note entirely, acknowledging that [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]]'s authentication mechanisms had resolved the concern that made RFC 2254 hesitant. RFC 4513 brought a fourth layer to the extensibility story: [[collection/concepts/ldap-tls|StartTLS]] and [[collection/concepts/sasl|SASL]] as the security foundation that the original extensibility mechanisms had implicitly assumed would exist. See [[collection/synthesis/ldap-authentication-security-architecture|LDAP Security Architecture: Authentication Gap to RFC 4513]] for a detailed analysis.
