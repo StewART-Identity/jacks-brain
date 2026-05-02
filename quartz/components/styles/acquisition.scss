@@ -6,7 +6,8 @@
 /* Acquisition table: column widths.
    The unified table look (header band, alternating rows, cell borders,
    flush-left) comes from quartz/styles/jbtable.scss via the .jb-table
-   class on the wrapping <div>. */
+   class on the wrapping <div>. Sort header convention (cursor, hover,
+   triangle indicators) matches the Retention table. */
 
 #acquisition-app thead th.queue-checkbox-cell,
 #acquisition-app tbody td.queue-checkbox-cell {
@@ -53,42 +54,20 @@
   overflow-wrap: anywhere;
 }
 
-/* Sortable column headers. Click to cycle sort: asc → desc → default.
-   Headers have tabindex=0 and role=button, so they're keyboard-focusable
-   and announced as buttons by screen readers. */
-#acquisition-app thead th.queue-sortable {
+/* Sortable column headers — same convention as Retention.
+   Click to toggle asc ↔ desc. Active sort shown via filled triangle
+   (▲▼) appended to header text. Headers have tabindex=0 and role=button
+   so they're keyboard-focusable; the focus styling is left to the
+   browser default since Retention has no custom focus styling either. */
+#acquisition-app th.sortable {
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.15s ease;
-  position: relative;
 }
-#acquisition-app thead th.queue-sortable:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-:root[saved-theme="dark"] #acquisition-app thead th.queue-sortable:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-#acquisition-app thead th.queue-sortable:focus-visible {
-  outline: 2px solid var(--secondary);
-  outline-offset: -2px;
+#acquisition-app th.sortable:hover {
+  color: var(--secondary);
 }
 .queue-sort-arrow {
-  display: inline-block;
-  margin-left: 0.3rem;
   font-size: 0.85em;
-  vertical-align: baseline;
-  transition: opacity 0.15s ease;
-}
-.queue-sort-arrow-inactive {
-  color: var(--gray);
-  opacity: 0;
-}
-#acquisition-app thead th.queue-sortable:hover .queue-sort-arrow-inactive {
-  opacity: 0.5;
-}
-.queue-sort-arrow-active {
-  color: var(--secondary);
-  font-weight: 700;
 }
 
 .recent-runs {
