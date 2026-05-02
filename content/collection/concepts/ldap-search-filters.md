@@ -1,6 +1,6 @@
 ---
 title: "LDAP Search Filters"
-summary: "Boolean predicate expressions selecting directory entries in LDAP queries; RFC 2254 defines their human-readable string syntax."
+summary: "Boolean predicate expressions selecting directory entries in LDAP queries; string syntax defined by RFC 4515 (obsoleting RFC 2254)."
 type: concept
 created: 2026-05-02
 updated: 2026-05-02
@@ -15,13 +15,16 @@ tags:
   - substring
   - boolean-logic
   - rfc2254
+  - rfc4510
+  - utf-8
   - directory-access
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4515-txt]]"
 ---
 
-LDAP search filters are boolean predicate expressions that select entries from an [[collection/concepts/ldap|LDAP]] directory. A filter is applied to a subtree of the directory tree and returns only entries whose attributes satisfy the predicate. On the wire, filters are ASN.1 BER-encoded per the LDAPv3 ASN.1 definition in RFC 2251; in human-readable contexts they use the string syntax specified in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]].
+LDAP search filters are boolean predicate expressions that select entries from an [[collection/concepts/ldap|LDAP]] directory. A filter is applied to a subtree of the directory tree and returns only entries whose attributes satisfy the predicate. On the wire, filters are ASN.1 BER-encoded per the LDAPv3 ASN.1 definition in RFC 4511; in human-readable contexts they use the string syntax specified in [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] (June 2006), which obsoletes the earlier [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (December 1997).
 
 ## Filter Types
 
