@@ -1,0 +1,18 @@
+# This directory is the staging queue for cataloging.
+#
+# Files acquired via /api/upload, the MCP `acquire_for_catalog` tool, or
+# direct git push land here first. The catalog workflow (.github/workflows/
+# catalog.yml) promotes one file at a time from here to static/originals/,
+# runs the catalog, and at the end promotes the next file in FIFO order.
+#
+# This serializes catalog work without needing a cron schedule: throughput
+# is bounded only by how fast each catalog run completes. With one file in
+# the queue, it drains in one promotion. With twenty files, it drains in
+# twenty promotions, one after another.
+#
+# Cancellation: deleting a file from raw/queue/ before it's promoted
+# prevents it from ever being cataloged. The Acquisition page surfaces
+# files in this directory as PENDING and offers a checkbox to remove them.
+#
+# Files in this directory are NOT visible on the Quartz site (raw/ is
+# excluded from the build).
