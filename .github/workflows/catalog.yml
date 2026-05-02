@@ -238,6 +238,15 @@ jobs:
       # passes an explicit file_path, that path may already be in
       # static/originals/ (re-cataloging a previously-cataloged file).
       # We only move from in-flight if the file IS in in-flight.
+      #
+      # Re-view dedupe: if a file in static/in-flight/ has the same name
+      # as a file already in static/originals/ — the normal case for a
+      # re-view of a previously-cataloged source — `git mv` would refuse
+      # to overwrite. Instead, we `git rm` the in-flight duplicate. The
+      # bytes are the same (same uploaded file, same name), so the
+      # originals copy is the canonical one and the in-flight copy is
+      # discarded. The wiki page updates that catalog Claude wrote during
+      # the re-view are committed as usual via `git add content/ data/`.
       - name: Finalize and commit
         if: |
           always() &&
@@ -253,16 +262,28 @@ jobs:
           # already-existing originals file.
           mkdir -p static/originals
           MOVED=0
+          REMOVED=0
           if [ -d static/in-flight ]; then
             for f in static/in-flight/*; do
               [ -e "$f" ] || continue
               base=$(basename "$f")
               if [ "$base" = ".gitkeep" ]; then continue; fi
-              echo "Finalizing: moving $base out of in-flight"
-              git mv "$f" "static/originals/$base"
-              MOVED=$((MOVED + 1))
+              if [ -e "static/originals/$base" ]; then
+                # Re-view: the file already exists in originals. Drop the
+                # in-flight duplicate; the originals copy is canonical.
+                # Wiki updates from this re-view are still staged below
+                # via `git add content/ data/`.
+                echo "Finalizing: $base already in originals (re-view) — removing in-flight duplicate"
+                git rm "$f"
+                REMOVED=$((REMOVED + 1))
+              else
+                echo "Finalizing: moving $base out of in-flight"
+                git mv "$f" "static/originals/$base"
+                MOVED=$((MOVED + 1))
+              fi
             done
           fi
+          echo "Finalize summary: $MOVED moved to originals, $REMOVED removed (re-view dedupe)"
 
           # Stage wiki output and the in-flight→originals move(s) together.
           # data/ catches retention writes that bypassed MCP — defense in
