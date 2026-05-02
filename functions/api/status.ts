@@ -7,9 +7,9 @@
  *
  * States:
  *   CATALOGED    — source page exists in the wiki
- *   IN_PROGRESS  — a workflow is currently processing
- *   QUEUED       — a workflow is queued to process
- *   FAILED       — no source page and no active workflow
+ *   IN_PROGRESS  — a workflow is currently processing this file
+ *   QUEUED       — a workflow is queued to process this file
+ *   FAILED       — no source page and no active workflow for this file
  *
  * Requires env vars:
  *   GITHUB_TOKEN  — fine-grained PAT with contents:read + actions:read
@@ -48,6 +48,12 @@ interface GitHubCommit {
   }
 }
 
+// Match any token with a file extension we use for originals. Shared
+// between commit-message timestamp lookup and active-run filename
+// extraction. The token can include underscores, dots, hyphens, letters,
+// digits — the same set we restrict acquire_for_catalog filenames to.
+const FILENAME_RE = /([A-Za-z0-9._-]+\.(?:md|png|jpg|jpeg|gif|webp|pdf|docx|pptx|xlsx|csv|txt|html|json|mp4|mov|webm))/gi
+
 function ghHeaders(token: string) {
   return {
     Authorization: `Bearer ${token}`,
@@ -66,6 +72,23 @@ function ghHeaders(token: string) {
  */
 function stripAutolink(s: string): string {
   return s.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+}
+
+/**
+ * Pull the most-likely filename out of an arbitrary string (commit message,
+ * workflow display title, etc.) by finding all filename-shaped tokens and
+ * picking the longest one. Longest wins because it's the most specific:
+ * a re-acquisition message like "Re-acquire jacks-rules.md with complete
+ * text" might also contain shorter incidental tokens.
+ *
+ * Returns null when nothing filename-shaped is found.
+ */
+function extractFilename(s: string): string | null {
+  if (!s) return null
+  const matches = [...s.matchAll(FILENAME_RE)].map(m => m[1])
+  if (matches.length === 0) return null
+  matches.sort((a, b) => b.length - a.length)
+  return stripAutolink(matches[0])
 }
 
 /**
@@ -99,27 +122,78 @@ async function getOriginalsTimestamps(
   const commits: GitHubCommit[] = await res.json()
   const timestamps = new Map<string, string>()
 
-  // Match any token with a file extension we use for originals. The token
-  // can include underscores, dots, hyphens, letters, digits — the same set
-  // we restrict acquire_for_catalog filenames to.
-  const filenameRe = /([A-Za-z0-9._-]+\.(?:md|png|jpg|jpeg|gif|webp|pdf|docx|pptx|xlsx|csv|txt|html|json|mp4|mov|webm))/gi
-
   for (const c of commits) {
-    const msg = c.commit.message
-    // Find ALL filename-shaped tokens in the message and pick the longest
-    // (most specific) one. This handles two cases:
-    //  - "Acquire 2026-04-25-something.md for cataloging" (one match, easy)
-    //  - "Re-acquire jacks-rules-for-website-design.md with complete text"
-    //    (no date prefix, but still has a recognizable filename token)
-    const matches = [...msg.matchAll(filenameRe)].map(m => m[1])
-    if (matches.length === 0) continue
-    matches.sort((a, b) => b.length - a.length)
-    const filename = stripAutolink(matches[0])
+    const filename = extractFilename(c.commit.message)
+    if (!filename) continue
     if (!timestamps.has(filename)) {
       timestamps.set(filename, c.commit.committer.date)
     }
   }
   return timestamps
+}
+
+/**
+ * Fetch all in-flight catalog runs and bucket them by the filename each is
+ * processing. Each run targets exactly one file: the catalog workflow is
+ * push-triggered on static/originals/**, so head_commit.message identifies
+ * the file (typically "Acquire <filename> for cataloging" from the MCP
+ * default, or whatever custom message the operator passed). The
+ * upload-form path uses display_title "upload: <filename>" — we honor both.
+ *
+ * We query in_progress and queued separately because GitHub's status
+ * filter only accepts one value at a time. Each call uses per_page=100 to
+ * cover large batch acquisitions where 20+ runs can be queued at once.
+ *
+ * Returns two sets keyed by extracted filename. A file present in either
+ * set is "active"; absence from both means the run window has closed and
+ * the file is either cataloged or genuinely failed.
+ */
+async function getActiveRunsByFile(
+  token: string,
+  repo: string,
+): Promise<{ inProgress: Set<string>; queued: Set<string> }> {
+  const [inProgressRes, queuedRes] = await Promise.all([
+    fetch(
+      `https://api.github.com/repos/${repo}/actions/workflows/catalog.yml/runs?status=in_progress&per_page=100`,
+      { headers: ghHeaders(token) },
+    ),
+    fetch(
+      `https://api.github.com/repos/${repo}/actions/workflows/catalog.yml/runs?status=queued&per_page=100`,
+      { headers: ghHeaders(token) },
+    ),
+  ])
+
+  const inProgressData: GitHubRunsResponse = inProgressRes.ok
+    ? await inProgressRes.json()
+    : { workflow_runs: [] }
+  const queuedData: GitHubRunsResponse = queuedRes.ok
+    ? await queuedRes.json()
+    : { workflow_runs: [] }
+
+  const fileFromRun = (run: WorkflowRun): string | null => {
+    // Upload-form path: display_title is "upload: <filename>".
+    const uploadMatch = (run.display_title || "").match(/upload:\s*(.+)/)
+    if (uploadMatch) return uploadMatch[1].trim()
+    // MCP / push path: filename is in the head commit message.
+    return (
+      extractFilename(run.head_commit?.message || "") ||
+      extractFilename(run.display_title || "")
+    )
+  }
+
+  const bucket = (runs: WorkflowRun[]): Set<string> => {
+    const s = new Set<string>()
+    for (const run of runs) {
+      const f = fileFromRun(run)
+      if (f) s.add(f)
+    }
+    return s
+  }
+
+  return {
+    inProgress: bucket(inProgressData.workflow_runs),
+    queued: bucket(queuedData.workflow_runs),
+  }
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -130,7 +204,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   try {
-    const [originalsRes, sourcesRes, runsRes, timestamps] = await Promise.all([
+    const [originalsRes, sourcesRes, activeRuns, timestamps] = await Promise.all([
       fetch(
         `https://api.github.com/repos/${GITHUB_REPO}/contents/static/originals`,
         { headers: ghHeaders(GITHUB_TOKEN) },
@@ -139,10 +213,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         `https://api.github.com/repos/${GITHUB_REPO}/contents/content/collection/sources`,
         { headers: ghHeaders(GITHUB_TOKEN) },
       ),
-      fetch(
-        `https://api.github.com/repos/${GITHUB_REPO}/actions/workflows/catalog.yml/runs?per_page=10`,
-        { headers: ghHeaders(GITHUB_TOKEN) },
-      ),
+      getActiveRunsByFile(GITHUB_TOKEN, GITHUB_REPO),
       getOriginalsTimestamps(GITHUB_TOKEN, GITHUB_REPO),
     ])
 
@@ -157,9 +228,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       name: stripAutolink(f.name),
     }))
     const sources: GitHubFile[] = sourcesRes.ok ? await sourcesRes.json() : []
-    const runsData: GitHubRunsResponse = runsRes.ok
-      ? await runsRes.json()
-      : { workflow_runs: [] }
 
     // Build set of cataloged source page stems
     const catalogedStems = new Set(
@@ -167,20 +235,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         .filter((f) => f.name.endsWith(".md") && f.name !== "index.md")
         .map((f) => f.name.replace(/\.md$/, "")),
     )
-
-    // Check for any active workflows
-    const activeRuns = runsData.workflow_runs.filter(
-      (r) => r.status === "in_progress" || r.status === "queued",
-    )
-    const hasActiveRun = activeRuns.length > 0
-
-    // Extract document names from active runs
-    const activeDocNames = new Set<string>()
-    for (const run of activeRuns) {
-      const title = run.display_title || run.head_commit?.message || ""
-      const match = title.match(/upload:\s*(.+)/)
-      if (match) activeDocNames.add(match[1].trim())
-    }
 
     // Build document status list
     const documents = originals
@@ -232,20 +286,26 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           ? matchingSourceStem.replace(/^\d{4}-\d{2}-\d{2}-/, "") + ext
           : dePrefixed
 
-        // Check if an active workflow is processing this file
-        const isActive = activeDocNames.has(f.name) || (hasActiveRun && !isCataloged)
+        // Active-run lookup is per-file. We check both the full name and
+        // the de-prefixed name because run commit messages may refer to
+        // the file either way (and the upload-form path emits the bare
+        // filename without the date prefix).
+        const isInProgress =
+          activeRuns.inProgress.has(f.name) ||
+          activeRuns.inProgress.has(dePrefixed)
+        const isQueued =
+          activeRuns.queued.has(f.name) ||
+          activeRuns.queued.has(dePrefixed)
 
         let status: string
         if (isCataloged) {
           status = "cataloged"
-        } else if (activeRuns.some((r) => r.status === "in_progress") && isActive) {
+        } else if (isInProgress) {
           status = "in_progress"
-        } else if (activeRuns.some((r) => r.status === "queued") && isActive) {
+        } else if (isQueued) {
           status = "queued"
-        } else if (!isCataloged) {
-          status = "failed"
         } else {
-          status = "cataloged"
+          status = "failed"
         }
 
         return {
@@ -263,7 +323,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         return bKey.localeCompare(aKey)
       })
 
-    // Also include active run info for auto-refresh detection
+    // Auto-refresh trigger for the frontend poller.
     const hasActive = documents.some(
       (d) => d.status === "in_progress" || d.status === "queued",
     )
