@@ -49,6 +49,8 @@ These may differ. A proxy server might authenticate with its own credentials but
 
 A `uAuthzId` SHOULD NOT be assumed globally unique. `dnAuthzId` values need not refer to an existing directory entry.
 
+The SASL `authzId` applies for the *entire session* from Bind onward. For per-operation authorization identity substitution — specifying a different identity for each individual LDAP operation without re-binding — see the [[collection/concepts/ldap-proxy-authorization|LDAP Proxy Authorization Control]] ([[collection/sources/2026-05-02-rfc4370-txt|RFC 4370]]).
+
 ## Security Layers
 
 Beyond authentication, SASL mechanisms may negotiate *security layers* providing data integrity and/or confidentiality. In LDAP, SASL layers stack on top of any TLS layer, regardless of negotiation order. SASL layers take effect after the final successful Bind response's first octet and persist through subsequent failed or non-SASL Binds.

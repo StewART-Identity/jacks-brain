@@ -28,6 +28,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
   - "[[collection/sources/2026-05-02-rfc2891-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4370-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
@@ -59,6 +60,7 @@ The LDAP companion RFCs in this wiki address different layers of the protocol st
 | [[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]] (1999) | Operation control | `controls` field | Paginated retrieval via an opaque server-issued cookie |
 | [[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]] (2000) | Operation control | `controls` field | [[collection/concepts/ldap-server-side-sorting|Server-side sorting]] of search results by a prioritized list of attribute types and matching rules |
 | [[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]] (2001) | Password management | `ExtendedRequest` / `ExtendedResponse` | [[collection/concepts/ldap-password-modify|Password modify]] for users with non-DN identities or externally stored passwords |
+| [[collection/sources/2026-05-02-rfc4370-txt|RFC 4370]] (2006) | Operation control | `controls` field | [[collection/concepts/ldap-proxy-authorization|Proxy Authorization]] — per-operation authorization identity substitution; the only cataloged control mandating `criticality = TRUE` |
 | [[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]] (2006) | Attribute selection | `supportedFeatures` OID | `@classname` shorthand returning all attributes of an [[collection/concepts/ldap-object-classes|object class]] |
 | [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] (2006) | Authentication | StartTLS + SASL Bind | Authentication methods, StartTLS procedure, [[collection/concepts/sasl|SASL]] integration, authorization state model |
 | [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] (2006) | Data types | Normative spec | 34 [[collection/concepts/ldap-syntaxes|syntaxes]] and 32 [[collection/concepts/ldap-matching-rules|matching rules]]; the type system underlying all attribute definitions |
@@ -77,7 +79,7 @@ The OID `1.3.6.1.4.1.4203.1.5.2` sits in the [[collection/entities/openldap-foun
 
 The December 1997 core RFCs (2251–2256) were a largely [[collection/entities/netscape-communications|Netscape]]-driven effort, with [[collection/entities/tim-howes|Tim Howes]] and colleagues as primary authors. RFC 2696 (September 1999) and [[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]] (August 2000) both show [[collection/entities/microsoft|Microsoft]]'s sustained entry into LDAP standardization — in RFC 2696, three of four authors are from Microsoft's Redmond campus; in RFC 2891, Anoop Anantha continues as the Microsoft representative alongside Howes (now at Loudcloud) and [[collection/entities/mark-wahl|Mark Wahl]] (now at Sun Microsystems). Both RFCs use OIDs in Microsoft's arc, and both address operational concerns — pagination and sorting — that Active Directory implementers would have needed ahead of the Windows 2000 release.
 
-This timing is consistent with Active Directory's development cycle: Microsoft shipped AD in Windows 2000 (released February 2000) and had strong incentives to standardize the extensions their implementation required. The paged results control OID (`1.2.840.113556.1.4.319`) sits in Microsoft's registered OID arc, suggesting the control existed as a proprietary AD extension before being submitted to the IETF.
+This timing is consistent with Active Directory's development cycle: Microsoft shipped AD in Windows 2000 (released February 2000) and had strong incentives to standardize the extensions their implementation required. The paged results control OID (`1.2.840.113556.1.4.319`) sits in Microsoft's registered OID arc, suggesting the control existed as a proprietary AD extension before being submitted to the IETF. The same OID-arc-as-provenance pattern appears in [[collection/sources/2026-05-02-rfc4370-txt|RFC 4370]] (February 2006): the [[collection/concepts/ldap-proxy-authorization|Proxy Authorization Control]] OID (`2.16.840.1.113730.3.4.18`) is in [[collection/entities/netscape-communications|Netscape Communications Corp.'s]] arc, even though the RFC was authored by [[collection/entities/rob-weltman|Rob Weltman]] at Yahoo!, Inc. — indicating the control was designed and the OID registered during an earlier Netscape tenure.
 
 By 2006, the center of gravity had shifted again: the [[collection/sources/2026-05-02-rfc4510-txt|RFC 4510]] series that revised and replaced 2251–2256 is primarily a [[collection/entities/kurt-zeilenga|Kurt Zeilenga]] / [[collection/entities/openldap-foundation|OpenLDAP Foundation]] effort. RFC 4529 (also 2006) follows the same authorship pattern — Zeilenga sole author, OID in the OpenLDAP arc. Where Netscape drove the core and Microsoft drove the paged results extension, OpenLDAP drove the 2006 consolidation and the schema-aware attribute selection extension.
 
@@ -92,7 +94,7 @@ RFC 4529 shows a complementary pattern: extend the grammar productions of an exi
 Four distinct extension patterns, all standardized through the OID registry:
 
 1. **ABNF-only extension** ([[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]], updating [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]]): no runtime state, no discovery, purely a grammar convenience
-2. **Controls mechanism** ([[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]], [[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]]): per-operation augmentation with optional criticality enforcement; RFC 2696 adds stateful pagination, RFC 2891 adds result ordering
+2. **Controls mechanism** ([[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]], [[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]], [[collection/sources/2026-05-02-rfc4370-txt|RFC 4370]]): per-operation augmentation with optional or mandatory criticality enforcement; RFC 2696 adds stateful pagination, RFC 2891 adds result ordering, RFC 4370 adds per-operation authorization identity substitution — the last being the only cataloged control that mandates `criticality = TRUE`
 3. **Grammar + feature OID** ([[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]]): grammar extension with upfront capability negotiation via `supportedFeatures`
 4. **Extended operations** ([[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]]): new operations identified by OID, with no base-protocol analog — used when the required operation cannot be expressed through existing protocol primitives
 

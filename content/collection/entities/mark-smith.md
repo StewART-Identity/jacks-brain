@@ -23,6 +23,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc2255-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4516-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4370-txt]]"
 ---
 
 Mark Smith is a software engineer and IETF contributor who participated in both the original 1997 LDAPv3 standardization effort and the 2006 RFC 4510 revision.
@@ -40,3 +41,5 @@ By June 2006 Smith was affiliated with Pearl Crescent, LLC (Saline, MI), where h
 - **[[collection/sources/2026-05-02-rfc4516-txt|RFC 4516]]** — LDAP: Uniform Resource Locator. Defines the `ldap://` URI scheme for encoding [[collection/concepts/ldap-url|LDAP search operations and referral targets]] as self-contained strings. Obsoletes RFC 2255 (December 1997).
 
 RFC 4516 is the primary consumer of the string filter syntax standardized in RFC 4515 — the `<filter>` component of an LDAP URL uses the RFC 4515 string representation directly.
+
+Smith is also credited in the acknowledgements of [[collection/sources/2026-05-02-rfc4370-txt|RFC 4370]] (LDAP Proxied Authorization Control, February 2006) as "formerly of Netscape Communications Corp." — consistent with his trajectory away from Netscape and into Pearl Crescent by the time of the RFC 4510 series. His reviewer credit alongside [[collection/entities/kurt-zeilenga|Zeilenga]], [[collection/entities/mark-wahl|Mark Wahl]], [[collection/entities/jim-sermersheim|Jim Sermersheim]], and [[collection/entities/steven-legg|Steven Legg]] reflects his continued involvement in the LDAP community beyond his primary editing role.

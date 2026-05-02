@@ -20,6 +20,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
   - "[[collection/sources/2026-05-02-rfc3062-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4370-txt]]"
 ---
 
 Kurt D. Zeilenga is an engineer at the [[collection/entities/openldap-foundation|OpenLDAP Foundation]] and the primary author of the RFC 4510 series — the 2006 revision of the LDAPv3 Technical Specification that replaced the original December 1997 RFCs (2251–2256) originally driven by [[collection/entities/netscape-communications|Netscape Communications]] engineers including [[collection/entities/tim-howes|Tim Howes]].
@@ -51,3 +52,5 @@ Where the original LDAPv3 RFCs (2251–2256) were a [[collection/entities/netsca
 Zeilenga's work concentrated on schema and protocol extensions: Directory Information Models (4512), IANA registration procedures (4520), and protocol feature extensions including the `+` operational attributes selector (3673), read entry controls (4527), and the [[collection/sources/2026-05-02-rfc4529-txt|`@classname` attribute selection shorthand]] (4529). An earlier contribution — [[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]] (2001) — defined the [[collection/concepts/ldap-password-modify|Password Modify Extended Operation]], addressing the password-change gap that SASL integration had created.
 
 Note: RFC 4516 ([[collection/concepts/ldap-url|LDAP URL format]]) is sometimes listed in attributions of Zeilenga's work, but the actual RFC was edited by [[collection/entities/mark-smith|Mark Smith]] and [[collection/entities/tim-howes|Tim Howes]]. Zeilenga is thanked in the acknowledgements for "valuable comments" alongside RL "Bob" Morgan, Mark Wahl, Jim Sermersheim, and Hallvard Furuseth.
+
+Zeilenga is also credited in the acknowledgements of [[collection/sources/2026-05-02-rfc4370-txt|RFC 4370]] (LDAP Proxied Authorization Control) alongside [[collection/entities/mark-smith|Mark Smith]], [[collection/entities/mark-wahl|Mark Wahl]], [[collection/entities/jim-sermersheim|Jim Sermersheim]], and [[collection/entities/steven-legg|Steven Legg]] — reflecting his role as a reviewer across the broader LDAP standards community during the 2006 period.
