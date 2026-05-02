@@ -22,10 +22,11 @@ tags:
   - rfc4517
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc2252-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
 ---
 
-Every attribute stored in an [[collection/concepts/ldap|LDAP]] directory has a **syntax** — a data type that constrains the structure and format of its values and determines how those values are encoded in the LDAP protocol. Syntaxes are defined in [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] and are distinct from [[collection/concepts/ldap-matching-rules|matching rules]], which define comparison semantics. A syntax defines *what values are legal*; matching rules define *how values compare*.
+Every attribute stored in an [[collection/concepts/ldap|LDAP]] directory has a **syntax** — a data type that constrains the structure and format of its values and determines how those values are encoded in the LDAP protocol. Syntaxes were originally defined in [[collection/sources/2026-05-02-rfc2252-txt|RFC 2252]] (1997) and updated/superseded by [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] (2006). They are distinct from [[collection/concepts/ldap-matching-rules|matching rules]], which define comparison semantics. A syntax defines *what values are legal*; matching rules define *how values compare*.
 
 ## What a Syntax Specifies
 

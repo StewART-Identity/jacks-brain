@@ -21,6 +21,7 @@ tags:
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2251-txt]]"
+  - "[[collection/sources/2026-05-02-rfc2252-txt]]"
   - "[[collection/sources/2026-05-02-rfc2253-txt]]"
 ---
 
@@ -29,7 +30,7 @@ Mark Wahl was an LDAP engineer affiliated with Critical Angle Inc. (4815 W. Brak
 Wahl is listed as a co-author on several foundational LDAP RFCs from December 1997:
 
 - **RFC 2251** — Lightweight Directory Access Protocol (v3): core wire protocol, operations, and information model
-- **RFC 2252** — LDAPv3 Attribute Syntax Definitions (co-authored with A. Coulbeck, [[collection/entities/tim-howes|T. Howes]], and [[collection/entities/steve-kille|S. Kille]])
+- **[[collection/sources/2026-05-02-rfc2252-txt|RFC 2252]]** — LDAPv3 Attribute Syntax Definitions (co-authored with [[collection/entities/andy-coulbeck|A. Coulbeck]], [[collection/entities/tim-howes|T. Howes]], and [[collection/entities/steve-kille|S. Kille]])
 - **[[collection/sources/2026-05-02-rfc2253-txt|RFC 2253]]** — UTF-8 String Representation of [[collection/concepts/distinguished-name|Distinguished Names]] (co-authored with [[collection/entities/steve-kille|S. Kille]] and [[collection/entities/tim-howes|T. Howes]])
 - **RFC 2256** — A Summary of the X.500(96) User Schema for Use with LDAPv3
 
