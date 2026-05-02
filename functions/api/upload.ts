@@ -32,6 +32,27 @@ interface Env {
   USER_TIMEZONE?: string
 }
 
+// Maximum upload size, in bytes. Files larger than this are rejected at
+// the upload endpoint before any bytes are read or any GitHub commit is
+// attempted. 5 MB is a comfortable ceiling for typical document
+// acquisitions (RFCs, IAM team docs, scanned PDFs up to ~50 pages) and
+// keeps obvious mistakes (entire books, videos, large image bundles)
+// out of the pipeline. The post-conversion guard in catalog.mjs is the
+// stricter check on actual *content* size; this guard is just a sanity
+// filter on raw bytes.
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
+/**
+ * Format a byte count as a human-readable string (KB or MB), matching
+ * the granularity humans use when discussing file sizes. Goal: error
+ * messages that look like "6.3 MB" rather than "6606148 bytes".
+ */
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} bytes`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
+  return `${(n / 1024 / 1024).toFixed(1)} MB`
+}
+
 /**
  * Today's date in YYYY-MM-DD form, computed in the configured user timezone
  * (USER_TIMEZONE env var). Falls back to UTC if not set.
@@ -87,6 +108,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     if (!file) {
       return Response.json({ error: "No file provided" }, { status: 400 })
+    }
+
+    // Size guard. Reject before reading the body or hitting GitHub.
+    // file.size is set by the runtime during multipart parsing, so this
+    // doesn't require us to allocate the arrayBuffer.
+    if (file.size > MAX_UPLOAD_BYTES) {
+      return Response.json(
+        {
+          error: "File too large",
+          detail: `This file is ${formatBytes(file.size)}; the upload limit is ${formatBytes(MAX_UPLOAD_BYTES)}. Try a smaller document, an excerpt, or split the file.`,
+          maxBytes: MAX_UPLOAD_BYTES,
+          actualBytes: file.size,
+        },
+        { status: 413 },
+      )
     }
 
     // Read file content and base64 encode it
