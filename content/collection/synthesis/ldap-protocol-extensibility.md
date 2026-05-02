@@ -28,6 +28,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
+  - "[[collection/sources/2026-05-02-rfc3062-txt]]"
 ---
 
 [[collection/concepts/ldap|LDAPv3]] (RFC 2251, December 1997) was deliberately designed to be extensible: the `LDAPMessage` format includes a `controls` field that allows any operation to carry additional semantics defined in separate specifications. [[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]] (September 1999) demonstrates this extensibility model in practice, adding [[collection/concepts/ldap-paged-results|paged result retrieval]] — a capability the core protocol intentionally deferred.
@@ -42,7 +43,7 @@ RFC 2251 Section 4.1.12 defines `controls` as an optional sequence of `Control` 
 
 This design separates *what operations are possible* (the core protocol) from *how those operations are augmented* (controls defined in companion RFCs). The core could be finalized without resolving every operational concern.
 
-## Five Cataloged RFCs, Four Layers
+## Cataloged RFCs and Their Extensibility Mechanisms
 
 The LDAP companion RFCs in this wiki address different layers of the protocol stack and use different extensibility mechanisms:
 
@@ -51,6 +52,7 @@ The LDAP companion RFCs in this wiki address different layers of the protocol st
 | [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (1997, obsoleted) | Query syntax | ABNF extension | Original string representation of [[collection/concepts/ldap-search-filters|search filters]]; superseded by RFC 4515 |
 | [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] (2006) | Query syntax | ABNF extension | Revised string representation — explicit UTF-8, formal `valueencoding` rule |
 | [[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]] (1999) | Operation control | `controls` field | Paginated retrieval via an opaque server-issued cookie |
+| [[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]] (2001) | Password management | `ExtendedRequest` / `ExtendedResponse` | [[collection/concepts/ldap-password-modify|Password modify]] for users with non-DN identities or externally stored passwords |
 | [[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]] (2006) | Attribute selection | `supportedFeatures` OID | `@classname` shorthand returning all attributes of an [[collection/concepts/ldap-object-classes|object class]] |
 | [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] (2006) | Authentication | StartTLS + SASL Bind | Authentication methods, StartTLS procedure, [[collection/concepts/sasl|SASL]] integration, authorization state model |
 | [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] (2006) | Data types | Normative spec | 34 [[collection/concepts/ldap-syntaxes|syntaxes]] and 32 [[collection/concepts/ldap-matching-rules|matching rules]]; the type system underlying all attribute definitions |
@@ -77,10 +79,15 @@ By 2006, the center of gravity had shifted again: the RFC 4510 series that revis
 
 The controls mechanism reflects a broader IETF design philosophy: standardize the minimal viable protocol, then extend it through the OID namespace without coordination bottlenecks. Any organization with an assigned OID arc can define a control. The `criticality` flag provides a graceful degradation path — non-critical controls are silently ignored by servers that don't implement them, preserving interoperability.
 
-RFC 4529 shows a complementary pattern: extend the grammar productions of an existing protocol element (the `attributeSelector`) and gate the extension behind a discoverable feature OID rather than relying on criticality flags. This pushes coordination to the discovery layer — clients negotiate capability before using it. Three distinct extension patterns, all standardized through the OID registry:
+RFC 4529 shows a complementary pattern: extend the grammar productions of an existing protocol element (the `attributeSelector`) and gate the extension behind a discoverable feature OID rather than relying on criticality flags. This pushes coordination to the discovery layer — clients negotiate capability before using it.
+
+[[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]] (2001) shows a third pattern: **ExtendedRequest/ExtendedResponse**. Where controls augment *existing* operations and grammar extensions modify *argument encoding*, extended operations introduce entirely *new operations* identified by OID. Password modification had no adequate analog in the base LDAPv3 operation set once [[collection/concepts/sasl|SASL]] integration created non-DN user identities — so a new operation was needed, not an argument or control. [[collection/entities/kurt-zeilenga|Zeilenga]] registered `passwdModifyOID` in the [[collection/entities/openldap-foundation|OpenLDAP Foundation]]'s OID arc (`1.3.6.1.4.1.4203.1.11`) — the same arc he later used for the `@classname` feature OID — establishing a pattern of using the foundation's allocation as an RFC prototyping space.
+
+Four distinct extension patterns, all standardized through the OID registry:
 
 1. **ABNF-only extension** ([[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]], updating [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]]): no runtime state, no discovery, purely a grammar convenience
-2. **Controls mechanism** (RFC 2696): per-operation augmentation with optional criticality enforcement
-3. **Grammar + feature OID** (RFC 4529): grammar extension with upfront capability negotiation via `supportedFeatures`
+2. **Controls mechanism** ([[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]]): per-operation augmentation with optional criticality enforcement
+3. **Grammar + feature OID** ([[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]]): grammar extension with upfront capability negotiation via `supportedFeatures`
+4. **Extended operations** ([[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]]): new operations identified by OID, with no base-protocol analog — used when the required operation cannot be expressed through existing protocol primitives
 
 This is in tension with the IESG's caution embedded in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (discouraging update-capable deployments until authentication was standardized): the extensibility model assumes implementations will converge, but the authentication gap meant the protocol could be extended in many directions simultaneously while a critical baseline remained unresolved. [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] quietly closed this loop — the 2006 revision removed the IESG note entirely, acknowledging that [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]]'s authentication mechanisms had resolved the concern that made RFC 2254 hesitant. RFC 4513 brought a fourth layer to the extensibility story: [[collection/concepts/ldap-tls|StartTLS]] and [[collection/concepts/sasl|SASL]] as the security foundation that the original extensibility mechanisms had implicitly assumed would exist. See [[collection/synthesis/ldap-authentication-security-architecture|LDAP Security Architecture: Authentication Gap to RFC 4513]] for a detailed analysis.

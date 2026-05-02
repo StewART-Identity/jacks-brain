@@ -26,6 +26,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
+  - "[[collection/sources/2026-05-02-rfc3062-txt]]"
 ---
 
 The IETF approved [[collection/concepts/ldap|LDAPv3]] in December 1997 while knowing the authentication story was incomplete. The IESG note embedded in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] stated this explicitly — it approved read-only and interoperability testing deployments but discouraged production update-capable deployments until mandatory authentication mechanisms were standardized. Nine years later, [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] (June 2006) closed that gap. [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] removed the IESG note from the search filter spec, quietly acknowledging that the authentication problem had been solved.
@@ -102,3 +103,11 @@ This framing matters because it clarifies several edge cases:
 The RFC 4510 series involved four editors working on different documents. RFC 4513's security focus sat alongside [[collection/entities/kurt-zeilenga|Kurt Zeilenga]]'s work on protocol messages (RFC 4511), directory information models (RFC 4512), and the IANA registry cleanup. The coordination is visible in cross-references: RFC 4511 defines the StartTLS extended operation; RFC 4513 defines the procedures for using it safely. Neither document is independently complete on the topic.
 
 [[collection/entities/roger-harrison|Harrison]]'s role as sole editor of RFC 4513 — rather than the [[collection/entities/openldap-foundation|OpenLDAP Foundation]]-led pattern that dominates the rest of the RFC 4510 series — reflects that authentication policy is inherently implementation- and deployment-specific. Novell's eDirectory and [[collection/entities/microsoft|Microsoft]]'s Active Directory had different authentication architectures; a Novell engineer was perhaps better positioned to write a flexible, implementation-neutral authentication framework than an OpenLDAP-focused one.
+
+## The SASL Identity Gap and Password Management
+
+The SASL integration that RFC 4513 formalized created a side-effect the authentication architecture had to accommodate: once a user's identity is a non-DN SASL username rather than a directory entry DN, the standard Modify operation can no longer update their password. A Modify targets an entry's attribute; if the user has no entry, or their password is managed by the SASL service provider rather than the directory, the Modify has no valid target.
+
+[[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]] (February 2001, by [[collection/entities/kurt-zeilenga|Kurt Zeilenga]]) addressed this with the [[collection/concepts/ldap-password-modify|Password Modify Extended Operation]] — an `ExtendedRequest` that operates on an *identity* rather than a *directory entry*. The operation accepts an optional `userIdentity` field that may be a DN or any other identity string, decoupling password modification from the directory-entry model entirely.
+
+RFC 3062's security requirement mirrors RFC 4513's layered model: the operation MUST be used with confidentiality protection (StartTLS; NULL cipher suite prohibited). It SHALL NOT be used anonymously. This means RFC 3062 depends on the security infrastructure that RFC 4513 later formalized — the extended operation is only safe in the presence of the TLS and authentication layers RFC 4513 standardized. The dependency makes RFC 3062 an early artifact in the LDAP security architecture, written before RFC 4513 codified the complete model but anticipating it.
