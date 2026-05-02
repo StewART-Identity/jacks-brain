@@ -1,40 +1,49 @@
 name: Auto-catalog acquired documents
 
-# This workflow has two trigger paths and one orchestrating job.
+# Three-directory pipeline for cataloging acquisitions:
 #
-# Path A: push to static/originals/** — a file is ready to be cataloged
-#   (either freshly promoted from raw/queue/ by a previous run of this
-#   workflow, or placed directly by a manual operation). Run the catalog
-#   on it, then promote the next file from raw/queue/ if any.
+#   raw/queue/         — PENDING. Files awaiting their turn.
+#   static/in-flight/  — IN_PROGRESS. The file currently being cataloged.
+#                        At most one file here at a time.
+#   static/originals/  — CATALOGED corpus. Completed files stay here
+#                        permanently for download links and listing.
 #
-# Path B: push to raw/queue/** — a new acquisition landed in the staging
-#   queue. If static/originals/ is currently empty, promote one file out
-#   of the queue (which triggers another workflow run via Path A). If
-#   static/originals/ has a file in it, the currently-running catalog
-#   will handle promotion at its end; do nothing here.
+# The workflow has two trigger paths plus the manual override:
 #
-# Path C: workflow_dispatch — manual override for specific files or the
-#   legacy "scan all uncataloged" path. Used for operational recovery,
-#   not normal flow.
+# Path A: push to raw/queue/** — a new acquisition landed in staging.
+#   If static/in-flight/ is currently empty (no catalog running),
+#   promote one file from raw/queue/ to static/in-flight/ and exit.
+#   The static/in-flight/ push triggers Path B in a new workflow run.
+#   If static/in-flight/ is non-empty, do nothing — the running
+#   catalog will promote the next file when it finishes.
+#
+# Path B: push to static/in-flight/** — a file just got promoted.
+#   Run the catalog on it. When complete (success or failure), move
+#   it from static/in-flight/ to static/originals/, commit any wiki
+#   output, then promote the next file from raw/queue/ if any.
+#
+# Path C: workflow_dispatch — manual override for a specific file or
+#   the legacy bulk-scan path. Used for operational recovery.
 #
 # The concurrency: catalog-main group with cancel-in-progress: false
-# serializes everything: at most one workflow run executes at a time,
-# even if many pushes arrive in quick succession. This is essential —
-# multiple concurrent runs would race on git operations and try to
-# catalog the same file twice.
+# serializes everything. With "false" cancellation, GitHub Actions holds
+# at most one waiter behind a running job; a flood of pushes collapses
+# to "one running, one queued, rest cancelled" — which is fine because
+# the in-flight directory and queue together carry the state across
+# workflow runs.
 
 on:
   workflow_dispatch:
     inputs:
       file_path:
-        description: "Path to a specific file (in raw/queue/ or static/originals/) to catalog. Leave blank for the legacy scan-all-uncataloged path (requires CATALOG_ALLOW_BULK)."
+        description: "Path to a specific file (relative to repo root) to catalog. Leave blank for the legacy scan-all-uncataloged path (requires CATALOG_ALLOW_BULK)."
         required: false
         type: string
   push:
     branches: [main]
     paths:
       - "raw/queue/**"
-      - "static/originals/**"
+      - "static/in-flight/**"
 
 permissions:
   contents: write
@@ -50,9 +59,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          # Use a token that can push to main — needed for both the
-          # promote step (which moves files between directories) and
-          # the catalog commit step (which lands wiki pages).
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
@@ -68,15 +74,11 @@ jobs:
       - name: Install document converters
         run: sudo apt-get update && sudo apt-get install -y pandoc poppler-utils
 
-      # Decide what this run should do, based on the trigger and current
-      # state of the repo. Outputs three step outputs:
-      #
-      #   action      — one of "catalog", "promote-only", "noop", "dispatch"
-      #   files       — newline-separated paths to catalog (relative to repo)
-      #                 (only set when action=catalog)
-      #   queue_count — number of files currently in raw/queue/ (informational)
-      #
-      # The action determines which subsequent steps run via if: conditions.
+      # Decide what this run should do based on the trigger and current
+      # repo state. Sets two outputs:
+      #   action — "promote-only", "catalog", "dispatch", or "noop"
+      #   files_path — path to a newline-separated list of files to
+      #                catalog (used when action ∈ {catalog, dispatch})
       - name: Plan this run
         id: plan
         env:
@@ -90,30 +92,23 @@ jobs:
           FILES_OUT=/tmp/catalog/files.txt
           : > "$FILES_OUT"
 
-          # Count files currently in static/originals/ (excluding markers).
-          # The queue model expects 0 or 1 — anything else suggests an
-          # operational anomaly that we'll surface but not refuse.
-          ORIGINALS_COUNT=0
-          if [ -d static/originals ]; then
-            ORIGINALS_COUNT=$(find static/originals -maxdepth 1 -type f \
-              ! -name '.gitkeep' ! -name '.catalog-trigger' | wc -l | tr -d ' ')
+          # Count actionable files in each directory (excluding .gitkeep).
+          IN_FLIGHT_COUNT=0
+          if [ -d static/in-flight ]; then
+            IN_FLIGHT_COUNT=$(find static/in-flight -maxdepth 1 -type f \
+              ! -name '.gitkeep' | wc -l | tr -d ' ')
           fi
           QUEUE_COUNT=0
           if [ -d raw/queue ]; then
             QUEUE_COUNT=$(find raw/queue -maxdepth 1 -type f \
               ! -name '.gitkeep' | wc -l | tr -d ' ')
           fi
-          echo "Originals count: $ORIGINALS_COUNT"
-          echo "Queue count: $QUEUE_COUNT"
-          echo "queue_count=$QUEUE_COUNT" >> "$GITHUB_OUTPUT"
+          echo "in-flight count: $IN_FLIGHT_COUNT"
+          echo "queue count: $QUEUE_COUNT"
 
           ACTION=""
 
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            # Manual dispatch — preserve the existing semantics: an
-            # explicit file_path catalogs that file, an empty file_path
-            # falls through to scan-everything mode (which catalog.mjs
-            # gates on CATALOG_ALLOW_BULK).
             ACTION="dispatch"
             if [ -n "${DISPATCH_PATH:-}" ]; then
               echo "Manual dispatch with file_path=$DISPATCH_PATH"
@@ -122,31 +117,31 @@ jobs:
               echo "Manual dispatch with no file_path — will scan all uncataloged"
             fi
           else
-            # Push event. Discover what changed.
+            # Push event. Discovery script extracts paths under
+            # static/in-flight/ from the push event payload.
             node scripts/discover-changed-originals.mjs >> "$FILES_OUT"
-            ORIGINALS_PUSHED=$(wc -l < "$FILES_OUT" | tr -d ' ')
-            echo "Push event added/modified $ORIGINALS_PUSHED file(s) under static/originals/"
+            IN_FLIGHT_PUSHED=$(wc -l < "$FILES_OUT" | tr -d ' ')
+            echo "Push event added/modified $IN_FLIGHT_PUSHED file(s) under static/in-flight/"
 
-            if [ "$ORIGINALS_PUSHED" -gt 0 ]; then
-              # A file landed in static/originals/ — catalog it. The
+            if [ "$IN_FLIGHT_PUSHED" -gt 0 ]; then
+              # A file landed in static/in-flight/ — catalog it. The
               # discovery script's output is already in $FILES_OUT.
               ACTION="catalog"
             else
-              # No static/originals/ change — this push must have been
-              # to raw/queue/. Promote one file out of the queue, but
-              # only if static/originals/ is empty (no catalog in flight).
-              if [ "$ORIGINALS_COUNT" -gt 0 ]; then
-                # A catalog is already running. The currently-running
-                # catalog's promote-next step will pick up our queue
-                # addition when it finishes. Nothing to do here.
-                echo "static/originals/ is non-empty (count=$ORIGINALS_COUNT) — catalog in flight, deferring promotion"
+              # No in-flight change — this push must have been to
+              # raw/queue/. Promote one file out of the queue, but only
+              # if static/in-flight/ is empty.
+              if [ "$IN_FLIGHT_COUNT" -gt 0 ]; then
+                # A catalog is currently running. The catalog's
+                # post-completion step will promote the next file from
+                # the queue when it finishes. Nothing for us to do.
+                echo "static/in-flight/ is non-empty (count=$IN_FLIGHT_COUNT) — catalog in flight, deferring promotion"
                 ACTION="noop"
               elif [ "$QUEUE_COUNT" -eq 0 ]; then
-                # Queue push but the queue is empty? This shouldn't
-                # normally happen (the file we just pushed should be
-                # there), but it can if the file was deleted between
-                # the push event and our checkout. Nothing to do.
-                echo "raw/queue/ is empty — nothing to promote"
+                # Queue push but the queue is empty — file may have been
+                # deleted between push and our checkout (queue-delete
+                # endpoint). Nothing to do.
+                echo "raw/queue/ is empty — nothing to promote (race with deletion?)"
                 ACTION="noop"
               else
                 ACTION="promote-only"
@@ -158,36 +153,27 @@ jobs:
           echo "action=$ACTION" >> "$GITHUB_OUTPUT"
           echo "files_path=$FILES_OUT" >> "$GITHUB_OUTPUT"
 
-      # Promote one file from raw/queue/ to static/originals/. This is
-      # called from two places: as the only action when ACTION=promote-only
-      # (a queue push arrived while no catalog was in flight), and at the
-      # end of every catalog run (to advance the queue). The logic is
-      # identical, so it lives in a reusable composite step via a script.
-      #
-      # Because the path is identical, we just inline it here for both
-      # call sites — see "Promote next from queue" later in this file.
+      # Promote one file from raw/queue/ to static/in-flight/.
+      # Triggered only when action=promote-only (a queue push arrived
+      # while no catalog was in flight).
       - name: Promote one from queue (initial trigger)
         if: steps.plan.outputs.action == 'promote-only'
         run: |
           set -euo pipefail
-          # Pick the oldest file in raw/queue/ — FIFO order. We use ls -tr
-          # for sort-by-mtime-ascending; ties broken alphabetically, which
-          # is fine since git checkout sets all mtimes to the same instant
-          # anyway, but this gives a deterministic order regardless.
+          # Pick the oldest file in raw/queue/ — FIFO order. ls -tr is
+          # mtime-ascending; for git checkouts mtimes are uniform so we
+          # fall back to alphabetical, which is deterministic.
           NEXT=$(ls -tr raw/queue/ 2>/dev/null | grep -v '^\.gitkeep$' | head -n 1 || true)
           if [ -z "$NEXT" ]; then
             echo "Queue empty — nothing to promote (race with deletion?)"
             exit 0
           fi
-          echo "Promoting: $NEXT"
+          echo "Promoting to in-flight: $NEXT"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          mkdir -p static/originals
-          git mv "raw/queue/$NEXT" "static/originals/$NEXT"
+          mkdir -p static/in-flight
+          git mv "raw/queue/$NEXT" "static/in-flight/$NEXT"
           git commit -m "promote from queue: $NEXT"
-          # Retry-on-conflict: another commit (e.g. an MCP retention write,
-          # or another upload landing in raw/queue/) may have landed
-          # between our checkout and our push. Rebase and retry.
           for i in 1 2 3 4; do
             git pull --rebase origin main && git push origin main && exit 0
             echo "Push attempt $i failed, retrying in $((i * 2))s..."
@@ -207,9 +193,6 @@ jobs:
         run: |
           set -euo pipefail
           if [ ! -s "$FILES_LIST" ]; then
-            # No specific files — only happens for workflow_dispatch with
-            # empty file_path. catalog.mjs's CI guard refuses this without
-            # CATALOG_ALLOW_BULK=1, so set it here as the explicit opt-in.
             echo "No specific files identified; running catalog.mjs in scan mode"
             CATALOG_ALLOW_BULK=1 node scripts/catalog.mjs
           else
@@ -221,22 +204,53 @@ jobs:
             done < "$FILES_LIST"
           fi
 
-      - name: Commit and push catalog output
-        if: steps.plan.outputs.action == 'catalog' || steps.plan.outputs.action == 'dispatch'
+      # Move the cataloged file from static/in-flight/ to static/originals/,
+      # commit the wiki output, and push. This step ALWAYS runs after a
+      # catalog (success OR failure) so static/in-flight/ ends up empty
+      # either way — a failed catalog should not leave the file stuck
+      # in-flight, blocking the queue. The file ends up in
+      # static/originals/ without a source page, which the status
+      # endpoint correctly classifies as FAILED.
+      #
+      # The workflow_dispatch case is more flexible: when an operator
+      # passes an explicit file_path, that path may already be in
+      # static/originals/ (re-cataloging a previously-cataloged file).
+      # We only move from in-flight if the file IS in in-flight.
+      - name: Finalize and commit
+        if: |
+          always() &&
+          (steps.plan.outputs.action == 'catalog' || steps.plan.outputs.action == 'dispatch')
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # content/ holds the wiki pages Claude Code wrote during the
-          # catalog. data/ is a fallback for retention writes that bypassed
-          # MCP — the normal path is for catalog Claude to call
-          # append_retention_entry, which makes its own commit; this catches
-          # the case where a direct filesystem write happened instead.
-          git add content/ data/
+
+          # Move any file currently in static/in-flight/ to
+          # static/originals/. Normally exactly one file; could be zero
+          # in dispatch cases where the operator pointed directly at an
+          # already-existing originals file.
+          mkdir -p static/originals
+          MOVED=0
+          if [ -d static/in-flight ]; then
+            for f in static/in-flight/*; do
+              [ -e "$f" ] || continue
+              base=$(basename "$f")
+              if [ "$base" = ".gitkeep" ]; then continue; fi
+              echo "Finalizing: moving $base out of in-flight"
+              git mv "$f" "static/originals/$base"
+              MOVED=$((MOVED + 1))
+            done
+          fi
+
+          # Stage wiki output and the in-flight→originals move(s) together.
+          # data/ catches retention writes that bypassed MCP — defense in
+          # depth; the normal path is for catalog Claude to commit
+          # retention via append_retention_entry MCP tool.
+          git add content/ data/ static/in-flight static/originals
           if git diff --staged --quiet; then
-            echo "No changes to commit."
+            echo "No changes to commit (catalog produced no output and no file to finalize)."
           else
-            git commit -m "catalog: auto-generated wiki pages from acquired documents"
+            git commit -m "catalog: process complete, finalize wiki output"
             for i in 1 2 3 4; do
               git pull --rebase origin main && git push origin main && break
               echo "Push attempt $i failed, retrying in $((i * 2))s..."
@@ -244,54 +258,33 @@ jobs:
             done
           fi
 
-      # Always run after a catalog finishes (success OR failure). This is
-      # the heart of the queue drain: each catalog run, regardless of
-      # outcome, advances the queue by promoting the next file. A failed
-      # catalog doesn't poison the queue — it just means the failed file
-      # ends up in static/originals/ without a source page (status=FAILED
-      # on the Acquisition page), and the next file proceeds normally.
-      #
-      # The currently-cataloged file MUST be removed from static/originals/
-      # before promoting the next, OR the next push to static/originals/
-      # would see two files and the discovery script would catalog only
-      # the newly-added one (correct), but static/originals/ would
-      # accumulate finished originals over time.
-      #
-      # Decision: leave finished originals in place. They serve as the
-      # "source of truth" for /api/originals download links, and the
-      # Acquisition page uses them to enumerate all cataloged documents.
-      # The promotion step adds a new file alongside the old one, and the
-      # discover script picks out only the newly-added one for the next
-      # catalog run. static/originals/ ends up holding ALL cataloged
-      # files, not just the in-flight one. That's actually the correct
-      # long-term shape — the "in-flight" definition is "in static/
-      # originals/ AND not yet cataloged" — checked by the status endpoint.
-      #
-      # So: every catalog run ends by promoting the next, and
-      # static/originals/ accumulates over time as the corpus grows.
+      # Promote the next file from raw/queue/ to static/in-flight/, if any.
+      # Always runs after a catalog, regardless of success/failure. If
+      # the queue is empty, this is a no-op and the cycle ends.
       - name: Promote next from queue (post-catalog)
         if: |
           always() &&
-          (steps.plan.outputs.action == 'catalog' || steps.plan.outputs.action == 'dispatch') &&
-          steps.plan.outputs.queue_count != '0'
+          (steps.plan.outputs.action == 'catalog' || steps.plan.outputs.action == 'dispatch')
         run: |
           set -euo pipefail
-          # Re-pull to see any commits that landed during the catalog
-          # (MCP retention writes, the catalog commit step we just ran,
-          # potentially new uploads landing in raw/queue/).
+          # Re-pull to see commits that landed during the catalog
+          # (MCP retention writes, the finalize commit we just pushed,
+          # potentially new uploads landing in raw/queue/ or deletions
+          # from raw/queue/).
           git pull --rebase origin main || true
-          # Re-check the queue — it may have grown OR shrunk during the
-          # catalog (a deletion via the upcoming /api/queue/delete endpoint).
-          NEXT=$(ls -tr raw/queue/ 2>/dev/null | grep -v '^\.gitkeep$' | head -n 1 || true)
+          NEXT=""
+          if [ -d raw/queue ]; then
+            NEXT=$(ls -tr raw/queue/ 2>/dev/null | grep -v '^\.gitkeep$' | head -n 1 || true)
+          fi
           if [ -z "$NEXT" ]; then
-            echo "Queue is empty after catalog — nothing to promote"
+            echo "Queue is empty after catalog — cycle ends"
             exit 0
           fi
-          echo "Promoting next: $NEXT"
+          echo "Promoting next from queue: $NEXT"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          mkdir -p static/originals
-          git mv "raw/queue/$NEXT" "static/originals/$NEXT"
+          mkdir -p static/in-flight
+          git mv "raw/queue/$NEXT" "static/in-flight/$NEXT"
           git commit -m "promote from queue: $NEXT"
           for i in 1 2 3 4; do
             git pull --rebase origin main && git push origin main && exit 0
