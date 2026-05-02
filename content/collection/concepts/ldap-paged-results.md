@@ -54,5 +54,7 @@ Without paging, a single `SearchRequest` against a large directory may be reject
 ## See Also
 
 - [[collection/concepts/ldap-search-filters|LDAP search filters]] — govern *what* entries match the query; paged results governs *how many* are returned per round trip
+- [[collection/concepts/ldap-server-side-sorting|LDAP Server-Side Sorting]] — RFC 2891 extends paged results with a sort order guarantee; the server must sort the entire result set before paginating
 - [[collection/concepts/ldap|LDAP]] — the underlying protocol
-- [[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]] — the normative specification
+- [[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]] — the normative specification for paged results
+- [[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]] — specifies how server-side sorting and paged results interact

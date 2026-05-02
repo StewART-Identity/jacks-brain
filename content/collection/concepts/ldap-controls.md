@@ -22,6 +22,7 @@ confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2251-txt]]"
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
+  - "[[collection/sources/2026-05-02-rfc2891-txt]]"
 ---
 
 LDAP controls are an extensibility mechanism first introduced in [[collection/sources/2026-05-02-rfc2251-txt|RFC 2251]] (December 1997) and carried forward in [[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] §4.1.11. They allow additional semantics and arguments to be attached to any [[collection/concepts/ldap|LDAP]] operation. Controls travel in the `controls` field of the `LDAPMessage` envelope and affect only the message they are attached to.
@@ -79,6 +80,7 @@ Servers advertise the `controlType` OIDs of recognized request controls in the `
 The controls mechanism is used by several extensions:
 
 - **[[collection/concepts/ldap-paged-results|Paged Results]]** ([[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]]): A `SimplePagedResultsControl` (OID `1.2.840.113556.1.4.319`) on Search requests, carrying a page size and server-issued continuation cookie
+- **[[collection/concepts/ldap-server-side-sorting|Server-Side Sorting]]** ([[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]]): A `SortKeyList` request control (OID `1.2.840.113556.1.4.473`) specifying attribute types and matching rules by which the server should order results, paired with a `SortResult` response control (OID `1.2.840.113556.1.4.474`) reporting sort success or failure
 - **Read Entry Controls** (RFC 4527): Return the entry's state before/after a Modify, enabling compare-and-swap semantics on directory entries
 
 RFC 4511 itself does not define any specific controls — it only specifies the controls mechanism. Controls are defined in separate documents.

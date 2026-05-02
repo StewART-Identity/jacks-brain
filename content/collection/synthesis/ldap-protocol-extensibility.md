@@ -14,6 +14,7 @@ tags:
   - rfc
   - ietf
   - paged-results
+  - server-side-sorting
   - microsoft
   - netscape
   - openldap
@@ -26,6 +27,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
+  - "[[collection/sources/2026-05-02-rfc2891-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
@@ -55,12 +57,13 @@ The LDAP companion RFCs in this wiki address different layers of the protocol st
 | [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (1997, obsoleted) | Query syntax | ABNF extension | Original string representation of [[collection/concepts/ldap-search-filters|search filters]]; superseded by RFC 4515 |
 | [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] (2006) | Query syntax | ABNF extension | Revised string representation — explicit UTF-8, formal `valueencoding` rule |
 | [[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]] (1999) | Operation control | `controls` field | Paginated retrieval via an opaque server-issued cookie |
+| [[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]] (2000) | Operation control | `controls` field | [[collection/concepts/ldap-server-side-sorting|Server-side sorting]] of search results by a prioritized list of attribute types and matching rules |
 | [[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]] (2001) | Password management | `ExtendedRequest` / `ExtendedResponse` | [[collection/concepts/ldap-password-modify|Password modify]] for users with non-DN identities or externally stored passwords |
 | [[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]] (2006) | Attribute selection | `supportedFeatures` OID | `@classname` shorthand returning all attributes of an [[collection/concepts/ldap-object-classes|object class]] |
 | [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] (2006) | Authentication | StartTLS + SASL Bind | Authentication methods, StartTLS procedure, [[collection/concepts/sasl|SASL]] integration, authorization state model |
 | [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] (2006) | Data types | Normative spec | 34 [[collection/concepts/ldap-syntaxes|syntaxes]] and 32 [[collection/concepts/ldap-matching-rules|matching rules]]; the type system underlying all attribute definitions |
 
-RFC 2254 and [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] occupy the same layer — both are purely developer-convenience documents: no new query semantics, only a string encoding of what ASN.1 BER already expresses. RFC 4515's main contribution was formalizing what RFC 2254 described informally: the `valueencoding` ABNF rule makes the UTF-8 encoding requirement derivable from the grammar rather than buried in prose. RFC 2696 genuinely extends protocol behavior, introducing a stateful server-side construct (the paged search session) with no equivalent in the core protocol. RFC 4529 falls between: it extends the `attributeSelector` ABNF production without adding a new operation or state — the expansion is computed at request time from the server's schema knowledge.
+RFC 2254 and [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] occupy the same layer — both are purely developer-convenience documents: no new query semantics, only a string encoding of what ASN.1 BER already expresses. RFC 4515's main contribution was formalizing what RFC 2254 described informally: the `valueencoding` ABNF rule makes the UTF-8 encoding requirement derivable from the grammar rather than buried in prose. RFC 2696 and [[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]] both genuinely extend protocol behavior using the controls mechanism, introducing stateful or ordering semantics with no equivalent in the core protocol. They arrived in close succession (September 1999 and August 2000) and share authorship in Anoop Anantha ([[collection/entities/microsoft|Microsoft]]) and [[collection/entities/tim-howes|Tim Howes]] — and their OIDs both fall in Microsoft's `1.2.840.113556` arc, reinforcing the pattern of proprietary-to-IETF standardization. RFC 4529 falls between: it extends the `attributeSelector` ABNF production without adding a new operation or state — the expansion is computed at request time from the server's schema knowledge.
 
 ## The supportedFeatures Mechanism (RFC 4529)
 
@@ -72,7 +75,7 @@ The OID `1.3.6.1.4.1.4203.1.5.2` sits in the [[collection/entities/openldap-foun
 
 ## Standardization Trajectory: Netscape → Microsoft → OpenLDAP
 
-The December 1997 core RFCs (2251–2256) were a largely [[collection/entities/netscape-communications|Netscape]]-driven effort, with [[collection/entities/tim-howes|Tim Howes]] and colleagues as primary authors. RFC 2696, published nearly two years later, shows [[collection/entities/microsoft|Microsoft]]'s entry into LDAP standardization — three of four authors are from Microsoft's Redmond campus.
+The December 1997 core RFCs (2251–2256) were a largely [[collection/entities/netscape-communications|Netscape]]-driven effort, with [[collection/entities/tim-howes|Tim Howes]] and colleagues as primary authors. RFC 2696 (September 1999) and [[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]] (August 2000) both show [[collection/entities/microsoft|Microsoft]]'s sustained entry into LDAP standardization — in RFC 2696, three of four authors are from Microsoft's Redmond campus; in RFC 2891, Anoop Anantha continues as the Microsoft representative alongside Howes (now at Loudcloud) and [[collection/entities/mark-wahl|Mark Wahl]] (now at Sun Microsystems). Both RFCs use OIDs in Microsoft's arc, and both address operational concerns — pagination and sorting — that Active Directory implementers would have needed ahead of the Windows 2000 release.
 
 This timing is consistent with Active Directory's development cycle: Microsoft shipped AD in Windows 2000 (released February 2000) and had strong incentives to standardize the extensions their implementation required. The paged results control OID (`1.2.840.113556.1.4.319`) sits in Microsoft's registered OID arc, suggesting the control existed as a proprietary AD extension before being submitted to the IETF.
 
@@ -89,7 +92,7 @@ RFC 4529 shows a complementary pattern: extend the grammar productions of an exi
 Four distinct extension patterns, all standardized through the OID registry:
 
 1. **ABNF-only extension** ([[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]], updating [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]]): no runtime state, no discovery, purely a grammar convenience
-2. **Controls mechanism** ([[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]]): per-operation augmentation with optional criticality enforcement
+2. **Controls mechanism** ([[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]], [[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]]): per-operation augmentation with optional criticality enforcement; RFC 2696 adds stateful pagination, RFC 2891 adds result ordering
 3. **Grammar + feature OID** ([[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]]): grammar extension with upfront capability negotiation via `supportedFeatures`
 4. **Extended operations** ([[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]]): new operations identified by OID, with no base-protocol analog — used when the required operation cannot be expressed through existing protocol primitives
 

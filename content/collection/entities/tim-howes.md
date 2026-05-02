@@ -11,14 +11,17 @@ tags:
   - ldapv2
   - ldapv3
   - netscape
+  - loudcloud
   - opsware
   - university-of-michigan
   - ietf
   - rfc
   - rfc1777
+  - rfc2891
   - rfc4510
   - search-filters
   - ldap-url
+  - server-side-sorting
   - directory-access
   - distinguished-name
   - rfc2253
@@ -31,6 +34,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc2253-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
+  - "[[collection/sources/2026-05-02-rfc2891-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4516-txt]]"
 ---
@@ -51,3 +55,7 @@ By June 2006 he had moved to Opsware, Inc. (Sunnyvale, CA, 599 N. Mathilda Ave.)
 - **[[collection/sources/2026-05-02-rfc4516-txt|RFC 4516]]** — LDAP: Uniform Resource Locator. The RFC 4510-series replacement for his original RFC 2255, defining the [[collection/concepts/ldap-url|`ldap://` URI scheme]] for encoding LDAP search operations and referral targets.
 
 His email on record for the 2006 publications was `howes@opsware.com`. The pairing of RFC 4515 and RFC 4516 authorship reflects the documents' close relationship: the filter string syntax RFC 4515 defines is embedded directly in the LDAP URL format RFC 4516 specifies.
+
+## Loudcloud Interlude (2000)
+
+Between Netscape and Opsware, Howes was affiliated with Loudcloud, Inc. (615 Tasman Dr., Sunnyvale, CA; `howes@loudcloud.com`). In August 2000 he co-authored **[[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]]** (LDAP Control Extension for Server Side Sorting of Search Results) alongside [[collection/entities/mark-wahl|Mark Wahl]] (now at Sun Microsystems) and Anoop Anantha ([[collection/entities/microsoft|Microsoft Corp.]]). RFC 2891 defines a paired [[collection/concepts/ldap-server-side-sorting|server-side sorting]] control — a `SortKeyList` request control (OID `1.2.840.113556.1.4.473`) and a `SortResult` response control (OID `1.2.840.113556.1.4.474`) — extending the same controls mechanism he had leveraged in RFC 2696. Anantha was also a co-author of RFC 2696, making RFC 2891 a continuation of that cross-company collaboration.
