@@ -52,8 +52,15 @@ jobs:
       # With many files in originals/, that scan can't finish within the
       # GitHub Actions job timeout and the workflow's terminal commit step
       # never runs — wiki pages written during the run are discarded with
-      # the runner. We now extract each added path from the push payload and
+      # the runner. We extract each added path from the push payload and
       # invoke catalog.mjs once per file.
+      #
+      # Implementation note: the previous version of this step inlined a
+      # python heredoc inside the run: block. YAML's indentation preservation
+      # broke the heredoc terminator (a heredoc without <<- requires the
+      # terminator at column zero), and the step failed before producing any
+      # output. Writing the python to a separate file makes the YAML
+      # indentation irrelevant.
       - name: Determine files to catalog
         id: files
         env:
@@ -74,36 +81,15 @@ jobs:
             else
               # Empty file_path on dispatch is the explicit scan-everything
               # path. Leave the file list empty; catalog.mjs run with no
-              # argument will do the scan.
+              # argument and CATALOG_ALLOW_BULK=1 will do the scan.
               echo "Manual dispatch with no file_path — will scan all uncataloged"
             fi
           else
             # Push event — extract files added or modified under static/originals/
-            # from the commits that triggered this run.
-            python3 - <<'PY' >> "$OUT"
-          import json, os
-          added = json.loads(os.environ.get("ADDED_FILES_JSON", "[]") or "[]")
-          modified = json.loads(os.environ.get("MODIFIED_FILES_JSON", "[]") or "[]")
-          # github.event.commits.*.added is a list-of-lists (one inner list
-          # per commit). Flatten and dedupe while preserving order.
-          seen = set()
-          out = []
-          for group in (added + modified):
-              if not group:
-                  continue
-              for path in group:
-                  if not path or not path.startswith("static/originals/"):
-                      continue
-                  # Skip the .gitkeep marker and any catalog trigger files
-                  base = path.rsplit("/", 1)[-1]
-                  if base in (".gitkeep", ".catalog-trigger"):
-                      continue
-                  if path not in seen:
-                      seen.add(path)
-                      out.append(path)
-          for p in out:
-              print(p)
-          PY
+            # from the commits that triggered this run. The discovery logic
+            # is in scripts/discover-changed-originals.mjs (small node script,
+            # no python dependency, no heredoc gymnastics).
+            node scripts/discover-changed-originals.mjs >> "$OUT"
             echo "Push event identified $(wc -l < "$OUT") file(s) to catalog"
           fi
 
@@ -123,9 +109,9 @@ jobs:
           if [ ! -s "$FILES_LIST" ]; then
             # No specific files identified — fall through to a scan-everything
             # call. This only happens for a manual dispatch with empty
-            # file_path. catalog.mjs's CI guard (next commit) will refuse the
-            # no-argument scan when CI=true unless explicitly opted in via
-            # CATALOG_ALLOW_BULK=1, so a bulk scan is a deliberate choice.
+            # file_path. catalog.mjs's CI guard refuses the no-argument scan
+            # unless CATALOG_ALLOW_BULK=1, which we set here to confirm the
+            # operator chose this path deliberately.
             echo "No specific files identified; running catalog.mjs in scan mode"
             CATALOG_ALLOW_BULK=1 node scripts/catalog.mjs
           else
