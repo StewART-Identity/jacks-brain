@@ -23,6 +23,7 @@ tags:
   - novell
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc4510-txt]]"
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
@@ -101,7 +102,7 @@ This framing matters because it clarifies several edge cases:
 
 ## What Changed in the 2006 Revision
 
-The RFC 4510 series involved four editors working on different documents. RFC 4513's security focus sat alongside [[collection/entities/jim-sermersheim|Jim Sermersheim]]'s work on the core protocol ([[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]]), [[collection/entities/kurt-zeilenga|Zeilenga]]'s work on directory information models (RFC 4512), and the IANA registry cleanup. The coordination is visible in cross-references: RFC 4511 §4.14 defines the StartTLS extended operation; RFC 4513 defines the procedures for using it safely. Neither document is independently complete on the topic. Both RFC 4511 and RFC 4513 were edited by [[collection/entities/novell|Novell]] engineers.
+The [[collection/sources/2026-05-02-rfc4510-txt|RFC 4510]] series involved four editors working on different documents. RFC 4513's security focus sat alongside [[collection/entities/jim-sermersheim|Jim Sermersheim]]'s work on the core protocol ([[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]]), [[collection/entities/kurt-zeilenga|Zeilenga]]'s work on directory information models (RFC 4512), and the IANA registry cleanup. The coordination is visible in cross-references: RFC 4511 §4.14 defines the StartTLS extended operation; RFC 4513 defines the procedures for using it safely. Neither document is independently complete on the topic. Both RFC 4511 and RFC 4513 were edited by [[collection/entities/novell|Novell]] engineers.
 
 [[collection/entities/roger-harrison|Harrison]]'s role as sole editor of RFC 4513 — rather than the [[collection/entities/openldap-foundation|OpenLDAP Foundation]]-led pattern that dominates the rest of the RFC 4510 series — reflects that authentication policy is inherently implementation- and deployment-specific. Novell's eDirectory and [[collection/entities/microsoft|Microsoft]]'s Active Directory had different authentication architectures; a Novell engineer was perhaps better positioned to write a flexible, implementation-neutral authentication framework than an OpenLDAP-focused one.
 

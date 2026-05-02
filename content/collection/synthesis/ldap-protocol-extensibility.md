@@ -22,6 +22,7 @@ tags:
   - attribute-selection
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc4510-txt]]"
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
@@ -75,7 +76,7 @@ The December 1997 core RFCs (2251–2256) were a largely [[collection/entities/n
 
 This timing is consistent with Active Directory's development cycle: Microsoft shipped AD in Windows 2000 (released February 2000) and had strong incentives to standardize the extensions their implementation required. The paged results control OID (`1.2.840.113556.1.4.319`) sits in Microsoft's registered OID arc, suggesting the control existed as a proprietary AD extension before being submitted to the IETF.
 
-By 2006, the center of gravity had shifted again: the RFC 4510 series that revised and replaced 2251–2256 is primarily a [[collection/entities/kurt-zeilenga|Kurt Zeilenga]] / [[collection/entities/openldap-foundation|OpenLDAP Foundation]] effort. RFC 4529 (also 2006) follows the same authorship pattern — Zeilenga sole author, OID in the OpenLDAP arc. Where Netscape drove the core and Microsoft drove the paged results extension, OpenLDAP drove the 2006 consolidation and the schema-aware attribute selection extension.
+By 2006, the center of gravity had shifted again: the [[collection/sources/2026-05-02-rfc4510-txt|RFC 4510]] series that revised and replaced 2251–2256 is primarily a [[collection/entities/kurt-zeilenga|Kurt Zeilenga]] / [[collection/entities/openldap-foundation|OpenLDAP Foundation]] effort. RFC 4529 (also 2006) follows the same authorship pattern — Zeilenga sole author, OID in the OpenLDAP arc. Where Netscape drove the core and Microsoft drove the paged results extension, OpenLDAP drove the 2006 consolidation and the schema-aware attribute selection extension.
 
 ## Design Philosophy: Defer and Extend
 

@@ -17,6 +17,7 @@ tags:
   - oid
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc4510-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
   - "[[collection/sources/2026-05-02-rfc3062-txt]]"
 ---
