@@ -3,10 +3,11 @@ title: "Jack Stewart"
 summary: "IAM Engineer with 29 years of higher education experience, specializing in identity provisioning, authentication, and directory services."
 type: entity
 created: 2026-05-01
-updated: 2026-05-01
+updated: 2026-05-02
 subjects:
   - identity-management
   - career
+  - web-development
 tags:
   - iam
   - higher-education
@@ -21,8 +22,13 @@ tags:
   - louisville
   - michigan
   - unt
+  - react
+  - typescript
+  - frontend
+  - internal-tooling
 sources:
   - "[[collection/sources/2026-05-01-manuel-jack-stewart-ii-resume]]"
+  - "[[collection/sources/2026-05-01-iam-team-knowledge-ui-vocabulary-and-conventions-for-web-interfaces]]"
 confidence: high
 ---
 
@@ -36,6 +42,10 @@ Manuel "Jack" Stewart II is an IAM Engineer based in Louisville, Kentucky. He ha
 - **Federated authentication**: Processed SSO requests using [[collection/concepts/saml]] via Shibboleth (Internet 2 implementation).
 - **Privileged access management**: Subject matter expertise in CyberArk PAM and Application Identity Manager.
 - **Infrastructure automation**: Ansible for provisioning BIG-IP, Linux, and Windows infrastructure.
+
+## Frontend and Internal Tooling
+
+At [[collection/entities/university-of-north-texas]], Jack leads or contributes to a portfolio of internal React/TypeScript web applications, including [[collection/entities/iam-toolbox]], the UNT Directory App, and the DSTools Azure replacement. The IAM team's [[collection/sources/2026-05-01-iam-team-knowledge-ui-vocabulary-and-conventions-for-web-interfaces|UI Vocabulary document]] — authored by Jack — establishes shared HTML/UX terminology for the team's web application work, reflecting an engineering maturity where style documentation is a standard deliverable. See [[collection/synthesis/iam-team-application-portfolio]] for analysis of the team's application portfolio.
 
 ## Education
 

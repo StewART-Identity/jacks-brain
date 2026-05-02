@@ -3,7 +3,7 @@ title: "IAM Career in Higher Education: Jack Stewart's Arc"
 summary: "Synthesis of Jack Stewart's 29-year IAM career — tracing the evolution from early directory services to cloud identity architecture across three universities."
 type: synthesis
 created: 2026-05-01
-updated: 2026-05-01
+updated: 2026-05-02
 subjects:
   - identity-management
   - career
@@ -21,6 +21,7 @@ tags:
   - platform-migration
 sources:
   - "[[collection/sources/2026-05-01-manuel-jack-stewart-ii-resume]]"
+  - "[[collection/sources/2026-05-01-iam-team-knowledge-ui-vocabulary-and-conventions-for-web-interfaces]]"
 confidence: high
 ---
 
@@ -42,9 +43,11 @@ At [[collection/entities/university-of-michigan]], Jack operated at significantl
 - **Azure AD implementations** (2017–2022): Two consecutive deployments, plus a complex tenant-to-tenant migration, demonstrate growing cloud identity depth.
 - **AD domain administration** (2022–2023): Elevation to lead AD domain administrator — atop an existing developer lead role — indicates both the breadth of Jack's scope and the institutional trust placed in him for the university's most critical directory infrastructure.
 
-## Phase 4: Cloud Architecture (2024–Present, UNT)
+## Phase 4: Cloud Architecture and Application Development (2024–Present, UNT)
 
 At [[collection/entities/university-of-north-texas]], Jack's external title shifts to include "Architect" — a signal that the role has an explicit architecture dimension that his Michigan developer-lead titles did not. This tracks the broader industry shift: as [[collection/concepts/entra-id]] absorbs more of what on-premise [[collection/concepts/active-directory]] and [[collection/entities/netiq-identity-manager]] once handled, the senior IAM practitioner role evolves from connector-writing and domain administration toward cloud platform design and governance.
+
+Simultaneously, the UNT phase reveals a team that has expanded into full web application development. The [[collection/entities/iam-toolbox]], the UNT Directory App, and the DSTools Azure replacement are React/TypeScript applications built and maintained by the IAM team. The [[collection/sources/2026-05-01-iam-team-knowledge-ui-vocabulary-and-conventions-for-web-interfaces|UI Vocabulary document]] — a shared HTML/UX terminology guide — is direct evidence of this expansion: teams write vocabulary guides when multiple engineers are building multiple UIs and vocabulary drift has become a real cost. See [[collection/synthesis/iam-team-application-portfolio]] for a focused synthesis of this dimension.
 
 ## Patterns Across the Arc
 
@@ -66,4 +69,4 @@ The Ansible automation work (BIG-IP, Linux, Windows provisioning) alongside appl
 
 **5. Documentation as a deliverable**
 
-The cross-team run-books for Michigan's tenant-to-tenant migration appear explicitly in the resume as a notable artifact. This frames coordination artifacts — not just the technical implementation — as first-class deliverables, consistent with operating at scale across distributed teams.
+The cross-team run-books for Michigan's tenant-to-tenant migration appear explicitly in the resume as a notable artifact. This frames coordination artifacts — not just the technical implementation — as first-class deliverables, consistent with operating at scale across distributed teams. The [[collection/sources/2026-05-01-iam-team-knowledge-ui-vocabulary-and-conventions-for-web-interfaces|UI Vocabulary document]] at UNT extends this pattern into frontend engineering: a shared vocabulary guide is itself a deliverable, not a byproduct of the work.
