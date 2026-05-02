@@ -58,7 +58,7 @@ const sidebarLeft = [
     ],
   }),
   Component.SidebarLink({
-    title: "Collection",
+    title: "Collect",
     slug: "collection",
     defaultState: "open",
     links: [
