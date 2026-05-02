@@ -41,6 +41,20 @@ name: Auto-catalog acquired documents
 #   "one running, one queued, rest cancelled" — which is fine because
 #   the in-flight directory and queue together carry the state across
 #   workflow runs.
+#
+# Planning: directory state, not push payload.
+#   The planning step decides what this run should do based on what's
+#   currently on disk in raw/queue/ and static/in-flight/, NOT based on
+#   github.event.commits.*.added/modified. Two reasons:
+#     1. The push event payload is unreliable for git mv — sometimes the
+#        rename pair shows up under added+removed, sometimes it's
+#        coalesced into a rename record and appears in neither.
+#     2. The directories ARE the state; the push event is just a trigger
+#        to wake us up. Looking at the directories directly is more
+#        robust than interpreting the payload.
+#   Concurrency-group serialization guarantees no other catalog run is
+#   executing while we plan, so we don't need a "is someone else running"
+#   check — if static/in-flight/ has a file, that file is OURS to catalog.
 
 on:
   workflow_dispatch:
@@ -88,16 +102,14 @@ jobs:
       - name: Install document converters
         run: sudo apt-get update && sudo apt-get install -y pandoc poppler-utils
 
-      # Decide what this run should do based on the trigger and current
-      # repo state. Sets two outputs:
-      #   action — "promote-only", "catalog", "dispatch", or "noop"
-      #   files_path — path to a newline-separated list of files to
-      #                catalog (used when action ∈ {catalog, dispatch})
+      # Decide what this run should do based on the CURRENT STATE of the
+      # repo directories (not the push event payload). Sets two outputs:
+      #   action — "catalog", "promote-only", "dispatch", or "noop"
+      #   files_path — newline-separated list of file paths to catalog
+      #                (only set when action ∈ {catalog, dispatch})
       - name: Plan this run
         id: plan
         env:
-          ADDED_FILES_JSON: ${{ toJson(github.event.commits.*.added) }}
-          MODIFIED_FILES_JSON: ${{ toJson(github.event.commits.*.modified) }}
           DISPATCH_PATH: ${{ inputs.file_path }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
@@ -106,17 +118,21 @@ jobs:
           FILES_OUT=/tmp/catalog/files.txt
           : > "$FILES_OUT"
 
-          # Count actionable files in each directory (excluding .gitkeep).
-          IN_FLIGHT_COUNT=0
+          # Inventory the directories.
+          IN_FLIGHT_FILES=()
           if [ -d static/in-flight ]; then
-            IN_FLIGHT_COUNT=$(find static/in-flight -maxdepth 1 -type f \
-              ! -name '.gitkeep' | wc -l | tr -d ' ')
+            while IFS= read -r f; do
+              [ -z "$f" ] && continue
+              IN_FLIGHT_FILES+=("$f")
+            done < <(find static/in-flight -maxdepth 1 -type f \
+              ! -name '.gitkeep' | sort)
           fi
           QUEUE_COUNT=0
           if [ -d raw/queue ]; then
             QUEUE_COUNT=$(find raw/queue -maxdepth 1 -type f \
               ! -name '.gitkeep' | wc -l | tr -d ' ')
           fi
+          IN_FLIGHT_COUNT=${#IN_FLIGHT_FILES[@]}
           echo "in-flight count: $IN_FLIGHT_COUNT"
           echo "queue count: $QUEUE_COUNT"
 
@@ -131,35 +147,27 @@ jobs:
               echo "Manual dispatch with no file_path — will scan all uncataloged"
             fi
           else
-            # Push event. Discovery script extracts paths under
-            # static/in-flight/ from the push event payload.
-            node scripts/discover-changed-originals.mjs >> "$FILES_OUT"
-            IN_FLIGHT_PUSHED=$(wc -l < "$FILES_OUT" | tr -d ' ')
-            echo "Push event added/modified $IN_FLIGHT_PUSHED file(s) under static/in-flight/"
-
-            if [ "$IN_FLIGHT_PUSHED" -gt 0 ]; then
-              # A file landed in static/in-flight/ — catalog it. The
-              # discovery script's output is already in $FILES_OUT.
+            # Push event. Look at directory state to decide.
+            #
+            # Decision order:
+            #   1. If anything is in static/in-flight/, catalog it. The
+            #      file is there because a previous workflow run promoted
+            #      it. Concurrency-group serialization guarantees no
+            #      other catalog run is currently processing it.
+            #   2. Else if anything is in raw/queue/, promote one.
+            #   3. Else nothing to do.
+            if [ "$IN_FLIGHT_COUNT" -gt 0 ]; then
               ACTION="catalog"
+              for f in "${IN_FLIGHT_FILES[@]}"; do
+                echo "$f" >> "$FILES_OUT"
+              done
+              echo "Found $IN_FLIGHT_COUNT file(s) in static/in-flight/ — cataloging"
+            elif [ "$QUEUE_COUNT" -gt 0 ]; then
+              ACTION="promote-only"
+              echo "Queue has $QUEUE_COUNT file(s) and in-flight is empty — promoting one"
             else
-              # No in-flight change — this push must have been to
-              # raw/queue/. Promote one file out of the queue, but only
-              # if static/in-flight/ is empty.
-              if [ "$IN_FLIGHT_COUNT" -gt 0 ]; then
-                # A catalog is currently running. The catalog's
-                # post-completion step will promote the next file from
-                # the queue when it finishes. Nothing for us to do.
-                echo "static/in-flight/ is non-empty (count=$IN_FLIGHT_COUNT) — catalog in flight, deferring promotion"
-                ACTION="noop"
-              elif [ "$QUEUE_COUNT" -eq 0 ]; then
-                # Queue push but the queue is empty — file may have been
-                # deleted between push and our checkout (queue-delete
-                # endpoint). Nothing to do.
-                echo "raw/queue/ is empty — nothing to promote (race with deletion?)"
-                ACTION="noop"
-              else
-                ACTION="promote-only"
-              fi
+              ACTION="noop"
+              echo "Nothing in queue or in-flight — nothing to do"
             fi
           fi
 
@@ -168,8 +176,8 @@ jobs:
           echo "files_path=$FILES_OUT" >> "$GITHUB_OUTPUT"
 
       # Promote one file from raw/queue/ to static/in-flight/.
-      # Triggered only when action=promote-only (a queue push arrived
-      # while no catalog was in flight).
+      # Triggered when action=promote-only (a queue push arrived while
+      # nothing was in-flight).
       - name: Promote one from queue (initial trigger)
         if: steps.plan.outputs.action == 'promote-only'
         run: |
