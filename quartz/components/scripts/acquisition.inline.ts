@@ -5,6 +5,15 @@
 // the queue via /api/queue/delete; a floating selection bar at the
 // bottom of the page surfaces the action.
 //
+// Each row's Acquired cell shows the date on the first line and a
+// state-appropriate relative-time string on the second line:
+//   PENDING     → "waiting Nm"    (queue wait time, growing)
+//   IN_PROGRESS → "processing Nm" (processing duration, growing)
+//   CATALOGED   → "Nm ago"        (completion age, frozen)
+//   FAILED      → "Nm ago"        (same as cataloged)
+// The relative time is computed from acquiredAt (ISO timestamp from the
+// most recent state-change commit) returned by /api/status.
+//
 // State:
 //   selectedFilenames — in-memory Set<string>, lives for the current
 //   navigation. Survives table re-renders by re-checking matching DOM
@@ -46,6 +55,46 @@ document.addEventListener("nav", () => {
   const selectionCountSpan = document.getElementById("queue-selection-count-num") as HTMLSpanElement | null
   const clearSelectionBtn = document.getElementById("queue-clear-selection-btn") as HTMLButtonElement | null
   const removeBtn = document.getElementById("queue-remove-btn") as HTMLButtonElement | null
+
+  // ------------------------------------------------------------------
+  // Relative-time formatting
+  // ------------------------------------------------------------------
+
+  // Format a duration in milliseconds as a short human-readable string.
+  // Granularity is matched to operational scale: seconds under a minute,
+  // minutes under an hour, hours under a day, days beyond. Always returns
+  // something readable; never throws or returns null.
+  function formatDuration(ms: number): string {
+    if (ms < 0) ms = 0
+    const sec = Math.floor(ms / 1000)
+    if (sec < 60) return `${sec}s`
+    const min = Math.floor(sec / 60)
+    if (min < 60) return `${min}m`
+    const hr = Math.floor(min / 60)
+    if (hr < 24) {
+      const remMin = min % 60
+      return remMin === 0 ? `${hr}h` : `${hr}h ${remMin}m`
+    }
+    const days = Math.floor(hr / 24)
+    return `${days}d`
+  }
+
+  // Build the second line of the Acquired cell — the state-appropriate
+  // phrasing of acquiredAt. Returns "" if no timestamp is available.
+  function relativeTimeLine(doc: DocumentRow): string {
+    if (!doc.acquiredAt) return ""
+    const ts = Date.parse(doc.acquiredAt)
+    if (Number.isNaN(ts)) return ""
+    const elapsed = Date.now() - ts
+    const dur = formatDuration(elapsed)
+    switch (doc.status) {
+      case "pending":     return `waiting ${dur}`
+      case "in_progress": return `processing ${dur}`
+      case "cataloged":
+      case "failed":      return `${dur} ago`
+      default:            return `${dur} ago`
+    }
+  }
 
   // ------------------------------------------------------------------
   // Selection state — UI helpers
@@ -98,10 +147,20 @@ document.addEventListener("nav", () => {
              aria-label="Select for removal" />
          </td>`
       : `<td class="queue-checkbox-cell"></td>`
+    const dateText = escapeText(doc.acquired || "Unknown")
+    const relText = escapeText(relativeTimeLine(doc))
+    const acquiredCell = relText
+      ? `<td class="queue-acquired-cell">
+           <div class="queue-acquired-date">${dateText}</div>
+           <div class="queue-acquired-relative">${relText}</div>
+         </td>`
+      : `<td class="queue-acquired-cell">
+           <div class="queue-acquired-date">${dateText}</div>
+         </td>`
     return `<tr>
       ${checkboxCell}
       <td>${escapeText(doc.document)}</td>
-      <td>${escapeText(doc.acquired || "Unknown")}</td>
+      ${acquiredCell}
       <td><span class="run-badge ${doc.status}">${doc.status}</span></td>
     </tr>`
   }
