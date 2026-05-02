@@ -19,6 +19,15 @@
  *
  * Binary files (.docx, .pdf) are converted to text first using pandoc/pdftotext.
  *
+ * Size guard: after conversion, the script checks the resulting text size
+ * and exits early (without invoking catalog Claude) if it exceeds
+ * MAX_CONVERTED_BYTES. The early exit is exit code 0 — the workflow's
+ * finalize step still runs and moves the file to static/originals/, which
+ * makes the file appear as FAILED on the Acquisition page (file in
+ * originals, no source page, no retention row). This is the right signal
+ * for "this file got past upload but the catalog declined it for a known
+ * reason." A red workflow run is reserved for genuine bugs.
+ *
  * MCP integration: when the catalog runs in an environment with .mcp.json
  * configured (e.g. the catalog GitHub Action), the catalog Claude has
  * access to the wiki's MCP server tools. The prompt below instructs it
@@ -38,7 +47,7 @@
  * CATALOG_ALLOW_BULK=1 is set. See main() for the rationale.
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs"
+import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from "node:fs"
 import { join, resolve, basename, relative, extname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { execFileSync, execSync } from "node:child_process"
@@ -53,9 +62,27 @@ const ALL_EXTENSIONS = new Set([
   ".gif", ".webp", ".doc", ".docx",
 ])
 
+// Maximum size of the converted text, in bytes. Documents larger than
+// this are rejected after conversion, before catalog Claude is invoked.
+// 500 KB ≈ 125K tokens, well-bounded relative to Claude's context window
+// while leaving room for the prompt boilerplate and per-page reasoning.
+// Above this size, source-page quality drops (Claude has trouble holding
+// the whole document in mind well enough to identify entities/concepts
+// consistently). The rejection appears on the Acquisition page as FAILED.
+const MAX_CONVERTED_BYTES = 500 * 1024
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Format a byte count as a human-readable string (KB or MB).
+ */
+function formatBytes(n) {
+  if (n < 1024) return `${n} bytes`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
+  return `${(n / 1024 / 1024).toFixed(1)} MB`
+}
 
 /**
  * Today's date in YYYY-MM-DD form, computed in the user's configured
@@ -215,6 +242,41 @@ function catalogWithClaude(sourcePath) {
   const readablePath = convertToText(sourcePath)
   const relReadable = relative(ROOT, readablePath)
   const isConverted = readablePath !== sourcePath
+
+  // Post-conversion size guard. We check ALL files (text or converted)
+  // because a giant input .txt or .md is just as expensive for catalog
+  // Claude as a giant converted .docx. Skip the check for image files
+  // (Claude Code views them directly, no text extraction).
+  const ext = extname(sourcePath).toLowerCase()
+  const isImage = [".png", ".jpg", ".jpeg", ".gif", ".webp"].includes(ext)
+  if (!isImage) {
+    let convertedBytes
+    try {
+      convertedBytes = statSync(readablePath).size
+    } catch (err) {
+      console.error(`  Could not stat ${readablePath}: ${err.message}`)
+      // Don't block on a stat failure — let catalog Claude proceed and
+      // surface any real problem there.
+      convertedBytes = 0
+    }
+    if (convertedBytes > MAX_CONVERTED_BYTES) {
+      console.log(
+        `  Post-conversion size ${formatBytes(convertedBytes)} exceeds ` +
+        `limit of ${formatBytes(MAX_CONVERTED_BYTES)}. Skipping catalog ` +
+        `for ${originalName} — file will appear as FAILED on the ` +
+        `Acquisition page.`,
+      )
+      console.log(
+        `  To catalog this document, split it into smaller pieces ` +
+        `(e.g. by chapter or section) and upload each separately.`,
+      )
+      // Exit 0 so the workflow's finalize step still moves the file
+      // from static/in-flight/ to static/originals/. The catalog
+      // declined this particular document for a known reason; the
+      // workflow itself succeeded.
+      process.exit(0)
+    }
+  }
 
   // Compute canonical slug and decide whether this is a re-view.
   // If an existing page matches this slug, we use ITS filename verbatim —
