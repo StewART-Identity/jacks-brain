@@ -23,6 +23,7 @@ tags:
   - isode-consortium
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc1487-txt]]"
   - "[[collection/sources/2026-05-02-rfc1777-txt]]"
   - "[[collection/sources/2026-05-02-rfc2251-txt]]"
   - "[[collection/sources/2026-05-02-rfc2252-txt]]"
@@ -33,7 +34,7 @@ Steve Kille is an IETF contributor and software engineer with a long career in d
 
 ## LDAPv2 (1995): ISODE Consortium
 
-In the LDAPv2 period, Kille is listed as representing the **ISODE Consortium** (PO Box 505, London SW11 1DX, UK; phone: +44-71-223-4062; email: `S.Kille@isode.com`). He co-authored [[collection/sources/2026-05-02-rfc1777-txt|RFC 1777]] (March 1995, LDAPv2) alongside [[collection/entities/wengyik-yeong|Wengyik Yeong]] (PSI Inc.) and [[collection/entities/tim-howes|Tim Howes]] (University of Michigan). The ISODE Consortium was the not-for-profit consortium that developed the ISODE software suite for OSI/X.500 interoperability; it subsequently reorganized into [[collection/entities/isode-ltd|Isode Ltd.]]
+In the LDAPv1/v2 period, Kille is listed as representing the **ISODE Consortium** (PO Box 505, London SW11 1DX, UK; phone: +44-71-223-4062; email: `S.Kille@isode.com`). He co-authored [[collection/sources/2026-05-02-rfc1487-txt|RFC 1487]] (July 1993, LDAPv1) — the inaugural LDAP specification — and its successor [[collection/sources/2026-05-02-rfc1777-txt|RFC 1777]] (March 1995, LDAPv2), alongside [[collection/entities/wengyik-yeong|Wengyik Yeong]] (PSI Inc.) and [[collection/entities/tim-howes|Tim Howes]] (University of Michigan). The ISODE Consortium was the not-for-profit consortium that developed the ISODE software suite for OSI/X.500 interoperability; it subsequently reorganized into [[collection/entities/isode-ltd|Isode Ltd.]]
 
 ## LDAPv3 (1997): Isode Limited
 

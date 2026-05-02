@@ -24,6 +24,7 @@ tags:
   - rfc2253
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc1487-txt]]"
   - "[[collection/sources/2026-05-02-rfc1777-txt]]"
   - "[[collection/sources/2026-05-02-rfc2251-txt]]"
   - "[[collection/sources/2026-05-02-rfc2252-txt]]"
@@ -38,7 +39,7 @@ Tim Howes was a software engineer and central contributor to the [[collection/co
 
 ## LDAPv2 (1993–1995): University of Michigan
 
-Howes's earliest LDAP work was conducted from the University of Michigan, where he was based at ITD Research Systems (535 W William St., Ann Arbor, MI 48103-4943; phone: +1 313 747-4454; email: `tim@umich.edu`). He co-authored RFC 1487 (December 1993, LDAPv1) and its successor **[[collection/sources/2026-05-02-rfc1777-txt|RFC 1777]]** (March 1995, LDAPv2) alongside [[collection/entities/wengyik-yeong|Wengyik Yeong]] (PSI Inc.) and [[collection/entities/steve-kille|Steve Kille]] (ISODE Consortium). The University of Michigan was an early center of LDAP development, where the reference implementation was also produced.
+Howes's earliest LDAP work was conducted from the University of Michigan, where he was based at ITD Research Systems (535 W William St., Ann Arbor, MI 48103-4943; phone: +1 313 747-4454; email: `tim@umich.edu`). He co-authored **[[collection/sources/2026-05-02-rfc1487-txt|RFC 1487]]** (July 1993, LDAPv1) and its successor **[[collection/sources/2026-05-02-rfc1777-txt|RFC 1777]]** (March 1995, LDAPv2) alongside [[collection/entities/wengyik-yeong|Wengyik Yeong]] (PSI Inc.) and [[collection/entities/steve-kille|Steve Kille]] (ISODE Consortium). The University of Michigan was an early center of LDAP development, where the reference implementation was also produced.
 
 ## LDAPv3 (1997): Netscape Communications
 

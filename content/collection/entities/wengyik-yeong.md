@@ -19,10 +19,11 @@ tags:
   - psi
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc1487-txt]]"
   - "[[collection/sources/2026-05-02-rfc1777-txt]]"
 ---
 
-Wengyik Yeong was a software engineer at PSI Inc. (Performance Systems International, 510 Huntmar Park Drive, Herndon, VA 22070; phone: +1 703-450-8001; email: `yeongw@psilink.com`) and co-author of the foundational [[collection/concepts/ldap|LDAP]] protocol specifications. He is listed on RFC 1487 (December 1993, LDAPv1) and its successor [[collection/sources/2026-05-02-rfc1777-txt|RFC 1777]] (March 1995, LDAPv2), alongside [[collection/entities/tim-howes|Tim Howes]] (University of Michigan) and [[collection/entities/steve-kille|Steve Kille]] (ISODE Consortium).
+Wengyik Yeong was a software engineer at PSI Inc. (Performance Systems International, 510 Huntmar Park Drive, Herndon, VA 22070; phone: +1 703-450-8001; email: `yeongw@psilink.com`) and co-author of the foundational [[collection/concepts/ldap|LDAP]] protocol specifications. He is listed on [[collection/sources/2026-05-02-rfc1487-txt|RFC 1487]] (July 1993, LDAPv1) and its successor [[collection/sources/2026-05-02-rfc1777-txt|RFC 1777]] (March 1995, LDAPv2), alongside [[collection/entities/tim-howes|Tim Howes]] (University of Michigan) and [[collection/entities/steve-kille|Steve Kille]] (ISODE Consortium).
 
 PSI Inc. had broader involvement in early X.500 and Internet directory infrastructure. M. Rose, also at Performance Systems International, authored RFC 1202 (Directory Assistance Service, February 1991) — one of the pre-LDAP X.500 access approaches that [[collection/sources/2026-05-02-rfc1777-txt|RFC 1777]] itself cites as prior work. The co-location of multiple X.500/directory contributors at PSI reflects the company's positioning as an early Internet infrastructure provider active in OSI/X.500 deployments.
 

@@ -31,6 +31,7 @@ tags:
   - result-codes
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc1487-txt]]"
   - "[[collection/sources/2026-05-02-rfc1777-txt]]"
   - "[[collection/sources/2026-05-02-rfc2251-txt]]"
   - "[[collection/sources/2026-05-02-rfc4510-txt]]"
@@ -66,7 +67,7 @@ LDAP is the protocol layer underneath much of enterprise identity infrastructure
 
 ## Version History
 
-- **LDAPv1** — RFC 1487 (1993), derived from the X.500 DAP; authored by [[collection/entities/wengyik-yeong|Yeong]], [[collection/entities/tim-howes|Howes]], and [[collection/entities/steve-kille|Kille]]
+- **LDAPv1** — [[collection/sources/2026-05-02-rfc1487-txt|RFC 1487]] (July 1993), the inaugural LDAP specification, derived from the X.500 DAP; authored by [[collection/entities/wengyik-yeong|Yeong]], [[collection/entities/tim-howes|Howes]], and [[collection/entities/steve-kille|Kille]]
 - **LDAPv2** — [[collection/sources/2026-05-02-rfc1777-txt|RFC 1777]] (March 1995); authentication limited to cleartext password or Kerberos v4; no Controls, no SASL, no Extended operations; string filter syntax in RFC 1960
 - **LDAPv3** — RFC 2251–2256 (December 1997), adding SASL authentication, referrals, controls, and extensible matching; authored largely by [[collection/entities/netscape-communications|Netscape Communications]] engineers including [[collection/entities/tim-howes|Tim Howes]]; replaced by the [[collection/sources/2026-05-02-rfc4510-txt|RFC 4510]] series (June 2006), where [[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] (edited by [[collection/entities/jim-sermersheim|Jim Sermersheim]] of [[collection/entities/novell|Novell]]) is the authoritative protocol specification
 
