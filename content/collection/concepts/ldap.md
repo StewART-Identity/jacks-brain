@@ -36,6 +36,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc2251-txt]]"
   - "[[collection/sources/2026-05-02-rfc4510-txt]]"
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4512-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"

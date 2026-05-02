@@ -22,6 +22,7 @@ tags:
   - oid
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc4512-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
 ---
@@ -34,7 +35,7 @@ sources:
 
 **Layer 2 — Matching Rules** define comparison semantics: how values of a given syntax are compared in Search filters, Compare operations, and Modify duplicate-detection. [[collection/concepts/ldap-matching-rules|Matching rules]] are also specified in RFC 4517, each with its own OID. A matching rule answers: "How do two values of this type compare — and by what criteria?" Equality, ordering, and substrings variants exist.
 
-**Layer 3 — Attribute Types** bind together a syntax and a set of matching rules, giving the combination a name and OID. An attribute type definition (RFC 4512) says: "Values of this attribute must conform to syntax X; they compare equal by rule Y; they order by rule Z; they match substrings by rule W." The `cn` (commonName) attribute, for example, uses Directory String syntax with `caseIgnoreMatch` as its equality rule.
+**Layer 3 — Attribute Types** bind together a syntax and a set of matching rules, giving the combination a name and OID. An attribute type definition ([[collection/sources/2026-05-02-rfc4512-txt|RFC 4512]]) says: "Values of this attribute must conform to syntax X; they compare equal by rule Y; they order by rule Z; they match substrings by rule W." The `cn` (commonName) attribute, for example, uses Directory String syntax with `caseIgnoreMatch` as its equality rule.
 
 **Layer 4 — Object Classes** group attribute types into mandatory (`MUST`) and optional (`MAY`) sets, defining the shape of a directory entry. [[collection/concepts/ldap-object-classes|Object classes]] inherit from each other via `SUP` chains. An entry's object classes determine which attributes it may or must carry.
 
@@ -63,7 +64,7 @@ The four-layer schema architecture is defined across multiple RFCs in the 2006 R
 | Layer | Defined by | Author |
 |-------|-----------|--------|
 | Syntaxes + Matching Rules | [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] | [[collection/entities/steven-legg|Steven Legg]] |
-| Attribute Types + Object Classes | RFC 4512 | [[collection/entities/kurt-zeilenga|Kurt Zeilenga]] |
+| Attribute Types + Object Classes | [[collection/sources/2026-05-02-rfc4512-txt\|RFC 4512]] | [[collection/entities/kurt-zeilenga|Kurt Zeilenga]] |
 | User-facing schema (cn, sn, dc, etc.) | RFC 4519 (2006); originally [[collection/sources/2026-05-02-rfc2256-txt|RFC 2256]] (1997) | A. Sciberras; originally [[collection/entities/mark-wahl|Mark Wahl]] |
 | DN string representation | RFC 4514 | Kurt Zeilenga |
 

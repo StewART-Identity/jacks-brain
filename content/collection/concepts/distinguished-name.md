@@ -24,6 +24,7 @@ tags:
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2253-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4512-txt]]"
 ---
 
 A Distinguished Name (DN) is the primary key to an entry in an X.500 or [[collection/concepts/ldap|LDAP]] directory. Every entry has exactly one DN, which encodes its full path through the Directory Information Tree (DIT) from the root to the entry itself. DNs are defined in X.501 and serve as the canonical way to identify and address directory entries across all LDAP operations — searches, binds, modifications, and attribute references.

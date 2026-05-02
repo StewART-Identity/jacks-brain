@@ -17,10 +17,11 @@ tags:
   - rfc4512
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc4512-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
 ---
 
-In [[collection/concepts/ldap|LDAP]], every directory entry belongs to one or more object classes. Object classes are schema constructs defined in RFC 4512 that govern what attributes an entry may carry. They are the fundamental unit of schema organization in the directory information model.
+In [[collection/concepts/ldap|LDAP]], every directory entry belongs to one or more object classes. Object classes are schema constructs defined in [[collection/sources/2026-05-02-rfc4512-txt|RFC 4512]] that govern what attributes an entry may carry. They are the fundamental unit of schema organization in the [[collection/concepts/directory-information-tree|directory information model]].
 
 ## Object Class Structure
 
