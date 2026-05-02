@@ -25,12 +25,22 @@ name: Auto-catalog acquired documents
 # Path C: workflow_dispatch — manual override for a specific file or
 #   the legacy bulk-scan path. Used for operational recovery.
 #
-# The concurrency: catalog-main group with cancel-in-progress: false
-# serializes everything. With "false" cancellation, GitHub Actions holds
-# at most one waiter behind a running job; a flood of pushes collapses
-# to "one running, one queued, rest cancelled" — which is fine because
-# the in-flight directory and queue together carry the state across
-# workflow runs.
+# Authentication:
+#   We authenticate checkout with WORKFLOW_GIT_TOKEN, a fine-grained PAT
+#   with Contents: read/write on this repo. The default GITHUB_TOKEN
+#   would work for git operations, BUT GitHub deliberately blocks
+#   workflow runs from being triggered by GITHUB_TOKEN-authored pushes
+#   (anti-loop guard). Path B above relies on Path A's push to
+#   static/in-flight/ triggering a new workflow run — that requires a
+#   PAT-authored push, which the GITHUB_TOKEN doesn't provide.
+#
+# Concurrency:
+#   The catalog-main group with cancel-in-progress: false serializes
+#   everything. With "false" cancellation, GitHub Actions holds at most
+#   one waiter behind a running job; a flood of pushes collapses to
+#   "one running, one queued, rest cancelled" — which is fine because
+#   the in-flight directory and queue together carry the state across
+#   workflow runs.
 
 on:
   workflow_dispatch:
@@ -59,7 +69,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # PAT, not the implicit GITHUB_TOKEN. See the auth note in the
+          # workflow header. Pushes authored via this token's auth WILL
+          # trigger downstream workflow runs; pushes via GITHUB_TOKEN will
+          # NOT, and we depend on the trigger to chain catalog runs.
+          token: ${{ secrets.WORKFLOW_GIT_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:
