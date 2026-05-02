@@ -3,13 +3,13 @@
  *
  * Returns the cataloging state of every acquired document by reading
  * three directories:
- *   - raw/queue/ — files staged but not yet promoted (PENDING)
+ *   - static/queue/ — files staged but not yet promoted (PENDING)
  *   - static/in-flight/ — file currently being cataloged (IN_PROGRESS)
  *   - static/originals/ — completed corpus
  *
  * States:
- *   PENDING      — file is in raw/queue/. Removable via the Acquisition
- *                  page checkboxes.
+ *   PENDING      — file is in static/queue/. Removable via the
+ *                  Acquisition page checkboxes.
  *   IN_PROGRESS  — file is in static/in-flight/. Catalog workflow is
  *                  actively executing on it. At most one at a time.
  *   CATALOGED    — file is in static/originals/ AND a matching wiki
@@ -129,11 +129,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   try {
     const [queueFiles, inFlightFiles, originalFiles, sources, queueTimes, inFlightTimes, originalsTimes] =
       await Promise.all([
-        listDir(GITHUB_TOKEN, GITHUB_REPO, "raw/queue"),
+        listDir(GITHUB_TOKEN, GITHUB_REPO, "static/queue"),
         listDir(GITHUB_TOKEN, GITHUB_REPO, "static/in-flight"),
         listDir(GITHUB_TOKEN, GITHUB_REPO, "static/originals"),
         listDir(GITHUB_TOKEN, GITHUB_REPO, "content/collection/sources"),
-        getDirTimestamps(GITHUB_TOKEN, GITHUB_REPO, "raw/queue"),
+        getDirTimestamps(GITHUB_TOKEN, GITHUB_REPO, "static/queue"),
         getDirTimestamps(GITHUB_TOKEN, GITHUB_REPO, "static/in-flight"),
         getDirTimestamps(GITHUB_TOKEN, GITHUB_REPO, "static/originals"),
       ])
@@ -186,7 +186,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     const documents: DocumentRow[] = []
 
-    // PENDING — files in raw/queue/.
+    // PENDING — files in static/queue/.
     for (const f of queueFiles) {
       if (f.type !== "file" || f.name === ".gitkeep") continue
       documents.push(rowFromFile(f, "queue", queueTimes, "pending"))
