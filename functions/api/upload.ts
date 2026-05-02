@@ -2,8 +2,19 @@
  * POST /api/upload
  *
  * Accepts a file via multipart form data, commits the original to
- * static/originals/ in the GitHub repo. The catalog workflow triggers
- * automatically on push.
+ * raw/queue/ in the GitHub repo. The catalog workflow's queue-trigger
+ * path will then promote the file to static/originals/ in FIFO order
+ * (immediately if no catalog is currently running, otherwise after the
+ * currently-running catalog completes).
+ *
+ * Why raw/queue/ instead of static/originals/:
+ * Every acquisition path (this endpoint, MCP acquire_for_catalog, and
+ * direct git push) now uses the queue as the universal entry point. The
+ * catalog workflow promotes one file at a time, which serializes all
+ * catalog work without needing a cron schedule and bounds the worst-case
+ * concurrent-catalog count to one regardless of how many files are
+ * uploaded simultaneously. See .github/workflows/catalog.yml for the
+ * orchestrating logic.
  *
  * Requires env vars (set in Cloudflare Pages dashboard):
  *   GITHUB_TOKEN   — fine-grained PAT with contents:write + actions:write
@@ -88,7 +99,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const today = todayInUserTimezone(context.env)
     const originalName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-")
     const filename = originalName.startsWith(today) ? originalName : `${today}-${originalName}`
-    const path = `static/originals/${filename}`
+    // Stage in raw/queue/ — the catalog workflow's queue-trigger path will
+    // promote it to static/originals/ when ready.
+    const path = `raw/queue/${filename}`
 
     // Commit the file to the repo via GitHub Contents API
     const commitResponse = await fetch(
@@ -114,12 +127,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return Response.json({ error: "GitHub commit failed", details: err }, { status: 502 })
     }
 
-    // The catalog workflow triggers automatically on push to static/originals/**
-
     return Response.json({
       success: true,
       filename,
-      message: `File committed to ${path}. Catalog workflow triggered.`,
+      message: `File queued at ${path}. Catalog workflow will pick it up in FIFO order.`,
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error"
