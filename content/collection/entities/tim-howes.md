@@ -17,15 +17,18 @@ tags:
   - search-filters
   - ldap-url
   - directory-access
+  - distinguished-name
+  - rfc2253
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc2253-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4516-txt]]"
 ---
 
-Tim Howes was a software engineer and central contributor to the [[collection/concepts/ldap|LDAP]] standards effort across nearly a decade of IETF work. He is listed as co-author on RFC 2251 (LDAPv3 core protocol) and RFC 2252 (attribute syntax definitions), sole author of [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (December 1997 — string representation of [[collection/concepts/ldap-search-filters|LDAP search filters]]) and its companion RFC 2255 (December 1997 — LDAP URL format), and co-author of RFC 2696 ([[collection/sources/2026-05-02-rfc2696-txt|LDAP Control Extension for Simple Paged Results]], September 1999) alongside [[collection/entities/microsoft|Microsoft Corp.]] engineers.
+Tim Howes was a software engineer and central contributor to the [[collection/concepts/ldap|LDAP]] standards effort across nearly a decade of IETF work. He is listed as co-author on RFC 2251 (LDAPv3 core protocol), RFC 2252 (attribute syntax definitions), and **[[collection/sources/2026-05-02-rfc2253-txt|RFC 2253]]** (December 1997 — UTF-8 string representation of [[collection/concepts/distinguished-name|Distinguished Names]], co-authored with [[collection/entities/mark-wahl|M. Wahl]] and [[collection/entities/steve-kille|S. Kille]]). He is sole author of [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (December 1997 — string representation of [[collection/concepts/ldap-search-filters|LDAP search filters]]) and its companion RFC 2255 (December 1997 — LDAP URL format), and co-author of RFC 2696 ([[collection/sources/2026-05-02-rfc2696-txt|LDAP Control Extension for Simple Paged Results]], September 1999) alongside [[collection/entities/microsoft|Microsoft Corp.]] engineers.
 
 At the time of the December 1997 RFC publications, Howes was based at [[collection/entities/netscape-communications|Netscape Communications Corp.]]'s Mountain View, CA office (501 E. Middlefield Road). His email address on record was `howes@netscape.com`.
 

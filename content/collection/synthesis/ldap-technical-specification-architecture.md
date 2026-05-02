@@ -29,7 +29,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
 ---
 
-The 1997 LDAPv3 specification — RFCs 2251 through 2256, plus 2829, 2830, and eventually 3377 and 3771 — was not designed as a modular suite. RFC 2251 alone covered the protocol wire encoding, the information model, the authentication framework, and the result codes. Syntaxes, matching rules, and schema were in RFC 2252; DN string representation in RFC 2253; filter string representation in RFC 2254; URL format in RFC 2255; X.500 user-application schema in RFC 2256. These documents overlapped, cross-referenced each other ambiguously, and each contained bits of normative material relevant to multiple concerns. The 2006 [[collection/sources/2026-05-02-rfc4510-txt|RFC 4510]] series replaced this tangled set with nine documents, each owning a single, clearly bounded concern.
+The 1997 LDAPv3 specification — RFCs 2251 through 2256, plus 2829, 2830, and eventually 3377 and 3771 — was not designed as a modular suite. RFC 2251 alone covered the protocol wire encoding, the information model, the authentication framework, and the result codes. Syntaxes, matching rules, and schema were in RFC 2252; [[collection/concepts/distinguished-name|DN]] string representation in [[collection/sources/2026-05-02-rfc2253-txt|RFC 2253]]; filter string representation in RFC 2254; URL format in RFC 2255; X.500 user-application schema in RFC 2256. These documents overlapped, cross-referenced each other ambiguously, and each contained bits of normative material relevant to multiple concerns. The 2006 [[collection/sources/2026-05-02-rfc4510-txt|RFC 4510]] series replaced this tangled set with nine documents, each owning a single, clearly bounded concern.
 
 ## The Decomposition
 
@@ -49,7 +49,7 @@ The result is a clean layering:
 | Wire protocol | [[collection/sources/2026-05-02-rfc4511-txt\|RFC 4511]] | ASN.1/BER encoding, all operations, controls mechanism, result codes |
 | Authentication | [[collection/sources/2026-05-02-rfc4513-txt\|RFC 4513]] | Bind semantics, StartTLS, SASL integration, authorization state |
 | Data types | [[collection/sources/2026-05-02-rfc4517-txt\|RFC 4517]] | Syntaxes and matching rules |
-| String encodings | RFC 4514, [[collection/sources/2026-05-02-rfc4515-txt\|RFC 4515]] | DN string form, filter string form |
+| String encodings | RFC 4514, [[collection/sources/2026-05-02-rfc4515-txt\|RFC 4515]] | DN string form, filter string form (1997 predecessors: [[collection/sources/2026-05-02-rfc2253-txt\|RFC 2253]], RFC 2254) |
 | URL syntax | [[collection/sources/2026-05-02-rfc4516-txt\|RFC 4516]] | LDAP URL format |
 | User schema | RFC 4519 | Standard attributes (cn, mail, uid, etc.) |
 | String preparation | RFC 4518 | Internationalized string comparison normalization |

@@ -85,9 +85,9 @@ Every LDAP attribute has a **syntax** — a data type constraining the structure
 
 The key architectural point: syntaxes and matching rules are **separately defined**. The Directory String syntax permits UTF-8 text; whether that text compares case-sensitively (`caseExactMatch`) or case-insensitively (`caseIgnoreMatch`) is a separately specified matching rule. This allows multiple matching rules to apply to the same syntax.
 
-Common syntaxes include [[collection/concepts/ldap-syntaxes|Directory String]], [[collection/concepts/ldap-syntaxes|DN]], [[collection/concepts/ldap-syntaxes|Generalized Time]], Integer, Boolean, and OID. Each syntax has a unique dotted-decimal OID and an LDAP-specific encoding (usually human-readable ABNF) that differs from the BER encoding used by X.500.
+Common syntaxes include [[collection/concepts/ldap-syntaxes|Directory String]], [[collection/concepts/distinguished-name|DN]], [[collection/concepts/ldap-syntaxes|Generalized Time]], Integer, Boolean, and OID. Each syntax has a unique dotted-decimal OID and an LDAP-specific encoding (usually human-readable ABNF) that differs from the BER encoding used by X.500.
 
-[[collection/concepts/ldap-matching-rules|Matching rules]] operate in three modes — equality, ordering, and substrings — and string rules apply Unicode string preparation algorithms (RFC 4518) before comparison. The `distinguishedNameMatch` rule is particularly complex: it compares DNs structurally by RDN and AVA, recursively invoking each AVA attribute type's own equality rule.
+[[collection/concepts/ldap-matching-rules|Matching rules]] operate in three modes — equality, ordering, and substrings — and string rules apply Unicode string preparation algorithms (RFC 4518) before comparison. The `distinguishedNameMatch` rule is particularly complex: it compares [[collection/concepts/distinguished-name|DNs]] structurally by RDN and AVA, recursively invoking each AVA attribute type's own equality rule.
 
 ## Authentication Caveat (Historical)
 
