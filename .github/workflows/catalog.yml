@@ -39,17 +39,105 @@ jobs:
       - name: Install document converters
         run: sudo apt-get update && sudo apt-get install -y pandoc poppler-utils
 
+      # Decide which file(s) this run should catalog.
+      #
+      # Three paths:
+      #   1. workflow_dispatch with file_path set -> catalog that file
+      #   2. workflow_dispatch with file_path empty -> scan all uncataloged
+      #   3. push event -> catalog only the file(s) added under static/originals/
+      #      in the triggering commits, NOT the whole directory
+      #
+      # Path 3 is the important fix. Previously a push event ran the script
+      # with no argument, which made every push trigger a full backlog scan.
+      # With many files in originals/, that scan can't finish within the
+      # GitHub Actions job timeout and the workflow's terminal commit step
+      # never runs — wiki pages written during the run are discarded with
+      # the runner. We now extract each added path from the push payload and
+      # invoke catalog.mjs once per file.
+      - name: Determine files to catalog
+        id: files
+        env:
+          ADDED_FILES_JSON: ${{ toJson(github.event.commits.*.added) }}
+          MODIFIED_FILES_JSON: ${{ toJson(github.event.commits.*.modified) }}
+          DISPATCH_PATH: ${{ inputs.file_path }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/catalog
+          OUT=/tmp/catalog/files.txt
+          : > "$OUT"
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ -n "${DISPATCH_PATH:-}" ]; then
+              echo "Manual dispatch with file_path=$DISPATCH_PATH"
+              echo "$DISPATCH_PATH" >> "$OUT"
+            else
+              # Empty file_path on dispatch is the explicit scan-everything
+              # path. Leave the file list empty; catalog.mjs run with no
+              # argument will do the scan.
+              echo "Manual dispatch with no file_path — will scan all uncataloged"
+            fi
+          else
+            # Push event — extract files added or modified under static/originals/
+            # from the commits that triggered this run.
+            python3 - <<'PY' >> "$OUT"
+          import json, os
+          added = json.loads(os.environ.get("ADDED_FILES_JSON", "[]") or "[]")
+          modified = json.loads(os.environ.get("MODIFIED_FILES_JSON", "[]") or "[]")
+          # github.event.commits.*.added is a list-of-lists (one inner list
+          # per commit). Flatten and dedupe while preserving order.
+          seen = set()
+          out = []
+          for group in (added + modified):
+              if not group:
+                  continue
+              for path in group:
+                  if not path or not path.startswith("static/originals/"):
+                      continue
+                  # Skip the .gitkeep marker and any catalog trigger files
+                  base = path.rsplit("/", 1)[-1]
+                  if base in (".gitkeep", ".catalog-trigger"):
+                      continue
+                  if path not in seen:
+                      seen.add(path)
+                      out.append(path)
+          for p in out:
+              print(p)
+          PY
+            echo "Push event identified $(wc -l < "$OUT") file(s) to catalog"
+          fi
+
+          echo "Files queued for cataloging:"
+          cat "$OUT" || true
+          echo "files_path=$OUT" >> "$GITHUB_OUTPUT"
+
       - name: Run catalog
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           USER_TIMEZONE: ${{ vars.USER_TIMEZONE }}
           MCP_SERVICE_TOKEN: ${{ secrets.MCP_SERVICE_TOKEN }}
           MCP_SERVER_URL: https://jacks-brain-mcp.stewart-identity.workers.dev/
+          FILES_LIST: ${{ steps.files.outputs.files_path }}
         run: |
-          if [ -n "${{ inputs.file_path }}" ]; then
-            node scripts/catalog.mjs "${{ inputs.file_path }}"
+          set -euo pipefail
+          if [ ! -s "$FILES_LIST" ]; then
+            # No specific files identified — fall through to a scan-everything
+            # call. This only happens for a manual dispatch with empty
+            # file_path. catalog.mjs's CI guard (next commit) will refuse the
+            # no-argument scan when CI=true unless explicitly opted in via
+            # CATALOG_ALLOW_BULK=1, so a bulk scan is a deliberate choice.
+            echo "No specific files identified; running catalog.mjs in scan mode"
+            CATALOG_ALLOW_BULK=1 node scripts/catalog.mjs
           else
-            node scripts/catalog.mjs
+            # One invocation per file, in order. Each call has its own
+            # ~10-minute Claude Code budget and produces its own writes,
+            # which the terminal commit step picks up at the end.
+            while IFS= read -r FILE; do
+              [ -z "$FILE" ] && continue
+              echo "::group::Cataloging $FILE"
+              node scripts/catalog.mjs "$FILE"
+              echo "::endgroup::"
+            done < "$FILES_LIST"
           fi
 
       - name: Commit and push to main
