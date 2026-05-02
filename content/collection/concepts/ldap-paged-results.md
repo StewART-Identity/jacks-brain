@@ -16,6 +16,8 @@ tags:
   - cookie
   - resource-management
   - directory-access
+  - x500
+  - security
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
@@ -50,6 +52,14 @@ In identity management contexts, LDAP paged results is the standard mechanism fo
 - Enumerating accounts during access reviews or reporting
 
 Without paging, a single `SearchRequest` against a large directory may be rejected if the server enforces a `sizeLimit`. Most LDAP client libraries expose paged results as a first-class API, and Active Directory effectively requires it for queries returning more than 1,000 entries.
+
+## X.500 Mapping
+
+For LDAPv3 servers fronting X.500 (93) directories, the control maps directly onto the `PagedResultsRequest` defined in X.511: `size` → `pageSize`, `cookie` → `queryReference`. X.500's `PagedResultsRequest` also defines `sortKeys` and `reverse` fields — both are excluded from the RFC 2696 mapping. RFC 2696 intentionally covers only the simple (non-sort-aware) case; [[collection/concepts/ldap-server-side-sorting|server-side sorting]] handles ordered paging.
+
+## Security Consideration: Result Count Disclosure
+
+Because the server's `size` estimate reveals the total match count *before* any entries are returned, a client can determine how many entries satisfy a given filter without ever receiving the entries themselves. Servers implementing per-entry access control must decide whether the aggregate count may be disclosed even when individual entries are withheld — RFC 2696 flags this as requiring special server-side handling.
 
 ## See Also
 
