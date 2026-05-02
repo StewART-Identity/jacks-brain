@@ -14,11 +14,24 @@
 // The relative time is computed from acquiredAt (ISO timestamp from the
 // most recent state-change commit) returned by /api/status.
 //
+// Column sorting:
+//   Document, Acquired, and Status columns are clickable headers that
+//   cycle through ascending → descending → default sort. Default is
+//   status-grouped, newest first within group (matches the order the
+//   /api/status endpoint returns). Sort state lives in module scope
+//   and survives polling re-renders; resets to default on SPA nav away.
+//
 // State:
 //   selectedFilenames — in-memory Set<string>, lives for the current
 //   navigation. Survives table re-renders by re-checking matching DOM
 //   nodes after each rebuild, but resets to empty whenever the user
 //   navigates away (Quartz SPA destroys the script frame).
+//
+//   sortColumn / sortDirection — current sort settings, applied during
+//   render. null/null means "default order" (use /api/status order).
+//
+//   lastDocuments — most recent documents from /api/status. Cached so
+//   header-click re-sorts don't require a network round-trip.
 //
 // Cleanup contract:
 //   Every addEventListener registered here has a matching removal in a
@@ -43,12 +56,24 @@ interface DeleteResult {
   detail?: string
 }
 
+type SortColumn = "document" | "acquired" | "status" | null
+type SortDirection = "asc" | "desc" | null
+
 document.addEventListener("nav", () => {
   const runsList = document.getElementById("runs-list")
   if (!runsList) return
 
   let pollTimer: ReturnType<typeof setInterval> | null = null
   const selectedFilenames = new Set<string>()
+
+  // Sort state. Lives across renders; resets on SPA nav (the cleanup
+  // callback resets it explicitly so a re-mount starts fresh).
+  let sortColumn: SortColumn = null
+  let sortDirection: SortDirection = null
+
+  // Cache of the most recent documents array, so column header clicks
+  // can re-sort without a network round-trip.
+  let lastDocuments: DocumentRow[] = []
 
   const refreshRunsBtn = document.getElementById("refresh-runs-btn") as HTMLButtonElement | null
   const selectionBar = document.getElementById("queue-selection-bar") as HTMLDivElement | null
@@ -94,6 +119,91 @@ document.addEventListener("nav", () => {
       case "failed":      return `${dur} ago`
       default:            return `${dur} ago`
     }
+  }
+
+  // ------------------------------------------------------------------
+  // Sorting
+  // ------------------------------------------------------------------
+
+  // Lifecycle order for status sort. Lower value = earlier in lifecycle.
+  // Cataloged and failed share an order rank because they're both
+  // terminal states; tiebreak below falls to acquired-time desc.
+  const STATUS_RANK: Record<DocumentRow["status"], number> = {
+    pending: 0,
+    in_progress: 1,
+    cataloged: 2,
+    failed: 2,
+  }
+
+  // Apply the current sort settings to a documents array. Returns a new
+  // array; doesn't mutate. When sortColumn/sortDirection are null, the
+  // input order is preserved (which is the /api/status default order).
+  function applySort(docs: DocumentRow[]): DocumentRow[] {
+    if (sortColumn === null || sortDirection === null) {
+      return docs.slice()
+    }
+    const sign = sortDirection === "asc" ? 1 : -1
+    const sorted = docs.slice()
+    sorted.sort((a, b) => {
+      let cmp = 0
+      switch (sortColumn) {
+        case "document":
+          cmp = a.document.localeCompare(b.document, undefined, { sensitivity: "base" })
+          break
+        case "acquired":
+          // Prefer acquiredAt (ISO timestamp) when available, fall back
+          // to acquired (date string). Empty/missing values sort last
+          // regardless of direction so they don't drift to the top in
+          // descending sort.
+          const aKey = a.acquiredAt || a.acquired || ""
+          const bKey = b.acquiredAt || b.acquired || ""
+          if (!aKey && !bKey) cmp = 0
+          else if (!aKey) return 1
+          else if (!bKey) return -1
+          else cmp = aKey.localeCompare(bKey)
+          break
+        case "status":
+          cmp = STATUS_RANK[a.status] - STATUS_RANK[b.status]
+          // Tiebreak by document name so siblings within a status group
+          // appear in a stable, useful order rather than whatever the
+          // input array gave us.
+          if (cmp === 0) {
+            cmp = a.document.localeCompare(b.document, undefined, { sensitivity: "base" })
+          }
+          break
+      }
+      return cmp * sign
+    })
+    return sorted
+  }
+
+  // Cycle the sort state when a column header is clicked.
+  // Same column: asc → desc → default (null/null) → asc → ...
+  // Different column: → asc on the new column.
+  function cycleSort(col: SortColumn) {
+    if (col === null) return
+    if (sortColumn !== col) {
+      sortColumn = col
+      sortDirection = "asc"
+    } else if (sortDirection === "asc") {
+      sortDirection = "desc"
+    } else if (sortDirection === "desc") {
+      sortColumn = null
+      sortDirection = null
+    } else {
+      sortDirection = "asc"
+    }
+    // Re-render the table from cached docs without re-fetching.
+    renderTable(lastDocuments)
+  }
+
+  // Build the arrow indicator for a column header.
+  function sortIndicator(col: SortColumn): string {
+    if (sortColumn !== col || sortDirection === null) {
+      return `<span class="queue-sort-arrow queue-sort-arrow-inactive" aria-hidden="true">↕</span>`
+    }
+    const arrow = sortDirection === "asc" ? "↑" : "↓"
+    return `<span class="queue-sort-arrow queue-sort-arrow-active" aria-hidden="true">${arrow}</span>`
   }
 
   // ------------------------------------------------------------------
@@ -181,16 +291,19 @@ document.addEventListener("nav", () => {
       runsList.innerHTML = '<p class="muted">No acquisitions yet.</p>'
       return
     }
+
+    const sortedDocs = applySort(documents)
+
     runsList.innerHTML =
       `<div class="table-container jb-table"><table>
         <thead><tr>
           <th class="queue-checkbox-cell" aria-label="Select"></th>
-          <th>Document</th>
-          <th>Acquired</th>
-          <th>Status</th>
+          <th class="queue-sortable" data-sort-col="document" tabindex="0" role="button" aria-label="Sort by document">Document ${sortIndicator("document")}</th>
+          <th class="queue-sortable" data-sort-col="acquired" tabindex="0" role="button" aria-label="Sort by acquired date">Acquired ${sortIndicator("acquired")}</th>
+          <th class="queue-sortable" data-sort-col="status" tabindex="0" role="button" aria-label="Sort by status">Status ${sortIndicator("status")}</th>
         </tr></thead>
         <tbody>` +
-      documents.map(rowHTML).join("") +
+      sortedDocs.map(rowHTML).join("") +
       `</tbody></table></div>`
 
     // After the rebuild, re-check any boxes whose filenames are still
@@ -205,6 +318,16 @@ document.addEventListener("nav", () => {
         box.checked = true
       }
       box.addEventListener("change", onCheckboxChange)
+    })
+
+    // Wire up sort handlers on the column headers. Same as the row
+    // checkboxes — these get GC'd when innerHTML is next replaced.
+    const sortableHeaders = runsList.querySelectorAll(
+      "th.queue-sortable",
+    ) as NodeListOf<HTMLTableCellElement>
+    sortableHeaders.forEach(th => {
+      th.addEventListener("click", onSortHeaderClick)
+      th.addEventListener("keydown", onSortHeaderKeydown)
     })
 
     // Drop any selections whose filenames are no longer pending. (E.g.
@@ -231,6 +354,24 @@ document.addEventListener("nav", () => {
       selectedFilenames.delete(fn)
     }
     updateSelectionBar()
+  }
+
+  function onSortHeaderClick(e: Event) {
+    const th = e.currentTarget as HTMLTableCellElement
+    const col = th.dataset.sortCol as SortColumn
+    cycleSort(col)
+  }
+
+  // Keyboard support: Enter and Space activate the sort header. The
+  // tabindex="0" + role="button" attributes make the headers focusable
+  // and announce them to screen readers as buttons.
+  function onSortHeaderKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault()
+      const th = e.currentTarget as HTMLTableCellElement
+      const col = th.dataset.sortCol as SortColumn
+      cycleSort(col)
+    }
   }
 
   // ------------------------------------------------------------------
@@ -322,6 +463,7 @@ document.addEventListener("nav", () => {
       const response = await fetch("/api/status")
       const data = await response.json() as { documents?: DocumentRow[]; hasActive?: boolean }
       const documents = data.documents || []
+      lastDocuments = documents
       renderTable(documents)
 
       if (data.hasActive && !pollTimer) {
@@ -359,14 +501,12 @@ document.addEventListener("nav", () => {
   //   2. The button click handlers must be removed before the next SPA
   //      navigation, otherwise every visit to /learn/acquisition stacks
   //      another listener on the same button.
-  //   3. The per-row checkbox change handlers are attached during
-  //      renderTable; since renderTable replaces innerHTML, those nodes
-  //      are GC'd along with their listeners on every rebuild — but on
-  //      SPA navigation the LATEST set of checkboxes is still in the DOM
-  //      and would leak if not for the SPA's whole-frame teardown. The
-  //      change-listener cleanup happens implicitly via the innerHTML
-  //      replacement and the SPA frame teardown; we don't need to track
-  //      those individually.
+  //   3. The per-row checkbox change handlers and per-render header
+  //      click handlers are attached during renderTable; since
+  //      renderTable replaces innerHTML, those nodes are GC'd along
+  //      with their listeners on every rebuild — but on SPA navigation
+  //      the LATEST set is still in the DOM and would leak if not for
+  //      the SPA's whole-frame teardown.
   if (typeof window !== "undefined" && (window as any).addCleanup) {
     ;(window as any).addCleanup(() => {
       if (pollTimer) {
@@ -381,6 +521,10 @@ document.addEventListener("nav", () => {
       // SPA frame teardown anyway, but explicit is better.
       selectedFilenames.clear()
       updateSelectionBar()
+      // Reset sort state so a re-mount starts fresh.
+      sortColumn = null
+      sortDirection = null
+      lastDocuments = []
     })
   }
 
