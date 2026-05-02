@@ -24,6 +24,7 @@ confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc4512-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4519-txt]]"
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
 ---
 
@@ -65,7 +66,7 @@ The four-layer schema architecture is defined across multiple RFCs in the 2006 R
 |-------|-----------|--------|
 | Syntaxes + Matching Rules | [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] | [[collection/entities/steven-legg|Steven Legg]] |
 | Attribute Types + Object Classes | [[collection/sources/2026-05-02-rfc4512-txt\|RFC 4512]] | [[collection/entities/kurt-zeilenga|Kurt Zeilenga]] |
-| User-facing schema (cn, sn, dc, etc.) | RFC 4519 (2006); originally [[collection/sources/2026-05-02-rfc2256-txt|RFC 2256]] (1997) | A. Sciberras; originally [[collection/entities/mark-wahl|Mark Wahl]] |
+| User-facing schema (cn, sn, dc, etc.) | [[collection/sources/2026-05-02-rfc4519-txt\|RFC 4519]] (2006); originally [[collection/sources/2026-05-02-rfc2256-txt|RFC 2256]] (1997) | [[collection/entities/andrew-sciberras\|A. Sciberras]]; originally [[collection/entities/mark-wahl|Mark Wahl]] |
 | DN string representation | RFC 4514 | Kurt Zeilenga |
 
 RFC 4517 and RFC 4512 are tightly coupled: an attribute type definition in RFC 4512's ABNF (`AttributeTypeDescription`) references syntax OIDs and matching rule names that are specified in RFC 4517. Neither document is self-contained without the other.

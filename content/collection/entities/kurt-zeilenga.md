@@ -20,6 +20,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4512-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4519-txt]]"
   - "[[collection/sources/2026-05-02-rfc3062-txt]]"
   - "[[collection/sources/2026-05-02-rfc4370-txt]]"
 ---
@@ -42,6 +43,7 @@ Zeilenga is sole or lead author on a substantial portion of the LDAPv3 specifica
 | RFC 4518 (2006) | LDAP: Internationalized String Preparation | Author |
 | RFC 4520 (2006) | IANA Considerations for LDAP | Author |
 | RFC 4527 (2006) | LDAP Read Entry Controls | Author |
+| RFC 4519 (2006) | LDAP: Schema for User Applications | Acknowledged contributor |
 | RFC 4529 (2006) | Requesting Attributes by Object Class in LDAP | Author |
 
 His email as listed in the RFCs: `Kurt@OpenLDAP.org`.
@@ -53,5 +55,7 @@ Where the original LDAPv3 RFCs (2251–2256) were a [[collection/entities/netsca
 Zeilenga's work concentrated on schema and protocol extensions: Directory Information Models (4512), IANA registration procedures (4520), and protocol feature extensions including the `+` operational attributes selector (3673), read entry controls (4527), and the [[collection/sources/2026-05-02-rfc4529-txt|`@classname` attribute selection shorthand]] (4529). An earlier contribution — [[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]] (2001) — defined the [[collection/concepts/ldap-password-modify|Password Modify Extended Operation]], addressing the password-change gap that SASL integration had created.
 
 Note: RFC 4516 ([[collection/concepts/ldap-url|LDAP URL format]]) is sometimes listed in attributions of Zeilenga's work, but the actual RFC was edited by [[collection/entities/mark-smith|Mark Smith]] and [[collection/entities/tim-howes|Tim Howes]]. Zeilenga is thanked in the acknowledgements for "valuable comments" alongside RL "Bob" Morgan, Mark Wahl, Jim Sermersheim, and Hallvard Furuseth.
+
+Zeilenga is acknowledged in [[collection/sources/2026-05-02-rfc4519-txt|RFC 4519]] (LDAP Schema for User Applications) alongside [[collection/entities/steven-legg|Steven Legg]] for "significant contribution" to the revision — the update of [[collection/sources/2026-05-02-rfc2256-txt|RFC 2256]] by [[collection/entities/mark-wahl|Mark Wahl]] that carries the standard [[collection/concepts/x500-user-schema|X.500 user schema]] forward into the 2006 series.
 
 Zeilenga is also credited in the acknowledgements of [[collection/sources/2026-05-02-rfc4370-txt|RFC 4370]] (LDAP Proxied Authorization Control) alongside [[collection/entities/mark-smith|Mark Smith]], [[collection/entities/mark-wahl|Mark Wahl]], [[collection/entities/jim-sermersheim|Jim Sermersheim]], and [[collection/entities/steven-legg|Steven Legg]] — reflecting his role as a reviewer across the broader LDAP standards community during the 2006 period.

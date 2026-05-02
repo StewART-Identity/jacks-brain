@@ -31,6 +31,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4516-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4519-txt]]"
 ---
 
 ## LDAPv2 Prehistory: RFC 1777
@@ -49,7 +50,7 @@ The concern mapping from 1997 to 2006 was not one-to-one. RFC 2251's content was
 - Directory Information Models (DIT structure, object classes, attribute types, schema) → RFC 4512
 - Authentication methods, StartTLS procedures, authorization state model → [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]]
 
-RFC 2252 (Attribute Syntaxes and Matching Rules) was similarly split: the information model portions went to RFC 4512; the 34 syntaxes and 32 matching rules themselves became [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]]. RFC 2256's user-application schema moved to RFC 4519, with residual model material absorbed by RFC 4512. The authentication RFCs (2829 and 2830) were consolidated into RFC 4513. The IntermediateResponse RFC (3771) was absorbed directly into RFC 4511.
+RFC 2252 (Attribute Syntaxes and Matching Rules) was similarly split: the information model portions went to RFC 4512; the 34 syntaxes and 32 matching rules themselves became [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]]. RFC 2256's user-application schema moved to [[collection/sources/2026-05-02-rfc4519-txt|RFC 4519]], with residual model material absorbed by RFC 4512. The authentication RFCs (2829 and 2830) were consolidated into RFC 4513. The IntermediateResponse RFC (3771) was absorbed directly into RFC 4511.
 
 The result is a clean layering:
 
@@ -61,7 +62,7 @@ The result is a clean layering:
 | Data types | [[collection/sources/2026-05-02-rfc4517-txt\|RFC 4517]] | Syntaxes and matching rules |
 | String encodings | RFC 4514, [[collection/sources/2026-05-02-rfc4515-txt\|RFC 4515]] | DN string form, filter string form (1997 predecessors: [[collection/sources/2026-05-02-rfc2253-txt\|RFC 2253]], RFC 2254) |
 | URL syntax | [[collection/sources/2026-05-02-rfc4516-txt\|RFC 4516]] | LDAP URL format |
-| User schema | RFC 4519 | Standard attributes (cn, mail, uid, etc.) |
+| User schema | [[collection/sources/2026-05-02-rfc4519-txt\|RFC 4519]] | Standard attributes (cn, mail, uid, etc.) |
 | String preparation | RFC 4518 | Internationalized string comparison normalization |
 
 ## RFC 4518: The New Addition
