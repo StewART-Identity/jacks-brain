@@ -29,10 +29,15 @@ sources:
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
+  - "[[collection/sources/2026-05-02-rfc1777-txt]]"
   - "[[collection/sources/2026-05-02-rfc3062-txt]]"
 ---
 
 The IETF approved [[collection/concepts/ldap|LDAPv3]] in December 1997 while knowing the authentication story was incomplete. The IESG note embedded in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] stated this explicitly — it approved read-only and interoperability testing deployments but discouraged production update-capable deployments until mandatory authentication mechanisms were standardized. Nine years later, [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] (June 2006) closed that gap. [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] removed the IESG note from the search filter spec, quietly acknowledging that the authentication problem had been solved.
+
+## LDAPv2 Baseline: Even More Limited
+
+Before the 1997 gap, [[collection/sources/2026-05-02-rfc1777-txt|RFC 1777]] (LDAPv2, March 1995) offered an even simpler authentication picture: cleartext password (`simple`) or Kerberos version 4 (`krbv42LDAP` / `krbv42DSA`). No SASL framework, no TLS, no StartTLS, no transport-level security of any kind. The RFC states plainly: "This version of the protocol provides facilities only for simple authentication using a cleartext password, and for kerberos version 4 authentication." LDAPv2 was a protocol designed for the trusted-network environment of early 1990s university and enterprise intranets — security in depth was not the design constraint.
 
 ## The 1997 Gap
 
