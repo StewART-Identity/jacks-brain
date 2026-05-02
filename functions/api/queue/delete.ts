@@ -1,15 +1,15 @@
 /**
  * POST /api/queue/delete
  *
- * Deletes one or more files from raw/queue/. Used by the Acquisition page
- * to cancel PENDING acquisitions before they're promoted to
- * static/originals/ for cataloging.
+ * Deletes one or more files from static/queue/. Used by the Acquisition
+ * page to cancel PENDING acquisitions before they're promoted to
+ * static/in-flight/ for cataloging.
  *
  * Request body (JSON):
  *   { "filenames": ["foo.docx", "2026-05-02-bar.pdf"] }
  *
- * The filenames are basenames within raw/queue/. Path separators and any
- * attempt to escape the directory are rejected.
+ * The filenames are basenames within static/queue/. Path separators and
+ * any attempt to escape the directory are rejected.
  *
  * Response:
  *   {
@@ -21,9 +21,9 @@
  *
  * Each filename gets an independent result. A 404 from the GitHub Contents
  * API (file not found) is treated as "already_promoted" because the
- * promotion step in catalog.yml moves files out of raw/queue/ as the queue
- * drains; the Acquisition page may show a row as PENDING that is in the
- * middle of being promoted by the time the deletion reaches GitHub.
+ * promotion step in catalog.yml moves files out of static/queue/ as the
+ * queue drains; the Acquisition page may show a row as PENDING that is
+ * in the middle of being promoted by the time the deletion reaches GitHub.
  *
  * Auth: requires Cloudflare Access (cf-access-authenticated-user-email
  * header), same as /api/upload and /api/nuke.
@@ -58,10 +58,11 @@ function ghHeaders(token: string) {
 }
 
 /**
- * Validate that a filename is a plain basename safe to use under raw/queue/.
- * Rejects: empty strings, anything with a path separator, anything that
- * starts with a dot (hidden files like .gitkeep we don't want to delete),
- * anything outside the allowed character set we use for acquisitions.
+ * Validate that a filename is a plain basename safe to use under
+ * static/queue/. Rejects: empty strings, anything with a path separator,
+ * anything that starts with a dot (hidden files like .gitkeep we don't
+ * want to delete), anything outside the allowed character set we use
+ * for acquisitions.
  */
 function isValidQueueFilename(name: string): boolean {
   if (typeof name !== "string" || name.length === 0) return false
@@ -76,7 +77,7 @@ function isValidQueueFilename(name: string): boolean {
 }
 
 /**
- * Delete a single file from raw/queue/ via the GitHub Contents API.
+ * Delete a single file from static/queue/ via the GitHub Contents API.
  * The API requires the current SHA, so we have to GET first then DELETE.
  */
 async function deleteOne(
@@ -84,7 +85,7 @@ async function deleteOne(
   token: string,
   repo: string,
 ): Promise<DeleteResult> {
-  const path = `raw/queue/${filename}`
+  const path = `static/queue/${filename}`
 
   // First fetch the file metadata to get its SHA.
   const getRes = await fetch(
