@@ -2,7 +2,7 @@ name: Auto-catalog acquired documents
 
 # Three-directory pipeline for cataloging acquisitions:
 #
-#   raw/queue/         — PENDING. Files awaiting their turn.
+#   static/queue/      — PENDING. Files awaiting their turn.
 #   static/in-flight/  — IN_PROGRESS. The file currently being cataloged.
 #                        At most one file here at a time.
 #   static/originals/  — CATALOGED corpus. Completed files stay here
@@ -10,9 +10,9 @@ name: Auto-catalog acquired documents
 #
 # The workflow has two trigger paths plus the manual override:
 #
-# Path A: push to raw/queue/** — a new acquisition landed in staging.
+# Path A: push to static/queue/** — a new acquisition landed in staging.
 #   If static/in-flight/ is currently empty (no catalog running),
-#   promote one file from raw/queue/ to static/in-flight/ and exit.
+#   promote one file from static/queue/ to static/in-flight/ and exit.
 #   The static/in-flight/ push triggers Path B in a new workflow run.
 #   If static/in-flight/ is non-empty, do nothing — the running
 #   catalog will promote the next file when it finishes.
@@ -20,7 +20,7 @@ name: Auto-catalog acquired documents
 # Path B: push to static/in-flight/** — a file just got promoted.
 #   Run the catalog on it. When complete (success or failure), move
 #   it from static/in-flight/ to static/originals/, commit any wiki
-#   output, then promote the next file from raw/queue/ if any.
+#   output, then promote the next file from static/queue/ if any.
 #
 # Path C: workflow_dispatch — manual override for a specific file or
 #   the legacy bulk-scan path. Used for operational recovery.
@@ -44,8 +44,8 @@ name: Auto-catalog acquired documents
 #
 # Planning: directory state, not push payload.
 #   The planning step decides what this run should do based on what's
-#   currently on disk in raw/queue/ and static/in-flight/, NOT based on
-#   github.event.commits.*.added/modified. Two reasons:
+#   currently on disk in static/queue/ and static/in-flight/, NOT based
+#   on github.event.commits.*.added/modified. Two reasons:
 #     1. The push event payload is unreliable for git mv — sometimes the
 #        rename pair shows up under added+removed, sometimes it's
 #        coalesced into a rename record and appears in neither.
@@ -66,7 +66,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "raw/queue/**"
+      - "static/queue/**"
       - "static/in-flight/**"
 
 permissions:
@@ -128,8 +128,8 @@ jobs:
               ! -name '.gitkeep' | sort)
           fi
           QUEUE_COUNT=0
-          if [ -d raw/queue ]; then
-            QUEUE_COUNT=$(find raw/queue -maxdepth 1 -type f \
+          if [ -d static/queue ]; then
+            QUEUE_COUNT=$(find static/queue -maxdepth 1 -type f \
               ! -name '.gitkeep' | wc -l | tr -d ' ')
           fi
           IN_FLIGHT_COUNT=${#IN_FLIGHT_FILES[@]}
@@ -154,7 +154,7 @@ jobs:
             #      file is there because a previous workflow run promoted
             #      it. Concurrency-group serialization guarantees no
             #      other catalog run is currently processing it.
-            #   2. Else if anything is in raw/queue/, promote one.
+            #   2. Else if anything is in static/queue/, promote one.
             #   3. Else nothing to do.
             if [ "$IN_FLIGHT_COUNT" -gt 0 ]; then
               ACTION="catalog"
@@ -175,17 +175,17 @@ jobs:
           echo "action=$ACTION" >> "$GITHUB_OUTPUT"
           echo "files_path=$FILES_OUT" >> "$GITHUB_OUTPUT"
 
-      # Promote one file from raw/queue/ to static/in-flight/.
+      # Promote one file from static/queue/ to static/in-flight/.
       # Triggered when action=promote-only (a queue push arrived while
       # nothing was in-flight).
       - name: Promote one from queue (initial trigger)
         if: steps.plan.outputs.action == 'promote-only'
         run: |
           set -euo pipefail
-          # Pick the oldest file in raw/queue/ — FIFO order. ls -tr is
+          # Pick the oldest file in static/queue/ — FIFO order. ls -tr is
           # mtime-ascending; for git checkouts mtimes are uniform so we
           # fall back to alphabetical, which is deterministic.
-          NEXT=$(ls -tr raw/queue/ 2>/dev/null | grep -v '^\.gitkeep$' | head -n 1 || true)
+          NEXT=$(ls -tr static/queue/ 2>/dev/null | grep -v '^\.gitkeep$' | head -n 1 || true)
           if [ -z "$NEXT" ]; then
             echo "Queue empty — nothing to promote (race with deletion?)"
             exit 0
@@ -194,7 +194,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           mkdir -p static/in-flight
-          git mv "raw/queue/$NEXT" "static/in-flight/$NEXT"
+          git mv "static/queue/$NEXT" "static/in-flight/$NEXT"
           git commit -m "promote from queue: $NEXT"
           for i in 1 2 3 4; do
             git pull --rebase origin main && git push origin main && exit 0
@@ -280,7 +280,7 @@ jobs:
             done
           fi
 
-      # Promote the next file from raw/queue/ to static/in-flight/, if any.
+      # Promote the next file from static/queue/ to static/in-flight/, if any.
       # Always runs after a catalog, regardless of success/failure. If
       # the queue is empty, this is a no-op and the cycle ends.
       - name: Promote next from queue (post-catalog)
@@ -291,12 +291,12 @@ jobs:
           set -euo pipefail
           # Re-pull to see commits that landed during the catalog
           # (MCP retention writes, the finalize commit we just pushed,
-          # potentially new uploads landing in raw/queue/ or deletions
-          # from raw/queue/).
+          # potentially new uploads landing in static/queue/ or deletions
+          # from static/queue/).
           git pull --rebase origin main || true
           NEXT=""
-          if [ -d raw/queue ]; then
-            NEXT=$(ls -tr raw/queue/ 2>/dev/null | grep -v '^\.gitkeep$' | head -n 1 || true)
+          if [ -d static/queue ]; then
+            NEXT=$(ls -tr static/queue/ 2>/dev/null | grep -v '^\.gitkeep$' | head -n 1 || true)
           fi
           if [ -z "$NEXT" ]; then
             echo "Queue is empty after catalog — cycle ends"
@@ -306,7 +306,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           mkdir -p static/in-flight
-          git mv "raw/queue/$NEXT" "static/in-flight/$NEXT"
+          git mv "static/queue/$NEXT" "static/in-flight/$NEXT"
           git commit -m "promote from queue: $NEXT"
           for i in 1 2 3 4; do
             git pull --rebase origin main && git push origin main && exit 0
