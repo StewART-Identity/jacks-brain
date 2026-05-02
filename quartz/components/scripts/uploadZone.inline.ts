@@ -72,7 +72,8 @@ document.addEventListener("nav", () => {
     })
   }
 
-  // Drag and drop
+  // Drag and drop. Multi-file drag is supported — pass the entire
+  // FileList through to uploadFiles which iterates internally.
   dropZone.addEventListener("dragover", (e) => {
     e.preventDefault()
     dropZone.classList.add("drag-over")
@@ -84,11 +85,13 @@ document.addEventListener("nav", () => {
     e.preventDefault()
     dropZone.classList.remove("drag-over")
     if (e.dataTransfer?.files.length) {
-      uploadFile(e.dataTransfer.files[0])
+      uploadFiles(e.dataTransfer.files)
     }
   })
 
-  // Click to browse
+  // Click to browse. Multi-select is supported (input has `multiple`
+  // attribute); the change handler hands the entire FileList to
+  // uploadFiles.
   dropZone.addEventListener("click", (e) => {
     if (e.target !== fileInput) {
       fileInput.click()
@@ -96,11 +99,12 @@ document.addEventListener("nav", () => {
   })
   fileInput.addEventListener("change", () => {
     if (fileInput.files?.length) {
-      uploadFile(fileInput.files[0])
+      uploadFiles(fileInput.files)
     }
   })
 
-  // Global paste handler for images
+  // Global paste handler for images. Clipboard items can contain at
+  // most one file in practice, so this stays single-file.
   document.addEventListener("paste", (e) => {
     // Only handle if we're on the upload page (drop zone exists)
     if (!dropZone) return
@@ -159,43 +163,127 @@ document.addEventListener("nav", () => {
     return `${today}-${slug}${ext}`
   }
 
+  // Single-file path. Used by the paste handler and as a thin wrapper
+  // around uploadFiles when there's exactly one file. The title field
+  // applies in this path.
   async function uploadFile(file: File) {
-    const busy = await checkActiveCatalog()
-    if (busy) {
+    return uploadFiles([file])
+  }
+
+  // Multi-file upload coordinator. Sequential — each file awaits the
+  // previous so progress messages land in order and we don't race the
+  // GitHub tree. Title field is honored only when there's exactly one
+  // file (a single title across N files would collide on filenames).
+  async function uploadFiles(files: FileList | File[]) {
+    const fileArray = Array.from(files as ArrayLike<File>)
+    if (fileArray.length === 0) return
+
+    const isMulti = fileArray.length > 1
+    const title = fileTitle?.value.trim() || ""
+
+    if (isMulti && title) {
       showCardStatus(
         fileStatus,
-        "Another document is currently being processed. Your upload will be queued.",
+        "Uploading " + fileArray.length + " files (title field ignored for multi-upload)...",
         "pending",
       )
-    }
-
-    // If the user filled in a title, rename the file before uploading.
-    // Empty or whitespace-only titles fall back to the original filename,
-    // which gets date-prefixed server-side (see upload.ts).
-    const title = fileTitle?.value.trim() || ""
-    const renamedName = title ? filenameFromTitle(title, file.name) : null
-    const fileToUpload = renamedName
-      ? new File([file], renamedName, { type: file.type })
-      : file
-
-    showCardStatus(fileStatus, "Uploading " + fileToUpload.name + "...", "pending")
-    try {
-      const formData = new FormData()
-      formData.append("file", fileToUpload)
-      const response = await fetch("/api/upload", { method: "POST", body: formData })
-      const data = await response.json()
-      if (data.success) {
-        showCardStatus(fileStatus, ACQUISITION_HINT, "success")
-        // Clear the title field on success so it doesn't accidentally apply
-        // to the next upload. The paste card clears on focus; the file card
-        // clears on successful completion.
-        if (fileTitle) fileTitle.value = ""
-      } else {
-        showCardStatus(fileStatus, "Upload failed: " + (data.error || "Unknown error"), "error")
+    } else {
+      const busy = await checkActiveCatalog()
+      if (busy) {
+        showCardStatus(
+          fileStatus,
+          isMulti
+            ? "Another document is currently being processed. Your uploads will be queued."
+            : "Another document is currently being processed. Your upload will be queued.",
+          "pending",
+        )
       }
-    } catch (err: any) {
-      showCardStatus(fileStatus, "Upload failed: " + err.message, "error")
     }
+
+    let successes = 0
+    let failures = 0
+
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i]
+
+      // Title rename only applies in single-file path. For multi-file,
+      // skip the title and use the original filename (date-prefixed
+      // server-side per upload.ts).
+      const renamedName = !isMulti && title ? filenameFromTitle(title, file.name) : null
+      const fileToUpload = renamedName
+        ? new File([file], renamedName, { type: file.type })
+        : file
+
+      const progress = isMulti
+        ? "Uploading " + (i + 1) + " of " + fileArray.length + ": " + fileToUpload.name + "..."
+        : "Uploading " + fileToUpload.name + "..."
+      showCardStatus(fileStatus, progress, "pending")
+
+      try {
+        const formData = new FormData()
+        formData.append("file", fileToUpload)
+        const response = await fetch("/api/upload", { method: "POST", body: formData })
+        const data = await response.json()
+        if (data.success) {
+          successes++
+          if (isMulti) {
+            showCardStatus(
+              fileStatus,
+              "Uploaded " + (i + 1) + " of " + fileArray.length + ": " + fileToUpload.name,
+              "success",
+            )
+          }
+        } else {
+          failures++
+          const errMsg = data.error || "Unknown error"
+          const detail = data.detail ? " (" + data.detail + ")" : ""
+          showCardStatus(
+            fileStatus,
+            "Failed " + fileToUpload.name + ": " + errMsg + detail,
+            "error",
+          )
+        }
+      } catch (err: any) {
+        failures++
+        showCardStatus(
+          fileStatus,
+          "Failed " + fileToUpload.name + ": " + err.message,
+          "error",
+        )
+      }
+    }
+
+    // Final summary line.
+    if (isMulti) {
+      if (failures === 0) {
+        showCardStatus(
+          fileStatus,
+          "Uploaded " + successes + " files. " + ACQUISITION_HINT,
+          "success",
+        )
+      } else if (successes === 0) {
+        showCardStatus(
+          fileStatus,
+          "All " + failures + " uploads failed.",
+          "error",
+        )
+      } else {
+        showCardStatus(
+          fileStatus,
+          "Uploaded " + successes + " of " + fileArray.length + "; " + failures + " failed. " + ACQUISITION_HINT,
+          "success",
+        )
+      }
+    } else if (successes > 0) {
+      showCardStatus(fileStatus, ACQUISITION_HINT, "success")
+    }
+
+    // Clear the title field on success — same behavior as before.
+    // For multi-uploads the title was ignored anyway, so clearing it
+    // signals the field is reset for next time.
+    if (fileTitle && successes > 0) fileTitle.value = ""
+
+    // Reset the file input so the same file can be re-selected later.
     fileInput.value = ""
   }
 
