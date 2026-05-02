@@ -35,7 +35,7 @@ Zeilenga is sole or lead author on a substantial portion of the LDAPv3 specifica
 | [[collection/sources/2026-05-02-rfc4510-txt\|RFC 4510 (2006)]] | LDAP Technical Specification Road Map | Editor |
 | [[collection/sources/2026-05-02-rfc4511-txt\|RFC 4511 (2006)]] | LDAP: The Protocol | Significant contributor (technical review) |
 | RFC 4512 (2006) | LDAP: Directory Information Models | Author |
-| RFC 4516 (2006) | LDAP: Uniform Resource Locator | Co-editor |
+| [[collection/sources/2026-05-02-rfc4516-txt\|RFC 4516 (2006)]] | LDAP: Uniform Resource Locator | Acknowledged contributor (editors: Smith, Howes) |
 | RFC 4517 (2006) | LDAP: Syntaxes and Matching Rules | Significant contributor |
 | RFC 4518 (2006) | LDAP: Internationalized String Preparation | Author |
 | RFC 4520 (2006) | IANA Considerations for LDAP | Author |
@@ -48,4 +48,6 @@ His email as listed in the RFCs: `Kurt@OpenLDAP.org`.
 
 Where the original LDAPv3 RFCs (2251–2256) were a [[collection/entities/netscape-communications|Netscape]]-led effort, the 2006 RFC 4510 series revision was largely driven by Zeilenga and the [[collection/entities/openldap-foundation|OpenLDAP Foundation]]. The 4510 series is normative — it obsoletes the 2251–2256 series.
 
-Zeilenga's work concentrated on schema and protocol extensions: Directory Information Models (4512), LDAP URLs (4516), IANA registration procedures (4520), and protocol feature extensions including the `+` operational attributes selector (3673), read entry controls (4527), and the [[collection/sources/2026-05-02-rfc4529-txt|`@classname` attribute selection shorthand]] (4529). An earlier contribution — [[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]] (2001) — defined the [[collection/concepts/ldap-password-modify|Password Modify Extended Operation]], addressing the password-change gap that SASL integration had created.
+Zeilenga's work concentrated on schema and protocol extensions: Directory Information Models (4512), IANA registration procedures (4520), and protocol feature extensions including the `+` operational attributes selector (3673), read entry controls (4527), and the [[collection/sources/2026-05-02-rfc4529-txt|`@classname` attribute selection shorthand]] (4529). An earlier contribution — [[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]] (2001) — defined the [[collection/concepts/ldap-password-modify|Password Modify Extended Operation]], addressing the password-change gap that SASL integration had created.
+
+Note: RFC 4516 ([[collection/concepts/ldap-url|LDAP URL format]]) is sometimes listed in attributions of Zeilenga's work, but the actual RFC was edited by [[collection/entities/mark-smith|Mark Smith]] and [[collection/entities/tim-howes|Tim Howes]]. Zeilenga is thanked in the acknowledgements for "valuable comments" alongside RL "Bob" Morgan, Mark Wahl, Jim Sermersheim, and Hallvard Furuseth.
