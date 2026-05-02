@@ -20,10 +20,11 @@ tags:
   - response-controls
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc2251-txt]]"
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
 ---
 
-LDAP controls are an extensibility mechanism defined in [[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] §4.1.11 that allow additional semantics and arguments to be attached to any [[collection/concepts/ldap|LDAP]] operation. Controls travel in the `controls` field of the `LDAPMessage` envelope and affect only the message they are attached to.
+LDAP controls are an extensibility mechanism first introduced in [[collection/sources/2026-05-02-rfc2251-txt|RFC 2251]] (December 1997) and carried forward in [[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] §4.1.11. They allow additional semantics and arguments to be attached to any [[collection/concepts/ldap|LDAP]] operation. Controls travel in the `controls` field of the `LDAPMessage` envelope and affect only the message they are attached to.
 
 ## Wire Format
 

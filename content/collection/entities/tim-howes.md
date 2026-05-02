@@ -21,6 +21,7 @@ tags:
   - rfc2253
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc2251-txt]]"
   - "[[collection/sources/2026-05-02-rfc2253-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"

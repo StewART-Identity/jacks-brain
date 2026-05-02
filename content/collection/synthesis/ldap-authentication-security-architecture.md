@@ -23,6 +23,7 @@ tags:
   - novell
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc2251-txt]]"
   - "[[collection/sources/2026-05-02-rfc4510-txt]]"
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
@@ -35,7 +36,7 @@ The IETF approved [[collection/concepts/ldap|LDAPv3]] in December 1997 while kno
 
 ## The 1997 Gap
 
-The original LDAPv3 specification (RFC 2251) defined the Bind operation and its two authentication choices — `simple` (anonymous, unauthenticated, or name/password) and `sasl` (any SASL mechanism). But RFC 2251 did not mandate which mechanisms all implementations must support. This created an interoperability vacuum: two conforming LDAPv3 implementations could share no common authentication mechanism, making update operations effectively non-interoperable in the general case.
+The original LDAPv3 specification ([[collection/sources/2026-05-02-rfc2251-txt|RFC 2251]]) defined the Bind operation and its two authentication choices — `simple` (anonymous, unauthenticated, or name/password) and `sasl` (any SASL mechanism). But RFC 2251 did not mandate which mechanisms all implementations must support. This created an interoperability vacuum: two conforming LDAPv3 implementations could share no common authentication mechanism, making update operations effectively non-interoperable in the general case.
 
 This was not an oversight so much as a deliberate deferral — the IETF wanted to ship the core protocol while the security community worked out the details. But deferral created a real operational risk: a client could successfully Bind against a server using the unauthenticated mechanism (non-zero DN, zero-length password), trigger a `success` response, and then assume it had authenticated as that DN — when in reality the session was in an anonymous authorization state. Systems making authorization decisions based on Bind success were vulnerable to this confusion.
 

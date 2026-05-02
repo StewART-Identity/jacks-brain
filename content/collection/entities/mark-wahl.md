@@ -20,6 +20,7 @@ tags:
   - directory-access
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc2251-txt]]"
   - "[[collection/sources/2026-05-02-rfc2253-txt]]"
 ---
 
