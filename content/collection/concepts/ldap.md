@@ -17,10 +17,14 @@ tags:
   - authentication
   - ldap-controls
   - paged-results
+  - object-class
+  - ldap-schema
+  - attribute-selection
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4529-txt]]"
 ---
 
 LDAP (Lightweight Directory Access Protocol) is a TCP/IP protocol for reading and modifying directory services — hierarchical databases optimized for read-heavy workloads such as user accounts, group memberships, and organizational data. LDAPv3, defined in RFC 2251 (December 1997), is the version in current widespread use.
@@ -34,7 +38,7 @@ LDAP operations include:
 - **Add / Delete / Modify** — update operations (requiring authentication)
 - **Modify DN** — rename or move an entry
 
-Search operations take a base DN, scope (base/one/sub), [[collection/concepts/ldap-search-filters|search filter]], and list of attributes to return. Filters are encoded on the wire using ASN.1 BER (ITU-T X.690) but expressed in human-readable form using the string syntax defined in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]].
+Search operations take a base DN, scope (base/one/sub), [[collection/concepts/ldap-search-filters|search filter]], and list of attributes to return. The attribute list supports three special descriptors: `*` (all user attributes), `+` (all operational attributes, RFC 3673), and `@classname` (all attributes permitted by a named [[collection/concepts/ldap-object-classes|object class]], [[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]]). Filters are encoded on the wire using ASN.1 BER (ITU-T X.690) but expressed in human-readable form using the string syntax defined in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]].
 
 LDAPv3 messages carry an optional `controls` field (RFC 2251 Section 4.1.12) that allows extension-specific semantics to be attached to any operation. For example, [[collection/concepts/ldap-paged-results|paged results]] ([[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]]) uses a control to let clients retrieve large result sets in pages rather than all at once.
 
