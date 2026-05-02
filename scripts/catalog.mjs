@@ -33,6 +33,9 @@
  * Usage:
  *   node scripts/catalog.mjs [file-path]    # catalog a specific file
  *   node scripts/catalog.mjs                # catalog all un-cataloged acquisitions
+ *
+ * In GitHub Actions the no-argument form is refused unless
+ * CATALOG_ALLOW_BULK=1 is set. See main() for the rationale.
  */
 
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs"
@@ -369,6 +372,26 @@ function main() {
     }
     filesToCatalog = [fullPath]
   } else {
+    // Scan-everything path. Refuse this in CI unless CATALOG_ALLOW_BULK=1
+    // is set explicitly. Background: a previous version of catalog.yml
+    // called this script with no argument on every push, which made each
+    // run try to catalog the entire backlog in serial. With many files
+    // queued, those runs hit the GitHub Actions job timeout long before
+    // the workflow's terminal commit step ran, so wiki pages written
+    // during the run got thrown away with the runner. Per-file cataloging
+    // is now the default in CI; scan-everything is preserved for explicit
+    // bulk workflow_dispatch calls and for local invocation.
+    const inCI = process.env.GITHUB_ACTIONS === "true" || process.env.CI === "true"
+    const allowBulk = process.env.CATALOG_ALLOW_BULK === "1"
+    if (inCI && !allowBulk) {
+      console.error(
+        "Refusing to scan-and-catalog the entire originals/ directory in CI " +
+        "without CATALOG_ALLOW_BULK=1. Pass an explicit file path as an " +
+        "argument, or set CATALOG_ALLOW_BULK=1 to opt in to a bulk run.",
+      )
+      process.exit(2)
+    }
+
     const uncatalogedNames = findUncatalogedAcquisitions()
     if (uncatalogedNames.length === 0) {
       console.log("No new acquisitions to catalog in static/originals/.")
