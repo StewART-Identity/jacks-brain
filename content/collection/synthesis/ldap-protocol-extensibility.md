@@ -22,6 +22,7 @@ tags:
   - attribute-selection
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
@@ -35,7 +36,7 @@ sources:
 
 ## The Controls Mechanism
 
-RFC 2251 Section 4.1.12 defines `controls` as an optional sequence of `Control` values, each carrying:
+[[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] §4.1.11 (the 2006 successor to RFC 2251) defines `controls` as an optional sequence of `Control` values attached to the `LDAPMessage` envelope — see [[collection/concepts/ldap-controls|LDAP Controls]] for the wire format and criticality semantics. Each control carries:
 
 - A `controlType` OID identifying the extension
 - A `criticality` flag — if `TRUE`, the server must reject the request if it cannot process the control
@@ -49,6 +50,7 @@ The LDAP companion RFCs in this wiki address different layers of the protocol st
 
 | RFC | Layer | Mechanism | What it provides |
 |---|---|---|---|
+| [[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] (2006) | Core protocol | Entire protocol spec | Wire encoding (ASN.1/BER), all operations, [[collection/concepts/ldap-controls|controls]] mechanism, result codes, referrals |
 | [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (1997, obsoleted) | Query syntax | ABNF extension | Original string representation of [[collection/concepts/ldap-search-filters|search filters]]; superseded by RFC 4515 |
 | [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] (2006) | Query syntax | ABNF extension | Revised string representation — explicit UTF-8, formal `valueencoding` rule |
 | [[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]] (1999) | Operation control | `controls` field | Paginated retrieval via an opaque server-issued cookie |

@@ -1,6 +1,6 @@
 ---
 title: "LDAP (Lightweight Directory Access Protocol)"
-summary: "Open TCP/IP protocol for reading and updating directory services, standardized as LDAPv3 in RFC 2251 (December 1997)."
+summary: "Open TCP/IP protocol for reading and updating directory services; LDAPv3 wire protocol is defined in RFC 4511 (2006), which obsoleted RFC 2251 (1997)."
 type: concept
 created: 2026-05-02
 updated: 2026-05-02
@@ -19,6 +19,7 @@ tags:
   - starttls
   - sasl
   - bind
+  - search
   - security
   - ldap-controls
   - paged-results
@@ -27,8 +28,10 @@ tags:
   - attribute-selection
   - syntaxes
   - matching-rules
+  - result-codes
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
@@ -49,7 +52,7 @@ LDAP operations include:
 
 Search operations take a base DN, scope (base/one/sub), [[collection/concepts/ldap-search-filters|search filter]], and list of attributes to return. The attribute list supports three special descriptors: `*` (all user attributes), `+` (all operational attributes, RFC 3673), and `@classname` (all attributes permitted by a named [[collection/concepts/ldap-object-classes|object class]], [[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]]). Filters are encoded on the wire using ASN.1 BER (ITU-T X.690) but expressed in human-readable form using the string syntax defined in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]].
 
-LDAPv3 messages carry an optional `controls` field (RFC 2251 Section 4.1.12) that allows extension-specific semantics to be attached to any operation. For example, [[collection/concepts/ldap-paged-results|paged results]] ([[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]]) uses a control to let clients retrieve large result sets in pages rather than all at once.
+LDAPv3 messages carry an optional `controls` field ([[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] §4.1.11) that allows extension-specific semantics to be attached to any operation. Each [[collection/concepts/ldap-controls|control]] carries a type OID, a `criticality` flag, and optional BER-encoded data. For example, [[collection/concepts/ldap-paged-results|paged results]] ([[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]]) uses a control to let clients retrieve large result sets in pages rather than all at once.
 
 ## Role in Identity Infrastructure
 
@@ -62,7 +65,7 @@ LDAP is the protocol layer underneath much of enterprise identity infrastructure
 
 - **LDAPv1** — RFC 1487 (1993), derived from the X.500 DAP
 - **LDAPv2** — RFC 1777; string filter syntax in RFC 1960
-- **LDAPv3** — RFC 2251–2256 (December 1997), adding SASL authentication, referrals, controls, and extensible matching; authored largely by [[collection/entities/netscape-communications|Netscape Communications]] engineers including [[collection/entities/tim-howes|Tim Howes]]
+- **LDAPv3** — RFC 2251–2256 (December 1997), adding SASL authentication, referrals, controls, and extensible matching; authored largely by [[collection/entities/netscape-communications|Netscape Communications]] engineers including [[collection/entities/tim-howes|Tim Howes]]; replaced by the RFC 4510 series (June 2006), where [[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] (edited by [[collection/entities/jim-sermersheim|Jim Sermersheim]] of [[collection/entities/novell|Novell]]) is the authoritative protocol specification
 
 ## Authentication and Security
 

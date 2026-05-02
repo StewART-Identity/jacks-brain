@@ -15,6 +15,7 @@ tags:
   - directory-access
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
   - "[[collection/sources/2026-05-02-rfc3062-txt]]"
@@ -31,6 +32,7 @@ Zeilenga is sole or lead author on a substantial portion of the LDAPv3 specifica
 | [[collection/sources/2026-05-02-rfc3062-txt\|RFC 3062 (2001)]] | LDAP Password Modify Extended Operation | Author |
 | RFC 3673 (2003) | LDAPv3: All Operational Attributes | Author |
 | RFC 4510 (2006) | LDAP Technical Specification Road Map | Editor |
+| [[collection/sources/2026-05-02-rfc4511-txt\|RFC 4511 (2006)]] | LDAP: The Protocol | Significant contributor (technical review) |
 | RFC 4512 (2006) | LDAP: Directory Information Models | Author |
 | RFC 4516 (2006) | LDAP: Uniform Resource Locator | Co-editor |
 | RFC 4517 (2006) | LDAP: Syntaxes and Matching Rules | Significant contributor |

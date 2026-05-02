@@ -21,6 +21,7 @@ tags:
   - authorization-state
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
 ---
 
@@ -28,7 +29,7 @@ sources:
 
 ## The StartTLS Operation
 
-StartTLS is an LDAP extended operation (OID `1.3.6.1.4.1.1466.20037`) defined in RFC 4511 §4.14 that installs a TLS layer over an existing LDAP session. TLS provides confidentiality and data integrity; TLS authentication services are available to LDAP only in combination with [[collection/concepts/sasl|SASL EXTERNAL]].
+StartTLS is an LDAP extended operation (OID `1.3.6.1.4.1.1466.20037`) defined in [[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] §4.14 that installs a TLS layer over an existing LDAP session. TLS provides confidentiality and data integrity; TLS authentication services are available to LDAP only in combination with [[collection/concepts/sasl|SASL EXTERNAL]].
 
 **When StartTLS may be sent** — after session establishment, but NOT when:
 - TLS is already established on the session

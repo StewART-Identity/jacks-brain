@@ -17,6 +17,7 @@ tags:
   - authentication
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
 ---
 
@@ -28,7 +29,7 @@ NDS, introduced with NetWare 4 in 1993, was an X.500-derived hierarchical direct
 
 ## Role in LDAP Standards
 
-[[collection/entities/roger-harrison|Roger Harrison]], editor of [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]], was a Novell engineer. RFC 4513 — which standardized LDAP's authentication methods and security mechanisms — reflects Novell's interest in a rigorous, interoperable authentication layer. A weak authentication standard would have put eDirectory at a disadvantage against Microsoft's vertically-integrated AD ecosystem.
+Novell supplied editors for two of the most consequential documents in the RFC 4510 series: [[collection/entities/jim-sermersheim|Jim Sermersheim]] edited [[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] (the core protocol document), and [[collection/entities/roger-harrison|Roger Harrison]] edited [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] (authentication and security). RFC 4513 in particular reflects Novell's interest in a rigorous, interoperable authentication layer — a weak standard would have put eDirectory at a disadvantage against Microsoft's vertically-integrated AD ecosystem.
 
 ## Position in LDAP Standards History
 
@@ -36,6 +37,7 @@ NDS, introduced with NetWare 4 in 1993, was an X.500-derived hierarchical direct
 |---|---|---|
 | 1997 (LDAPv3 core) | [[collection/entities/netscape-communications|Netscape Communications]] | RFC 2251–2256 core protocol |
 | 1999 (extensions) | [[collection/entities/microsoft|Microsoft]] | RFC 2696 paged results |
+| 2006 (protocol spec) | Novell (Sermersheim) | RFC 4511 core protocol |
 | 2006 (auth/security) | Novell (Harrison) | RFC 4513 authentication methods |
 | 2006 (revision) | [[collection/entities/openldap-foundation|OpenLDAP Foundation]] (Zeilenga) | RFC 4510 series overall revision |
 
