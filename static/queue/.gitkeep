@@ -1,0 +1,16 @@
+# This directory is the PENDING queue for the cataloging pipeline.
+#
+# Three-directory model:
+#   static/queue/      — PENDING. Files awaiting promotion.
+#   static/in-flight/  — IN_PROGRESS. The file currently being cataloged.
+#   static/originals/  — CATALOGED. Completed files stay here permanently.
+#
+# Files arrive here from three sources: the web upload form
+# (functions/api/upload.ts), the MCP server's acquire_for_catalog tool,
+# and direct git pushes. All three converge on the same queue, and the
+# catalog workflow promotes one file at a time in FIFO order.
+#
+# Files in this directory are eligible for deletion via the queue-delete
+# endpoint (functions/api/queue/delete.ts), exposed in the Acquisition
+# page UI as PENDING-row checkboxes. Once a file is promoted to
+# static/in-flight/, it can no longer be removed via that path.
