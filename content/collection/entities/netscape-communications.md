@@ -23,3 +23,4 @@ Netscape Communications Corp. was a pioneering internet software company headqua
 - RFC 2254 — [[collection/sources/2026-05-02-rfc2254-txt|String representation of search filters]]
 - RFC 2255 — LDAP URL format
 - RFC 2256 — Summary of X.500(96) user schema for LDAPv3
+- RFC 2696 — [[collection/sources/2026-05-02-rfc2696-txt|LDAP Control Extension for Simple Paged Results]] (co-authored with [[collection/entities/microsoft|Microsoft Corp.]], September 1999)
