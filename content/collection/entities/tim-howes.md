@@ -33,6 +33,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc2252-txt]]"
   - "[[collection/sources/2026-05-02-rfc2253-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
+  - "[[collection/sources/2026-05-02-rfc2255-txt]]"
   - "[[collection/sources/2026-05-02-rfc2696-txt]]"
   - "[[collection/sources/2026-05-02-rfc2891-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
@@ -47,7 +48,7 @@ Howes's earliest LDAP work was conducted from the University of Michigan, where 
 
 ## LDAPv3 (1997): Netscape Communications
 
-By the time of the December 1997 RFC publications, Howes had moved to [[collection/entities/netscape-communications|Netscape Communications Corp.]]'s Mountain View, CA office (501 E. Middlefield Road; email: `howes@netscape.com`). He is listed as co-author on RFC 2251 (LDAPv3 core protocol), **[[collection/sources/2026-05-02-rfc2252-txt|RFC 2252]]** (attribute syntax definitions), and **[[collection/sources/2026-05-02-rfc2253-txt|RFC 2253]]** (UTF-8 string representation of [[collection/concepts/distinguished-name|Distinguished Names]], co-authored with [[collection/entities/mark-wahl|M. Wahl]] and [[collection/entities/steve-kille|S. Kille]]). He is sole author of [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (December 1997 — string representation of [[collection/concepts/ldap-search-filters|LDAP search filters]]) and its companion RFC 2255 (December 1997 — LDAP URL format), and co-author of RFC 2696 ([[collection/sources/2026-05-02-rfc2696-txt|LDAP Control Extension for Simple Paged Results]], September 1999) alongside [[collection/entities/microsoft|Microsoft Corp.]] engineers.
+By the time of the December 1997 RFC publications, Howes had moved to [[collection/entities/netscape-communications|Netscape Communications Corp.]]'s Mountain View, CA office (501 E. Middlefield Road; email: `howes@netscape.com`). He is listed as co-author on RFC 2251 (LDAPv3 core protocol), **[[collection/sources/2026-05-02-rfc2252-txt|RFC 2252]]** (attribute syntax definitions), and **[[collection/sources/2026-05-02-rfc2253-txt|RFC 2253]]** (UTF-8 string representation of [[collection/concepts/distinguished-name|Distinguished Names]], co-authored with [[collection/entities/mark-wahl|M. Wahl]] and [[collection/entities/steve-kille|S. Kille]]). He is sole author of [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (December 1997 — string representation of [[collection/concepts/ldap-search-filters|LDAP search filters]]) and co-author (with [[collection/entities/mark-smith|Mark Smith]]) of [[collection/sources/2026-05-02-rfc2255-txt|RFC 2255]] (December 1997 — [[collection/concepts/ldap-url|LDAP URL format]]), and co-author of RFC 2696 ([[collection/sources/2026-05-02-rfc2696-txt|LDAP Control Extension for Simple Paged Results]], September 1999) alongside [[collection/entities/microsoft|Microsoft Corp.]] engineers.
 
 By June 2006 he had moved to Opsware, Inc. (Sunnyvale, CA, 599 N. Mathilda Ave.), where he co-authored two RFC 4510-series documents alongside editor [[collection/entities/mark-smith|Mark Smith]] of Pearl Crescent, LLC:
 

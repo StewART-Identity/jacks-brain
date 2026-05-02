@@ -18,13 +18,15 @@ tags:
   - percent-encoding
   - abnf
   - rfc4510
+  - rfc2255
   - directory-access
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc4516-txt]]"
+  - "[[collection/sources/2026-05-02-rfc2255-txt]]"
 ---
 
-An LDAP URL is a URI in the `ldap://` scheme that encodes a complete [[collection/concepts/ldap|LDAP]] search operation — or a referral target — as a single, self-contained string. The format is defined by [[collection/sources/2026-05-02-rfc4516-txt|RFC 4516]] (June 2006, part of the [[collection/sources/2026-05-02-rfc4510-txt|RFC 4510]] series), which obsoletes RFC 2255.
+An LDAP URL is a URI in the `ldap://` scheme that encodes a complete [[collection/concepts/ldap|LDAP]] search operation — or a referral target — as a single, self-contained string. The format is defined by [[collection/sources/2026-05-02-rfc4516-txt|RFC 4516]] (June 2006, part of the [[collection/sources/2026-05-02-rfc4510-txt|RFC 4510]] series), which obsoletes [[collection/sources/2026-05-02-rfc2255-txt|RFC 2255]] (December 1997).
 
 ## Structure
 
@@ -95,3 +97,12 @@ Because LDAP URLs are often resolved automatically (in referrals, link-following
 - For referral-driven update operations, strong authentication methods SHOULD be used
 
 See [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] for authentication guidance.
+
+## Historical Note: RFC 2255 (1997)
+
+The [[collection/sources/2026-05-02-rfc2255-txt|original LDAP URL format]] was defined in RFC 2255 (December 1997) by [[collection/entities/tim-howes|Tim Howes]] and [[collection/entities/mark-smith|Mark Smith]] of [[collection/entities/netscape-communications|Netscape Communications Corp.]], as part of the December 1997 LDAPv3 cluster. RFC 4516 (2006) obsoleted it with the following key changes:
+
+- **Removed the `bindname` extension** — the one extension RFC 2255 defined was dropped from RFC 4516 because no implementations existed. RFC 2255's `bindname` extension allowed a URL to specify the DN to authenticate as during resolution, with criticality support.
+- **Updated base RFCs** — RFC 2255 referenced RFC 1738 for `hostport` and RFC 2396 for URL encoding; RFC 4516 updated both to RFC 3986, enabling literal IPv6 addresses in the `<host>` component and requiring `[` and `]` to be percent-encoded.
+- **Revised ABNF grammar** — RFC 4516 aligned ABNF with common productions from RFC 4512; `<extype>` became an OID (from RFC 4512) rather than an ad hoc token.
+- **Clarified attribute selector** — `<attrdesc>` now references `<attributeSelector>` from RFC 4511, formally enabling `*` in the attributes component.
