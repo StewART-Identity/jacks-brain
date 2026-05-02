@@ -8,23 +8,31 @@
    flush-left) comes from quartz/styles/jbtable.scss via the .jb-table
    class on the wrapping <div>. */
 
-#acquisition-app thead th:nth-child(1) {
+#acquisition-app thead th.queue-checkbox-cell,
+#acquisition-app tbody td.queue-checkbox-cell {
+  /* Checkbox — fits the input plus minimal padding. Centered. */
+  width: 2.5rem;
+  text-align: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+#acquisition-app thead th:nth-child(2) {
   /* Document — takes whatever's left */
   width: auto;
 }
-#acquisition-app thead th:nth-child(2),
-#acquisition-app tbody td:nth-child(2) {
+#acquisition-app thead th:nth-child(3),
+#acquisition-app tbody td:nth-child(3) {
   /* Acquired — fits "2026-04-23" plus padding */
   width: 7rem;
   white-space: nowrap;
 }
-#acquisition-app thead th:nth-child(3),
-#acquisition-app tbody td:nth-child(3) {
+#acquisition-app thead th:nth-child(4),
+#acquisition-app tbody td:nth-child(4) {
   /* Status — fits the widest badge ("IN_PROGRESS") plus padding */
   width: 8rem;
   white-space: nowrap;
 }
-#acquisition-app tbody td:nth-child(1) {
+#acquisition-app tbody td:nth-child(2) {
   /* Document name can be long — allow wrapping and break on hyphens */
   overflow-wrap: anywhere;
 }
@@ -60,6 +68,16 @@
 .runs-action-btn:hover {
   opacity: 0.7;
 }
+
+input.queue-row-checkbox {
+  cursor: pointer;
+  margin: 0;
+  /* Slightly larger than browser default to make tap targets easier on
+     touch devices without dominating the table row. */
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
 .run-badge {
   padding: 2px 8px;
   border-radius: 10px;
@@ -88,6 +106,7 @@
   background: #fbf4e4;
   color: #6b4d1a;
 }
+.run-badge.pending,
 .run-badge.queued {
   background: #eef1f6;
   color: #2e3d55;
@@ -113,6 +132,7 @@
   background: #6b4d1a;
   color: #d4ad5a;
 }
+:root[saved-theme="dark"] .run-badge.pending,
 :root[saved-theme="dark"] .run-badge.queued {
   background: #2e3d55;
   color: #7b8fad;
@@ -121,4 +141,123 @@
 #acquisition-app .muted {
   color: var(--gray);
   font-style: italic;
+}
+
+/* Floating selection bar — fixed at the bottom of the viewport, visible
+   only when one or more PENDING checkboxes are selected. Hidden via the
+   [hidden] HTML attribute (toggled by the inline script). */
+.queue-selection-bar[hidden] {
+  display: none;
+}
+.queue-selection-bar {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  font-size: 0.95rem;
+}
+.queue-selection-count {
+  color: var(--gray);
+  font-weight: 600;
+}
+#queue-selection-count-num {
+  color: var(--secondary);
+}
+.queue-bar-btn-secondary,
+.queue-bar-btn-primary {
+  font-size: 0.85rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease;
+  font-weight: 600;
+}
+.queue-bar-btn-secondary {
+  background: transparent;
+  color: var(--gray);
+  border-color: var(--lightgray);
+}
+.queue-bar-btn-secondary:hover {
+  opacity: 0.7;
+}
+.queue-bar-btn-primary {
+  background: var(--secondary);
+  color: var(--light);
+}
+.queue-bar-btn-primary:hover {
+  opacity: 0.85;
+}
+.queue-bar-btn-primary:disabled,
+.queue-bar-btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: wait;
+}
+
+:root[saved-theme="dark"] .queue-selection-bar {
+  background: var(--lightgray);
+  border-color: var(--gray);
+}
+
+/* Toast for action feedback — appended to body by the inline script,
+   fades in/out around a 3-second hold. */
+.queue-toast {
+  position: fixed;
+  bottom: 5rem; /* clear the selection bar's home position */
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 60;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+}
+.queue-toast.queue-toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.queue-toast-success {
+  background: #ebf5ee;
+  color: #2b5e3e;
+  border: 1px solid #c8e0cf;
+}
+.queue-toast-info {
+  background: #eef1f6;
+  color: #2e3d55;
+  border: 1px solid #d3d9e2;
+}
+.queue-toast-error {
+  background: #f9eded;
+  color: #6b2020;
+  border: 1px solid #ebcccc;
+}
+
+:root[saved-theme="dark"] .queue-toast-success {
+  background: #1b3f29;
+  color: #7bbf95;
+  border-color: #2b5e3e;
+}
+:root[saved-theme="dark"] .queue-toast-info {
+  background: #2e3d55;
+  color: #7b8fad;
+  border-color: #3d5070;
+}
+:root[saved-theme="dark"] .queue-toast-error {
+  background: #6b2020;
+  color: #c46b6b;
+  border-color: #8a3030;
 }
