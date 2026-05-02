@@ -16,10 +16,12 @@
 //
 // Column sorting:
 //   Document, Acquired, and Status columns are clickable headers that
-//   cycle through ascending → descending → default sort. Default is
-//   status-grouped, newest first within group (matches the order the
-//   /api/status endpoint returns). Sort state lives in module scope
-//   and survives polling re-renders; resets to default on SPA nav away.
+//   toggle ascending ↔ descending sort. Acquired column starts descending
+//   (newest first); other columns start ascending. Active sort is shown
+//   via filled triangles (▲▼) appended to the column header — same
+//   convention as the Retention table (which set the precedent). Sort
+//   state lives in module scope and survives polling re-renders; resets
+//   to default order on SPA nav away.
 //
 // State:
 //   selectedFilenames — in-memory Set<string>, lives for the current
@@ -29,6 +31,9 @@
 //
 //   sortColumn / sortDirection — current sort settings, applied during
 //   render. null/null means "default order" (use /api/status order).
+//   Note: the cycle is two-state (asc ↔ desc) once a column has been
+//   clicked. The null/null state is only the initial state before any
+//   click, and gets restored by the cleanup callback on SPA nav.
 //
 //   lastDocuments — most recent documents from /api/status. Cached so
 //   header-click re-sorts don't require a network round-trip.
@@ -127,7 +132,7 @@ document.addEventListener("nav", () => {
 
   // Lifecycle order for status sort. Lower value = earlier in lifecycle.
   // Cataloged and failed share an order rank because they're both
-  // terminal states; tiebreak below falls to acquired-time desc.
+  // terminal states; tiebreak below falls to document name.
   const STATUS_RANK: Record<DocumentRow["status"], number> = {
     pending: 0,
     in_progress: 1,
@@ -178,32 +183,31 @@ document.addEventListener("nav", () => {
   }
 
   // Cycle the sort state when a column header is clicked.
-  // Same column: asc → desc → default (null/null) → asc → ...
-  // Different column: → asc on the new column.
+  // Same column: toggle direction (asc ↔ desc).
+  // Different column: switch to the new column. Acquired starts desc
+  // (newest first); other columns start asc.
   function cycleSort(col: SortColumn) {
     if (col === null) return
     if (sortColumn !== col) {
       sortColumn = col
-      sortDirection = "asc"
-    } else if (sortDirection === "asc") {
-      sortDirection = "desc"
-    } else if (sortDirection === "desc") {
-      sortColumn = null
-      sortDirection = null
+      sortDirection = col === "acquired" ? "desc" : "asc"
     } else {
-      sortDirection = "asc"
+      sortDirection = sortDirection === "asc" ? "desc" : "asc"
     }
     // Re-render the table from cached docs without re-fetching.
     renderTable(lastDocuments)
   }
 
-  // Build the arrow indicator for a column header.
+  // Build the arrow indicator for a column header. Uses filled triangles
+  // (▲▼) — same convention as the Retention table. No glyph on inactive
+  // columns: cleaner than a faint placeholder, and the click target is
+  // still discoverable via cursor-pointer styling on hover.
   function sortIndicator(col: SortColumn): string {
     if (sortColumn !== col || sortDirection === null) {
-      return `<span class="queue-sort-arrow queue-sort-arrow-inactive" aria-hidden="true">↕</span>`
+      return ""
     }
-    const arrow = sortDirection === "asc" ? "↑" : "↓"
-    return `<span class="queue-sort-arrow queue-sort-arrow-active" aria-hidden="true">${arrow}</span>`
+    const arrow = sortDirection === "asc" ? "\u25B2" : "\u25BC"
+    return ` <span class="queue-sort-arrow" aria-hidden="true">${arrow}</span>`
   }
 
   // ------------------------------------------------------------------
@@ -298,9 +302,9 @@ document.addEventListener("nav", () => {
       `<div class="table-container jb-table"><table>
         <thead><tr>
           <th class="queue-checkbox-cell" aria-label="Select"></th>
-          <th class="queue-sortable" data-sort-col="document" tabindex="0" role="button" aria-label="Sort by document">Document ${sortIndicator("document")}</th>
-          <th class="queue-sortable" data-sort-col="acquired" tabindex="0" role="button" aria-label="Sort by acquired date">Acquired ${sortIndicator("acquired")}</th>
-          <th class="queue-sortable" data-sort-col="status" tabindex="0" role="button" aria-label="Sort by status">Status ${sortIndicator("status")}</th>
+          <th class="sortable" data-sort-col="document" tabindex="0" role="button" aria-label="Sort by document">Document${sortIndicator("document")}</th>
+          <th class="sortable" data-sort-col="acquired" tabindex="0" role="button" aria-label="Sort by acquired date">Acquired${sortIndicator("acquired")}</th>
+          <th class="sortable" data-sort-col="status" tabindex="0" role="button" aria-label="Sort by status">Status${sortIndicator("status")}</th>
         </tr></thead>
         <tbody>` +
       sortedDocs.map(rowHTML).join("") +
@@ -323,7 +327,7 @@ document.addEventListener("nav", () => {
     // Wire up sort handlers on the column headers. Same as the row
     // checkboxes — these get GC'd when innerHTML is next replaced.
     const sortableHeaders = runsList.querySelectorAll(
-      "th.queue-sortable",
+      "th.sortable",
     ) as NodeListOf<HTMLTableCellElement>
     sortableHeaders.forEach(th => {
       th.addEventListener("click", onSortHeaderClick)
