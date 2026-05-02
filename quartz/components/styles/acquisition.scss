@@ -22,9 +22,25 @@
 }
 #acquisition-app thead th:nth-child(3),
 #acquisition-app tbody td:nth-child(3) {
-  /* Acquired — fits "2026-04-23" plus padding */
-  width: 7rem;
+  /* Acquired — fits "2026-04-23" on top and "processing 8m"/"waiting 4m"
+     /"12m ago" underneath. Slightly wider than just the date because of
+     the two-line layout and the longer relative-time strings. */
+  width: 8.5rem;
+}
+#acquisition-app tbody td.queue-acquired-cell {
+  /* Two-line cell — vertical alignment to the top so the date doesn't
+     drift center when the relative line is short. */
+  vertical-align: top;
+}
+#acquisition-app .queue-acquired-date {
   white-space: nowrap;
+}
+#acquisition-app .queue-acquired-relative {
+  white-space: nowrap;
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  color: var(--gray);
+  font-style: italic;
 }
 #acquisition-app thead th:nth-child(4),
 #acquisition-app tbody td:nth-child(4) {
