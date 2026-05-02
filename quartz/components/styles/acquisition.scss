@@ -53,6 +53,44 @@
   overflow-wrap: anywhere;
 }
 
+/* Sortable column headers. Click to cycle sort: asc → desc → default.
+   Headers have tabindex=0 and role=button, so they're keyboard-focusable
+   and announced as buttons by screen readers. */
+#acquisition-app thead th.queue-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+  position: relative;
+}
+#acquisition-app thead th.queue-sortable:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+:root[saved-theme="dark"] #acquisition-app thead th.queue-sortable:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+#acquisition-app thead th.queue-sortable:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: -2px;
+}
+.queue-sort-arrow {
+  display: inline-block;
+  margin-left: 0.3rem;
+  font-size: 0.85em;
+  vertical-align: baseline;
+  transition: opacity 0.15s ease;
+}
+.queue-sort-arrow-inactive {
+  color: var(--gray);
+  opacity: 0;
+}
+#acquisition-app thead th.queue-sortable:hover .queue-sort-arrow-inactive {
+  opacity: 0.5;
+}
+.queue-sort-arrow-active {
+  color: var(--secondary);
+  font-weight: 700;
+}
+
 .recent-runs {
   margin-top: 0;
 }
