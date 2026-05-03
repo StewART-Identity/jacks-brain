@@ -31,6 +31,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
   - "[[collection/sources/2026-05-02-rfc1777-txt]]"
   - "[[collection/sources/2026-05-02-rfc3062-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4532-txt]]"
 ---
 
 The IETF approved [[collection/concepts/ldap|LDAPv3]] in December 1997 while knowing the authentication story was incomplete. The IESG note embedded in [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] stated this explicitly — it approved read-only and interoperability testing deployments but discouraged production update-capable deployments until mandatory authentication mechanisms were standardized. Nine years later, [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] (June 2006) closed that gap. [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] removed the IESG note from the search filter spec, quietly acknowledging that the authentication problem had been solved.
@@ -107,6 +108,8 @@ This framing matters because it clarifies several edge cases:
 - Any Bind request, including a failing one, immediately moves the session to anonymous state before the result is delivered — there is no transient "being authenticated" state
 
 The SASL `authzId` mechanism (session-level authorization identity substitution) has a per-operation counterpart: the [[collection/concepts/ldap-proxy-authorization|Proxy Authorization Control]] ([[collection/sources/2026-05-02-rfc4370-txt|RFC 4370]], February 2006). Where SASL `authzId` applies for the duration of a session, the Proxy Authorization Control specifies an authorization identity on a single operation, leaving the session's overall authorization state unchanged. This is designed for proxy servers and application middleware that multiplex many users over one connection. A key security distinction: the Proxy Authorization Control mandates `criticality = TRUE`, making it the only cataloged LDAP control with a mandatory criticality requirement, ensuring any failure to honor the substitution surfaces as an explicit error rather than a silent identity mismatch.
+
+Complementing both mechanisms is the [[collection/concepts/ldap-who-am-i|LDAP "Who am I?" operation]] ([[collection/sources/2026-05-02-rfc4532-txt|RFC 4532]], June 2006) — a read-back mechanism that lets a client ask the server what authorization identity it has assigned to the session. This is the query counterpart to the write operations above: it does not change the authorization state, only reports it. Critically, it is a post-Bind extended operation, so it is protected by the security layers (TLS, SASL) established during Bind. This contrasts with the earlier RFC 3829 Authorization Identity Controls approach, which used Bind response controls delivered before Bind-established security was active. The "Who am I?" operation can also be combined with the Proxy Authorization Control to probe the authzId the server would assign to a specified proxy identity — useful for verifying server-side identity-mapping behavior before committing to a proxied operation.
 
 ## What Changed in the 2006 Revision
 

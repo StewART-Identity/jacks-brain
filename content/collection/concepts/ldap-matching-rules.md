@@ -24,6 +24,7 @@ confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2252-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4530-txt]]"
 ---
 
 **Matching rules** define comparison semantics for [[collection/concepts/ldap|LDAP]] directory operations. They are deliberately separate from [[collection/concepts/ldap-syntaxes|syntaxes]]: a syntax constrains what attribute values are legal; a matching rule defines how those values compare against an assertion value in Search filters, Compare operations, and Modify operations (to identify values to delete and to prevent duplicate values). Matching rules were originally defined in [[collection/sources/2026-05-02-rfc2252-txt|RFC 2252]] (1997) and updated by [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] (2006), which added string preparation algorithms (RFC 4518) and several new rules.
@@ -72,6 +73,7 @@ Steps 1–5 are identical across all string rules. Step 2 (Map) and Step 6 (Insi
 | `numericStringMatch` | 2.5.13.8 | Numeric String | Spaces stripped |
 | `uniqueMemberMatch` | 2.5.13.23 | Name And Optional UID | DN + optional bit string |
 | `bitStringMatch` | 2.5.13.16 | Bit String | Bitwise equality |
+| `uuidMatch` | 1.3.6.1.1.16.2 | UUID | UUID equality; assertion uses dash-delimited UUID string form (RFC 4530) |
 
 ## Key Ordering Rules
 
@@ -83,6 +85,7 @@ Steps 1–5 are identical across all string rules. Step 2 (Map) and Step 6 (Insi
 | `integerOrderingMatch` | 2.5.13.15 | Numeric ordering |
 | `octetStringOrderingMatch` | 2.5.13.18 | Bit-by-bit lexicographic |
 | `numericStringOrderingMatch` | 2.5.13.9 | Code-point order, spaces stripped |
+| `uuidOrderingMatch` | 1.3.6.1.1.16.3 | Octet-string ordering on UUID; not meaningful for randomly generated (v4) UUIDs (RFC 4530) |
 
 ## Key Substrings Rules
 

@@ -24,6 +24,7 @@ confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2252-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4530-txt]]"
 ---
 
 Every attribute stored in an [[collection/concepts/ldap|LDAP]] directory has a **syntax** — a data type that constrains the structure and format of its values and determines how those values are encoded in the LDAP protocol. Syntaxes were originally defined in [[collection/sources/2026-05-02-rfc2252-txt|RFC 2252]] (1997) and updated/superseded by [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]] (2006). They are distinct from [[collection/concepts/ldap-matching-rules|matching rules]], which define comparison semantics. A syntax defines *what values are legal*; matching rules define *how values compare*.
@@ -60,6 +61,8 @@ Gateways between LDAP and X.500 must transcode Directory String values per the T
 **Boolean** (`1.3.6.1.4.1.1466.115.121.1.7`) — Encoded as literal `TRUE` or `FALSE`.
 
 **Octet String** (`1.3.6.1.4.1.1466.115.121.1.40`) — Arbitrary byte sequence; not generally human-readable.
+
+**UUID** (`1.3.6.1.1.16.1`) — A 16-octet (128-bit) Universally Unique Identifier conforming to RFC 4122, encoded in LDAP as the standard dash-delimited ASCII string (e.g., `597ae2f6-16a6-1027-98f4-d28b5365dc14`). Defined in [[collection/sources/2026-05-02-rfc4530-txt|RFC 4530]]. Used exclusively by the [[collection/concepts/ldap-entry-uuid|`entryUUID` operational attribute]]. The OID arc `1.3.6.1.1.16` is the IANA LDAP parameters arc, not the OpenLDAP private enterprise arc used by other Zeilenga-authored extensions.
 
 **JPEG** (`1.3.6.1.4.1.1466.115.121.1.28`) — JFIF-encoded image; one of the few binary (non-human-readable) LDAP syntaxes.
 

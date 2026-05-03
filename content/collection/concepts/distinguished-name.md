@@ -25,6 +25,7 @@ confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2253-txt]]"
   - "[[collection/sources/2026-05-02-rfc4512-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4530-txt]]"
 ---
 
 A Distinguished Name (DN) is the primary key to an entry in an X.500 or [[collection/concepts/ldap|LDAP]] directory. Every entry has exactly one DN, which encodes its full path through the Directory Information Tree (DIT) from the root to the entry itself. DNs are defined in X.501 and serve as the canonical way to identify and address directory entries across all LDAP operations — searches, binds, modifications, and attribute references.
@@ -84,6 +85,12 @@ The DN syntax (`1.3.6.1.4.1.1466.115.121.1.12`) is one of the core [[collection/
 The LDAP string encoding of a DN is **not a reversible transformation** to DER. A `commonName` attribute value of `Sam` produces the string `CN=Sam` regardless of whether the underlying ASN.1 encoding used PrintableString or TeletexString — the string form discards that distinction. Applications that require the DER form of a DN (especially for X.509 certificate verification, where signature validation depends on exact DER-encoding) MUST NOT use the LDAP string representation as an intermediate step. They should use the `#hex` BER encoding form instead.
 
 This is a recurring interoperability concern when LDAP directories and PKI systems interact — see [[collection/synthesis/ldap-authentication-security-architecture|LDAP Security Architecture]] for context on the broader authentication model.
+
+## DN Instability and Stable Entry Identity
+
+A DN is a mutable address, not a permanent identifier. The Modify DN operation allows entries to be renamed or moved to a new location in the DIT, and deleted entries leave their former DNs available for reassignment to entirely new objects. This means a client that caches a DN to track a specific person or resource can silently start referring to a different entry after a rename or delete/re-add cycle.
+
+[[collection/concepts/ldap-entry-uuid|`entryUUID`]], defined in [[collection/sources/2026-05-02-rfc4530-txt|RFC 4530]], addresses this directly. It is a server-assigned, immutable operational attribute that holds a UUID (RFC 4122) permanently identifying each entry from creation through any number of renames. The UUID survives Modify DN operations unchanged and is `NO-USER-MODIFICATION` — nothing a client does can alter it. A client that stores both the DN and the `entryUUID` value can detect renames (same UUID, different DN), re-creations (same DN, different UUID), and stable entries (same UUID and DN) with certainty.
 
 ## Relationship to RFC 4514
 

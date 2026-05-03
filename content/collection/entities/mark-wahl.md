@@ -15,12 +15,14 @@ tags:
   - rfc2252
   - rfc2253
   - rfc2256
+  - rfc3829
   - x500-user-schema
   - rfc2891
   - sun-microsystems
   - distinguished-name
   - attribute-syntaxes
   - server-side-sorting
+  - authorization-identity
   - directory-access
 confidence: high
 sources:
@@ -29,6 +31,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc2253-txt]]"
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
   - "[[collection/sources/2026-05-02-rfc2891-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4532-txt]]"
 ---
 
 Mark Wahl was an LDAP engineer affiliated with Critical Angle Inc. (4815 W. Braker Lane #502-385, Austin, TX 78759; email: `M.Wahl@critical-angle.com`) at the time of the December 1997 [[collection/concepts/ldap|LDAPv3]] specification publications.
@@ -45,6 +48,10 @@ Wahl is listed as a co-author on several foundational LDAP RFCs from December 19
 RFC 2251 is also cited in RFC 4510 as foundational to the LDAPbis 2006 revision: "based largely on RFC 3377 by J. Hodges and R. Morgan, and borrows from RFC 2251 by M. Wahl, T. Howes, and S. Kille." The December 1997 cluster he co-authored forms the original LDAPv3 specification, later reorganized into the [[collection/synthesis/ldap-technical-specification-architecture|RFC 4510 series]].
 
 The [[collection/entities/netscape-communications|Netscape Communications]] entity page notes Wahl alongside [[collection/entities/tim-howes|Tim Howes]] and [[collection/entities/steve-kille|Steve Kille]] as central to the 1997 LDAPv3 standards effort, though RFC 2253 lists his affiliation as Critical Angle Inc. rather than Netscape.
+
+## RFC 3829: Authorization Identity Controls
+
+Wahl co-authored RFC 3829 (July 2004) — the Authorization Identity Request and Response Controls — alongside [[collection/entities/rob-weltman|Rob Weltman]] and [[collection/entities/mark-smith|Mark Smith]]. The RFC defined a mechanism for LDAP clients to obtain the authorization identity a server associates with a session, delivered via Bind request and response controls. [[collection/sources/2026-05-02-rfc4532-txt|RFC 4532]] (2006) by [[collection/entities/kurt-zeilenga|Kurt Zeilenga]] is explicitly intended to replace this mechanism, citing the security limitation that Bind controls are not protected by the security layers the Bind operation establishes. RFC 4532 acknowledges their prior work.
 
 ## Sun Microsystems (2000)
 

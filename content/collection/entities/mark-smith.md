@@ -13,8 +13,10 @@ tags:
   - rfc
   - rfc4510
   - rfc2255
+  - rfc3829
   - search-filters
   - ldap-url
+  - authorization-identity
   - directory-access
   - string-representation
   - netscape
@@ -24,6 +26,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4516-txt]]"
   - "[[collection/sources/2026-05-02-rfc4370-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4532-txt]]"
 ---
 
 Mark Smith is a software engineer and IETF contributor who participated in both the original 1997 LDAPv3 standardization effort and the 2006 RFC 4510 revision.
@@ -43,3 +46,5 @@ By June 2006 Smith was affiliated with Pearl Crescent, LLC (Saline, MI), where h
 RFC 4516 is the primary consumer of the string filter syntax standardized in RFC 4515 — the `<filter>` component of an LDAP URL uses the RFC 4515 string representation directly.
 
 Smith is also credited in the acknowledgements of [[collection/sources/2026-05-02-rfc4370-txt|RFC 4370]] (LDAP Proxied Authorization Control, February 2006) as "formerly of Netscape Communications Corp." — consistent with his trajectory away from Netscape and into Pearl Crescent by the time of the RFC 4510 series. His reviewer credit alongside [[collection/entities/kurt-zeilenga|Zeilenga]], [[collection/entities/mark-wahl|Mark Wahl]], [[collection/entities/jim-sermersheim|Jim Sermersheim]], and [[collection/entities/steven-legg|Steven Legg]] reflects his continued involvement in the LDAP community beyond his primary editing role.
+
+Smith also co-authored RFC 3829 (July 2004, with [[collection/entities/rob-weltman|Rob Weltman]] and [[collection/entities/mark-wahl|Mark Wahl]]) — the Authorization Identity Request and Response Controls, which used Bind controls to return the authorization identity. [[collection/sources/2026-05-02-rfc4532-txt|RFC 4532]] (2006) acknowledges this prior work and is intended to replace RFC 3829's mechanism with a post-Bind extended operation protected by Bind-established security layers.

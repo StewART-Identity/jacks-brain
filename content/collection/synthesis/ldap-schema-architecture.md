@@ -26,6 +26,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
   - "[[collection/sources/2026-05-02-rfc4519-txt]]"
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4530-txt]]"
 ---
 
 [[collection/concepts/ldap|LDAP]] schema is not a monolithic data model. It is a four-layer architecture in which each layer depends on the one below it, and each layer is independently extensible via OID-registered definitions. Understanding the layering explains both why LDAP schema is so flexible and why schema design errors propagate in surprising ways.
@@ -68,6 +69,9 @@ The four-layer schema architecture is defined across multiple RFCs in the 2006 R
 | Attribute Types + Object Classes | [[collection/sources/2026-05-02-rfc4512-txt\|RFC 4512]] | [[collection/entities/kurt-zeilenga|Kurt Zeilenga]] |
 | User-facing schema (cn, sn, dc, etc.) | [[collection/sources/2026-05-02-rfc4519-txt\|RFC 4519]] (2006); originally [[collection/sources/2026-05-02-rfc2256-txt|RFC 2256]] (1997) | [[collection/entities/andrew-sciberras\|A. Sciberras]]; originally [[collection/entities/mark-wahl|Mark Wahl]] |
 | DN string representation | RFC 4514 | Kurt Zeilenga |
+| UUID syntax + matching rules + entryUUID attribute | [[collection/sources/2026-05-02-rfc4530-txt\|RFC 4530]] | [[collection/entities/kurt-zeilenga\|Kurt Zeilenga]] |
+
+RFC 4530 illustrates an important pattern in LDAP schema extension: the same four-layer architecture (syntax → matching rules → attribute type → operational use) that underpins the core schema can be extended outside the RFC 4510 series, registering new primitives through IANA's LDAP parameters arc (`1.3.6.1.1.16`) rather than a private enterprise arc. RFC 4530 adds a new primitive type (UUID) at Layer 1, two matching rules at Layer 2, and a server-managed operational attribute at Layer 3 — without touching Layer 4 (object classes) at all. The [[collection/concepts/ldap-entry-uuid|`entryUUID`]] attribute solves the [[collection/concepts/distinguished-name|DN instability]] problem by anchoring entry identity below the naming layer.
 
 RFC 4517 and RFC 4512 are tightly coupled: an attribute type definition in RFC 4512's ABNF (`AttributeTypeDescription`) references syntax OIDs and matching rule names that are specified in RFC 4517. Neither document is self-contained without the other.
 
@@ -85,3 +89,4 @@ This four-layer architecture underlies everything else cataloged about LDAP:
 - [[collection/concepts/ldap-paged-results|Paged results]] and [[collection/sources/2026-05-02-rfc4529-txt|attribute selection by object class]] operate on entries whose structure is defined by object classes built on attribute types
 - [[collection/concepts/sasl|SASL]] and [[collection/concepts/ldap-tls|TLS]] govern *who* can read/write attributes; the schema governs *what* those attributes contain and *how* they compare
 - The `distinguishedNameMatch` rule (Layer 2) is what makes DN-based access control in [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513's authorization model]] semantically well-defined: DN equality is a matching rule, not a string comparison
+- [[collection/concepts/ldap-entry-uuid|`entryUUID`]] (RFC 4530) demonstrates the four-layer model applied to a new primitive: UUID syntax at Layer 1, `uuidMatch`/`uuidOrderingMatch` at Layer 2, `entryUUID` operational attribute at Layer 3 — the [[collection/concepts/ldap-content-synchronization|Content Synchronization]] protocol relies on this stable identity anchor to distinguish renames from delete/re-add pairs
