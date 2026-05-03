@@ -29,6 +29,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4533-txt]]"
   - "[[collection/sources/2026-05-02-rfc4530-txt]]"
   - "[[collection/sources/2026-05-02-rfc4532-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4526-txt]]"
 ---
 
 Kurt D. Zeilenga is an engineer at the [[collection/entities/openldap-foundation|OpenLDAP Foundation]] and the primary author of the RFC 4510 series — the 2006 revision of the LDAPv3 Technical Specification that replaced the original December 1997 RFCs (2251–2256) originally driven by [[collection/entities/netscape-communications|Netscape Communications]] engineers including [[collection/entities/tim-howes|Tim Howes]].
@@ -53,6 +54,7 @@ Zeilenga is sole or lead author on a substantial portion of the LDAPv3 specifica
 | RFC 4519 (2006) | LDAP: Schema for User Applications | Acknowledged contributor |
 | RFC 4529 (2006) | Requesting Attributes by Object Class in LDAP | Author |
 | [[collection/sources/2026-05-02-rfc4530-txt\|RFC 4530 (2006)]] | LDAP entryUUID Operational Attribute | Author |
+| [[collection/sources/2026-05-02-rfc4526-txt\|RFC 4526 (2006)]] | LDAP Absolute True and False Filters | Author |
 | [[collection/sources/2026-05-02-rfc4532-txt\|RFC 4532 (2006)]] | LDAP "Who am I?" Operation | Author |
 | [[collection/sources/2026-05-02-rfc4533-txt\|RFC 4533 (2006)]] | LDAP Content Synchronization Operation | Co-author (with [[collection/entities/jong-hyuk-choi\|Jong Hyuk Choi]], IBM) |
 

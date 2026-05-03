@@ -16,13 +16,18 @@ tags:
   - boolean-logic
   - rfc2254
   - rfc4510
+  - rfc4526
   - utf-8
   - directory-access
+  - x500
+  - dap
+  - supported-features
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc2254-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4526-txt]]"
 ---
 
 LDAP search filters are boolean predicate expressions that select entries from an [[collection/concepts/ldap|LDAP]] directory. A filter is applied to a subtree of the directory tree and returns only entries whose attributes satisfy the predicate. On the wire, filters are ASN.1 BER-encoded per the LDAPv3 ASN.1 definition in RFC 4511; in human-readable contexts they use the string syntax specified in [[collection/sources/2026-05-02-rfc4515-txt|RFC 4515]] (June 2006), which obsoletes the earlier [[collection/sources/2026-05-02-rfc2254-txt|RFC 2254]] (December 1997).
@@ -74,6 +79,17 @@ Five characters must be backslash-hex-escaped (`\xx`) in filter values: `*` (0x2
 
 The grammar allows both `present` and `substring` productions to yield `attr=*`, but the RFC resolves the ambiguity: `attr=*` with no other components is always interpreted as a presence filter, not a substring match.
 
+## Absolute True and False Filters (RFC 4526)
+
+[[collection/sources/2026-05-02-rfc4526-txt|RFC 4526]] (June 2006) extends the filter model to restore absolute True and False assertions originally present in X.500 DAP but absent from LDAPv3. The rule follows directly from boolean algebra:
+
+- `(&)` — an `and` filter with **zero elements** always evaluates to **True**
+- `(|)` — an `or` filter with **zero elements** always evaluates to **False**
+
+These filters are useful when querying DSA-specific Entries (DSEs) that do not carry `objectClass` attributes, where a presence filter like `(objectClass=*)` may legitimately return False. They also enable more direct DAP-to-LDAP gateway implementations.
+
+Servers supporting this extension SHOULD publish OID `1.3.6.1.4.1.4203.1.5.3` in the root DSE's `supportedFeatures` attribute. Clients SHOULD check for this OID before using `(&)` or `(|)` syntax.
+
 ## Reuse Beyond Search
 
-The `Filter` ASN.1 type defined in RFC 4511 §4.5.1 is reused by [[collection/concepts/ldap-assertion-control|RFC 4528's Assertion Control]] as the control's value. Any valid search filter can serve as an assertion condition — equality, presence, substring, extensible match, and boolean compositions — applied to the target entry of any LDAP operation (not just Search). This reuse gives the Assertion Control the full expressiveness of LDAP's query language as a precondition mechanism.
+The `Filter` ASN.1 type defined in RFC 4511 §4.5.1 is reused by [[collection/concepts/ldap-assertion-control|RFC 4528's Assertion Control]] as the control's value. Any valid search filter can serve as an assertion condition — equality, presence, substring, extensible match, boolean compositions, and (with RFC 4526 support) absolute True and False filters — applied to the target entry of any LDAP operation (not just Search). This reuse gives the Assertion Control the full expressiveness of LDAP's query language as a precondition mechanism.
