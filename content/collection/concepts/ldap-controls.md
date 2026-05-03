@@ -24,6 +24,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc2891-txt]]"
   - "[[collection/sources/2026-05-02-rfc4370-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4527-txt]]"
   - "[[collection/sources/2026-05-02-rfc4528-txt]]"
 ---
 
@@ -84,7 +85,7 @@ The controls mechanism is used by several extensions:
 - **[[collection/concepts/ldap-paged-results|Paged Results]]** ([[collection/sources/2026-05-02-rfc2696-txt|RFC 2696]]): A `SimplePagedResultsControl` (OID `1.2.840.113556.1.4.319`) on Search requests, carrying a page size and server-issued continuation cookie
 - **[[collection/concepts/ldap-server-side-sorting|Server-Side Sorting]]** ([[collection/sources/2026-05-02-rfc2891-txt|RFC 2891]]): A `SortKeyList` request control (OID `1.2.840.113556.1.4.473`) specifying attribute types and matching rules by which the server should order results, paired with a `SortResult` response control (OID `1.2.840.113556.1.4.474`) reporting sort success or failure
 - **[[collection/concepts/ldap-proxy-authorization|Proxy Authorization]]** ([[collection/sources/2026-05-02-rfc4370-txt|RFC 4370]]): A mandatory-critical control (OID `2.16.840.1.113730.3.4.18`) that requests a single operation execute under a specified authorization identity, enabling per-operation identity substitution for proxy servers and middleware; the only cataloged control that mandates `criticality = TRUE`
-- **Read Entry Controls** (RFC 4527): Return the entry's state before/after a Modify, enabling compare-and-swap semantics on directory entries
+- **[[collection/concepts/ldap-read-entry-controls|Read Entry Controls]]** ([[collection/sources/2026-05-02-rfc4527-txt|RFC 4527]]): A Pre-Read control (OID `1.3.6.1.1.13.1`) and Post-Read control (OID `1.3.6.1.1.13.2`) that atomically return the target entry's state before or after an update; when combined with the Assertion Control, enables compare-and-swap semantics on directory entries
 - **[[collection/concepts/ldap-assertion-control|Assertion Control]]** ([[collection/sources/2026-05-02-rfc4528-txt|RFC 4528]]): A filter-based precondition control (OID `1.3.6.1.1.12`) that blocks any operation unless a specified `Filter` evaluates to TRUE against the target entry; enables atomic "test and set" / "test and clear" patterns; returns `assertionFailed` (122) on failure
 
 RFC 4511 itself does not define any specific controls — it only specifies the controls mechanism. Controls are defined in separate documents.

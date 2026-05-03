@@ -24,6 +24,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4519-txt]]"
   - "[[collection/sources/2026-05-02-rfc3062-txt]]"
   - "[[collection/sources/2026-05-02-rfc4370-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4527-txt]]"
   - "[[collection/sources/2026-05-02-rfc4528-txt]]"
   - "[[collection/sources/2026-05-02-rfc4533-txt]]"
   - "[[collection/sources/2026-05-02-rfc4530-txt]]"
@@ -47,7 +48,7 @@ Zeilenga is sole or lead author on a substantial portion of the LDAPv3 specifica
 | RFC 4517 (2006) | LDAP: Syntaxes and Matching Rules | Significant contributor |
 | [[collection/sources/2026-05-02-rfc4518-txt\|RFC 4518 (2006)]] | LDAP: Internationalized String Preparation | Author |
 | RFC 4520 (2006) | IANA Considerations for LDAP | Author |
-| RFC 4527 (2006) | LDAP Read Entry Controls | Author |
+| [[collection/sources/2026-05-02-rfc4527-txt\|RFC 4527 (2006)]] | LDAP Read Entry Controls | Author |
 | [[collection/sources/2026-05-02-rfc4528-txt\|RFC 4528 (2006)]] | LDAP Assertion Control | Author |
 | RFC 4519 (2006) | LDAP: Schema for User Applications | Acknowledged contributor |
 | RFC 4529 (2006) | Requesting Attributes by Object Class in LDAP | Author |
