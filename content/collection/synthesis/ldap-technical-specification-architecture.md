@@ -28,6 +28,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4510-txt]]"
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4514-txt]]"
   - "[[collection/sources/2026-05-02-rfc4515-txt]]"
   - "[[collection/sources/2026-05-02-rfc4516-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
@@ -61,7 +62,7 @@ The result is a clean layering:
 | Wire protocol | [[collection/sources/2026-05-02-rfc4511-txt\|RFC 4511]] | ASN.1/BER encoding, all operations, controls mechanism, result codes |
 | Authentication | [[collection/sources/2026-05-02-rfc4513-txt\|RFC 4513]] | Bind semantics, StartTLS, SASL integration, authorization state |
 | Data types | [[collection/sources/2026-05-02-rfc4517-txt\|RFC 4517]] | Syntaxes and matching rules |
-| String encodings | RFC 4514, [[collection/sources/2026-05-02-rfc4515-txt\|RFC 4515]] | DN string form, filter string form (1997 predecessors: [[collection/sources/2026-05-02-rfc2253-txt\|RFC 2253]], RFC 2254) |
+| String encodings | [[collection/sources/2026-05-02-rfc4514-txt\|RFC 4514]], [[collection/sources/2026-05-02-rfc4515-txt\|RFC 4515]] | DN string form, filter string form (1997 predecessors: [[collection/sources/2026-05-02-rfc2253-txt\|RFC 2253]], RFC 2254) |
 | URL syntax | [[collection/sources/2026-05-02-rfc4516-txt\|RFC 4516]] | LDAP URL format |
 | User schema | [[collection/sources/2026-05-02-rfc4519-txt\|RFC 4519]] | Standard attributes (cn, mail, uid, etc.) |
 | String preparation | [[collection/sources/2026-05-02-rfc4518-txt\|RFC 4518]] | Internationalized string comparison normalization |
@@ -87,6 +88,6 @@ Both BCPs were authored by [[collection/entities/kurt-zeilenga|Zeilenga]], consi
 
 ## Authorship and the Transition of Stewardship
 
-The 1997 series was a [[collection/entities/netscape-communications|Netscape]]-led effort with [[collection/entities/tim-howes|Tim Howes]] and colleagues as principal authors. The 2006 series is a product of the IETF LDAPBIS Working Group, with [[collection/entities/kurt-zeilenga|Zeilenga]] as the dominant author — editing RFC 4510 (this road map), RFC 4512, RFC 4514, [[collection/sources/2026-05-02-rfc4518-txt|RFC 4518]], RFC 4520, and RFC 4521 outright, and contributing significantly to [[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] and [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]]. [[collection/sources/2026-05-02-rfc4516-txt|RFC 4516]] (LDAP URLs) was edited by [[collection/entities/mark-smith|Mark Smith]] and [[collection/entities/tim-howes|Tim Howes]] — the same pair who produced RFC 4515 — with Zeilenga thanked in the acknowledgements. The authentication RFCs (RFC 4513) were instead edited by [[collection/entities/roger-harrison|Roger Harrison]] of [[collection/entities/novell|Novell]] — see [[collection/synthesis/ldap-authentication-security-architecture|LDAP Security Architecture: Authentication Gap to RFC 4513]] for why a Novell engineer was positioned to own the authentication framework.
+The 1997 series was a [[collection/entities/netscape-communications|Netscape]]-led effort with [[collection/entities/tim-howes|Tim Howes]] and colleagues as principal authors. The 2006 series is a product of the IETF LDAPBIS Working Group, with [[collection/entities/kurt-zeilenga|Zeilenga]] as the dominant author — editing RFC 4510 (this road map), RFC 4512, [[collection/sources/2026-05-02-rfc4514-txt|RFC 4514]], [[collection/sources/2026-05-02-rfc4518-txt|RFC 4518]], RFC 4520, and RFC 4521 outright, and contributing significantly to [[collection/sources/2026-05-02-rfc4511-txt|RFC 4511]] and [[collection/sources/2026-05-02-rfc4517-txt|RFC 4517]]. [[collection/sources/2026-05-02-rfc4516-txt|RFC 4516]] (LDAP URLs) was edited by [[collection/entities/mark-smith|Mark Smith]] and [[collection/entities/tim-howes|Tim Howes]] — the same pair who produced RFC 4515 — with Zeilenga thanked in the acknowledgements. The authentication RFCs (RFC 4513) were instead edited by [[collection/entities/roger-harrison|Roger Harrison]] of [[collection/entities/novell|Novell]] — see [[collection/synthesis/ldap-authentication-security-architecture|LDAP Security Architecture: Authentication Gap to RFC 4513]] for why a Novell engineer was positioned to own the authentication framework.
 
 RFC 4510 itself traces its lineage explicitly: it is based largely on RFC 3377 by J. Hodges and R. Morgan, and borrows from RFC 2251 by M. Wahl, T. Howes, and S. Kille. The acknowledgement captures the generational handoff in LDAP stewardship.

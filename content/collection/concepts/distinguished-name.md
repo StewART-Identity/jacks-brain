@@ -24,6 +24,7 @@ tags:
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2253-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4514-txt]]"
   - "[[collection/sources/2026-05-02-rfc4512-txt]]"
   - "[[collection/sources/2026-05-02-rfc4530-txt]]"
 ---
@@ -94,4 +95,4 @@ A DN is a mutable address, not a permanent identifier. The Modify DN operation a
 
 ## Relationship to RFC 4514
 
-RFC 2253 (December 1997, by [[collection/entities/mark-wahl|Wahl]], [[collection/entities/steve-kille|Kille]], and [[collection/entities/tim-howes|Howes]]) established the DN string format used in LDAPv3. It was superseded by RFC 4514 (June 2006) as part of the [[collection/synthesis/ldap-technical-specification-architecture|RFC 4510 modular reorganization]]. RFC 4514 tightened the grammar and clarified UTF-8 handling but preserved the same core encoding scheme. The [[collection/sources/2026-05-02-rfc2253-txt|RFC 2253 source page]] has details on the original specification.
+RFC 2253 (December 1997, by [[collection/entities/mark-wahl|Wahl]], [[collection/entities/steve-kille|Kille]], and [[collection/entities/tim-howes|Howes]]) established the DN string format used in LDAPv3. It was superseded by [[collection/sources/2026-05-02-rfc4514-txt|RFC 4514]] (June 2006) as part of the [[collection/synthesis/ldap-technical-specification-architecture|RFC 4510 modular reorganization]]. RFC 4514 tightened the grammar and clarified UTF-8 handling but preserved the same core encoding scheme. The [[collection/sources/2026-05-02-rfc2253-txt|RFC 2253 source page]] has details on the original specification.
