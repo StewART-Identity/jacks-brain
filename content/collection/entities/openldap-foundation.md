@@ -21,6 +21,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4512-txt]]"
   - "[[collection/sources/2026-05-02-rfc4529-txt]]"
   - "[[collection/sources/2026-05-02-rfc3062-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4525-txt]]"
   - "[[collection/sources/2026-05-02-rfc4533-txt]]"
   - "[[collection/sources/2026-05-02-rfc4532-txt]]"
   - "[[collection/sources/2026-05-02-rfc4526-txt]]"
@@ -41,5 +42,7 @@ The foundation holds an IANA-assigned private enterprise OID arc (`1.3.6.1.4.1.4
 - OID `1.3.6.1.4.1.4203.1.5.2` — the `supportedFeatures` value published by servers implementing [[collection/sources/2026-05-02-rfc4529-txt|RFC 4529]]'s `@classname` attribute selection extension
 - OID `1.3.6.1.4.1.4203.1.5.3` — the `supportedFeatures` value published by servers implementing [[collection/sources/2026-05-02-rfc4526-txt|RFC 4526]]'s absolute True and False filter extension (`(&)` and `(|)`)
 - OID arc `1.3.6.1.4.1.4203.1.9.1` — all four protocol elements of [[collection/concepts/ldap-content-synchronization|LDAP Content Synchronization]] ([[collection/sources/2026-05-02-rfc4533-txt|RFC 4533]], 2006): Sync Request Control, Sync State Control, Sync Done Control, and Sync Info Message
+
+Not all of Zeilenga's 2006 contributions used the OpenLDAP arc. [[collection/sources/2026-05-02-rfc4525-txt|RFC 4525]] ([[collection/concepts/ldap-modify-increment|Modify-Increment Extension]], OID `1.3.6.1.1.14`) was registered directly in the IANA LDAP arc (`1.3.6.1.1`), the same arc used for the [[collection/concepts/ldap-read-entry-controls|Read Entry Controls]] (RFC 4527, OIDs `1.3.6.1.1.13.1`/`.13.2`) and [[collection/concepts/ldap-assertion-control|Assertion Control]] (RFC 4528, OID `1.3.6.1.1.12`). These IANA-arc OIDs reflect work standardized directly through the IETF process rather than prototyped in the foundation's private allocation first.
 
 The foundation's prominent role in the 2006 RFC 4510 series represents a shift in LDAP standardization leadership: the original 1997 effort (RFCs 2251–2256) was [[collection/entities/netscape-communications|Netscape]]-led; the 2006 revision that superseded it was driven largely by Zeilenga and OpenLDAP.

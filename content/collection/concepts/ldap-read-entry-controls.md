@@ -59,6 +59,8 @@ The most powerful combination is Pre-Read + [[collection/concepts/ldap-assertion
 
 This gives clients a primitive for optimistic concurrency control over directory data — without exposing a TOCTOU window between a separate read and write, and without requiring server-side transaction support beyond what RFC 4527 requires.
 
+A related three-way combination extends this to **atomic test-and-increment**: Assertion Control + [[collection/concepts/ldap-modify-increment|Modify-Increment]] ([[collection/sources/2026-05-02-rfc4525-txt|RFC 4525]]) + Post-Read. The Assertion Control gates the increment on a precondition (e.g., the counter is below a ceiling), and Post-Read returns the resulting value — all atomically in one round trip.
+
 ## Relationship to X.500 DAP
 
 The Pre-Read and Post-Read controls are explicitly modeled after equivalent capabilities in the X.500 Directory Access Protocol (DAP, X.511). This is one of several points where the [[collection/concepts/ldap|LDAPv3]] extension suite converged with X.500 capabilities that were absent from the original 1997 core.

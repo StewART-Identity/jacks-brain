@@ -24,6 +24,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4519-txt]]"
   - "[[collection/sources/2026-05-02-rfc3062-txt]]"
   - "[[collection/sources/2026-05-02-rfc4370-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4525-txt]]"
   - "[[collection/sources/2026-05-02-rfc4527-txt]]"
   - "[[collection/sources/2026-05-02-rfc4528-txt]]"
   - "[[collection/sources/2026-05-02-rfc4533-txt]]"
@@ -54,6 +55,7 @@ Zeilenga is sole or lead author on a substantial portion of the LDAPv3 specifica
 | RFC 4519 (2006) | LDAP: Schema for User Applications | Acknowledged contributor |
 | RFC 4529 (2006) | Requesting Attributes by Object Class in LDAP | Author |
 | [[collection/sources/2026-05-02-rfc4530-txt\|RFC 4530 (2006)]] | LDAP entryUUID Operational Attribute | Author |
+| [[collection/sources/2026-05-02-rfc4525-txt\|RFC 4525 (2006)]] | LDAP Modify-Increment Extension | Author |
 | [[collection/sources/2026-05-02-rfc4526-txt\|RFC 4526 (2006)]] | LDAP Absolute True and False Filters | Author |
 | [[collection/sources/2026-05-02-rfc4532-txt\|RFC 4532 (2006)]] | LDAP "Who am I?" Operation | Author |
 | [[collection/sources/2026-05-02-rfc4533-txt\|RFC 4533 (2006)]] | LDAP Content Synchronization Operation | Co-author (with [[collection/entities/jong-hyuk-choi\|Jong Hyuk Choi]], IBM) |
@@ -64,7 +66,7 @@ His email as listed in the RFCs: `Kurt@OpenLDAP.org`.
 
 Where the original LDAPv3 RFCs (2251–2256) were a [[collection/entities/netscape-communications|Netscape]]-led effort, the 2006 RFC 4510 series revision was largely driven by Zeilenga and the [[collection/entities/openldap-foundation|OpenLDAP Foundation]]. The 4510 series is normative — it obsoletes the 2251–2256 series.
 
-Zeilenga's work concentrated on schema and protocol extensions: Directory Information Models (4512), IANA registration procedures (4520), and protocol feature extensions including the `+` operational attributes selector (3673), read entry controls (4527), the [[collection/sources/2026-05-02-rfc4529-txt|`@classname` attribute selection shorthand]] (4529), and the [[collection/sources/2026-05-02-rfc4530-txt|`entryUUID` operational attribute]] (4530) — which introduced the UUID syntax and `uuidMatch` matching rules to address [[collection/concepts/distinguished-name|DN]] instability. An earlier contribution — [[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]] (2001) — defined the [[collection/concepts/ldap-password-modify|Password Modify Extended Operation]], addressing the password-change gap that SASL integration had created.
+Zeilenga's work concentrated on schema and protocol extensions: Directory Information Models (4512), IANA registration procedures (4520), and protocol feature extensions including the `+` operational attributes selector (3673), the [[collection/sources/2026-05-02-rfc4525-txt|Modify-Increment Extension]] (4525), read entry controls (4527), the [[collection/sources/2026-05-02-rfc4529-txt|`@classname` attribute selection shorthand]] (4529), and the [[collection/sources/2026-05-02-rfc4530-txt|`entryUUID` operational attribute]] (4530) — which introduced the UUID syntax and `uuidMatch` matching rules to address [[collection/concepts/distinguished-name|DN]] instability. An earlier contribution — [[collection/sources/2026-05-02-rfc3062-txt|RFC 3062]] (2001) — defined the [[collection/concepts/ldap-password-modify|Password Modify Extended Operation]], addressing the password-change gap that SASL integration had created.
 
 Note: RFC 4516 ([[collection/concepts/ldap-url|LDAP URL format]]) is sometimes listed in attributions of Zeilenga's work, but the actual RFC was edited by [[collection/entities/mark-smith|Mark Smith]] and [[collection/entities/tim-howes|Tim Howes]]. Zeilenga is thanked in the acknowledgements for "valuable comments" alongside RL "Bob" Morgan, Mark Wahl, Jim Sermersheim, and Hallvard Furuseth.
 

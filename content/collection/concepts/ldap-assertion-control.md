@@ -81,4 +81,8 @@ The Assertion Control is one of several controls in this wiki that augment [[col
 - [[collection/concepts/ldap-server-side-sorting|Server-Side Sorting]] (RFC 2891): orders Search results server-side
 - [[collection/concepts/ldap-proxy-authorization|Proxy Authorization]] (RFC 4370): substitutes authorization identity per-operation
 
-The Assertion Control is the only one of these that gates whether an operation executes at all, rather than modifying how it executes. For a broader analysis of how controls fit into the LDAPv3 extensibility architecture, see [[collection/synthesis/ldap-protocol-extensibility|LDAPv3 Extensibility: Controls, Features, and Companion RFCs]].
+The Assertion Control is the only one of these that gates whether an operation executes at all, rather than modifying how it executes.
+
+A particularly useful three-way combination: Assertion Control + [[collection/concepts/ldap-modify-increment|Modify-Increment]] ([[collection/sources/2026-05-02-rfc4525-txt|RFC 4525]]) + [[collection/concepts/ldap-read-entry-controls|Post-Read Control]] ([[collection/sources/2026-05-02-rfc4527-txt|RFC 4527]]) enables **atomic test-and-increment**: conditionally increment a counter only if it is below a bound, and return the resulting value — all in one round trip with no TOCTOU window.
+
+For a broader analysis of how controls fit into the LDAPv3 extensibility architecture, see [[collection/synthesis/ldap-protocol-extensibility|LDAPv3 Extensibility: Controls, Features, and Companion RFCs]].
