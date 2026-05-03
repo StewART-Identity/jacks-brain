@@ -34,3 +34,4 @@ Audit log of all cataloging operations. Read by /api/retention; rendered by the 
 | 2026-05-02 | Cataloged | 2026-05-02-rfc4528.txt.docx |
 | 2026-05-02 | Cataloged | 2026-05-02-rfc4527.txt.docx |
 | 2026-05-02 | Cataloged | 2026-05-02-rfc4526.txt.docx |
+| 2026-05-02 | Cataloged | 2026-05-02-rfc4525.txt.docx |
