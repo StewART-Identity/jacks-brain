@@ -73,3 +73,7 @@ Five characters must be backslash-hex-escaped (`\xx`) in filter values: `*` (0x2
 ## Presence vs. Substring Ambiguity
 
 The grammar allows both `present` and `substring` productions to yield `attr=*`, but the RFC resolves the ambiguity: `attr=*` with no other components is always interpreted as a presence filter, not a substring match.
+
+## Reuse Beyond Search
+
+The `Filter` ASN.1 type defined in RFC 4511 §4.5.1 is reused by [[collection/concepts/ldap-assertion-control|RFC 4528's Assertion Control]] as the control's value. Any valid search filter can serve as an assertion condition — equality, presence, substring, extensible match, and boolean compositions — applied to the target entry of any LDAP operation (not just Search). This reuse gives the Assertion Control the full expressiveness of LDAP's query language as a precondition mechanism.
