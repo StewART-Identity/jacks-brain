@@ -24,6 +24,7 @@ confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2252-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4518-txt]]"
   - "[[collection/sources/2026-05-02-rfc4530-txt]]"
 ---
 
@@ -45,16 +46,16 @@ A matching rule's assertion value syntax may also differ from the attribute valu
 
 ## String Preparation (RFC 4518)
 
-String-based matching rules apply **string preparation algorithms** before comparing. The steps, in order, are:
+String-based matching rules apply **string preparation algorithms** before comparing, as defined in [[collection/sources/2026-05-02-rfc4518-txt|RFC 4518]] and described in detail on the [[collection/concepts/ldap-string-preparation|LDAP String Preparation]] concept page. The steps, in order, are:
 
 1. **Transcode** — convert from LDAP-specific encoding to Unicode
 2. **Map** — apply character mapping (case folding for case-ignore rules; no-op for case-exact rules)
-3. **Normalize** — Unicode normalization
+3. **Normalize** — Unicode normalization (NFKC)
 4. **Prohibit** — reject prohibited code points
-5. **Check bidi** — validate bidirectional character sequences
+5. **Check bidi** — bidirectional characters are ignored (no normative effect in RFC 4518)
 6. **Insignificant Character Handling** — strip/normalize whitespace (space handling) or digits depending on the rule type
 
-Steps 1–5 are identical across all string rules. Step 2 (Map) and Step 6 (Insignificant Character Handling) vary by rule: case-ignore rules fold case; case-exact rules do not. numericString rules apply numericString insignificant character handling (spaces stripped); telephoneNumber rules apply telephoneNumber insignificant character handling.
+Steps 1–5 are identical across all string rules. Step 2 (Map) and Step 6 (Insignificant Character Handling) vary by rule: case-ignore rules fold case; case-exact rules do not. numericString rules remove all spaces; telephoneNumber rules remove all spaces and hyphen variants.
 
 ## Key Equality Rules
 

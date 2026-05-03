@@ -24,6 +24,7 @@ confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2252-txt]]"
   - "[[collection/sources/2026-05-02-rfc4517-txt]]"
+  - "[[collection/sources/2026-05-02-rfc4518-txt]]"
   - "[[collection/sources/2026-05-02-rfc4530-txt]]"
 ---
 
@@ -44,7 +45,7 @@ LDAP-specific encodings are **not canonical**. A round-trip through BER (LDAP â†
 - LDAP encodings must not be used where reversibility to DER is required â€” in particular, when verifying digital signatures, use DER directly.
 - Security-sensitive access control fields must be compared at the abstract value level, not by comparing raw encodings. Implementations must ensure matching rule comparisons operate on the underlying abstract value regardless of the encoding path used.
 
-Gateways between LDAP and X.500 must transcode Directory String values per the Transcode step in RFC 4518's string preparation algorithms.
+Gateways between LDAP and X.500 must transcode Directory String values per the Transcode step in [[collection/sources/2026-05-02-rfc4518-txt|RFC 4518]]'s [[collection/concepts/ldap-string-preparation|string preparation algorithms]].
 
 ## Key Syntaxes
 
