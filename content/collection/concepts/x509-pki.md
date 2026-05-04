@@ -25,9 +25,12 @@ tags:
 confidence: high
 sources:
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
 ---
 
 **X.509** is ITU-T Recommendation X.509 | ISO/IEC 9594-8, *The Directory: Authentication Framework* (and, in later editions, *Public-Key and Attribute Certificate Frameworks*). Originally a component of the [[collection/entities/itu-t|ITU-T]] X.500 directory series, X.509 became the universal standard for public-key certificates and is the foundation of TLS/HTTPS, S/MIME, code signing, and enterprise [[collection/concepts/ldap-tls|LDAP TLS]] authentication.
+
+X.509 was co-published alongside the [[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e|1988 X.500 specification]], where it served as the "strong authentication" mechanism: the directory would hold users' public encryption keys, and X.509 defined the procedures for obtaining those keys and authenticating between entities using them. X.509 thus began as a directory authentication service, not as an internet PKI standard.
 
 This subject (`pki`) is introduced here because X.509 PKI spans far beyond directory services — it is the trust infrastructure for the broader internet. The existing `directory-services` subject does not capture this scope.
 

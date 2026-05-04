@@ -3,7 +3,7 @@ title: "X.500 User Schema"
 summary: "The standard set of attribute types and object classes from the ISO/ITU-T X.500 series used by LDAP for representing people, organizations, and locations in directory entries."
 type: concept
 created: 2026-05-02
-updated: 2026-05-02
+updated: 2026-05-04
 subjects:
   - directory-services
 tags:
@@ -27,6 +27,7 @@ confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
   - "[[collection/sources/2026-05-02-rfc4519-txt]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
 ---
 
 The **X.500 user schema** is the standard set of attribute types and [[collection/concepts/ldap-object-classes|object classes]] from the ISO/[[collection/entities/itu-t|ITU-T]] X.500 directory series that [[collection/concepts/ldap|LDAP]] directory implementations are expected to recognize. It defines the shared vocabulary for "white pages" directories: how to represent people, organizations, locations, and groups. This vocabulary — `cn`, `sn`, `o`, `ou`, `person`, `organizationalPerson`, and others — is so widely adopted that it has become the default grammar of enterprise identity systems well beyond LDAP itself.
@@ -34,6 +35,8 @@ The **X.500 user schema** is the standard set of attribute types and [[collectio
 ## Normative Definitions
 
 The user schema was compiled for LDAP use in [[collection/sources/2026-05-02-rfc2256-txt|RFC 2256]] (December 1997), authored by [[collection/entities/mark-wahl|Mark Wahl]]. RFC 2256 summarizes attribute types from X.520 and X.501, object classes from X.521, and PKI attributes from X.509. In 2006, [[collection/sources/2026-05-02-rfc4519-txt|RFC 4519]] superseded RFC 2256 as part of the [[collection/synthesis/ldap-technical-specification-architecture|RFC 4510 modular reorganization]], carrying forward the same definitions with updates for modern practice.
+
+The core attribute types and object classes drawn from X.520 and X.521 trace directly to the [[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e|1988 X.500 publication set]] — co-published at the CCITT Melbourne 1988 session alongside X.500 (overview), X.501 (models), X.509 (authentication), and X.511–X.521.
 
 ## The Schema vs. the Framework
 

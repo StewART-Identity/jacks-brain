@@ -25,6 +25,7 @@ confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
 ---
 
 The **International Telecommunication Union – Telecommunication Standardization Sector** (ITU-T), formerly the **CCITT**, is the United Nations body responsible for international telecommunications standards. In the context of this wiki, ITU-T is significant as the primary standardization vehicle for the **X.500 directory standard series** — the normative framework whose data model [[collection/concepts/ldap|LDAP]] inherits entirely.
@@ -35,7 +36,7 @@ The X.500 series is developed jointly by ITU-T and ISO (published in parallel as
 
 | ITU-T Rec. | ISO equiv. | Title |
 |------------|------------|-------|
-| X.500 | ISO 9594-1 | The Directory: Overview of concepts, models and services |
+| [[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e\|X.500]] | ISO 9594-1 | The Directory: Overview of concepts, models and services |
 | X.501 | ISO 9594-2 | The Directory: Models |
 | X.509 | ISO 9594-8 | The Directory: Authentication Framework |
 | X.511 | ISO 9594-3 | The Directory: Abstract Service Definition |

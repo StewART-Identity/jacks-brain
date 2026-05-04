@@ -3,7 +3,7 @@ title: "Directory Information Tree (DIT)"
 summary: "The hierarchical tree structure organizing all directory entries in an X.500/LDAP deployment; the foundational data model underlying all LDAP operations."
 type: concept
 created: 2026-05-02
-updated: 2026-05-02
+updated: 2026-05-04
 subjects:
   - directory-services
 tags:
@@ -28,9 +28,10 @@ tags:
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc4512-txt]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
 ---
 
-The **Directory Information Tree (DIT)** is the hierarchical tree structure used by X.500 and [[collection/concepts/ldap|LDAP]] to organize all directory information. Every directory entry occupies a vertex in this tree; the relationships between entries are encoded in the tree's arcs. The DIT is the core organizing principle of the directory data model, defined normatively in [[collection/sources/2026-05-02-rfc4512-txt|RFC 4512]] based on X.501.
+The **Directory Information Tree (DIT)** is the hierarchical tree structure used by X.500 and [[collection/concepts/ldap|LDAP]] to organize all directory information. Every directory entry occupies a vertex in this tree; the relationships between entries are encoded in the tree's arcs. The DIT is the core organizing principle of the directory data model, introduced in the [[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e|1988 X.500 recommendation]] and defined normatively in [[collection/sources/2026-05-02-rfc4512-txt|RFC 4512]] based on X.501.
 
 ## Directory Information Base (DIB)
 

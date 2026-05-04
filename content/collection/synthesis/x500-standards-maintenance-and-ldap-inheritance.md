@@ -24,6 +24,7 @@ tags:
 confidence: high
 sources:
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
   - "[[collection/sources/2026-05-02-rfc4510-txt]]"
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
@@ -38,6 +39,8 @@ Between 1997 and 2006, the X.500 and LDAP specification universes ran in paralle
 
 | Period | ITU-T/ISO X.500 track | IETF LDAP track |
 |---|---|---|
+| 1988 | [[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e\|1st edition published]] (X.500–X.521 + X.509) | — (predates LDAP) |
+| 1993 | 2nd edition | LDAPv1 (RFC 1487) |
 | 1997 | 3rd edition published (X.500–X.530) | LDAPv3 published (RFC 2251–2256) |
 | 1999–2001 | 4th edition published; Technical Corrigenda to 3rd edition | RFC 2829/2830 (authentication); LDAPBIS working group forms |
 | 2001 | DIG v15: 200+ defect resolutions | LDAPv3 widely deployed, known gaps |
