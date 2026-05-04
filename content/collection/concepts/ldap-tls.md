@@ -25,7 +25,7 @@ sources:
   - "[[collection/sources/2026-05-02-rfc4513-txt]]"
 ---
 
-[[collection/concepts/ldap|LDAP]] sessions can be protected by Transport Layer Security (TLS, RFC 4346) in two ways: by connecting directly over TLS (historically port 636, "LDAPS"), or by upgrading an existing plaintext connection using the **StartTLS** extended operation. [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] specifies StartTLS procedures for LDAP.
+[[collection/concepts/ldap|LDAP]] sessions can be protected by Transport Layer Security (TLS, RFC 4346) in two ways: by connecting directly over TLS (historically port 636, "LDAPS"), or by upgrading an existing plaintext connection using the **StartTLS** extended operation. [[collection/sources/2026-05-02-rfc4513-txt|RFC 4513]] specifies StartTLS procedures for LDAP. TLS relies on [[collection/concepts/x509-pki|X.509 PKI]] for the server (and optionally client) certificate chain used during the TLS handshake.
 
 ## The StartTLS Operation
 

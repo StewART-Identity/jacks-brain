@@ -98,7 +98,7 @@ Several auxiliary classes support X.509 PKI integration:
 - **`certificationAuthority-V2`** (SUP certificationAuthority) — Adds `deltaRevocationList` support (new in X.500(96)).
 - **`userSecurityInformation`** — MAY `supportedAlgorithms`.
 
-All PKI certificate attributes must be stored and retrieved in binary form (`;binary` transfer option).
+All PKI certificate attributes must be stored and retrieved in binary form (`;binary` transfer option). For the full X.509 PKI framework — certification paths, certificate policies, CRL distribution points, and revocation — see [[collection/concepts/x509-pki|X.509 PKI]].
 
 ## Stability and Wider Reuse
 

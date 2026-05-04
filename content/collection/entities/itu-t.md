@@ -3,7 +3,7 @@ title: "ITU-T"
 summary: "UN telecommunications standards body that developed the X.500 directory series — the normative source for LDAP's attribute types, object classes, and authentication framework."
 type: entity
 created: 2026-05-02
-updated: 2026-05-02
+updated: 2026-05-04
 subjects:
   - directory-services
 tags:
@@ -18,9 +18,13 @@ tags:
   - iso
   - itu
   - pki
+  - technical-corrigendum
+  - defect-resolution
+  - implementors-guide
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
 ---
 
 The **International Telecommunication Union – Telecommunication Standardization Sector** (ITU-T), formerly the **CCITT**, is the United Nations body responsible for international telecommunications standards. In the context of this wiki, ITU-T is significant as the primary standardization vehicle for the **X.500 directory standard series** — the normative framework whose data model [[collection/concepts/ldap|LDAP]] inherits entirely.
@@ -54,6 +58,12 @@ Because LDAP inherits X.500's data model wholesale, the attribute types and obje
 ## X.509 and PKI
 
 X.509 is separately significant beyond directory services as the foundation for TLS/SSL certificate chains, HTTPS, and enterprise PKI. The X.509 PKI attributes compiled in RFC 2256 (`userCertificate`, `cACertificate`, `certificateRevocationList`, etc.) carry the same OID arc (`2.5.4.*`) used in X.509 certificate structures globally. See [[collection/concepts/ldap-tls|LDAP TLS]] for how TLS (itself X.509-based) secures LDAP connections.
+
+## Directory Implementors' Guide and Defect Resolution
+
+ITU-T jointly maintains the **Directory Implementors' Guide** (DIG) with [[collection/entities/iso-iec-jtc1-sc6|ISO/IEC JTC 1/SC 6]], a compilation of reported defects and their resolutions to the X.500-series. The DIG is distributed through ITU-T contributions and ISO/IEC N-series documents and serves as an authoritative supplementary reference for implementers. [[collection/entities/hoyt-kesterson|Hoyt L. Kesterson II]] served as editor and ISO Rapporteur for the 3rd and 4th edition periods.
+
+The defect resolution process involves a collaborative international committee with representatives from national bodies submitting numbered Defect Reports (DRs). Agreed resolutions are balloted as Draft Technical Corrigenda (DTCs) and, once approved, published as formal Technical Corrigenda (TCs). [[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e|DIG Version 15]] (August 2001) covers DRs 075–282 against the 3rd and 4th editions, including major corrections to [[collection/concepts/x509-pki|X.509 PKI]] semantics, [[collection/concepts/asn1|ASN.1]] module errors, and the deprecation of the DIRQOP security framework.
 
 ## QUIPU Implementation
 
