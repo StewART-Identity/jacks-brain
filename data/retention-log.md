@@ -39,3 +39,4 @@ Audit log of all cataloging operations. Read by /api/retention; rendered by the 
 | 2026-05-04 | Cataloged | 2026-05-04-T-REC-X.500-198811-S--PDF-E.pdf |
 | 2026-05-04 | Cataloged | 2026-05-04-T-REC-X.500-201610-S--PDF-E.pdf |
 | 2026-05-04 | Cataloged | 2026-05-04-T-REC-X.509-202110-I-Cor1-PDF-E.pdf |
+| 2026-05-04 | Cataloged | 2026-05-04-T-REC-X.509-202310-I-Cor2-PDF-E.pdf |
