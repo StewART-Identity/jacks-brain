@@ -11,6 +11,8 @@ tags:
   - distributed-directory
   - dsa
   - dua
+  - ldap-requester
+  - ldap-responder
   - dap
   - dsp
   - chaining
@@ -25,9 +27,11 @@ tags:
   - x519
   - x518
   - 1988
+  - 2016
 confidence: high
 sources:
   - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-500-201610-s-pdf-e]]"
 ---
 
 The **X.500 distributed directory model** describes how [[collection/entities/itu-t|ITU-T]] X.500 deploys directory services across many systems and organizations to form "a single logical directory composed of many systems." This distributed architecture is a defining feature of the X.500 design and contrasts sharply with typical [[collection/concepts/ldap|LDAP]] deployment practice, where chaining and multicasting are rarely implemented.
@@ -40,6 +44,16 @@ Two principal agent types participate in directory operations:
 
 **Directory System Agent (DSA)** — An OSI application process holding a portion of the [[collection/concepts/directory-information-tree|DIB]] and providing access to it. A DSA may answer requests from its own local database or interact with other DSAs to satisfy requests that span multiple servers. A DSA that holds no relevant data for a request has three options: chain the request, multicast it, or return a referral.
 
+The [[collection/sources/2026-05-04-t-rec-x-500-201610-s-pdf-e|2016 eighth edition]] added three LDAP-specific agent types, formally integrating [[collection/concepts/ldap|LDAP]] into the distributed model:
+
+| Agent | Role |
+|-------|------|
+| **LDAP server** | Application process serving LDAP clients via the LDAP protocol; peer of DSA in the functional model |
+| **LDAP requester** | A DSA capable of issuing LDAP requests and understanding LDAP responses |
+| **LDAP responder** | A DSA capable of understanding and responding to LDAP requests |
+
+A DSA can be simultaneously an LDAP responder and an LDAP requester, enabling topologies where X.500 DAP/DSP infrastructure and LDAP infrastructure interoperate. An LDAP client bound to an LDAP server, unlike a DUA, cannot have its requests served by a different server.
+
 ## Protocols
 
 | Protocol | Parties | Purpose |
@@ -47,7 +61,7 @@ Two principal agent types participate in directory operations:
 | **DAP** (Directory Access Protocol) | DUA ↔ DSA | Client–server operations: read, search, modify, bind |
 | **DSP** (Directory System Protocol) | DSA ↔ DSA | Server–server cooperation for distributed requests |
 
-Both are OSI application protocols — application contexts composed of application service elements built on the Remote Operations Service (ROS) from X.219 — formally specified in X.519. Both use [[collection/concepts/asn1|ASN.1]] encoding.
+Both are OSI application protocols — application contexts composed of application service elements built on the Remote Operations Service (ROS) from X.219 — formally specified in X.519. Both use [[collection/concepts/asn1|ASN.1]] encoding. Two additional protocols govern replication and operational bindings: DISP (Directory Information Shadowing Protocol, X.525) for [[collection/concepts/x500-directory-replication|shadowing agreements]], and DOP (Directory Operational Binding Management Protocol) for administrative bindings between DSAs.
 
 [[collection/concepts/ldap|LDAP]] (Lightweight DAP) replaced DAP with a TCP/IP-native protocol starting with RFC 1487 (1993). No LDAP equivalent of DSP exists — LDAP clients receive referrals and chase them independently rather than relying on server-to-server chaining.
 
@@ -137,4 +151,4 @@ These controls directly inspired the `sizelimit`, `timelimit`, and `scope` param
 | ADDMD backbone | Global carrier-interconnected directory | Not realized; DNS fills the naming role |
 | DSP | Formal normative server-to-server protocol | No LDAP equivalent |
 
-The gap between X.500's distributed vision and LDAP's simpler deployment model is one of the defining architectural differences between the two systems. See [[collection/synthesis/x500-standards-maintenance-and-ldap-inheritance|X.500 Standards Maintenance]] for the broader historical context of how LDAP diverged from and inherited the X.500 foundation.
+The gap between X.500's distributed vision and LDAP's simpler deployment model is one of the defining architectural differences between the two systems. The [[collection/sources/2026-05-04-t-rec-x-500-201610-s-pdf-e|2016 eighth edition]] partially bridged this gap by formally defining LDAP requesters and responders as valid participants in chaining and referral topologies — but multicasting and DSP remain X.500-only. See [[collection/synthesis/x500-ldap-convergence|X.500 and LDAP: Divergence and the 2016 Reconvergence]] for the full historical arc, and [[collection/synthesis/x500-standards-maintenance-and-ldap-inheritance|X.500 Standards Maintenance]] for how the defect resolution process shaped shared infrastructure.

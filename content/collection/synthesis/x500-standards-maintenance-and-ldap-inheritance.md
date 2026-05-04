@@ -25,6 +25,7 @@ confidence: high
 sources:
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-500-201610-s-pdf-e]]"
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
   - "[[collection/sources/2026-05-02-rfc4510-txt]]"
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"

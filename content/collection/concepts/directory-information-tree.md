@@ -24,11 +24,14 @@ tags:
   - dua
   - root-dse
   - alias
+  - compound-entry
+  - hierarchical-group
   - rfc4512
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc4512-txt]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-500-201610-s-pdf-e]]"
 ---
 
 The **Directory Information Tree (DIT)** is the hierarchical tree structure used by X.500 and [[collection/concepts/ldap|LDAP]] to organize all directory information. Every directory entry occupies a vertex in this tree; the relationships between entries are encoded in the tree's arcs. The DIT is the core organizing principle of the directory data model, introduced in the [[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e|1988 X.500 recommendation]] and defined normatively in [[collection/sources/2026-05-02-rfc4512-txt|RFC 4512]] based on X.501.
@@ -60,6 +63,8 @@ The DIT contains three kinds of entries:
 **Object entries** represent real-world objects — people, organizations, devices, or any identifiable entity. Each object entry belongs to exactly one structural [[collection/concepts/ldap-object-classes|object class]] chain, which defines what the entry represents.
 
 **Alias entries** provide alternative names for an object. An alias entry belongs to the `alias` structural object class and carries an `aliasedObjectName` attribute pointing to the target entry. Alias entries are always leaf entries — they cannot have subordinates. Alias dereferencing is the process of following these pointers to find the object entry being named.
+
+**Compound entries** represent a single real-world object as an aggregate of *member entries* (also called family members), each holding information about a particular aspect of that object. Introduced in the [[collection/sources/2026-05-04-t-rec-x-500-201610-s-pdf-e|2016 X.500 eighth edition overview]], compound entries allow one object to span multiple entries without losing its identity as a coherent whole. A Search may return compound entry information as a packaged result; a Modify Entry operates on a single member only; a Modify Distinguished Name may move members within the same compound entry.
 
 **Subentries** are a special sort of entry that holds administrative and operational information associated with a subtree. Subschema subentries — which hold schema definitions — are the most important kind (see below).
 
@@ -103,6 +108,15 @@ Schema discovery procedure:
 2. Issue a Search at that DN with `scope=baseObject` and `filter=(objectClass=subschema)`, requesting the desired schema attributes
 
 Subschema definitions in the wiki's [[collection/synthesis/ldap-schema-architecture|four-layer schema architecture]] — syntaxes, matching rules, attribute types, and [[collection/concepts/ldap-object-classes|object classes]] — are all stored in and served from subschema subentries.
+
+## Hierarchical Groups
+
+A **hierarchical group** establishes an alternative hierarchical relationship among entries that is independent of the DIT tree structure. Defined in the [[collection/sources/2026-05-04-t-rec-x-500-201610-s-pdf-e|2016 X.500 eighth edition]], hierarchical groups allow:
+
+- A Search operation matching an entry to return not only that entry but also other members of the hierarchical group to which it belongs
+- Hierarchical relationships to change without altering the DIT structure, thereby preserving the [[collection/concepts/distinguished-name|distinguished names]] of the entries involved
+
+Hierarchical groups decouple conceptual hierarchy (the business or organizational structure) from naming hierarchy (the DIT tree shape). In large deployments, this means reorganizations can be expressed in group membership without triggering DN renames across large subtrees.
 
 ## DIT Governance Rules
 
