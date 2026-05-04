@@ -16,6 +16,7 @@ tags:
   - asn1
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-04-t-rec-x-imp500-200103-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
 ---
 
@@ -23,7 +24,7 @@ sources:
 
 ## Role in Directory Standards
 
-Kesterson's primary contribution to the X.500 standards effort was editing and maintaining the [[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e|Directory Implementors' Guide]], a joint publication of [[collection/entities/itu-t|ITU-T]] and [[collection/entities/iso-iec-jtc1-sc6|ISO/IEC JTC 1/SC 6]] that compiled approved Technical Corrigenda (TCs) and tracked defect reports against the X.500-series standards. Version 15 of the Guide, dated August 2001, covered DR 075 through DR 282.
+Kesterson's primary contribution to the X.500 standards effort was editing and maintaining the **Directory Implementors' Guide** (DIG), a joint publication of [[collection/entities/itu-t|ITU-T]] and [[collection/entities/iso-iec-jtc1-sc6|ISO/IEC JTC 1/SC 6]] that compiled approved Technical Corrigenda (TCs) and tracked defect reports against the X.500-series standards. [[collection/sources/2026-05-04-t-rec-x-imp500-200103-i-msw-e|Version 14]] (March 2001) was the final version to document 2nd-edition (1993/1995) TCs — including X.509 TC1's introduction of v3 certificates — and explicitly advised 2nd-edition implementors to retain it as their authoritative reference. [[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e|Version 15]] (August 2001) dropped the 2nd-edition appendix and covered DRs 075–282 against the 3rd and 4th editions.
 
 In this role, Kesterson coordinated the collaborative **Directory Defect Resolution Committee** — an international body with representatives from national standards bodies in Australia, Canada, Denmark, France, Germany, Japan, Norway, Sweden, the UK, and the USA — to review implementer-reported defects and prepare draft corrigenda for ballot.
 

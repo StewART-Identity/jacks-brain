@@ -30,6 +30,7 @@ tags:
   - ldap
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-04-t-rec-x-imp500-200103-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e]]"
@@ -44,7 +45,7 @@ This subject (`pki`) is introduced here because X.509 PKI spans far beyond direc
 
 ## Certificate Structure
 
-An X.509 certificate binds a public key to a subject identity, signed by a certification authority (CA). The v3 structure includes:
+An X.509 certificate binds a public key to a subject identity, signed by a certification authority (CA). The v3 structure — introduced to the 2nd edition (1993) specification via Technical Corrigendum 1 and documented as a 2nd-edition correction in [[collection/sources/2026-05-04-t-rec-x-imp500-200103-i-msw-e|DIG Version 14]] — includes:
 - **Version** (must be v2 for attribute certificates; v3 for public-key certificates with extensions)
 - **Serial number** (unique per issuing CA)
 - **Signature algorithm identifier**

@@ -27,6 +27,7 @@ tags:
   - guls
 confidence: high
 sources:
+  - "[[collection/sources/2026-05-04-t-rec-x-imp500-200103-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-imp200-200612-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
@@ -75,6 +76,10 @@ A significant portion of the X.500 defect reports addressed [[collection/concept
 ## X.509: From Directory Authentication Framework to Internet PKI
 
 The most consequential thread in the DIG v15 corrigenda is X.509. What began as a component of the X.500 directory — *The Directory: Authentication Framework* — became the foundation of internet security infrastructure. The Technical Corrigenda documented in DIG v15 reveal a specification that was actively being hardened into the formal, rigorous PKI framework that would underpin TLS/HTTPS:
+
+### v3 Certificates Entered the 2nd Edition via Technical Corrigendum
+
+Before the 3rd edition (1997) incorporated X.509 v3 certificates as baseline, [[collection/sources/2026-05-04-t-rec-x-imp500-200103-i-msw-e|DIG Version 14]] — the last Guide to cover 2nd-edition TCs — records that v3 was introduced to the 2nd-edition (1993) specification through Technical Corrigendum 1 to X.509. This TC added the `extensions` field, the `EXTENSION` information object class, and CRL versioning/extension components to the normative 1993 text. The 3rd edition (1997) thus incorporated a feature already formally part of the corrected 2nd edition rather than originating v3 certificates from scratch. V14 explicitly instructed 2nd-edition implementors to retain it; V15 dropped the 2nd-edition appendix entirely. The edition boundary the 3rd edition represents is therefore more gradual than it appears from the published edition texts alone.
 
 ### Certification Path Processing as a Formal Algorithm
 
