@@ -6,6 +6,7 @@ created: 2026-05-02
 updated: 2026-05-04
 subjects:
   - directory-services
+  - osi-protocols
 tags:
   - x500
   - standards-body
@@ -21,10 +22,16 @@ tags:
   - technical-corrigendum
   - defect-resolution
   - implementors-guide
+  - osi
+  - acse
+  - rose
+  - guls
+  - x800
 confidence: high
 sources:
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-imp200-200612-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-509-202310-i-cor2-pdf-e]]"
@@ -67,6 +74,10 @@ X.509 is separately significant beyond directory services as the foundation for 
 ITU-T jointly maintains the **Directory Implementors' Guide** (DIG) with [[collection/entities/iso-iec-jtc1-sc6|ISO/IEC JTC 1/SC 6]], a compilation of reported defects and their resolutions to the X.500-series. The DIG is distributed through ITU-T contributions and ISO/IEC N-series documents and serves as an authoritative supplementary reference for implementers. [[collection/entities/hoyt-kesterson|Hoyt L. Kesterson II]] served as editor and ISO Rapporteur for the 3rd and 4th edition periods.
 
 The defect resolution process involves a collaborative international committee with representatives from national bodies submitting numbered Defect Reports (DRs). Agreed resolutions are balloted as Draft Technical Corrigenda (DTCs) and, once approved, published as formal Technical Corrigenda (TCs). [[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e|DIG Version 15]] (August 2001) covers DRs 075–282 against the 3rd and 4th editions, including major corrections to [[collection/concepts/x509-pki|X.509 PKI]] semantics, [[collection/concepts/asn1|ASN.1]] module errors, and the deprecation of the DIRQOP security framework. The process has continued actively since: the [[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e|2021 Technical Corrigendum 1 to X.509 (9th edition)]] — handled by Study Group 17 — corrected the `ALGORITHM` information object class definition (DR 431) and renamed four SHA/RSA algorithm identifier constants (DR 432). The [[collection/sources/2026-05-04-t-rec-x-509-202310-i-cor2-pdf-e|2023 Technical Corrigendum 2 to X.509 (9th edition)]] completed LDAP integration of the PMI attribute certificate framework (DR 434) and introduced the `noRevAvail` extension for short-lived certificate deployments (DR 435).
+
+## OSI Implementers' Guide and Protocol Layer Standards
+
+In addition to the Directory Implementors' Guide, ITU-T Study Group 17 also maintains the **OSI Implementers' Guide** — a parallel compilation of defect resolutions for the **X.200-series** (OSI session/presentation protocols), **X.600-series**, and **X.800-series** (OSI security architecture) recommendations. The [[collection/sources/2026-05-04-t-rec-x-imp200-200612-i-msw-e|OSI Implementers' Guide v1.1]] (December 2006) documents corrections to protocols that form the protocol substrate for X.500: [[collection/concepts/acse|ACSE]] (X.227/X.227bis) for application-layer association establishment, [[collection/concepts/rose-remote-operations|ROSE]] (X.880/X.882) for the request/response operation framework, and [[collection/concepts/guls|GULS]] (X.830) for OSI upper-layer security.
 
 ## QUIPU Implementation
 

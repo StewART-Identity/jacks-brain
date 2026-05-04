@@ -21,9 +21,14 @@ tags:
   - implementors-guide
   - standards-evolution
   - ietf
+  - osi
+  - acse
+  - rose
+  - guls
 confidence: high
 sources:
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-imp200-200612-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-201610-s-pdf-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e]]"
@@ -112,6 +117,26 @@ The [[collection/entities/hoyt-kesterson|Hoyt Kesterson]]-edited Directory Imple
 The IETF's equivalent for the 1997 LDAP RFCs was informal — mailing list discussions, implementation experience, eventually the LDAPBIS working group that produced the RFC 4510 series. The RFC 4510 documents *replaced* the 1997 RFCs rather than correcting them in place, which is both cleaner (no accumulated corrigenda to track) and more disruptive (implementations must track which RFC version applies to which behavior).
 
 Neither process is inherently superior — the ITU-T process produces more stable base texts with formal correction trails; the IETF process moves faster and produces more accessible documents. The directory/PKI standards that LDAP practitioners use today reflect outputs of both tracks, often in ways that are invisible unless you trace the history.
+
+## The OSI Protocol Layer: A Parallel Implementers' Guide
+
+The [[collection/sources/2026-05-04-t-rec-x-imp200-200612-i-msw-e|OSI Implementers' Guide v1.1]] (December 2006) is a companion document to the Directory Guide, covering the X.200/X.600/X.800-series protocols that form the OSI stack *beneath* the X.500 directory layer. Reading both guides together reveals the full scope of what X.500 DAP implementations actually required versus what LDAP avoided.
+
+### The Protocols X.500 DAP Required
+
+X.500 DAP operates over a full OSI protocol stack. The OSI Implementers' Guide covers three of its most critical components:
+
+**[[collection/concepts/acse|ACSE]] (X.227/X.237)** — the application-layer connection setup protocol. Before any directory operation, a DUA and DSA must complete an ACSE A-ASSOCIATE exchange negotiating application context, authentication credentials, and presentation context. LDAP replaced this with a direct TCP connection and a single Bind request.
+
+**[[collection/concepts/rose-remote-operations|ROSE]] (X.880/X.882)** — the remote operations framework. All X.500 directory operations are ROSE invoke/return-result/return-error exchanges. The `ReturnResult` correction documented in the OSI Guide (TC1 to X.880, 07/1995) directly affected the wire encoding of every successful directory operation response. LDAP replaced ROSE with a flat `LDAPMessage` type encoding protocol operations directly.
+
+**[[collection/concepts/guls|GULS]] (X.830)** — the upper-layer security framework. The OSI Guide documents ASN.1 module errors in GULS's `PROTECTED` parameterized type (incorrect `CONTAINING` syntax) that rendered the specification unimplementable from normative text. Simultaneously, DIG v15 deprecated the entire GULS/DIRQOP framework from the X.500 series. These two documents together capture a security framework that was formally corrected at the OSI layer and simultaneously abandoned at the directory layer.
+
+### GULS: Corrected and Abandoned
+
+The GULS trajectory is a particularly clear illustration of the difference between OSI formal standards maintenance and LDAP's deployment-driven evolution. The OSI Implementers' Guide fixed ASN.1 compilation errors in X.830 (December 2006). The Directory Implementors' Guide deprecated the same framework across X.501/X.511/X.518/X.519/X.525 (August 2001). Both documents represent formally sanctioned actions — corrections and deprecations — approved through the same ITU-T/ISO governance process. Neither represents unilateral abandonment.
+
+LDAP never adopted GULS at all, instead layering TLS (for transport security) and [[collection/concepts/sasl|SASL]] (for authentication) as separate protocol concerns. The [[collection/synthesis/ldap-authentication-security-architecture|LDAP security architecture]] that resulted is demonstrably simpler and more widely deployed than GULS would have been. But the X.500 community reached the same conclusion through its formal defect process rather than by designing around the problem.
 
 ## The Process Continues: X.509 Corrigenda (2021–2023)
 
