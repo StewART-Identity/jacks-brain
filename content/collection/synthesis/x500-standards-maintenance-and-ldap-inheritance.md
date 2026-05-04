@@ -27,6 +27,7 @@ sources:
   - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-201610-s-pdf-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-509-202310-i-cor2-pdf-e]]"
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
   - "[[collection/sources/2026-05-02-rfc4510-txt]]"
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
@@ -112,7 +113,7 @@ The IETF's equivalent for the 1997 LDAP RFCs was informal — mailing list discu
 
 Neither process is inherently superior — the ITU-T process produces more stable base texts with formal correction trails; the IETF process moves faster and produces more accessible documents. The directory/PKI standards that LDAP practitioners use today reflect outputs of both tracks, often in ways that are invisible unless you trace the history.
 
-## The Process Continues: X.509 2021 Corrigendum
+## The Process Continues: X.509 Corrigenda (2021–2023)
 
 The [[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e|Technical Corrigendum 1 to X.509 (2019)]], approved October 2021 by Study Group 17, illustrates that the ITU-T/ISO defect resolution process remained active two decades after the DIG v15 era. Two defect reports required correction:
 
@@ -120,4 +121,10 @@ The [[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e|Technical Co
 
 - **DR 432** corrected naming and RFC cross-references for four SHA/RSA algorithm constants in Annex B — a smaller editorial correction but one with potential interoperability implications if implementers used the constant names as authoritative identifiers.
 
-This 2021 TC demonstrates structural continuity with the earlier correction work: the problems being fixed (informal vs. formal ASN.1 specifications, incorrect normative references) are the same categories as those documented in DIG v15, and the mechanism (numbered DRs, international ballot, formal corrigendum) is identical. The [[collection/concepts/x509-pki|X.509 PKI]] standard remains under active maintenance as a living specification, not a frozen document.
+[[collection/sources/2026-05-04-t-rec-x-509-202310-i-cor2-pdf-e|Technical Corrigendum 2 to X.509 (2019)]], approved October 2023, continued the same pattern with two further defect reports:
+
+- **DR 434** retrofitted complete LDAP integration into the Privilege Management Infrastructure (PMI) — the attribute certificate framework added to X.509 in the 4th edition (2000). The PMI attribute types, object classes, and matching rules lacked `LDAP-SYNTAX`, `LDAP-NAME`, and `LDAP-DESC` fields in their ASN.1 definitions, leaving PMI unimplementable in LDAP directories at the normative level. The correction added a new clause 19.4 with seven SYNTAX-NAME definitions and seven new OIDs (id-asx 13–19), making the PMI LDAP interface machine-checkable. The correction category — "incomplete LDAP integration in the ASN.1 modules" — closely parallels the "missing LDAP attributes in schema definitions" issues documented in the DIG v15 era for earlier X.500 attribute types.
+
+- **DR 435** introduced the `noRevAvail` certificate extension for environments where revocation status is intentionally not provided — notably short-lived certificates. This represents not just an error correction but a standards evolution tracking deployment practice: modern certificate issuance infrastructure (ACME-based automation, ephemeral workload identity) issues certificates short enough that CRL/OCSP checking provides no meaningful security benefit.
+
+Together, the two corrigenda to the 9th edition (2021 and 2023) demonstrate structural continuity with the earlier correction work: the problems being fixed (informal vs. formal ASN.1 specifications, incomplete LDAP mapping fields) are the same categories as those documented in DIG v15, and the mechanism (numbered DRs, international ballot, formal corrigendum) is identical. The [[collection/concepts/x509-pki|X.509 PKI]] standard remains under active maintenance as a living specification, not a frozen document.

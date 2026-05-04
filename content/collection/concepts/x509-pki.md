@@ -22,11 +22,18 @@ tags:
   - cross-certification
   - revocation
   - ca
+  - pmi
+  - attribute-certificate
+  - norevavail
+  - privilege-management
+  - attribute-authority
+  - ldap
 confidence: high
 sources:
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-509-202310-i-cor2-pdf-e]]"
 ---
 
 **X.509** is ITU-T Recommendation X.509 | ISO/IEC 9594-8, *The Directory: Authentication Framework* (and, in later editions, *Public-Key and Attribute Certificate Frameworks*). Originally a component of the [[collection/entities/itu-t|ITU-T]] X.500 directory series, X.509 became the universal standard for public-key certificates and is the foundation of TLS/HTTPS, S/MIME, code signing, and enterprise [[collection/concepts/ldap-tls|LDAP TLS]] authentication.
@@ -120,6 +127,55 @@ The IDP extension is always critical — a certificate user that cannot process 
 ### Delta CRLs
 
 The `freshestCRL` (also called `deltaCRLIndicator`) mechanism allows issuing smaller incremental CRLs between full CRL publications, reducing bandwidth for large CRL populations.
+
+### noRevAvail Extension
+
+The `noRevAvail` extension (added in [[collection/sources/2026-05-04-t-rec-x-509-202310-i-cor2-pdf-e|Technical Corrigendum 2 (2023)]], DR 435) allows a CA or AA to signal that no revocation status information will be provided for a certificate:
+
+```asn1
+noRevAvail EXTENSION ::= {
+    SYNTAX      NULL
+    IDENTIFIED BY id-ce-noRevAvail }
+```
+
+Applicable only to end-entity certificates (SHALL NOT appear in CA or AA certificates) and always non-critical. When present, relying parties and privilege verifiers need not seek revocation status information. Intended for short-lived certificates (hours to days) where natural expiry serves as the effective revocation mechanism.
+
+## Privilege Management Infrastructure (PMI) and Attribute Certificates
+
+The 4th edition of X.509 (2000) extended the specification with a **Privilege Management Infrastructure (PMI)** — a framework for managing authorization attributes separately from identity. Where public-key certificates assert *who* an entity is (binding a public key to an identity), **attribute certificates** assert *what privileges* that entity holds. LDAP integration for the PMI was completed at the normative level by [[collection/sources/2026-05-04-t-rec-x-509-202310-i-cor2-pdf-e|Technical Corrigendum 2 (2023)]].
+
+### Attribute Certificate Structure
+
+An attribute certificate (AC) binds a set of attributes to a holder entity, signed by an **Attribute Authority (AA)**. The structure parallels the public-key certificate but omits the public key:
+
+- **Holder**: identifies the entity whose privileges are asserted (typically by reference to their public-key certificate)
+- **Issuer**: the AA that signs the attribute certificate
+- **Serial number**, **Validity period**, **Signature algorithm**
+- **Attributes**: the privilege assertions (e.g., `role`, `permission`, `xmlPrivilegeInfo`)
+- **Extensions**: including authority key identifier, targeting, and audit identity
+
+### PMI Hierarchy
+
+- **Source of Authority (SOA)**: the root AA for a privilege domain; the trust anchor for attribute certificate verification, analogous to a root CA
+- **Attribute Authority (AA)**: issues attribute certificates to holders; may be delegated authority by the SOA
+- **Privilege holder**: an entity holding one or more attribute certificates; represented in the directory by the `pmiUser` object class
+- **Delegation**: an AA may delegate authority to subordinate AAs; recorded using the `delegationPath` attribute and `pmiDelegationPath` object class
+
+### PMI in LDAP Directory
+
+PMI entries use the following auxiliary object classes (corrected in Cor. 2 to include full LDAP mappings):
+
+| Object class | LDAP-DESC | Role |
+|---|---|---|
+| `pmiUser` | "Privilege holder" | Entry holds attribute certificates |
+| `pmiAA` | "Privilege authority" | Entry is an Attribute Authority |
+| `pmiSOA` | "Source of authority" | Entry is a Source of Authority |
+| `attCertCRLDistributionPt` | — | Attribute certificate CRL distribution point |
+| `pmiDelegationPath` | "Privilege delegation path" | Entry holds delegation path |
+| `privilegePolicy` | "Privilege policy" | Entry holds privilege policy |
+| `protectedPrivilegePolicy` | "Protected privilege policy" | Entry holds protected privilege policy |
+
+Key attribute types include `attributeCertificateAttribute` (holds the AC), `aACertificate` (the AA's own certificate), and `attributeDescriptorCertificate`. Privilege-assertion attributes defined in §16 include `role` (`RoleSyntax`), `permission` (`DualStringSyntax`), and `xmlPrivilegeInfo` (XML-encoded, `UTF8String`). Cor. 2 added seven corresponding SYNTAX-NAME objects (§19.4) for LDAP encoding of these types, using DER via RFC 4522.
 
 ## Cross-Certification
 
