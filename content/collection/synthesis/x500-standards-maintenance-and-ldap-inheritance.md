@@ -26,6 +26,7 @@ sources:
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-201610-s-pdf-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e]]"
   - "[[collection/sources/2026-05-02-rfc2256-txt]]"
   - "[[collection/sources/2026-05-02-rfc4510-txt]]"
   - "[[collection/sources/2026-05-02-rfc4511-txt]]"
@@ -110,3 +111,13 @@ The [[collection/entities/hoyt-kesterson|Hoyt Kesterson]]-edited Directory Imple
 The IETF's equivalent for the 1997 LDAP RFCs was informal — mailing list discussions, implementation experience, eventually the LDAPBIS working group that produced the RFC 4510 series. The RFC 4510 documents *replaced* the 1997 RFCs rather than correcting them in place, which is both cleaner (no accumulated corrigenda to track) and more disruptive (implementations must track which RFC version applies to which behavior).
 
 Neither process is inherently superior — the ITU-T process produces more stable base texts with formal correction trails; the IETF process moves faster and produces more accessible documents. The directory/PKI standards that LDAP practitioners use today reflect outputs of both tracks, often in ways that are invisible unless you trace the history.
+
+## The Process Continues: X.509 2021 Corrigendum
+
+The [[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e|Technical Corrigendum 1 to X.509 (2019)]], approved October 2021 by Study Group 17, illustrates that the ITU-T/ISO defect resolution process remained active two decades after the DIG v15 era. Two defect reports required correction:
+
+- **DR 431** replaced an informal prose description of the `ALGORITHM` component in clause 6.2.2 with a formally typed [[collection/concepts/asn1|ASN.1]] information object class — the same category of "prose → machine-checkable ASN.1" correction that appeared repeatedly in the DIG v15 record. The correction also introduced three properly differentiated parameterized types (`AlgorithmWithInvoke`, `AlgorithmIdentifier`, `AlgoInvoke`) where previously there was ambiguity about when each form should be used.
+
+- **DR 432** corrected naming and RFC cross-references for four SHA/RSA algorithm constants in Annex B — a smaller editorial correction but one with potential interoperability implications if implementers used the constant names as authoritative identifiers.
+
+This 2021 TC demonstrates structural continuity with the earlier correction work: the problems being fixed (informal vs. formal ASN.1 specifications, incorrect normative references) are the same categories as those documented in DIG v15, and the mechanism (numbered DRs, international ballot, formal corrigendum) is identical. The [[collection/concepts/x509-pki|X.509 PKI]] standard remains under active maintenance as a living specification, not a frozen document.

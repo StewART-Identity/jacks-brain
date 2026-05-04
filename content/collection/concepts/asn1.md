@@ -23,6 +23,7 @@ tags:
 confidence: high
 sources:
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e]]"
 ---
 
 **ASN.1** (Abstract Syntax Notation One) is the ITU-T/ISO data description language used to define the structure of messages and data types in directory and security protocols. It is standardized in ITU-T X.680–X.683 | ISO/IEC 8824. For [[collection/entities/itu-t|ITU-T]] directory standards, ASN.1 is both the specification language for the normative data structures and the source of many of the most technically complex defect reports — ASN.1 module errors are a recurring theme in the [[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e|Directory Implementors' Guide]].
@@ -99,6 +100,36 @@ Multiple recommendations had incorrect import lists — importing types from the
 
 ### Module version identifiers
 ASN.1 modules are identified by OIDs including a version number. Errors in module OID last components (e.g., using 2 instead of 3) were corrected across several recommendations.
+
+## Information Object Classes
+
+ASN.1 information object classes (X.681) allow typed definitions of extensibility points — they describe a family of related objects that share a common structure. They appear throughout X.509 and the X.500 series as a way to couple OIDs with the parameter types that accompany them.
+
+The canonical example from X.509 is the `ALGORITHM` class (clause 6.2.2, formally corrected in [[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e|Technical Corrigendum 1 to the 9th edition]], DR 431):
+
+```asn1
+ALGORITHM ::= CLASS {
+    &Type       OPTIONAL,
+    &DynParms   OPTIONAL,
+    &id         OBJECT IDENTIFIER UNIQUE }
+WITH SYNTAX {
+    [PARMS      &Type]
+    [DYN-PARMS  &DynParms]
+    IDENTIFIED BY &id }
+```
+
+Each concrete algorithm (e.g., `sha256RSA`) is an *instance* of the `ALGORITHM` class, specifying `&id` (the OID), and optionally `&Type` (what the `parameters` field encodes) and `&DynParms` (what dynamic parameters to exchange). Parameterized types like `AlgorithmIdentifier` then use the class to enforce that only valid OID/parameter combinations are accepted:
+
+```asn1
+AlgorithmIdentifier{ALGORITHM:SupportedAlgorithms} ::= SEQUENCE {
+    algorithm   ALGORITHM.&id({SupportedAlgorithms}),
+    parameters  ALGORITHM.&Type({SupportedAlgorithms}{@algorithm}) OPTIONAL,
+    ... }
+```
+
+This is the `AlgorithmIdentifier` that appears in every X.509 certificate's `signatureAlgorithm` and `subjectPublicKeyInfo` fields. The `{@algorithm}` constraint links the `parameters` type to the specific OID chosen in the `algorithm` field — a typed constraint impossible to express without information object classes.
+
+The correction in DR 431 replaced an informal prose description with this formal class definition, making the constraint system machine-checkable. This is a common theme in X.500-series TC work: replacing prose descriptions of structural constraints with machine-verifiable ASN.1 constructs.
 
 ## Parameterized Types
 

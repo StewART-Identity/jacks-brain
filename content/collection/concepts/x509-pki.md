@@ -26,6 +26,7 @@ confidence: high
 sources:
   - "[[collection/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e]]"
   - "[[collection/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
+  - "[[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e]]"
 ---
 
 **X.509** is ITU-T Recommendation X.509 | ISO/IEC 9594-8, *The Directory: Authentication Framework* (and, in later editions, *Public-Key and Attribute Certificate Frameworks*). Originally a component of the [[collection/entities/itu-t|ITU-T]] X.500 directory series, X.509 became the universal standard for public-key certificates and is the foundation of TLS/HTTPS, S/MIME, code signing, and enterprise [[collection/concepts/ldap-tls|LDAP TLS]] authentication.
@@ -139,6 +140,31 @@ A CA may issue a certificate to itself in three circumstances:
 ## CertificatePair and PkiPath
 
 The `CertificatePair` (`issuedByThisCA`/`issuedToThisCA`) structure in the directory supports bidirectional cross-certification. The `PkiPath` type (added in TC2, 4th edition, DR 279) represents a certification path as a SEQUENCE OF Certificate, ordered so that each certificate's subject is the issuer of the next.
+
+## Algorithm Framework
+
+The cryptographic algorithm framework in X.509 is built around the `ALGORITHM` information object class, formally specified in clause 6.2.2 (corrected by Technical Corrigendum 1 to the 9th edition, DR 431). See [[collection/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e|X.509 Cor.1 (2021)]] for the full ASN.1.
+
+```asn1
+ALGORITHM ::= CLASS {
+    &Type       OPTIONAL,
+    &DynParms   OPTIONAL,
+    &id         OBJECT IDENTIFIER UNIQUE }
+WITH SYNTAX {
+    [PARMS      &Type]
+    [DYN-PARMS  &DynParms]
+    IDENTIFIED BY &id }
+```
+
+Three parameterized types are built on this class for different signalling needs:
+
+| Type | When used |
+|---|---|
+| `AlgorithmIdentifier` | Algorithm type signalled *without* invocation — used in certificate `signatureAlgorithm`, `subjectPublicKeyInfo.algorithm` |
+| `AlgorithmWithInvoke` | Algorithm type signalled *with* its invocation (includes dynamic parameters) |
+| `AlgoInvoke` | Only dynamic invocation parameters, when the algorithm is already known |
+
+`AlgorithmIdentifier` is what practitioners most commonly encounter: it appears in every X.509 certificate, every CRL, and every TLS handshake that negotiates a certificate-based algorithm. The corrigendum formalization makes the parameter constraint system (which OIDs are valid, which ASN.1 types apply to each OID's parameters field) machine-checkable rather than prose-described.
 
 ## Relationship to LDAP and Directory Services
 
