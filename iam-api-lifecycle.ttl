@@ -1,0 +1,244 @@
+# =============================================================================
+# UNT System IAM Ontology — iam-api lifecycle endpoints slice
+# =============================================================================
+#
+# Declares the iam-api lifecycle endpoint Transformations: the
+# Option-C "underlying writers" half of the three-lifecycle-surfaces
+# modeling adopted in iter-10. Each Transformation declared here is
+# a REST endpoint on the iam-api FastAPI service running at
+# https://iam-app-gab.untsystem.edu:8443 (Sectigo cert) that performs
+# one or more concrete read/write operations against IDTREE, the
+# three AD child domains, the Duo Admin API, or the LSPD database.
+# Upstream caller-Transformations (ALMA, Administrative scripts,
+# DSTools) live in lifecycle-surfaces.ttl and reach these endpoints
+# via unt:invokes edges.
+#
+# Why declare the endpoints as Transformations at all
+#
+#  The three-lifecycle-surfaces source review (see notes/
+#  IAM-API-FINDINGS.md, UTILITIES-FINDINGS.md, DSTOOLS-FINDINGS.md)
+#  established that:
+#
+#  - ALMA (Enterprise) does NOT write directly to LDAP. Every
+#    lifecycle write happens inside an iam-api endpoint, with ALMA
+#    as the orchestrator that decides WHEN to call which endpoint
+#    with what parameters.
+#
+#  - The Administrative scripts (deactivate_terminateduser.py /
+#    reactivate_terminateduser.py) DO write LDAP directly, but they
+#    invoke iam-api's /api/lifecycle/message endpoint for message
+#    formatting.
+#
+#  - DSTools (security/enable/index.php) writes IDTREE directly,
+#    invokes iam-api's /api/users/affiliations endpoint for an
+#    affiliation check, and after the mid-2026 update also invokes
+#    /api/lifecycle/message for ALMA-format message construction.
+#
+#  Three modeling options were considered for capturing this
+#  architecture in the ontology:
+#
+#  Option A: Model only the upstream surfaces as Transformations.
+#    Each surface gets unt:writes triples for every Attribute it
+#    eventually causes to be written, including the IDTREE writes
+#    that physically happen inside iam-api. Lost information: the
+#    fact that ALMA, Administrative scripts, and DSTools all converge
+#    on the same code path inside iam-api for the actual write. The
+#    services/ldap_service.py deactivate_user method is parameterized
+#    by source label precisely because it's one writer serving many
+#    callers; flattening that into per-caller writes erases the
+#    architectural reality.
+#
+#  Option B: Model only iam-api endpoints as Transformations. The
+#    upstream surfaces become unmodeled, or get reduced to "ALMA is
+#    a System." Lost information: half the actual writers
+#    (Administrative scripts and DSTools, which mostly bypass
+#    iam-api). And the orchestration logic (which endpoint to call
+#    when, how to handle failures, the Act→Wait→Verify pattern) has
+#    no place to live.
+#
+#  Option C: Model BOTH the iam-api endpoints and the upstream
+#    surfaces, with a new unt:invokes predicate connecting caller
+#    to callee. The iam-api endpoint Transformations own the
+#    unt:reads and unt:writes triples (they're the physical writers);
+#    the upstream Transformations own unt:invokes triples plus their
+#    own non-invocation reads/writes (Administrative deactivate has
+#    its own LDAP writes and an invocation of /lifecycle/message;
+#    DSTools has its own LDAP writes and invocations of /affiliations
+#    and /lifecycle/message; ALMA invokes lifecycle endpoints and has
+#    almost no direct writes of its own). Captures both architectural
+#    facts cleanly.
+#
+#  Iter-10 chooses Option C. The new unt:invokes predicate is defined
+#  in 00-ontology-core.ttl. This slice declares the iam-api endpoint
+#  Transformations that the invokes edges point at; lifecycle-surfaces.ttl
+#  declares the upstream caller-Transformations that own the invokes
+#  edges.
+#
+# Why this slice rather than scattered across the AccountLifecycle slices
+#
+#  Per the iter-9 Option-B cross-slice convention, individual unt:reads
+#  and unt:writes triples are distributed across the slices that own
+#  the read/write target Attributes. The iam-api endpoint Transformations
+#  themselves, however, are coherent enough that consolidating their
+#  declarations in one slice file aids readability — anyone looking
+#  for "what does iam-api do?" gets a single file to read. The same
+#  pattern was used in iter-9 for the AMS Transformations (declared in
+#  ams-claim.ttl rather than scattered across system-access.ttl and
+#  password-state.ttl) and for the provisioning-script status writers
+#  (declared in provisioning-script-status-writers.ttl).
+#
+#  Each Transformation declared here gets its rdfs:type and
+#  rdfs:comment in this slice plus the small set of "obvious" reads
+#  and writes; the bulk of the unt:reads / unt:writes triples are
+#  contributed in the per-Attribute slices (account-disabled.ttl,
+#  account-container.ttl, account-history.ttl, etc.) following
+#  Option B.
+#
+# The endpoint inventory modeled in iter-10
+#
+#  Eight POST endpoints relevant to lifecycle:
+#
+#    /api/users/{euid}/deactivate/inactivity
+#    /api/users/{euid}/duo/delete
+#    /api/users/{euid}/verify/inactivity
+#    /api/users/{euid}/defer
+#    /api/users/{euid}/reactivate/inactivity
+#    /api/users/{euid}/reactivate/ad
+#    /api/users/{euid}/verify/reactivation
+#    /api/lifecycle/message
+#
+#  Three GET endpoints relevant to lifecycle (the affiliation check,
+#  the deceased existence check, and the EIS lookups ALMA uses for
+#  eligibility verification):
+#
+#    /api/users/affiliations/{id}
+#    /api/users/eis/deceased/{id}
+#    /api/users/eis/* (multiple — see ALMA-PREVIEW.md)
+#
+#  Of these eleven, iter-10 declares ten as their own Transformations
+#  (one per endpoint), plus a single shared ALMA-eligibility-check
+#  Transformation for the cluster of /api/users/eis/* GETs that ALMA
+#  consumes in its check_employee / check_retiree / check_student_*
+#  / check_alumni / check_poi_role flow — those endpoints all share
+#  the same architectural shape (read a single EIS table or view via
+#  oracle_service, return a LookupResponse) and modeling them
+#  individually would clutter the slice without adding lineage value.
+#
+#  The Duo delete endpoint's modeling notes that Duo's internal schema
+#  is not yet captured at the Attribute level (Duo is declared as a
+#  System but its internal Attributes are not modeled, parallel to
+#  AMS) — the endpoint's unt:writes target is the conceptual "Duo
+#  user enrollment" rather than a specific Duo-side Attribute. The
+#  group-membership writes (removing user from DuoUsers and
+#  ECS-DUO-Users) are deferred to iter-14 GroupMembership per the
+#  iter-9 deferral.
+#
+# Author: Jack Stewart, IAM Engineer, UNT System
+# First draft: 2026-05-17 (AccountLifecycle cluster, iteration 10)
+#
+# DEPENDS ON: 00-ontology-core.ttl (defines unt:Transformation class,
+#   unt:invokes predicate, unt:IamApi System, and the cluster URIs).
+# DEPENDS ON: account-disabled.ttl, account-container.ttl,
+#   account-history.ttl, account-deferral.ttl, account-ignore.ttl,
+#   deceased-status.ttl (Attributes that this slice's Transformations
+#   read and write; per-Attribute contributions distributed across
+#   those slices per Option B).
+# =============================================================================
+
+@prefix rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:   <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix unt:   <https://ontology.untsystem.edu/iam#> .
+
+
+# -----------------------------------------------------------------------------
+# Lifecycle-action endpoints (POST) — the writers
+# -----------------------------------------------------------------------------
+
+unt:IamApi_deactivate_inactivity
+    a unt:Transformation ;
+    rdfs:label "iam-api — POST /api/users/{euid}/deactivate/inactivity" ;
+    rdfs:comment "The iam-api endpoint that performs the IDTREE-side writes for an Enterprise-lifecycle (inactivity-sweep) deactivation. Implemented in services/ldap_service.py:EDirectoryService.deactivate_user (lines 301-366). Issues a single LDAP MODIFY operation against the user's IDTREE Person object that REPLACEs four attributes: loginDisabled='TRUE', untAccountDisabled='Y', untAccountDisabledDate=<LDAP timestamp YYYYMMDDHHMMSSZ at moment of call>, description=<ALMA-formatted message from services.message_service.build_message>. Then issues a separate MODIFY_ADD operation appending the same message to untAccountHistory (the multi-valued audit log). Parameterized by deactivation_type (defaults to 'ALMA') and days_inactive (used to populate the message's detail field when type is ALMA — the resulting message string carries '(Inactive: <N> days)' as its detail). Does NOT touch untAccountADNoSync (that's the verify endpoint's job), does NOT touch any AD domain directly (IDM drivers propagate the IDTREE state changes to AD), and does NOT touch the deferral attribute. The endpoint is invoked by ALMA's Enterprise-lifecycle deactivate flow; no other lifecycle surface invokes it (Administrative and DSTools both write LDAP directly with their own message format). Reads no attributes inside the endpoint itself — the IDTREE writes are pre-determined by the request payload; eligibility checks happen upstream in the caller." ;
+    unt:reads unt:IDTREE_untAccountIgnore .
+
+# Note: the full unt:writes set for this endpoint is contributed in the
+# per-Attribute slices (account-disabled.ttl, account-history.ttl) per
+# the Option-B convention. The reads block above captures the
+# defense-in-depth check_ignore_flag read (also contributed in
+# account-ignore.ttl per Option B — duplicates in a Turtle graph
+# collapse, so the duplication is harmless and improves readability of
+# this declaration block).
+
+
+unt:IamApi_defer
+    a unt:Transformation ;
+    rdfs:label "iam-api — POST /api/users/{euid}/defer" ;
+    rdfs:comment "The iam-api endpoint that records a deferral on an IDTREE Person object when the Enterprise inactivity sweep identifies a stale candidate but the candidate is found ineligible for immediate deactivation (active affiliation discovered, ignore flag set, etc., with the exception of ERROR_CHECKING_ELIGIBILITY and FORCED_SKIP outcomes which do not trigger deferral). Implemented in services/ldap_service.py:EDirectoryService.defer_user (lines 372-433). Computes a target timestamp <today + DEACTIVATE_DEFERRAL_DAYS configured days> in LDAP YYYYMMDDHHMMSSZ format, then REPLACEs untAccountDeferral with that timestamp via LDAP MODIFY. Separately appends an ALMA-formatted message to untAccountHistory tagged with '(Inactive: until <YYYY-MM-DD>)' as the detail field. Critical semantic detail per Jack mid-iter-10: untAccountDeferral holds a future-date timestamp; ALMA's stale_user_filter excludes any user whose untAccountDeferral is set to a future date, so a deferred user falls out of the candidate pool until the date passes. The attribute is the mechanism that prevents the inactivity sweep from re-processing the same ineligible candidates on every run. Invoked exclusively by ALMA's Enterprise-lifecycle deactivate flow. Does not touch login state (a deferred account remains functional); does not touch any AD domain." .
+
+
+unt:IamApi_duo_delete
+    a unt:Transformation ;
+    rdfs:label "iam-api — POST /api/users/{euid}/duo/delete" ;
+    rdfs:comment "The iam-api endpoint that deletes a user's Duo enrollment as part of an Enterprise-lifecycle deactivation. Implemented in routers/duo.py via services/duo_service.py (not exhaustively source-read in iter-10 — flagged for follow-up if the Duo internal schema becomes relevant). Invokes the Duo Admin API to delete the user's account, then removes the user from the DuoUsers group (in UNT_AD) and the ECS-DUO-Users group (in the AD forest root). Gated by the ALMA-side DUO_ENABLED configuration flag — when disabled, the endpoint is not invoked. The Duo-side delete and the group-membership writes are not modeled at the Attribute level in iter-10: Duo's internal schema is not yet captured (only the System is declared, parallel to AMS), and the group memberships are deferred to iter-14 GroupMembership. The endpoint is acknowledged here for completeness of the iam-api inventory and so that ALMA's invocation edge has a target; the Attribute-level write modeling lives in those future iterations. Invoked exclusively by ALMA's Enterprise-lifecycle deactivate flow." .
+
+
+unt:IamApi_verify_inactivity
+    a unt:Transformation ;
+    rdfs:label "iam-api — POST /api/users/{euid}/verify/inactivity" ;
+    rdfs:comment "The iam-api endpoint that verifies a previously-initiated Enterprise-lifecycle deactivation has propagated correctly to all relevant systems, and on success sets untAccountADNoSync to block future IDM driver sync. Implemented in routers/lifecycle.py (lines 213-352) plus services/ldap_service.py:set_ad_nosync (lines 479-538). Reads loginDisabled and untAccountDisabled from IDTREE, the userAccountControl bit 2 (ACCOUNTDISABLE) from each of the three AD child domains, and the Duo account-existence state. If all five systems verify deactivated, writes untAccountADNoSync='HSC,STUDENTS,UNT' as a single MODIFY_REPLACE — value is a single-valued comma-separated string (the NOSYNC_INACTIVITY constant in routers/lifecycle.py:69; the iter-9-handoff's framing as 'multi-valued blanket' was imprecise — it's one comma-separated string value). If any of the five systems fails verification, no write occurs and the endpoint returns a non-success status to ALMA, which logs the failure and proceeds to the next candidate. Note: the iam-api code also declares a NOSYNC_ADMIN='HSC,UNT' constant — this is the value DSTools writes from the security/enable disable flow (the wired consumer that wasn't yet identified at the time IAM-API-FINDINGS.md was first written), not a future-administrative-hold reservation. Invoked exclusively by ALMA's Enterprise-lifecycle deactivate flow as the third phase of its Act→Wait→Verify pattern." .
+
+
+unt:IamApi_reactivate_inactivity
+    a unt:Transformation ;
+    rdfs:label "iam-api — POST /api/users/{euid}/reactivate/inactivity" ;
+    rdfs:comment "The iam-api endpoint that performs the IDTREE-side writes for an Enterprise-lifecycle reactivation. Implemented in services/ldap_service.py:EDirectoryService.reactivate_user (lines 663-755). Performs two LDAP operations against the user's Person object: (1) a MODIFY_REPLACE that SETs untAccountDisabled='N' deliberately as a SET-not-DELETE so the IDM drivers see the change event and trigger their downstream propagation; (2) a MODIFY_DELETE with ignore-if-absent semantics against four attributes — loginDisabled (to lift the eDirectory-side login block), description (so the deactivation message is no longer shown), untAccountDisabledDate (clearing the deactivation timestamp), and untAccountEnabled (a residual flag of unclear original semantics that's defensively cleared — see account-disabled.ttl rdfs:comment for the writer-side gap). Separately appends an ALMA-formatted reactivation message to untAccountHistory via MODIFY_ADD. Does NOT touch untAccountADNoSync (that's the verify-reactivation endpoint's job) and does NOT touch any AD domain (that's reactivate/ad's job). Returns the user's display_name ('givenName sn' from IDTREE) to the caller for use on the subsequent /reactivate/ad invocation. Invoked exclusively by ALMA's Enterprise-lifecycle reactivate flow, which detects reactivation candidates by finding users where untAccountDisabled='N' (set by some PeopleSoft-side process when affiliation is regained — modeled as the placeholder PeopleSoft_reactivation_flag_writer Transformation) AND untAccountDisabledDate is still PRESENT (the discrepancy signaling 'PeopleSoft reactivated this user; ALMA needs to complete the cleanup')." ;
+    unt:reads unt:IDTREE_untAccountIgnore .
+
+# Note: full unt:writes set contributed in account-disabled.ttl,
+# account-history.ttl per Option B. Reads of givenName and sn (for the
+# returned display_name) are contributed in their respective Names-cluster
+# slices in a future iteration if needed.
+
+
+unt:IamApi_reactivate_ad
+    a unt:Transformation ;
+    rdfs:label "iam-api — POST /api/users/{euid}/reactivate/ad" ;
+    rdfs:comment "The iam-api endpoint that performs the AD-side writes for an Enterprise-lifecycle reactivation. Implemented in routers/lifecycle.py (lines 432-505) plus services/ldap_service.py:ActiveDirectoryService.reactivate_user (lines 825-870). Called by ALMA after /reactivate/inactivity has completed the IDTREE-side writes, because untAccountADNoSync is still TRUE during the verify window and would otherwise block the IDM drivers from propagating the IDTREE changes. The direct AD writes bypass that block. For each of the three AD child domains, the endpoint: reads the current userAccountControl value (so the ACCOUNTDISABLE bit can be cleared via bitwise AND-NOT without disturbing other bits), reads givenName and sn from IDTREE to construct the display_name ('givenName sn' — e.g., 'Manuel Stewart' for a user whose legal first name is Manuel even if their preferred name is Jack — see UTILITIES-FINDINGS.md for the contrast with Administrative's preferredName-based variant), then issues a single MODIFY_REPLACE that updates userAccountControl with the new value (ACCOUNTDISABLE bit cleared) and description with the constructed display_name. The 'givenName sn' description write applies to ALL THREE AD domains uniformly — STUDENTS_AD gets it too, contrary to the iter-9 user-memory framing that students got an ALMA message instead. Invoked exclusively by ALMA's Enterprise-lifecycle reactivate flow." .
+
+
+unt:IamApi_verify_reactivation
+    a unt:Transformation ;
+    rdfs:label "iam-api — POST /api/users/{euid}/verify/reactivation" ;
+    rdfs:comment "The iam-api endpoint that verifies a previously-initiated Enterprise-lifecycle reactivation has propagated correctly to all relevant systems, and on success deletes untAccountADNoSync to restore IDM driver propagation. Implemented in routers/lifecycle.py (lines 512-637) plus services/ldap_service.py:delete_ad_nosync. Reads loginDisabled (verifying it's absent) and untAccountDisabled (verifying it's 'N') from IDTREE; reads userAccountControl from each of the three AD child domains (verifying bit 2 is cleared). If all four systems verify reactivated, issues a MODIFY_DELETE against untAccountADNoSync to restore normal IDM driver sync. If any of the four systems fails verification, no write occurs and the endpoint returns a non-success status. Invoked exclusively by ALMA's Enterprise-lifecycle reactivate flow as the third phase of its Act→Wait→Verify pattern." .
+
+
+unt:IamApi_lifecycle_message
+    a unt:Transformation ;
+    rdfs:label "iam-api — POST /api/lifecycle/message" ;
+    rdfs:comment "The iam-api endpoint that constructs an ALMA-formatted lifecycle-event message string from a structured request and returns it for use by the calling Transformation. Implemented in routers/message.py with formatting logic in services/message_service.py:build_message. Request payload: {action, source, detail?, timestamp?}; response: {message, timestamp, action, source, detail?}. The constructed message follows the format 'ALMA: <Action> <Timestamp> (<Source>)' or 'ALMA: <Action> <Timestamp> (<Source>: <Detail>)' with timestamps rendered in US Central time (America/Chicago). Action vocabulary: Deactivated, Reactivated, Deferred, Override. Source vocabulary: Inactive (the ALMA inactivity-sweep self-identifier), Security/Administrative/InfoSec (the three directing-authority tokens for the Administrative surface — different names for the same operational flow), and DSTools (the Ad-hoc surface). The endpoint is the single source of truth for ALMA-format message construction: ALMA's own deactivate/reactivate/defer endpoints construct their messages by invoking this endpoint internally (or via shared formatter library code, depending on the deployment path), and the Administrative scripts and DSTools both invoke it as their only iam-api consumption that isn't a read. Once the planned DSTools change deploys (writing untAccountHistory in ALMA format), the endpoint will be invoked by all three lifecycle surfaces uniformly. Reads no Attributes — the message construction is pure transformation of the request payload to a formatted string. Writes no Attributes — the caller is responsible for storing the returned string in description and/or untAccountHistory." .
+
+
+# -----------------------------------------------------------------------------
+# Read-only endpoints (GET) — the lookups
+# -----------------------------------------------------------------------------
+
+unt:IamApi_affiliations
+    a unt:Transformation ;
+    rdfs:label "iam-api — GET /api/users/affiliations/{id}" ;
+    rdfs:comment "The iam-api endpoint that returns a user's currently-active affiliations as a structured response, used by both ALMA and DSTools to gate lifecycle actions on affiliation state. Reads IDTREE Person attributes that encode affiliation (eduPersonAffiliation, eduPersonScopedAffiliation, role) plus the per-affiliation Y/N predicate flags (isstudent, isfaculty, isretiree, possibly others) to compute a consolidated affiliation set. Returns whichever of {student, employee, vendor, alumni} (the DSTools-relevant token set) plus possibly others are currently active for the user. Note: DSTools considers 'vendor' an active affiliation; ALMA's deactivate eligibility check does NOT — small vocabulary drift between the two consumers, flagged for the Affiliation cluster cleanup pass. Invoked by ALMA's Enterprise-lifecycle deactivate flow (as part of the eligibility check that decides whether to deactivate or defer), and by DSTools's disable handler (which blocks disable if the user has an active affiliation per DSTools's vocabulary). The Administrative surface does not invoke this endpoint — Administrative deactivations are operator-driven with the operator's HR/InfoSec context providing the affiliation knowledge out-of-band. The read-side targets (the IDTREE affiliation attributes) are declared in their respective Affiliation-cluster slices; this slice does not contribute unt:reads triples for them because the consolidation logic happens inside the iam-api endpoint and the upstream callers only see the consolidated response." .
+
+
+unt:IamApi_eis_lookup
+    a unt:Transformation ;
+    rdfs:label "iam-api — EIS lookup endpoints (cluster: /api/users/eis/*)" ;
+    rdfs:comment "A single Transformation modeling the cluster of iam-api EIS-lookup endpoints that ALMA invokes during its Enterprise-lifecycle eligibility check. The endpoints share a common architectural shape (HTTP GET, single-row Oracle query against an LSPD table or view, return a LookupResponse {found: bool}) and modeling them individually would clutter the slice without adding lineage value — the relevant lineage fact is 'ALMA invokes iam-api to check whether a candidate is currently in any of these EIS-recorded states.' The endpoint cluster: /api/users/eis/employees/{id}, /api/users/eis/retirees/{id}, /api/users/eis/students/enrolled/{id}, /api/users/eis/students/applicants/{id}, /api/users/eis/students/loa/{id}, /api/users/eis/students/payment/{id}, /api/users/eis/alumni/{id}, /api/users/idtree/roles/{id}/is-poi (the POI-role check). Each endpoint reads its respective LSPD table or view via services/oracle_service.py with a check_user_exists_multi_column query against (OPRID, EMPLID). The endpoints not in this cluster's invocation set: /api/users/eis/students/optional-indicators/{id}, /api/users/eis/students/special/{id}, /api/users/idtree/affiliations/{id}/is-alum (not consumed by any iter-10 lifecycle surface), and /api/users/eis/deceased/{id} (modeled separately as IamApi_deceased because the deceased endpoint is operationally and semantically distinct — it's an existence check against a death-record view rather than a current-affiliation check). The cluster Transformation captures ALMA's eligibility-check pattern at the right level of granularity for iter-10; finer modeling can be added in iter-12 Employment or iter-11 AcademicContext if those iterations need per-endpoint lineage." .
+
+
+unt:IamApi_deceased
+    a unt:Transformation ;
+    rdfs:label "iam-api — GET /api/users/eis/deceased/{id}" ;
+    rdfs:comment "The iam-api endpoint that returns the deceased-status existence-check result for a queried user. Implemented in routers/eis.py (lines 286-308) with the underlying query in services/oracle_service.py (lines 235, 315-325, 93-122). Performs 'SELECT 1 FROM SYSADM.PS_GBSA_AC_DECEASE WHERE (OPRID = :id OR EMPLID = :id) AND ROWNUM = 1' against the LSPD database and returns LookupResponse {found: bool}. The underlying view aggregates from LSPD.PS_PERSON.DT_OF_DEATH and LSPD.PS_PERSON_SA.{DEATH_CERTIF_NBR, PLACE_OF_DEATH} but those base-table columns are not separately exposed — the endpoint returns only a boolean. As of iter-10, NO Transformation among the three lifecycle surfaces (ALMA, Administrative, DSTools) invokes this endpoint — source review confirmed the absence in all three code bodies. The endpoint exists and is well-formed; the lack of a consumer is a documented gap. Remaining consumer candidates worth investigating in a future iteration: the AMS web application (plausible — AMS might want to block claim-completion for a deceased EUID), some PeopleSoft-side caller (less likely), or a future-not-yet-built lifecycle consumer. Iter-10 declares the Transformation with the read-side contribution and acknowledges the no-current-consumer gap in this rdfs:comment." .
+
+
+# =============================================================================
