@@ -7,9 +7,10 @@
  * Two paths based on URL detection:
  *
  *  - YouTube URLs (youtube.com, youtu.be, m.youtube.com, including /watch,
- *    /shorts, /embed): routed through Supadata's transcript API. Supadata
- *    handles the YouTube anti-bot infrastructure on residential IPs, with
- *    Whisper fallback for videos without native captions.
+ *    /shorts, /embed): metadata via YouTube's free public oembed endpoint,
+ *    transcript via Supadata. Supadata handles the YouTube anti-bot
+ *    infrastructure on residential IPs, with Whisper fallback for videos
+ *    without native captions.
  *
  *  - All other http(s) URLs: existing HTML-fetch + readability-extraction
  *    path. No external dependencies.
@@ -116,6 +117,44 @@ function extractYouTubeVideoId(parsed: URL): string | null {
   return null
 }
 
+// ─── YouTube oembed (free, no auth) ────────────────────────────────────────
+
+interface YouTubeOembed {
+  title?: string
+  author_name?: string
+  author_url?: string
+  thumbnail_url?: string
+}
+
+/**
+ * Fetch video title and channel from YouTube's public oembed endpoint.
+ *
+ * This is a free Google service designed to let third-party sites embed
+ * YouTube videos with basic metadata — used by every blog and forum that
+ * unfurls a YouTube link. No API key, no auth, no anti-bot wall (it's a
+ * cacheable JSON response, not the watch page). Costs zero Supadata
+ * credits.
+ *
+ * Failure tolerated: returns null on any error (404, network blip, JSON
+ * parse fail). Caller substitutes "YouTube Video (videoId)" /
+ * "Unknown Channel" defaults — the catalog pipeline still works with
+ * those, and the transcript is the meat of the source page anyway.
+ */
+async function fetchYouTubeOembed(videoUrl: string): Promise<YouTubeOembed | null> {
+  const url = new URL("https://www.youtube.com/oembed")
+  url.searchParams.set("url", videoUrl)
+  url.searchParams.set("format", "json")
+  try {
+    const res = await fetch(url.toString(), {
+      headers: { Accept: "application/json" },
+    })
+    if (!res.ok) return null
+    return (await res.json()) as YouTubeOembed
+  } catch {
+    return null
+  }
+}
+
 // ─── Supadata API client ───────────────────────────────────────────────────
 
 /**
@@ -143,22 +182,68 @@ interface SupadataJobResponse {
   jobId: string
 }
 
-/**
- * Supadata metadata response. We read title and channel only; other fields
- * (thumbnail, view counts, etc.) exist but aren't useful for cataloging.
- */
-interface SupadataMetadata {
-  title?: string
-  channel?: {
-    name?: string
-    id?: string
-  }
-  // Older Supadata responses use a flat shape; tolerate both.
-  channelName?: string
-  duration?: number
-}
-
 const SUPADATA_BASE = "https://api.supadata.ai/v1"
+
+/**
+ * Build a human-readable 429 error message by reading Supadata's
+ * rate-limit headers. Supadata follows the de-facto standard:
+ *
+ *   - Retry-After: seconds until the rate limit clears (short-window
+ *     rate limit, e.g. "5 calls per second"). Present on per-second hits.
+ *   - X-RateLimit-Limit: monthly credit cap (e.g. 100 for free tier)
+ *   - X-RateLimit-Remaining: credits left this billing cycle
+ *   - X-RateLimit-Reset: ISO timestamp or epoch seconds for cycle reset
+ *
+ * If Retry-After is small (<= a few minutes), it's the per-second cap and
+ * we should tell the user "wait N seconds and try again." If the
+ * remaining count is at or near zero, it's the monthly quota and the
+ * answer is "wait until the cycle reset or upgrade your plan."
+ *
+ * Falls back to a generic message if the headers aren't present —
+ * Supadata may evolve them, and we want graceful degradation rather than
+ * a crash if the shape ever changes.
+ */
+function describe429(res: Response): string {
+  const retryAfter = res.headers.get("Retry-After")
+  const remaining = res.headers.get("X-RateLimit-Remaining")
+  const limit = res.headers.get("X-RateLimit-Limit")
+  const reset = res.headers.get("X-RateLimit-Reset")
+
+  // Retry-After of a few seconds → per-second/minute rate limit.
+  // The free tier of most APIs of this shape limits to a few calls per
+  // second; Supadata's exact value isn't published but the header tells us.
+  const retrySeconds = retryAfter ? Number(retryAfter) : NaN
+  if (Number.isFinite(retrySeconds) && retrySeconds > 0 && retrySeconds <= 300) {
+    return `Supadata rate limit hit. Retry in ${retrySeconds} second${retrySeconds === 1 ? '' : 's'}.`
+  }
+
+  // Remaining at or near 0 → monthly quota exhausted.
+  const remainingN = remaining ? Number(remaining) : NaN
+  if (Number.isFinite(remainingN) && remainingN <= 0) {
+    let resetDescription = ""
+    if (reset) {
+      // Try parsing as ISO date first; fall back to treating as Unix epoch seconds.
+      const asDate = new Date(reset)
+      const asEpoch = !isNaN(Number(reset)) ? new Date(Number(reset) * 1000) : null
+      const parsed = !isNaN(asDate.getTime()) ? asDate : asEpoch
+      if (parsed && !isNaN(parsed.getTime())) {
+        resetDescription = `, resets ${parsed.toISOString().slice(0, 10)}`
+      }
+    }
+    const usage = limit ? ` (${limit}/${limit} used)` : ""
+    return `Supadata monthly credit quota exhausted${usage}${resetDescription}. Upgrade your plan at supadata.ai or wait for the next cycle.`
+  }
+
+  // Neither path fits — give the user enough to investigate themselves.
+  // Useful for "Retry-After is a long value" or "headers absent" cases.
+  const hints: string[] = []
+  if (retryAfter) hints.push(`Retry-After=${retryAfter}s`)
+  if (remaining) hints.push(`X-RateLimit-Remaining=${remaining}`)
+  if (limit) hints.push(`X-RateLimit-Limit=${limit}`)
+  if (reset) hints.push(`X-RateLimit-Reset=${reset}`)
+  const detail = hints.length > 0 ? ` (${hints.join(", ")})` : ""
+  return `Supadata 429: limit exceeded${detail}. Check https://dash.supadata.ai for current usage.`
+}
 
 /**
  * Fetch a transcript from Supadata. Returns one of:
@@ -175,9 +260,7 @@ const SUPADATA_BASE = "https://api.supadata.ai/v1"
  * text=false: get timestamped segments. We could ask for plain text by
  * passing text=true, but timestamped segments let us produce a cleanly
  * formatted transcript with periodic [HH:MM:SS] anchors that make it
- * trivial to jump back to the video at a specific point. The downside is
- * a slightly larger response payload; for normal YouTube content it's a
- * few KB difference, well worth the navigability gain.
+ * trivial to jump back to the video at a specific point.
  */
 async function fetchSupadataTranscript(
   apiKey: string,
@@ -218,6 +301,18 @@ async function fetchSupadataTranscript(
     return { kind: "job", jobId: body.jobId }
   }
 
+  // 429: rate limit or quota. Parse headers to tell the user which.
+  // We do this before the generic !res.ok branch because the 429 path
+  // wants special handling — different message shape, distinct status
+  // we surface to the frontend.
+  if (res.status === 429) {
+    return {
+      kind: "error",
+      status: 429,
+      message: describe429(res),
+    }
+  }
+
   if (!res.ok) {
     let detail = ""
     try {
@@ -256,30 +351,6 @@ async function fetchSupadataTranscript(
     kind: "error",
     status: 200,
     message: "Supadata returned 200 but content was neither segments nor text",
-  }
-}
-
-/**
- * Fetch YouTube video metadata (title, channel) from Supadata.
- *
- * Returns null on any failure; callers must tolerate that. We don't surface
- * metadata failure as a hard error because the transcript is the meat of
- * what we want — if metadata is unavailable, "YouTube Video (videoId)" is
- * a graceful fallback for the title and the catalog pipeline can still
- * generate a usable source page from the transcript content.
- */
-async function fetchSupadataMetadata(apiKey: string, videoUrl: string): Promise<SupadataMetadata | null> {
-  const url = new URL(`${SUPADATA_BASE}/metadata`)
-  url.searchParams.set("url", videoUrl)
-  try {
-    const res = await fetch(url.toString(), {
-      method: "GET",
-      headers: { "x-api-key": apiKey, Accept: "application/json" },
-    })
-    if (!res.ok) return null
-    return (await res.json()) as SupadataMetadata
-  } catch {
-    return null
   }
 }
 
@@ -499,16 +570,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       )
     }
 
-    // Canonical URL for both Supadata calls and the markdown frontmatter.
-    // Strips tracking params, query parameters like ?si=..., and any other
-    // noise — Supadata only needs the bare video URL.
+    // Canonical URL for both metadata and Supadata calls and the markdown
+    // frontmatter. Strips tracking params like ?si=..., and any other noise.
     const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`
 
-    // Fetch metadata and transcript in parallel. Metadata is best-effort;
-    // the transcript is essential. We let Promise.all run both so we don't
-    // sequentially block on the metadata call.
-    const [metadata, transcriptResult] = await Promise.all([
-      fetchSupadataMetadata(SUPADATA_API_KEY, canonicalUrl),
+    // Fetch metadata (free, from YouTube oembed) and transcript (1 Supadata
+    // credit) in parallel. Oembed is genuinely free and unmetered for our
+    // usage; no rate-limit concern there. The two calls hit different
+    // services, so they can't trigger Supadata rate limits even if Supadata's
+    // per-second cap is aggressive.
+    const [oembed, transcriptResult] = await Promise.all([
+      fetchYouTubeOembed(canonicalUrl),
       fetchSupadataTranscript(SUPADATA_API_KEY, canonicalUrl),
     ])
 
@@ -531,21 +603,28 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     if (transcriptResult.kind === "error") {
       // Supadata-side failures: forward the status and message so the
-      // upload UI can show something useful. 404 from Supadata typically
-      // means "no transcript available and AI generation also failed",
-      // which is genuinely a 422 (unprocessable entity) on our side.
-      const status = transcriptResult.status === 404 ? 422 : 502
+      // upload UI can show something useful. Specific mappings:
+      //   429 → keep as 429 (rate-limit / quota; message already crafted
+      //         by describe429() to explain which one)
+      //   404 → 422 (transcript genuinely unavailable for this video,
+      //         which is an unprocessable-entity situation from our side)
+      //   else → 502 (Supadata is up but returned an unexpected failure)
+      let status = 502
+      if (transcriptResult.status === 429) status = 429
+      else if (transcriptResult.status === 404) status = 422
       return Response.json(
         { error: transcriptResult.message },
         { status },
       )
     }
 
-    // Build the markdown. Title and channel come from metadata when
-    // available, with reasonable fallbacks. Transcription method is
-    // surfaced in frontmatter so the catalog Claude can mention it.
-    const title = metadata?.title || `YouTube Video (${videoId})`
-    const channel = metadata?.channel?.name || metadata?.channelName || "Unknown Channel"
+    // Build the markdown. Title and channel come from oembed when
+    // available, with reasonable fallbacks. We don't surface a
+    // transcription_method anymore because Supadata's response doesn't
+    // tell us whether it was native captions or AI-generated; if that
+    // distinction matters later, we can derive it from the response shape.
+    const title = oembed?.title || `YouTube Video (${videoId})`
+    const channel = oembed?.author_name || "Unknown Channel"
     const transcriptBody = transcriptResult.segments
       ? formatTimestampedTranscript(transcriptResult.segments)
       : transcriptResult.text
