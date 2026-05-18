@@ -2,7 +2,9 @@
  * POST /api/url
  *
  * Accepts a URL, fetches its content, and commits a markdown file to
- * static/originals/. The catalog workflow triggers automatically on push.
+ * static/queue/. The catalog workflow picks it up from there, promotes
+ * it through static/in-flight/, runs the catalog, and finalizes the
+ * file in static/originals/ — same pipeline /api/upload uses.
  *
  * Two paths based on URL detection:
  *
@@ -12,8 +14,8 @@
  *    infrastructure on residential IPs, with Whisper fallback for videos
  *    without native captions.
  *
- *  - All other http(s) URLs: existing HTML-fetch + readability-extraction
- *    path. No external dependencies.
+ *  - All other http(s) URLs: HTML-fetch + readability-extraction path.
+ *    No external dependencies.
  *
  * Requires env vars:
  *   GITHUB_TOKEN     — fine-grained PAT with contents:write + actions:write
@@ -455,19 +457,26 @@ function extractReadable(html: string): { title: string; body: string } {
 // ─── GitHub commit helper ──────────────────────────────────────────────────
 
 /**
- * Write a markdown file to static/originals/<filename> on main.
+ * Write a markdown file to static/queue/<filename> on main.
+ *
+ * The catalog workflow watches static/queue/** (via the workflow's `on:
+ * push: paths:` filter) and promotes files through static/in-flight/ to
+ * static/originals/ as they are cataloged. Writing directly to
+ * static/originals/ would silently bypass the catalog — the file would
+ * land but never produce wiki output. See the catalog.yml header for the
+ * full state machine.
  *
  * Returns { ok: true, path } on success, or { ok: false, status, error }
  * on failure. Used by both the YouTube and HTML paths so they share one
  * commit code path — easier to keep consistent.
  */
-async function commitOriginal(
+async function commitToQueue(
   env: Env,
   filename: string,
   markdown: string,
   commitMessage: string,
 ): Promise<{ ok: true; path: string } | { ok: false; status: number; error: string }> {
-  const path = `static/originals/${filename}`
+  const path = `static/queue/${filename}`
 
   // UTF-8 encode then base64. Same pattern as functions/api/upload.ts —
   // a TextEncoder pass first to handle multibyte characters correctly,
@@ -661,7 +670,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       `## Transcript\n\n` +
       `${transcriptBody}\n`
 
-    const commitResult = await commitOriginal(
+    const commitResult = await commitToQueue(
       context.env,
       filename,
       markdown,
@@ -681,11 +690,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       title,
       url: canonicalUrl,
       source_type: "youtube-video",
-      message: `YouTube video committed to ${commitResult.path}. Catalog workflow triggered.`,
+      message: `YouTube video queued at ${commitResult.path}. Catalog workflow triggered.`,
     })
   }
 
-  // ─── Generic web-page branch (existing path, unchanged behavior) ────────
+  // ─── Generic web-page branch ────────────────────────────────────────────
 
   let html: string
   try {
@@ -727,7 +736,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     `---\n\n`
   const markdown = `${frontmatter}# ${title}\n\nSource: [${parsed.hostname}](${url}) | Fetched: ${today}\n\n${body}\n`
 
-  const commitResult = await commitOriginal(
+  const commitResult = await commitToQueue(
     context.env,
     filename,
     markdown,
@@ -747,6 +756,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     title,
     url,
     source_type: "web-page",
-    message: `Page committed to ${commitResult.path}. Catalog workflow triggered.`,
+    message: `Page queued at ${commitResult.path}. Catalog workflow triggered.`,
   })
 }
