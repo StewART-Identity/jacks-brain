@@ -18,7 +18,6 @@
     "format": "npx prettier . --write",
     "test": "tsx --test",
     "profile": "0x -D prof ./quartz/bootstrap-cli.mjs build --concurrency=1",
-    "yt": "node scripts/youtube-transcript.mjs",
     "catalog": "node scripts/catalog.mjs"
   },
   "engines": {
@@ -98,7 +97,6 @@
     "workerpool": "^10.0.1",
     "ws": "^8.19.0",
     "yargs": "^18.0.0",
-    "youtube-transcript": "^1.2.1",
     "@anthropic-ai/sdk": "^0.39.0"
   },
   "devDependencies": {
