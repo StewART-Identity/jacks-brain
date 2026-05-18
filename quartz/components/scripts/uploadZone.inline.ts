@@ -359,16 +359,19 @@ document.addEventListener("nav", () => {
     })
   }
 
-  // YouTube catalog
+  // YouTube catalog — POSTs to the unified /api/url endpoint, which
+  // detects YouTube URLs and routes them through Supadata for transcript
+  // fetching. The card stays as a separate UI affordance (helpful cue
+  // that "yes, YouTube is supported"), but the backend is now unified.
   if (youtubeBtn && youtubeInput) {
     youtubeBtn.addEventListener("click", async () => {
       const url = youtubeInput.value.trim()
       if (!url) return
       youtubeBtn.disabled = true
-      youtubeBtn.textContent = "Submitting..."
-      showCardStatus(youtubeStatus, "Submitting YouTube URL...", "pending")
+      youtubeBtn.textContent = "Fetching transcript..."
+      showCardStatus(youtubeStatus, "Fetching transcript for " + url + "...", "pending")
       try {
-        const response = await fetch("/api/youtube", {
+        const response = await fetch("/api/url", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url }),
