@@ -5,9 +5,9 @@
  * entry including the original filename, a download URL pointing at the
  * repo's raw content, the date it was acquired (last commit touching the
  * file), and a flag indicating whether a corresponding source page exists
- * in content/collection/sources/ (i.e. whether it has been cataloged yet).
+ * in content/reflect/sources/ (i.e. whether it has been cataloged yet).
  *
- * Backs the SourcesList component on /collection/sources/.
+ * Backs the SourcesList component on /reflect/sources/.
  *
  * Response shape:
  *   { files: [
@@ -46,11 +46,11 @@ interface OriginalFile {
 
 const BRANCH = "main"
 const ORIGINALS_DIR = "static/originals"
-const SOURCES_DIR = "content/collection/sources"
+const SOURCES_DIR = "content/reflect/sources"
 
 // Mirror of the slug derivation used elsewhere — strips date prefixes so
 // the same underlying source matches between static/originals and
-// content/collection/sources regardless of date prefixing differences.
+// content/reflect/sources regardless of date prefixing differences.
 function deriveSlug(filename: string): string {
   // Source pages preserve their date prefix in the filename
   // (e.g. "2026-04-23-img-2369.md"), so the derived slug should too.
@@ -97,7 +97,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     (e) => e.type === "file" && e.name !== ".gitkeep" && e.download_url,
   )
 
-  // 2. List content/collection/sources/ to know which originals have been cataloged.
+  // 2. List content/reflect/sources/ to know which originals have been cataloged.
   const cataloguedSlugs = new Set<string>()
   const sourcesRes = await fetch(
     `${api}/contents/${SOURCES_DIR}?ref=${BRANCH}`,
