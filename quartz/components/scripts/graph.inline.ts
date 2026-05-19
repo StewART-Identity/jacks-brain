@@ -1260,7 +1260,7 @@ async function renderGraph(graph: HTMLElement, fullSlug: FullSlug) {
 
   const synthesisSlugs: SimpleSlug[] = []
   for (const k of data.keys()) {
-    if (k.startsWith("collection/synthesis/") && !k.endsWith("/index")) {
+    if (k.startsWith("reflect/synthesis/") && !k.endsWith("/index")) {
       synthesisSlugs.push(k)
     }
   }
