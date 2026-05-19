@@ -151,7 +151,7 @@ function slugify(filenameOrStem) {
  * page to update in place).
  */
 function findExistingSourcePage(acquisitionFilename) {
-  const sourcesDir = join(CONTENT_DIR, "collection", "sources")
+  const sourcesDir = join(CONTENT_DIR, "reflect", "sources")
   if (!existsSync(sourcesDir)) return null
   const targetSlug = slugify(acquisitionFilename)
 
@@ -287,7 +287,7 @@ function catalogWithClaude(sourcePath) {
   const existing = findExistingSourcePage(originalName)
   const isReView = existing !== null
   const sourceFilename = isReView ? existing.filename : `${today}-${slug}.md`
-  const sourcePagePath = `content/collection/sources/${sourceFilename}`
+  const sourcePagePath = `content/reflect/sources/${sourceFilename}`
   const retentionAction = isReView ? "Re-viewed" : "Cataloged"
 
   // If we converted the file, read it inline to avoid path issues
@@ -353,7 +353,7 @@ Read the following files to understand the wiki structure and current state:
 1. CLAUDE.md — the wiki schema and conventions
 2. content/index.md — the welcome/landing page (do not modify)
 3. data/retention-log.md — the current retention log (audit table, NOT a Quartz page)
-4. Any existing pages in content/collection/ that may already cover this material — update in place if so.
+4. Any existing pages in content/reflect/ that may already cover this material — update in place if so.
 
 ${sourceInstruction}
 
@@ -363,13 +363,13 @@ Follow the "Catalog" workflow from CLAUDE.md:
 
 1. ${isReView ? "Update" : "Create"} the source summary page at the exact path above. Use a direct filesystem write.
 
-2. Create or update entity pages in content/collection/entities/ for significant entities mentioned. Always prefer updating over duplicating. Direct filesystem writes.
+2. Create or update entity pages in content/reflect/entities/ for significant entities mentioned. Always prefer updating over duplicating. Direct filesystem writes.
 
-3. Create or update concept pages in content/collection/concepts/ for significant concepts. Always prefer updating over duplicating. Direct filesystem writes.
+3. Create or update concept pages in content/reflect/concepts/ for significant concepts. Always prefer updating over duplicating. Direct filesystem writes.
 
-4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/collection/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents. Direct filesystem write.
+4. If this source connects to or contrasts with existing wiki content, create or update a synthesis page in content/reflect/synthesis/ that draws cross-cutting insights. Good synthesis pages compare sources, identify patterns, or surface tensions between documents. Direct filesystem write.
 
-5. Do NOT modify content/index.md (the welcome page) or any of the per-category index.md files in collection/ (Sources, Entities, Concepts, Synthesis). The Collection page listings are rendered automatically by Quartz's FolderContent + PageList components from each page's frontmatter — title, summary, dates, tags. The index.md files contribute only the page title and intro paragraph above the auto-generated table; their bodies should stay empty. Putting a markdown table in an index.md would duplicate the auto-rendered listing and create drift.
+5. Do NOT modify content/index.md (the welcome page) or any of the per-category index.md files in reflect/ (Sources, Entities, Concepts, Synthesis). The Reflect page listings are rendered automatically by Quartz's FolderContent + PageList components from each page's frontmatter — title, summary, dates, tags. The index.md files contribute only the page title and intro paragraph above the auto-generated table; their bodies should stay empty. Putting a markdown table in an index.md would duplicate the auto-rendered listing and create drift.
 
 6. Update the retention log by calling the **append_retention_entry** MCP tool with these arguments:
      - action: "${retentionAction}"
@@ -384,10 +384,10 @@ Include a link to the original document in the source summary page (e.g., [Downl
 The /api/originals/ prefix is required — it is the auth-controlled download proxy that streams the file from the GitHub repo. Do NOT use /originals/ or /static/originals/ — neither path is served.
 
 IMPORTANT formatting rules:
-- Every page (source, entity, concept, synthesis) MUST include a 'summary:' field in its frontmatter — a single-sentence (≤140 char) description that will appear in the Collection table listings. Make it informative on its own, not just a restated title.
+- Every page (source, entity, concept, synthesis) MUST include a 'summary:' field in its frontmatter — a single-sentence (≤140 char) description that will appear in the Reflect table listings. Make it informative on its own, not just a restated title.
 - Do NOT include a duplicate H1 heading in any page. The frontmatter title is rendered automatically.
 - Use wikilinks ([[path]]) aggressively to cross-reference between pages.
-- All wiki page paths use the collection/ prefix: collection/sources/, collection/entities/, collection/concepts/, collection/synthesis/.
+- All wiki page paths use the reflect/ prefix: reflect/sources/, reflect/entities/, reflect/concepts/, reflect/synthesis/.
 - Today's date is ${today}.
 - The source page path is EXACTLY ${sourcePagePath}. Do not add or strip date prefixes from this path.
 
