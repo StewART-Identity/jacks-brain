@@ -9,15 +9,15 @@ export const sharedPageComponents: SharedLayout = {
     Component.Hamburger(),
     Component.ConditionalRender({
       component: Component.UploadZone(),
-      condition: (page) => page.fileData.slug === "learn/selection",
+      condition: (page) => page.fileData.slug === "collect/selection",
     }),
     Component.ConditionalRender({
       component: Component.FullGraph(),
-      condition: (page) => page.fileData.slug === "visualize/graph-view",
+      condition: (page) => page.fileData.slug === "visualize/graph",
     }),
     Component.ConditionalRender({
       component: Component.SourcesList(),
-      condition: (page) => page.fileData.slug === "collection/sources",
+      condition: (page) => page.fileData.slug === "reflect/sources",
     }),
     Component.ConditionalRender({
       component: Component.NukeButton(),
@@ -25,19 +25,19 @@ export const sharedPageComponents: SharedLayout = {
     }),
     Component.ConditionalRender({
       component: Component.SearchPage(),
-      condition: (page) => page.fileData.slug === "learn/search",
+      condition: (page) => page.fileData.slug === "search/wiki",
     }),
     Component.ConditionalRender({
       component: Component.ResearchPage(),
-      condition: (page) => page.fileData.slug === "learn/research",
+      condition: (page) => page.fileData.slug === "search/web",
     }),
     Component.ConditionalRender({
       component: Component.Acquisition(),
-      condition: (page) => page.fileData.slug === "learn/acquisition",
+      condition: (page) => page.fileData.slug === "collect/acquisition",
     }),
     Component.ConditionalRender({
       component: Component.RetentionList(),
-      condition: (page) => page.fileData.slug === "learn/retention",
+      condition: (page) => page.fileData.slug === "collect/retention",
     }),
   ],
   footer: Component.Footer(),
@@ -47,26 +47,33 @@ const sidebarLeft = [
   Component.PageTitle(),
   Component.MobileOnly(Component.Spacer()),
   Component.SidebarLink({
-    title: "Learn",
-    slug: "learn",
+    title: "Collect",
+    slug: "collect",
     defaultState: "open",
     links: [
-      { title: "Research", slug: "learn/research" },
-      { title: "Selection", slug: "learn/selection" },
-      { title: "Acquisition", slug: "learn/acquisition" },
-      { title: "Retention", slug: "learn/retention" },
+      { title: "Selection", slug: "collect/selection" },
+      { title: "Acquisition", slug: "collect/acquisition" },
+      { title: "Retention", slug: "collect/retention" },
     ],
   }),
   Component.SidebarLink({
-    title: "Collect",
-    slug: "collection",
+    title: "Search",
+    slug: "search",
     defaultState: "open",
     links: [
-      { title: "Sources", slug: "collection/sources" },
-      { title: "Entities", slug: "collection/entities" },
-      { title: "Concepts", slug: "collection/concepts" },
-      { title: "Synthesis", slug: "collection/synthesis" },
-      { title: "Search", slug: "learn/search" },
+      { title: "Wiki", slug: "search/wiki" },
+      { title: "Web", slug: "search/web" },
+    ],
+  }),
+  Component.SidebarLink({
+    title: "Reflect",
+    slug: "reflect",
+    defaultState: "open",
+    links: [
+      { title: "Sources", slug: "reflect/sources" },
+      { title: "Entities", slug: "reflect/entities" },
+      { title: "Concepts", slug: "reflect/concepts" },
+      { title: "Synthesis", slug: "reflect/synthesis" },
     ],
   }),
   Component.SidebarLink({
@@ -74,8 +81,8 @@ const sidebarLeft = [
     slug: "visualize",
     defaultState: "open",
     links: [
-      { title: "Graph View", slug: "visualize/graph-view" },
-      { title: "Graph Help", slug: "visualize/graph-help" },
+      { title: "Graph", slug: "visualize/graph" },
+      { title: "Help", slug: "visualize/help" },
     ],
   }),
   Component.ApplicationMenu(),
