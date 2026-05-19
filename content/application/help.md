@@ -4,6 +4,10 @@ title: "Help"
 
 A guide to navigating and using Jack's Brain.
 
+### Search
+- **[[search/wiki|Wiki]]** — Search across all wiki content
+- **[[search/web|Web]]** — Find candidate sources on the web
+
 ### Collect
 - **[[collect/selection|Selection]]** — Add a chosen source to the collection
 - **[[collect/acquisition|Acquisition]]** — Track documents through cataloging
@@ -14,10 +18,6 @@ A guide to navigating and using Jack's Brain.
 - **[[reflect/entities|Entities]]** — People, organizations, tools, systems
 - **[[reflect/concepts|Concepts]]** — Ideas, theories, frameworks
 - **[[reflect/synthesis|Synthesis]]** — Cross-cutting analysis
-
-### Search
-- **[[search/wiki|Wiki]]** — Search across all wiki content
-- **[[search/web|Web]]** — Find candidate sources on the web
 
 ### Visualize
 - **[[visualize/graph|Graph]]** — Interactive map of connections

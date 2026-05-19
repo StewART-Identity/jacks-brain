@@ -47,6 +47,15 @@ const sidebarLeft = [
   Component.PageTitle(),
   Component.MobileOnly(Component.Spacer()),
   Component.SidebarLink({
+    title: "Search",
+    slug: "search",
+    defaultState: "open",
+    links: [
+      { title: "Wiki", slug: "search/wiki" },
+      { title: "Web", slug: "search/web" },
+    ],
+  }),
+  Component.SidebarLink({
     title: "Collect",
     slug: "collect",
     defaultState: "open",
@@ -54,15 +63,6 @@ const sidebarLeft = [
       { title: "Selection", slug: "collect/selection" },
       { title: "Acquisition", slug: "collect/acquisition" },
       { title: "Retention", slug: "collect/retention" },
-    ],
-  }),
-  Component.SidebarLink({
-    title: "Search",
-    slug: "search",
-    defaultState: "open",
-    links: [
-      { title: "Wiki", slug: "search/wiki" },
-      { title: "Web", slug: "search/web" },
     ],
   }),
   Component.SidebarLink({
