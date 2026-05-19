@@ -158,7 +158,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   // 2. List all source pages so we know which slugs exist.
   const sourcesRes = await fetch(
-    `${api}/contents/content/collection/sources?ref=${BRANCH}`,
+    `${api}/contents/content/reflect/sources?ref=${BRANCH}`,
     { headers },
   )
   const sourcesPresent = new Set<string>()
@@ -184,7 +184,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   await Promise.all(
     [...uniqueSlugs].map(async (slug) => {
       const r = await fetch(
-        `${api}/contents/content/collection/sources/${slug}.md?ref=${BRANCH}`,
+        `${api}/contents/content/reflect/sources/${slug}.md?ref=${BRANCH}`,
         { headers },
       )
       if (!r.ok) return
