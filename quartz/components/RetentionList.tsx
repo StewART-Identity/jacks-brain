@@ -212,7 +212,7 @@ document.addEventListener("nav", () => {
   }
 
   // Remove the refresh-button click handler before the next SPA navigation.
-  // Without this, every visit to /learn/retention stacks another listener on
+  // Without this, every visit to /collect/retention stacks another listener on
   // the same button, so a single click later fires loadRetention() multiple
   // times. This is the canonical Quartz pattern -- see e.g.
   // checkbox.inline.ts and acquisition.inline.ts. The per-row listeners

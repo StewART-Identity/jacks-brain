@@ -1,7 +1,7 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 import styles from "./styles/searchPage.scss"
 
-/* SearchPage — the dedicated /learn/search route.
+/* SearchPage — the dedicated /search/wiki route.
  *
  * Visually mirrors the Research card exactly: rounded card, semi-
  * transparent dark fill, label, textarea, controls row with count
