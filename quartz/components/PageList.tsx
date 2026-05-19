@@ -48,15 +48,15 @@ type Props = {
   sort?: SortFn
 } & QuartzComponentProps
 
-// Collection sub-pages render as actual data tables instead of the default
+// Reflect sub-pages render as actual data tables instead of the default
 // flex-with-tags-floated-right layout. Date column appears on Sources and
 // Synthesis (where date carries information), but not on Concepts or
 // Entities (which are evergreen and don't have a meaningful "date").
 const COLLECTION_TABLE_SLUGS: Record<string, { showDate: boolean }> = {
-  "collection/sources": { showDate: true },
-  "collection/synthesis": { showDate: true },
-  "collection/concepts": { showDate: false },
-  "collection/entities": { showDate: false },
+  "reflect/sources": { showDate: true },
+  "reflect/synthesis": { showDate: true },
+  "reflect/concepts": { showDate: false },
+  "reflect/entities": { showDate: false },
 }
 
 export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort }: Props) => {
@@ -68,12 +68,12 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
 
   const currentSlug = fileData.slug ?? ""
   // Quartz's FullSlug for an index page includes the trailing 'index'
-  // segment (e.g. "collection/sources/index"). Strip it for the lookup.
+  // segment (e.g. "reflect/sources/index"). Strip it for the lookup.
   const lookupSlug = currentSlug.replace(/\/index$/, "")
   const tableConfig = COLLECTION_TABLE_SLUGS[lookupSlug]
 
   if (tableConfig) {
-    // Collection sub-page: render as a real table.
+    // Reflect sub-page: render as a real table.
     //
     // Column order: Title -> Date -> Summary -> Subjects -> Tags
     // Sortable: Title (alphabetical) and Date (chronological).
@@ -84,7 +84,7 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
     const showDate = tableConfig.showDate
 
     // When the page list is empty, show an explanatory notice instead
-    // of the table. Each Collection sub-page's empty state has its own
+    // of the table. Each Reflect sub-page's empty state has its own
     // copy because the reasons for emptiness differ:
     //
     // - Sources/Entities/Concepts: empty means "nothing cataloged yet."
@@ -101,19 +101,19 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
     // this branch since there's nothing to render in those cells.
     if (list.length === 0) {
       const emptyCopy: Record<string, { headline: string; body: string }> = {
-        "collection/sources": {
+        "reflect/sources": {
           headline: "No sources cataloged yet.",
           body: "Upload a document via the Selection page to start the cataloging pipeline.",
         },
-        "collection/entities": {
+        "reflect/entities": {
           headline: "No entities yet.",
           body: "Cataloged sources automatically generate entity pages for the people, organizations, tools, and systems they reference. Entities will appear here as you catalog sources.",
         },
-        "collection/concepts": {
+        "reflect/concepts": {
           headline: "No concepts yet.",
           body: "Cataloged sources automatically generate concept pages for the ideas, theories, frameworks, and principles they cover. Concepts will appear here as you catalog sources.",
         },
-        "collection/synthesis": {
+        "reflect/synthesis": {
           headline: "No synthesis pages yet.",
           body: "Synthesis pages emerge organically — the cataloger creates one when a newly cataloged source genuinely connects to or contrasts with existing wiki content. With only a small number of sources cataloged, there may not be cross-cutting material to synthesize. As the collection grows, synthesis pages will start appearing here.",
         },
@@ -280,7 +280,7 @@ PageList.css = `
   margin: 0;
 }
 
-/* Collection-table-specific styles. The base look (header band, cell
+/* Reflect-table-specific styles. The base look (header band, cell
    borders, alternating rows, flush-left) comes from jbtable.scss. */
 
 /* Percentage-based column widths so the table never overflows,
@@ -378,7 +378,7 @@ PageList.css = `
   white-space: nowrap;
 }
 
-/* Empty-state notice shown on Collection sub-pages when there are no
+/* Empty-state notice shown on Reflect sub-pages when there are no
    pages of that type yet. Replaces the table entirely — when there's
    nothing to show, the table headers are noise. The message
    distinguishes "no content yet, you should catalog something" (most
@@ -407,7 +407,7 @@ PageList.css = `
 }
 `
 
-// Client-side sort behavior for the Collection table headers.
+// Client-side sort behavior for the Reflect table headers.
 //
 // The SSR render emits rows in "newest first" order via the Quartz
 // sorter. This script runs on every Quartz `nav` event (which fires on
