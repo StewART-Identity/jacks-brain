@@ -1,168 +1,206 @@
-# Jack's Brain — Patch (April 24, 2026)
+# Jack's Brain
 
-A bundle that ships several bug fixes plus the Retention/Acquisition
-rename and the new inline title-edit feature.
+A personal knowledge wiki where Jack Stewart catalogs sources, builds
+out a per-domain ontology of entities and concepts, and synthesizes
+across them. Built on [Quartz](https://quartz.jzhao.xyz/) and deployed
+on Cloudflare Pages, with a thin layer of Cloudflare Functions
+providing the cataloging pipeline.
 
-> **Note (May 19, 2026):** Since this patch notes was written, the
-> top-level menu has been renamed: "Learn" → "Collect", "Collection"
-> → "Reflect", with a new "Search" section. Path references in this
-> file have been updated to the new layout for accuracy, but the
-> historical "renamed from X to Y" narrative below describes the
-> April 2026 changes that originally shipped in this patch.
+The wiki lives at **[jacks-brain.pages.dev](https://jacks-brain.pages.dev)**
+and is gated behind Cloudflare Access — only Jack can read or write.
 
-## What's in this patch
+---
 
-### Bug fixes
+## What it is
 
-- **`functions/api/originals.ts`** — reconstructed. The previous file at
-  this path had been silently overwritten with a Node CLI script, which
-  the Workers runtime can't execute. The Sources page in the wiki has
-  therefore been broken (silently — the page caught the fetch error and
-  showed "Could not load sources"). This restores it.
+A library-science-flavored knowledge base. The vocabulary is
+deliberate:
 
-- **`scripts/catalog.mjs`** — restored from git history. The version in
-  the repo today is a stale duplicate of `nuke.ts`. The recovered file
-  is the original first commit's content with one small adjustment: the
-  prompt now references `content/collect/retention.md` instead of
-  `memory.md` to match this patch's renames.
+- An **acquisition** is the act of bringing a document into the
+  collection — uploading a PDF, a webpage, a YouTube transcript.
+- The **catalog** is the automated pipeline that takes an acquired
+  document and turns it into wiki content: a source summary plus the
+  entity/concept/synthesis pages it spawns.
+- **Retention** is the chronological audit log of every cataloging
+  operation. It's what the wiki keeps; "memory" was the tech-y
+  placeholder before the rename.
+- **Reflect** is the catalog itself — the per-document summaries
+  (Sources) plus the cross-cutting pages they produce (Entities,
+  Concepts, Synthesis).
 
-- **`CLAUDE.md`** — brought into alignment with the actual wiki:
-  - Removes the "Master catalog" framing from `content/index.md`. The
-    wiki uses per-category index files (`reflect/sources/index.md`,
-    `reflect/concepts/index.md`, etc.) as the actual catalogs;
-    `content/index.md` is a hand-styled welcome page and shouldn't be
-    turned into a catalog.
-  - Replaces references to `memory.md` and `content/log.md` with
-    `content/collect/retention.md`.
-  - Updates the workflow descriptions to reflect the per-category index
-    model.
+The wiki uses two-tier classification on every page:
+**subjects** (a controlled vocabulary — placement within the wiki's
+ontology) plus **tags** (a free-form folksonomy — descriptive
+keywords). See `CLAUDE.md` for the full schema.
 
-- **Defense in depth on write endpoints.** All four write Functions
-  (`nuke.ts`, `upload.ts`, `url.ts`, `youtube.ts`) plus the new
-  `source.ts` and `retention.ts` now check for the
-  `Cf-Access-Authenticated-User-Email` header that Cloudflare Access
-  sets on every authenticated request. If the header is missing, the
-  function returns 403. This means a misconfiguration that disabled
-  Cloudflare Access in front of the Pages project would not result in
-  unauthenticated callers being able to wipe the wiki — they'd hit 403
-  at the Function layer too.
+---
 
-### Renames
+## Top-level structure
 
-- **`content/learn/retention.md` → `content/learn/acquisition.md`**:
-  the page that tracks document-processing status (queued / in progress
-  / cataloged) keeps its function. It's now called Acquisition because
-  that's what librarianship calls the act of bringing something into
-  the collection.
-
-- **`content/learn/memory.md` → `content/learn/retention.md`**: the
-  chronological audit log is renamed to Retention. "Retention" is the
-  library term for the long-term record of what's been kept; "Memory"
-  was the tech-y placeholder.
-
-- **Component renames**: `Retention.tsx` → `Acquisition.tsx`. The
-  inline script and SCSS files follow. The new page named Retention
-  uses a brand-new component, `RetentionList.tsx`, which has the
-  inline-edit table.
-
-- **Navigation**: under Learn, the order is now Research → Knowledge →
-  Acquisition → Retention. (Acquisition before Retention, matching the
-  workflow: you acquire a document, then it lives in retention.)
-
-### New feature: inline title editing on the Retention page
-
-The Retention page (the new audit log) renders a four-column table:
-Date, Action, Document (filename, read-only), Title (editable).
-
-Click a title to edit. Blur or Enter to save. Escape to cancel. The
-save commits a change to the source page's frontmatter `title:` field
-via the new `PATCH /api/source` endpoint. The original filename in
-`static/originals/` is never touched — only the display title changes.
-
-If a source page no longer exists (e.g. it was nuked), its row's title
-column shows a muted dash and editing is disabled.
-
-The data comes from a new `GET /api/retention` endpoint, which parses
-the markdown table in `content/collect/retention.md` and joins each row
-with the current title from the corresponding source page's
-frontmatter.
-
-## Files in this zip
+The sidebar nav mirrors the directory layout under `content/`:
 
 ```
-content/learn/acquisition.md           — was content/learn/retention.md (now lives at content/collect/acquisition.md)
-content/learn/retention.md             — was content/learn/memory.md (now lives at content/collect/retention.md; mounts RetentionList)
-functions/api/nuke.ts                  — RESET_TEMPLATES updated, Access header check
-functions/api/originals.ts             — reconstructed from scratch
-functions/api/retention.ts             — NEW
-functions/api/source.ts                — NEW (PATCH endpoint)
-functions/api/upload.ts                — Access header check
-functions/api/url.ts                   — Access header check
-functions/api/youtube.ts               — Access header check
-quartz/components/Acquisition.tsx      — renamed from Retention.tsx
-quartz/components/RetentionList.tsx    — NEW
-quartz/components/index.ts             — updated import map
-quartz/components/scripts/acquisition.inline.ts  — renamed from retention.inline.ts
-quartz/components/styles/acquisition.scss        — renamed from retention.scss
-quartz.layout.ts                       — sidebar links + ConditionalRender mounts
-scripts/catalog.mjs                    — recovered from git history (with retention.md patch)
-CLAUDE.md                              — vocabulary + structure update
+Collect       — the cataloging pipeline
+  Selection       (upload form)
+  Acquisition     (live processing status)
+  Retention       (chronological audit log; inline title edit)
+Search        — query tools
+  Wiki            (in-collection search)
+  Web             (external research)
+Reflect       — the cataloged collection
+  Sources         (per-document summary pages)
+  Entities        (people, organizations, tools, systems)
+  Concepts        (ideas, theories, frameworks)
+  Synthesis       (cross-cutting analysis, comparisons)
+Visualize     — graph view of the wiki
+  Graph           (full-page d3 force layout)
+  Help            (graph view shortcuts)
+Application   — meta-pages about the wiki itself
+  Help            (using the wiki)
+  Nuke It From Orbit  (wipe-and-reset; confirmation-gated)
 ```
 
-## How to apply via the GitHub Bridge
+`content/index.md` is a hand-styled welcome page and is intentionally
+not turned into a catalog.
 
-The simplest path: drop the entire `jacks-brain-patch/` directory's
-contents into the Bridge with strip-prefix set to `jacks-brain-patch/`,
-target repo `StewART-Identity/jacks-brain`, branch `main`. The Bridge
-will write each file to its correct location preserving directory
-structure. One commit covers everything.
+---
 
-Suggested commit message:
+## Repo layout
 
 ```
-Rename Memory → Retention, Retention → Acquisition; add inline title edit; fix originals.ts
+content/                       The wiki itself — Quartz serves this as the site
+  collect/                       Pipeline pages (Selection, Acquisition, Retention)
+  search/                        Search pages (Wiki, Web)
+  reflect/                       The collection (Sources, Entities, Concepts, Synthesis)
+  visualize/                     Graph view pages
+  application/                   Application-meta pages
+  index.md                       Welcome page
+data/
+  retention-log.md               Chronological audit log (markdown table)
+  graph-layouts.json             Saved graph view layouts
+docs/                          Quartz's own docs (upstream — left untouched)
+functions/api/                 Cloudflare Pages Functions (cataloging pipeline)
+quartz/                        Quartz source — components, plugins, layouts
+scripts/                       Catalog automation
+static/originals/              Immutable source documents (acquired uploads)
+static/in-flight/              Cataloging-in-progress state
+static/queue/                  Pending acquisitions (drives the catalog workflow)
+.github/workflows/             GitHub Actions (catalog.yml runs the pipeline)
+CLAUDE.md                      Wiki schema and cataloging conventions
+quartz.config.ts               Quartz site config
+quartz.layout.ts               Sidebar nav, page mounts, conditional renders
 ```
 
-## Cleanup steps NOT in this zip
+`docs/` is the upstream Quartz documentation, kept around for reference
+when modifying the layout or plugins. It isn't part of the wiki and
+isn't served as content.
 
-A few cleanups can't be done by adding files — they require deleting
-files or directly removing nav entries from the live repo. Do these
-right after pushing the patch:
+---
 
-1. **Delete `content/learn/memory.md` from the repo.** The patch
-   creates `content/learn/retention.md` (the new name), but the old
-   file at `content/learn/memory.md` will still exist and will appear
-   as a stale "Memory" page in the nav. Delete it via GitHub web UI
-   (open the file → trash icon → commit) or via local `git rm`.
+## The cataloging pipeline
 
-2. **Delete `quartz/components/Retention.tsx` and friends.** The patch
-   creates `Acquisition.tsx` and the renamed inline/scss files but
-   leaves the old `Retention.tsx`, `scripts/retention.inline.ts`, and
-   `styles/retention.scss` orphaned. They aren't imported anywhere
-   (the new `index.ts` imports `Acquisition` instead) so they're dead
-   code, but they'll bloat the repo. Delete them at your convenience.
+How a document becomes wiki content:
 
-3. **Set the Cloudflare Pages env var if not already set.** The new
-   Functions assume `GITHUB_TOKEN` and `GITHUB_REPO` env vars are
-   already configured (they were set when `nuke.ts` and `upload.ts`
-   were originally deployed). No new env vars are needed.
+1. **Acquisition.** The user drops a file (or URL) on the Selection
+   page, or pushes one through the MCP server. The file lands in
+   `static/originals/` and a row appears in `static/queue/`.
+2. **The catalog workflow fires** (`.github/workflows/catalog.yml`).
+   It checks the queue, picks the next item, runs Claude Code against
+   the document, and produces:
+   - One source page at `content/reflect/sources/YYYY-MM-DD-slug.md`
+   - Zero or more entity pages under `content/reflect/entities/`
+   - Zero or more concept pages under `content/reflect/concepts/`
+   - Zero or more synthesis pages under `content/reflect/synthesis/`
+   - One row appended to `data/retention-log.md`
+3. **Cloudflare Pages rebuilds** when the catalog commits land on
+   `main`, and the new pages appear on the live site.
 
-## Testing checklist
+The catalog is idempotent on re-views: rerunning it against an
+already-cataloged document updates the source page in place (replacing
+the body, appending to the `views:` log) rather than creating a new
+file.
 
-After deploy, in a fresh InPrivate window (so Access auth is fresh):
+The Acquisition page shows live status for whatever is currently
+moving through the pipeline. The Retention page shows the full
+historical record.
 
-- [ ] `/collect/acquisition` loads the Document Processing tracker
-- [ ] `/collect/retention` loads the audit table with four columns
-- [ ] Sidebar order under Collect is Selection / Acquisition / Retention
-- [ ] `/reflect/sources` loads the SourcesList table without a "Could
-      not load sources" error
-- [ ] On Retention, clicking a title turns it into an editable cell
-- [ ] Blur after edit shows the saved-state visual flash; refresh
-      confirms the title persisted
-- [ ] Escape during edit cancels and reverts
-- [ ] If a row's source page is gone, the title cell shows a muted dash
-      and clicking it does nothing
-      
+---
 
-If any of those fail, check Cloudflare Pages → your project → Functions
-logs (live) for the failing endpoint's error message.
+## Deployment
+
+The live site is a Cloudflare Pages project (`jacks-brain`) wired to
+this repo's `main` branch with automatic deployments. Every commit
+triggers a fresh Quartz build on CF's runners; there is no
+intermediate staging branch.
+
+A few things to know:
+
+- **CF builds are serialized per-project.** Large rename pushes
+  produce queued builds. Watch the Workers & Pages dashboard if a
+  change hasn't reflected on the live site within a couple of minutes.
+- **There is no incremental rebuild cache.** Each deployment is a full
+  Quartz build (~30-60 seconds). Batching changes into atomic multi-
+  file commits keeps the deployment queue short.
+- **`.github/workflows/deploy.yml` is orphaned.** It's a leftover
+  GitHub Pages publisher from before the CF migration and fails on
+  every push. It does not affect the live deployment.
+
+The wiki sits behind **Cloudflare Access** — every request must come
+from an authenticated session, and every write Function checks for the
+`Cf-Access-Authenticated-User-Email` header as defense in depth.
+
+---
+
+## Working in this repo
+
+Most edits go through one of two tools:
+
+- **[`jacks-brain-mcp`](https://github.com/StewART-Identity/jacks-brain-mcp)**
+  — an MCP server that lets Claude.ai read, write, and catalog content
+  here. Every write requires explicit per-call approval via the
+  Claude.ai tool-call confirmation dialog. This is the everyday
+  authoring path.
+- **The GitHub Bridge** at `idm-toolbox.pages.dev/bridge/` — a
+  multi-file commit UI for when you want to drop a tree of files in
+  deliberately, with a commit message and a tree preview.
+
+Direct `git push` works too, but is rarely the fastest path.
+
+Before making any wiki edits — by hand or through MCP — read
+**`CLAUDE.md`** at the repo root. It defines:
+
+- The page frontmatter schema (required fields, source-page extras).
+- The subjects vs. tags contract (controlled vocabulary vs.
+  folksonomy).
+- Naming conventions (filenames, source-page date prefixes, wikilinks).
+- The Catalog / Query / Lint workflows.
+- Normalization rules that take precedence over how source documents
+  style things.
+
+---
+
+## Patch history
+
+Cumulative structural changes are documented as `PATCH-YYYY-MM-DD.md`
+files at the repo root:
+
+- `PATCH-2026-04-24.md` — Retention/Acquisition rename, inline title
+  editing, originals.ts reconstruction.
+- `PATCH-2026-04-25.md` — Code-review fixes: HTML escaping,
+  count-cap flicker, numeric date sort.
+- `PATCH-2026-05-19.md` — Top-level menu refactor (Learn → Collect +
+  Search, Collection → Reflect, new Application section).
+
+The README itself describes only the current state of the project.
+For the "why did this change?" answer to anything structural, the
+matching patch file is where the rationale lives.
+
+---
+
+## License
+
+Code: MIT (`LICENSE.txt`). Wiki content (everything under `content/`
+and `static/originals/`): personal knowledge, not licensed for reuse.
+
+The Quartz framework this site is built on is itself MIT-licensed by
+its upstream authors. See `QUARTZ-README.md` for the upstream README.
