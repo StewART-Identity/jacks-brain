@@ -132,7 +132,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         listDir(GITHUB_TOKEN, GITHUB_REPO, "static/queue"),
         listDir(GITHUB_TOKEN, GITHUB_REPO, "static/in-flight"),
         listDir(GITHUB_TOKEN, GITHUB_REPO, "static/originals"),
-        listDir(GITHUB_TOKEN, GITHUB_REPO, "content/collection/sources"),
+        listDir(GITHUB_TOKEN, GITHUB_REPO, "content/reflect/sources"),
         getDirTimestamps(GITHUB_TOKEN, GITHUB_REPO, "static/queue"),
         getDirTimestamps(GITHUB_TOKEN, GITHUB_REPO, "static/in-flight"),
         getDirTimestamps(GITHUB_TOKEN, GITHUB_REPO, "static/originals"),
