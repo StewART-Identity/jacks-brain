@@ -475,64 +475,6 @@ input.search-bar {
   border-right-color: $green-100;
 }
 
-
-/* ==========================================================================
-   Mobile hamburger menu
-   ========================================================================== */
-
-.sidebar-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
-  width: 100%;
-}
-
-.mobile-menu-toggle {
-  display: none;
-}
-
-@media all and (max-width: 800px) {
-  .sidebar.left {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    position: relative;
-    padding-top: 1rem !important;
-    padding-bottom: 0.5rem !important;
-    gap: 0 !important;
-  }
-
-  .mobile-menu-toggle {
-    display: flex;
-    align-items: center;
-    background: transparent;
-    border: none;
-    color: var(--dark);
-    cursor: pointer;
-    padding: 0.4rem;
-    position: absolute;
-    right: 0;
-    top: 1rem;
-    z-index: 10;
-  }
-
-  .sidebar.left .sidebar-content {
-    display: none;
-    padding-top: 0.5rem;
-    gap: 0.8rem;
-  }
-
-  .sidebar.left .sidebar-content.open {
-    display: flex;
-  }
-
-  .sidebar.left .page-title {
-    display: block !important;
-  }
-
-  .sidebar.left .spacer {
-    display: none !important;
-  }
-}
 :root[saved-theme="dark"] .left-sidebar {
   border-right-color: $green-800;
 }
@@ -791,7 +733,7 @@ body[data-slug="index"] .center > article {
 
 
 /* ==========================================================================
-   Memory page — size table columns for "Date | Action | Details" pattern
+   Retention page — size table columns for "Date | Action | Details" pattern
    Without this, equal-width columns cramp the Details column while leaving
    the short Date and Action columns half-empty.
 
@@ -800,32 +742,32 @@ body[data-slug="index"] .center > article {
    horizontal scrollbar.
    ========================================================================== */
 
-body[data-slug="learn/memory"] .table-container {
+body[data-slug="collect/retention"] .table-container {
   overflow-x: visible;
 }
-body[data-slug="learn/memory"] .table-container > table {
+body[data-slug="collect/retention"] .table-container > table {
   margin: 0;
   padding: 0;
   width: 100%;
   table-layout: fixed;
 }
-body[data-slug="learn/memory"] .table-container > table th,
-body[data-slug="learn/memory"] .table-container > table td {
+body[data-slug="collect/retention"] .table-container > table th,
+body[data-slug="collect/retention"] .table-container > table td {
   min-width: 0;
 }
-body[data-slug="learn/memory"] .table-container > table th:nth-child(1),
-body[data-slug="learn/memory"] .table-container > table td:nth-child(1) {
+body[data-slug="collect/retention"] .table-container > table th:nth-child(1),
+body[data-slug="collect/retention"] .table-container > table td:nth-child(1) {
   /* Date — YYYY-MM-DD */
   width: 7rem;
   white-space: nowrap;
 }
-body[data-slug="learn/memory"] .table-container > table th:nth-child(2),
-body[data-slug="learn/memory"] .table-container > table td:nth-child(2) {
+body[data-slug="collect/retention"] .table-container > table th:nth-child(2),
+body[data-slug="collect/retention"] .table-container > table td:nth-child(2) {
   /* Action — "Cataloged", "Re-viewed" */
   width: 8rem;
   white-space: nowrap;
 }
-body[data-slug="learn/memory"] .table-container > table td:nth-child(3) {
+body[data-slug="collect/retention"] .table-container > table td:nth-child(3) {
   /* Details — filenames, allow wrapping on long names */
   overflow-wrap: anywhere;
 }
