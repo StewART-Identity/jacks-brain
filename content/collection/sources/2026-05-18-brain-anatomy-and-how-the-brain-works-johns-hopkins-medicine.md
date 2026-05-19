@@ -111,3 +111,7 @@ Twelve nerves originate inside the cranium. The first two arise from the cerebru
 | 10 | Vagus | Ear sensation, digestion, heart/throat motor |
 | 11 | Accessory | Head, neck, shoulder muscles |
 | 12 | Hypoglossal | Tongue motor |
+
+## See also
+
+[[collection/synthesis/brain-anatomy-sources-compared]] compares this source with [[collection/sources/2026-05-18-major-brain-structures-and-their-functions]], identifying what each covers uniquely and where they complement one another.

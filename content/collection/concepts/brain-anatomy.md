@@ -22,9 +22,15 @@ tags:
   - hypothalamus
   - pituitary-gland
   - deep-brain-structures
+  - thalamus
+  - basal-ganglia
+  - dopamine
+  - motor-cortex
+  - prefrontal-cortex
 confidence: high
 sources:
   - "[[collection/sources/2026-05-18-brain-anatomy-and-how-the-brain-works-johns-hopkins-medicine]]"
+  - "[[collection/sources/2026-05-18-major-brain-structures-and-their-functions]]"
 ---
 
 The human brain is divisible into three major regions — **cerebrum**, **brainstem**, and **cerebellum** — each with distinct structural subdivisions and functional roles. See [[collection/concepts/central-nervous-system]] for how the brain and spinal cord form the CNS together, and [[collection/concepts/gray-matter-and-white-matter]] for the tissue-level distinction underpinning all brain regions.
@@ -39,20 +45,20 @@ The cortex (Latin: "bark") is the deeply folded outer layer — its folds (gyri 
 
 ### Lobes
 
-Each hemisphere is divided into four lobes:
+Each hemisphere is divided into four lobes, separated by sulci. The **central sulcus** divides the frontal from the parietal lobe.
 
-| Lobe | Location | Key functions |
-|------|----------|---------------|
-| **Frontal** | Front of head | Personality, decision-making, movement, smell recognition; contains **Broca's area** (speech production) |
-| **Parietal** | Middle | Object identification, spatial reasoning, pain/touch interpretation; contains **Wernicke's area** (language comprehension) |
-| **Occipital** | Back | Vision |
-| **Temporal** | Sides | Short-term memory, speech, musical rhythm, some smell recognition |
+| Lobe | Location | Key functions | Named cortical areas |
+|------|----------|---------------|----------------------|
+| **Frontal** | Front of head | Voluntary movement, personality, decision-making, planning, impulse control | **Primary motor cortex** (causes body movement); **prefrontal cortex** (higher executive function); **Broca's area** (language production, typically left hemisphere) |
+| **Parietal** | Middle | Spatial orientation, attention, pain/touch, language | **Primary somatosensory cortex** (processes touch, pain, temperature, proprioception) |
+| **Occipital** | Back | Visual processing | **Primary visual cortex** plus multiple higher visual areas |
+| **Temporal** | Sides | Learning and memory, higher-order visual processing, hearing | **Primary auditory cortex** (sound perception); **Wernicke's area** (language comprehension; sits at the temporal-parietal junction) |
 
 ## Brainstem
 
 The brainstem bridges the cerebrum and the spinal cord. It has three components:
 
-- **Midbrain (mesencephalon)**: nuclei and neural pathways for hearing, movement, and response calculation. Contains the **substantia nigra** — a dopamine-rich region and part of the basal ganglia; degeneration here is the hallmark of Parkinson's disease.
+- **Midbrain (mesencephalon)**: nuclei and neural pathways for hearing, movement, and response calculation. Contains the two largest dopamine-producing regions in the brain: the **substantia nigra** (nigrostriatal pathway — movement; degeneration here causes Parkinson's disease) and the **ventral tegmental area (VTA)** (mesolimbic pathway — projects to the nucleus accumbens, driving reward and addiction). Both are part of the [[collection/concepts/basal-ganglia]]. See [[collection/concepts/dopamine-pathways]] for a full treatment.
 - **Pons**: origin of four of the twelve cranial nerves (tear production, chewing, blinking, facial expression, balance, hearing). Named for the Latin word for "bridge."
 - **Medulla**: the lowest brainstem segment, where brain meets spinal cord; regulates heart rhythm, breathing, blood flow, and oxygen/CO₂ levels; governs reflexes including sneezing, vomiting, coughing, and swallowing.
 
@@ -64,14 +70,16 @@ The cerebellum ("little brain") sits at the back of the head, below the temporal
 
 ## Deep structures
 
-Within the cerebrum, several specialized structures sit beneath the cortex:
+Within the cerebrum and diencephalon, several specialized structures sit beneath the cortex:
 
+- **Thalamus**: sits above the brainstem; acts as the brain's **relay station** — nearly all sensory information (except olfaction) stops at a specialized thalamic nucleus before being forwarded to the appropriate cortical area for further processing.
 - **Pituitary gland**: the "master gland" — a pea-sized structure governing hormone secretion from the thyroid, adrenals, and gonads. Takes chemical signals from the hypothalamus via a connecting stalk.
-- **Hypothalamus**: above the pituitary; regulates body temperature, sleep-wake cycles, hunger, thirst, and aspects of memory and emotion.
+- **Hypothalamus**: below the thalamus, above the pituitary; regulates body temperature, sleep-wake cycles, hunger, thirst, stress responses, and circadian rhythms. Produces oxytocin and vasopressin, which are transported to the pituitary for secretion.
 - **Amygdala**: paired almond-shaped structures, one per hemisphere; regulates emotion, memory, and the fight-or-flight response. Part of the limbic system; associated with stress and reward.
 - **Hippocampus**: curved seahorse-shaped organ on the underside of each temporal lobe; supports memory formation, learning, navigation, and spatial perception. Implicated in Alzheimer's disease.
 - **Pineal gland**: responds to light and dark; secretes **melatonin** to regulate circadian rhythms and the sleep-wake cycle.
 - **Ventricles**: four interconnected chambers producing cerebrospinal fluid (CSF). See [[collection/concepts/central-nervous-system]] for CSF's role in cushioning and waste clearance.
+- **Basal ganglia**: a group of subcortical nuclei including the striatum, globus pallidus, substantia nigra, nucleus accumbens, and subthalamic nucleus. Functions span movement selection, habit formation, and reward processing. See [[collection/concepts/basal-ganglia]] and [[collection/concepts/dopamine-pathways]].
 
 ## Brain coverings: meninges
 
