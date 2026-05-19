@@ -19,24 +19,24 @@
  * every file change into one POST, so this scales to any repo size.
  *
  * What gets deleted:
- *   - content/collection/sources/*.md       (except index.md)
- *   - content/collection/entities/*.md      (except index.md)
- *   - content/collection/concepts/*.md      (except index.md)
- *   - content/collection/synthesis/*.md     (except index.md)
+ *   - content/reflect/sources/*.md          (except index.md)
+ *   - content/reflect/entities/*.md         (except index.md)
+ *   - content/reflect/concepts/*.md         (except index.md)
+ *   - content/reflect/synthesis/*.md        (except index.md)
  *   - static/originals/*                (all acquired document originals)
  *
  * What gets reset to empty templates:
  *   - data/retention-log.md             (the audit log — keep file, empty table)
  *   - data/graph-layouts.json           (Graph View saved layouts — keep file, empty state)
- *   - content/learn/retention.md        (the page intro — keep file, no table)
- *   - content/collection/sources/index.md     (intro only — table auto-rendered)
- *   - content/collection/entities/index.md    (intro only — table auto-rendered)
- *   - content/collection/concepts/index.md    (intro only — table auto-rendered)
- *   - content/collection/synthesis/index.md   (intro only — table auto-rendered)
+ *   - content/collect/retention.md      (the page intro — keep file, no table)
+ *   - content/reflect/sources/index.md      (intro only — table auto-rendered)
+ *   - content/reflect/entities/index.md     (intro only — table auto-rendered)
+ *   - content/reflect/concepts/index.md     (intro only — table auto-rendered)
+ *   - content/reflect/synthesis/index.md    (intro only — table auto-rendered)
  *
  * What is preserved (NOT touched):
  *   - content/index.md (the custom landing page)
- *   - All scaffolding pages (application/, learn/, visualize/)
+ *   - All scaffolding pages (application/, collect/, search/, visualize/)
  *
  * Requires env vars:
  *   GITHUB_TOKEN — fine-grained PAT with contents:write
@@ -83,10 +83,10 @@ const BRANCH = "main"
 // Directories whose contents (except index.md) should be wiped clean.
 // These are the "content" directories cataloging writes to.
 const WIPE_DIRS = [
-  "content/collection/sources/",
-  "content/collection/entities/",
-  "content/collection/concepts/",
-  "content/collection/synthesis/",
+  "content/reflect/sources/",
+  "content/reflect/entities/",
+  "content/reflect/concepts/",
+  "content/reflect/synthesis/",
   "static/originals/",
 ]
 
@@ -97,30 +97,30 @@ const WIPE_DIRS = [
 // landing page (hero image + welcome text). A fresh empty-state template
 // would destroy that design. Nuke leaves the landing page alone.
 //
-// The four collection index templates are intro-only — the listing on
-// each Collection sub-page is rendered automatically by Quartz's
+// The four Reflect index templates are intro-only — the listing on
+// each Reflect sub-page is rendered automatically by Quartz's
 // FolderContent + PageList components from page frontmatter. No markdown
 // table goes in the body. See CLAUDE.md "Per-category index format".
 const RESET_TEMPLATES: Record<string, string> = {
-  "content/learn/retention.md":
+  "content/collect/retention.md":
     `---\ntitle: "Retention"\n---\n\nPermanent record of every document retained in the wiki. Click a title to rename it — the underlying filename is preserved.\n`,
 
   "data/retention-log.md":
-    `# Retention Log\n\nAudit log of all cataloging operations. Read by /api/retention; rendered by the RetentionList component on /learn/retention. Do not delete this file — nuke resets it to an empty table instead.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
+    `# Retention Log\n\nAudit log of all cataloging operations. Read by /api/retention; rendered by the RetentionList component on /collect/retention. Do not delete this file — nuke resets it to an empty table instead.\n\n| Date | Action | Details |\n|------|--------|--------|\n`,
 
   "data/graph-layouts.json":
     `{\n  "layouts": {},\n  "activeLayout": null\n}\n`,
 
-  "content/collection/sources/index.md":
+  "content/reflect/sources/index.md":
     `---\ntitle: "Sources"\n---\n\nAcquired documents and their cataloging status. Click a filename to download the original.\n`,
 
-  "content/collection/entities/index.md":
+  "content/reflect/entities/index.md":
     `---\ntitle: "Entities"\n---\n\nPeople, organizations, tools, and systems referenced across sources.\n`,
 
-  "content/collection/concepts/index.md":
+  "content/reflect/concepts/index.md":
     `---\ntitle: "Concepts"\n---\n\nIdeas, theories, frameworks, and principles extracted from sources.\n`,
 
-  "content/collection/synthesis/index.md":
+  "content/reflect/synthesis/index.md":
     `---\ntitle: "Synthesis"\n---\n\nCross-cutting analysis, comparisons, and theses drawn from multiple sources.\n`,
 }
 
