@@ -1,4 +1,4 @@
-// Acquisition page (/learn/acquisition) — interactive script.
+// Acquisition page (/collect/acquisition) — interactive script.
 //
 // Renders a polling status table fed by /api/status, with a checkbox
 // column for pending rows. Selected pending files can be removed from
@@ -503,7 +503,7 @@ document.addEventListener("nav", () => {
   // Register cleanup with the SPA router. Three reasons:
   //   1. The 10-second poll timer must not outlive the page it belongs to.
   //   2. The button click handlers must be removed before the next SPA
-  //      navigation, otherwise every visit to /learn/acquisition stacks
+  //      navigation, otherwise every visit to /collect/acquisition stacks
   //      another listener on the same button.
   //   3. The per-row checkbox change handlers and per-render header
   //      click handlers are attached during renderTable; since
