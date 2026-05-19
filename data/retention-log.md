@@ -44,3 +44,4 @@ Audit log of all cataloging operations. Read by /api/retention; rendered by the 
 | 2026-05-04 | Cataloged | 2026-05-04-T-REC-X.Imp500-200103-I--MSW-E.doc |
 | 2026-05-18 | Cataloged | 2026-05-18-nobody-wants-to-hear-this.md |
 | 2026-05-18 | Cataloged | 2026-05-18-brain-anatomy-and-how-the-brain-works-johns-hopkins-medicine.md |
+| 2026-05-18 | Cataloged | 2026-05-19-major-brain-structures-and-their-functions.md |
