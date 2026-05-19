@@ -3,6 +3,13 @@
 A bundle that ships several bug fixes plus the Retention/Acquisition
 rename and the new inline title-edit feature.
 
+> **Note (May 19, 2026):** Since this patch notes was written, the
+> top-level menu has been renamed: "Learn" → "Collect", "Collection"
+> → "Reflect", with a new "Search" section. Path references in this
+> file have been updated to the new layout for accuracy, but the
+> historical "renamed from X to Y" narrative below describes the
+> April 2026 changes that originally shipped in this patch.
+
 ## What's in this patch
 
 ### Bug fixes
@@ -16,17 +23,17 @@ rename and the new inline title-edit feature.
 - **`scripts/catalog.mjs`** — restored from git history. The version in
   the repo today is a stale duplicate of `nuke.ts`. The recovered file
   is the original first commit's content with one small adjustment: the
-  prompt now references `content/learn/retention.md` instead of
+  prompt now references `content/collect/retention.md` instead of
   `memory.md` to match this patch's renames.
 
 - **`CLAUDE.md`** — brought into alignment with the actual wiki:
   - Removes the "Master catalog" framing from `content/index.md`. The
-    wiki uses per-category index files (`collection/sources/index.md`,
-    `collection/concepts/index.md`, etc.) as the actual catalogs;
+    wiki uses per-category index files (`reflect/sources/index.md`,
+    `reflect/concepts/index.md`, etc.) as the actual catalogs;
     `content/index.md` is a hand-styled welcome page and shouldn't be
     turned into a catalog.
   - Replaces references to `memory.md` and `content/log.md` with
-    `content/learn/retention.md`.
+    `content/collect/retention.md`.
   - Updates the workflow descriptions to reflect the per-category index
     model.
 
@@ -76,15 +83,15 @@ If a source page no longer exists (e.g. it was nuked), its row's title
 column shows a muted dash and editing is disabled.
 
 The data comes from a new `GET /api/retention` endpoint, which parses
-the markdown table in `content/learn/retention.md` and joins each row
+the markdown table in `content/collect/retention.md` and joins each row
 with the current title from the corresponding source page's
 frontmatter.
 
 ## Files in this zip
 
 ```
-content/learn/acquisition.md           — was content/learn/retention.md
-content/learn/retention.md             — was content/learn/memory.md (now mounts RetentionList)
+content/learn/acquisition.md           — was content/learn/retention.md (now lives at content/collect/acquisition.md)
+content/learn/retention.md             — was content/learn/memory.md (now lives at content/collect/retention.md; mounts RetentionList)
 functions/api/nuke.ts                  — RESET_TEMPLATES updated, Access header check
 functions/api/originals.ts             — reconstructed from scratch
 functions/api/retention.ts             — NEW
@@ -144,10 +151,10 @@ right after pushing the patch:
 
 After deploy, in a fresh InPrivate window (so Access auth is fresh):
 
-- [ ] `/learn/acquisition` loads the Document Processing tracker
-- [ ] `/learn/retention` loads the audit table with four columns
-- [ ] Sidebar order under Learn is Research / Knowledge / Acquisition / Retention
-- [ ] `/collection/sources` loads the SourcesList table without a "Could
+- [ ] `/collect/acquisition` loads the Document Processing tracker
+- [ ] `/collect/retention` loads the audit table with four columns
+- [ ] Sidebar order under Collect is Selection / Acquisition / Retention
+- [ ] `/reflect/sources` loads the SourcesList table without a "Could
       not load sources" error
 - [ ] On Retention, clicking a title turns it into an editable cell
 - [ ] Blur after edit shows the saved-state visual flash; refresh
