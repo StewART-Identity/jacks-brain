@@ -27,20 +27,6 @@ if ("serviceWorker" in navigator) {
 }
 
 document.addEventListener("nav", function() {
-  // Mobile menu toggle. Uses addCleanup so the listener doesn't
-  // accumulate across SPA navigations — same pattern as
-  // checkbox.inline.ts (canonical Quartz form).
-  var toggle = document.querySelector(".mobile-menu-toggle");
-  var content = document.querySelector(".sidebar-content");
-  if (toggle && content) {
-    var onToggleClick = function() {
-      var open = content.classList.toggle("open");
-      toggle.setAttribute("aria-expanded", open ? "true" : "false");
-    };
-    toggle.addEventListener("click", onToggleClick);
-    window.addCleanup(function() { toggle.removeEventListener("click", onToggleClick); });
-  }
-
   // ── Graph View page controls ────────────────────────────────────────
   // Both the right-side zoom/fullscreen toolbar and the left-side
   // saved-layouts toolbar live on the Graph View page (via FullGraph).
