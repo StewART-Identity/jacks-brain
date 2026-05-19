@@ -108,7 +108,7 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
 
   const slug = body.slug
   const newTitle = body.title.trim()
-  const path = `content/collection/sources/${slug}.md`
+  const path = `content/reflect/sources/${slug}.md`
   const api = `https://api.github.com/repos/${GITHUB_REPO}`
   const headers = {
     Authorization: `Bearer ${GITHUB_TOKEN}`,
