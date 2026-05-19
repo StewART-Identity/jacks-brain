@@ -8,11 +8,14 @@ conventions, and workflows you follow. Read it at the start of every session.
 ```
 content/                # The wiki — you own this layer entirely
   index.md              # Welcome page (custom landing — do not turn into a catalog)
-  learn/
+  collect/
     selection.md        # Upload form — add a source to the collection
     acquisition.md      # Live status of the cataloging pipeline
     retention.md        # Chronological audit log of cataloged documents
-  collection/
+  search/
+    wiki.md             # Search the wiki (in-collection search)
+    web.md              # Search the web (external research)
+  reflect/
     sources/            # One summary page per cataloged source
       index.md          # Sources page — intro only; table auto-rendered
     entities/           # People, organizations, tools, systems
@@ -21,6 +24,9 @@ content/                # The wiki — you own this layer entirely
       index.md          # Concepts page — intro only; table auto-rendered
     synthesis/          # Cross-cutting analysis, comparisons, theses
       index.md          # Synthesis page — intro only; table auto-rendered
+  visualize/
+    graph.md            # Full-page graph view
+    help.md             # Graph view help and shortcuts
 static/originals/       # Immutable source documents — never modify these
 CLAUDE.md               # This file — read-only during operations
 ```
@@ -35,7 +41,7 @@ Every wiki page uses this template:
 ```markdown
 ---
 title: "Page Title"
-summary: "One-sentence description (≤140 chars) shown in Collection table listings."
+summary: "One-sentence description (≤140 chars) shown in Reflect table listings."
 type: source | entity | concept | synthesis
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
@@ -44,7 +50,7 @@ subjects:
 tags:
   - relevant-tag
 sources:
-  - "[[collection/sources/source-filename]]"
+  - "[[reflect/sources/source-filename]]"
 confidence: high | medium | low | speculative
 ---
 
@@ -52,7 +58,7 @@ Content here. Use [[wikilinks]] to link to other pages.
 ```
 
 The `summary` field is required for every page. It appears as the
-"Summary" column on each Collection sub-page (Sources, Entities,
+"Summary" column on each Reflect sub-page (Sources, Entities,
 Concepts, Synthesis) and is what makes the listings scannable. Make it
 informative on its own — not just the title rephrased. Examples:
 
@@ -98,18 +104,18 @@ views:
 
 - Filenames: lowercase, hyphens for spaces. `quantum-entanglement.md`, not
   `Quantum Entanglement.md`.
-- Source pages: `collection/sources/YYYY-MM-DD-short-descriptor.md` where the
+- Source pages: `reflect/sources/YYYY-MM-DD-short-descriptor.md` where the
   date is the date of **initial cataloging**, never re-cataloging. A source
   page's filename is stable across re-views — re-views never create new
   files.
-- Entity pages: `collection/entities/entity-name.md`
-- Concept pages: `collection/concepts/concept-name.md`
-- Synthesis pages: `collection/synthesis/descriptive-title.md`
+- Entity pages: `reflect/entities/entity-name.md`
+- Concept pages: `reflect/concepts/concept-name.md`
+- Synthesis pages: `reflect/synthesis/descriptive-title.md`
 
 ### Wikilinks
 
-Use `[[relative-path]]` format: `[[collection/concepts/gradient-descent]]`,
-`[[collection/entities/claude-shannon]]`. Quartz resolves these automatically.
+Use `[[relative-path]]` format: `[[reflect/concepts/gradient-descent]]`,
+`[[reflect/entities/claude-shannon]]`. Quartz resolves these automatically.
 
 When referencing a page, always use a wikilink. Cross-reference generously —
 links are what make the wiki valuable. Every new page should link to at least
@@ -284,7 +290,7 @@ depends on both.
    by slug, not by filename — see "Naming conventions"). If it does,
    this is a **re-view**; if not, this is the **initial cataloging**.
 
-4. Create or update the source summary page in `content/collection/sources/`.
+4. Create or update the source summary page in `content/reflect/sources/`.
    On a re-view: replace the body, append a `views:` entry, update `role:`
    if the interpretation changed. On an initial cataloging: create the
    file with a single `views:` entry.
@@ -296,15 +302,15 @@ depends on both.
 #### Enrich
 
 6. For each significant entity mentioned: create or update its page in
-   `content/collection/entities/`. Prefer enriching an existing page
+   `content/reflect/entities/`. Prefer enriching an existing page
    over creating a near-duplicate.
 
 7. For each significant concept: create or update its page in
-   `content/collection/concepts/`. Prefer enriching an existing page
+   `content/reflect/concepts/`. Prefer enriching an existing page
    over creating a near-duplicate.
 
 8. If the source connects to or contrasts with existing wiki content,
-   create or update a synthesis page in `content/collection/synthesis/`.
+   create or update a synthesis page in `content/reflect/synthesis/`.
    Good synthesis pages compare sources, identify patterns, or surface
    tensions between documents.
 
@@ -325,8 +331,8 @@ depends on both.
 A single source typically touches 5–15 pages. Take your time. Quality of
 cross-references matters more than speed.
 
-Do NOT modify any of the per-category `index.md` files in `collection/`,
-or `content/index.md` (the welcome page). The Collection page listings
+Do NOT modify any of the per-category `index.md` files in `reflect/`,
+or `content/index.md` (the welcome page). The Reflect page listings
 are rendered automatically by Quartz's `FolderContent` + `PageList`
 components from each page's frontmatter — title, summary, dates, tags.
 The index files contribute only the page title and intro paragraph
@@ -339,8 +345,8 @@ and create drift between the two views.
 Trigger: user asks a question about the wiki's domain.
 
 1. Find candidate pages with `list_wiki_pages` (filter by prefix:
-   `content/collection/sources/`, `content/collection/entities/`,
-   `content/collection/concepts/`, `content/collection/synthesis/`).
+   `content/reflect/sources/`, `content/reflect/entities/`,
+   `content/reflect/concepts/`, `content/reflect/synthesis/`).
 2. Read the relevant pages with `read_wiki_page`.
 3. Synthesize an answer with `[[wikilinks]]` to supporting pages.
 4. If the answer is substantial and reusable, offer to file it as a new
@@ -363,7 +369,7 @@ Suggest fixes. Ask before applying them.
 
 ## Per-category index format
 
-Each `collection/<category>/index.md` is intro-only — a title and a
+Each `reflect/<category>/index.md` is intro-only — a title and a
 one-paragraph description of what the category contains. The page
 listing below the intro is rendered automatically by Quartz's
 `FolderContent` + `PageList` components from page frontmatter (title,
@@ -391,7 +397,7 @@ turned into a catalog.
 
 `data/retention-log.md` is the chronological audit log of cataloging
 operations. It's a markdown table read by the `/api/retention` endpoint
-and rendered by the RetentionList component on `content/learn/retention.md`,
+and rendered by the RetentionList component on `content/collect/retention.md`,
 where titles can be inline-edited (the underlying filename is preserved).
 The rendered page itself contains no table — only the data file does.
 Always write to the data file, never to the rendered page.
