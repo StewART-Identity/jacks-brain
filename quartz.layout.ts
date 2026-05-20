@@ -13,7 +13,7 @@ export const sharedPageComponents: SharedLayout = {
     }),
     Component.ConditionalRender({
       component: Component.FullGraph(),
-      condition: (page) => page.fileData.slug === "visualize/graph",
+      condition: (page) => page.fileData.slug === "study/graph",
     }),
     Component.ConditionalRender({
       component: Component.SourcesList(),
@@ -22,8 +22,8 @@ export const sharedPageComponents: SharedLayout = {
     Component.ConditionalRender({
       component: Component.Notes(),
       condition: (page) =>
-        page.fileData.slug === "reflect/notes" ||
-        page.fileData.slug === "reflect/notes/index",
+        page.fileData.slug === "study/notes" ||
+        page.fileData.slug === "study/notes/index",
     }),
     Component.ConditionalRender({
       component: Component.NukeButton(),
@@ -80,16 +80,15 @@ const sidebarLeft = [
       { title: "Entities", slug: "reflect/entities" },
       { title: "Concepts", slug: "reflect/concepts" },
       { title: "Synthesis", slug: "reflect/synthesis" },
-      { title: "Notes", slug: "reflect/notes" },
     ],
   }),
   Component.SidebarLink({
-    title: "Visualize",
-    slug: "visualize",
+    title: "Study",
+    slug: "study",
     defaultState: "open",
     links: [
-      { title: "Graph", slug: "visualize/graph" },
-      { title: "Help", slug: "visualize/help" },
+      { title: "Graph", slug: "study/graph" },
+      { title: "Notes", slug: "study/notes" },
     ],
   }),
   Component.ApplicationMenu(),
