@@ -3,7 +3,7 @@ title: "Graph"
 summary: "Interactive map of all wiki pages and their connections. Best in fullscreen mode."
 type: concept
 created: 2026-04-26
-updated: 2026-04-28
+updated: 2026-05-20
 subjects:
   - operations
 tags:
@@ -17,4 +17,4 @@ confidence: high
 > [!tip] Best viewed in fullscreen
 > The graph fits more naturally and labels are easier to read when the canvas fills your screen. Use the fullscreen button in the graph toolbar (top-right of the graph) for the best experience.
 
-For a guide to the graph's colors, sizing, and interactions, see [[visualize/help|Help]].
+For a guide to the graph's colors, sizing, and interactions, see the [[application/help#graph-view|Graph view]] section of Help.
