@@ -20,6 +20,10 @@ export const sharedPageComponents: SharedLayout = {
       condition: (page) => page.fileData.slug === "reflect/sources",
     }),
     Component.ConditionalRender({
+      component: Component.Notes(),
+      condition: (page) => page.fileData.slug === "reflect/notes",
+    }),
+    Component.ConditionalRender({
       component: Component.NukeButton(),
       condition: (page) => page.fileData.slug === "application/nuke",
     }),
@@ -74,6 +78,7 @@ const sidebarLeft = [
       { title: "Entities", slug: "reflect/entities" },
       { title: "Concepts", slug: "reflect/concepts" },
       { title: "Synthesis", slug: "reflect/synthesis" },
+      { title: "Notes", slug: "reflect/notes" },
     ],
   }),
   Component.SidebarLink({
