@@ -21,7 +21,9 @@ export const sharedPageComponents: SharedLayout = {
     }),
     Component.ConditionalRender({
       component: Component.Notes(),
-      condition: (page) => page.fileData.slug === "reflect/notes",
+      condition: (page) =>
+        page.fileData.slug === "reflect/notes" ||
+        page.fileData.slug === "reflect/notes/index",
     }),
     Component.ConditionalRender({
       component: Component.NukeButton(),
