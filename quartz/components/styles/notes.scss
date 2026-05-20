@@ -1,0 +1,359 @@
+/**
+ * Notes page styles.
+ *
+ * Layered on top of the existing .catalog-card / .paste-title-input /
+ * .card-status conventions from uploadZone.scss — anything that's
+ * already styled there is reused verbatim so the Notes page looks
+ * like a sibling of the catalog page rather than a stranger.
+ */
+
+#notes-app {
+  max-width: 760px;
+  padding-bottom: 2rem;
+}
+
+/* Tag input gets the same shape as the title input but sits right
+   under it with a smaller gap. */
+.notes-tags-input {
+  margin-top: -0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ───── Tabs (Edit / Preview) ────────────────────────────────────── */
+.notes-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--lightgray);
+}
+.notes-tab {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--gray);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-bottom: -1px;
+  padding: 0.5rem 0.9rem;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.notes-tab:hover {
+  color: var(--darkgray);
+}
+.notes-tab.active {
+  border-bottom-color: var(--secondary);
+  color: var(--secondary);
+}
+.notes-tab:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ───── Editor pane ─────────────────────────────────────────────── */
+.notes-pane {
+  margin-top: 0.25rem;
+}
+.notes-textarea {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-family: var(--codeFont, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  resize: vertical;
+  box-sizing: border-box;
+  min-height: 220px;
+}
+.notes-textarea:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+
+/* Preview pane — best-effort rendering of the markdown so the user
+   can sanity-check before saving. */
+.notes-preview {
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+  color: var(--darkgray);
+  min-height: 220px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin-top: 0.75rem;
+    margin-bottom: 0.4rem;
+    line-height: 1.25;
+    color: var(--dark);
+  }
+  h1 {
+    font-size: 1.3rem;
+  }
+  h2 {
+    font-size: 1.15rem;
+  }
+  h3 {
+    font-size: 1.05rem;
+  }
+  p {
+    margin: 0.4rem 0;
+  }
+  ul,
+  ol {
+    margin: 0.4rem 0 0.4rem 1.25rem;
+    padding: 0;
+  }
+  li {
+    margin: 0.15rem 0;
+  }
+  blockquote {
+    margin: 0.5rem 0;
+    padding: 0.1rem 0.8rem;
+    border-left: 3px solid var(--lightgray);
+    color: var(--gray);
+  }
+  code {
+    background: var(--highlight);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    font-size: 0.88em;
+  }
+  pre {
+    background: var(--highlight);
+    padding: 0.6rem 0.8rem;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+    code {
+      background: transparent;
+      padding: 0;
+    }
+  }
+}
+
+/* Wikilink + hashtag preview pills — visually distinct so it's obvious
+   they'll be live on the published page. */
+.notes-wikilink {
+  background: color-mix(in srgb, var(--secondary) 12%, transparent);
+  color: var(--secondary);
+  border-radius: 4px;
+  padding: 0 0.25rem;
+  font-weight: 500;
+}
+.notes-hashtag {
+  color: var(--secondary);
+  font-weight: 500;
+}
+
+/* ───── Buttons ─────────────────────────────────────────────────── */
+.notes-primary-btn {
+  padding: 0.6rem 1.2rem;
+  background: var(--secondary);
+  color: var(--light);
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+.notes-primary-btn:hover {
+  opacity: 0.85;
+}
+.notes-primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notes-secondary-btn {
+  padding: 0.45rem 0.9rem;
+  background: transparent;
+  color: var(--darkgray);
+  border: 1px solid var(--lightgray);
+  border-radius: 6px;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.notes-secondary-btn:hover {
+  background: var(--highlight);
+  border-color: var(--gray);
+}
+
+.notes-danger-btn {
+  padding: 0.45rem 0.9rem;
+  background: transparent;
+  color: #8b3232;
+  border: 1px solid color-mix(in srgb, #8b3232 30%, transparent);
+  border-radius: 6px;
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+.notes-danger-btn:hover {
+  background: rgba(139, 50, 50, 0.08);
+  border-color: #8b3232;
+}
+.notes-danger-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notes-icon-btn {
+  // Compact button shape used inside list items where space is tight.
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+:root[saved-theme="dark"] .notes-danger-btn {
+  color: #c46b6b;
+  border-color: color-mix(in srgb, #c46b6b 30%, transparent);
+}
+:root[saved-theme="dark"] .notes-danger-btn:hover {
+  background: rgba(196, 107, 107, 0.12);
+  border-color: #c46b6b;
+}
+
+/* ───── Recent notes list ────────────────────────────────────────── */
+.notes-recent-section {
+  margin-top: 1.5rem;
+}
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.notes-list-item {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+}
+:root[saved-theme="dark"] .notes-list-item {
+  background: color-mix(in srgb, var(--light) 92%, transparent);
+}
+.notes-list-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: space-between;
+}
+.notes-list-item-title {
+  color: var(--dark);
+  font-weight: 600;
+  font-size: 0.98rem;
+  text-decoration: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.notes-list-item-title:hover {
+  color: var(--secondary);
+}
+.notes-list-item-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.notes-list-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.8rem;
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--gray);
+}
+.notes-list-item-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.notes-tag-pill {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  background: var(--highlight);
+  color: var(--darkgray);
+  border-radius: 999px;
+  font-size: 0.78rem;
+}
+.notes-empty-state {
+  margin: 0;
+  padding: 0.4rem 0;
+}
+
+/* ───── Delete confirmation modal ───────────────────────────────── */
+body.notes-modal-open {
+  overflow: hidden;
+}
+.notes-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+.notes-modal-backdrop[hidden] {
+  display: none;
+}
+.notes-modal {
+  background: var(--light);
+  color: var(--darkgray);
+  border-radius: 12px;
+  padding: 1.4rem 1.5rem 1.2rem;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+
+  h3 {
+    margin: 0 0 0.7rem;
+    color: var(--dark);
+    font-size: 1.1rem;
+  }
+}
+.notes-modal-body {
+  margin: 0 0 1.1rem;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+.notes-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+:root[saved-theme="dark"] .notes-modal {
+  background: var(--lightgray);
+}
