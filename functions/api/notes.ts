@@ -4,7 +4,7 @@
  * GET  /api/notes              → list all notes (newest first)
  * POST /api/notes              → create a new note from {title, tags, body}
  *
- * Notes live at content/reflect/notes/<slug>.md where slug is an ISO
+ * Notes live at content/study/notes/<slug>.md where slug is an ISO
  * timestamp YYYYMMDD-HHMMSS. The timestamp is computed in USER_TIMEZONE
  * (same fallback to UTC as upload.ts) — the second-level precision means
  * many-per-day capture never collides, which is the entire point of the
@@ -28,7 +28,7 @@ interface Env {
 }
 
 const BRANCH = "main"
-const NOTES_DIR = "content/reflect/notes"
+const NOTES_DIR = "content/study/notes"
 
 interface NoteSummary {
   slug: string
@@ -343,7 +343,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       success: true,
       slug,
       path,
-      url: `/reflect/notes/${slug}`,
+      url: `/study/notes/${slug}`,
       title,
       tags,
       message: `Note saved to ${path}. The next Quartz build (≈30s) will publish the page and update the graph.`,
