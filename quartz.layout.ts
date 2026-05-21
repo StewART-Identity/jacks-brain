@@ -87,8 +87,8 @@ const sidebarLeft = [
     slug: "study",
     defaultState: "open",
     links: [
-      { title: "Graph", slug: "study/graph" },
       { title: "Notes", slug: "study/notes" },
+      { title: "Graph", slug: "study/graph" },
     ],
   }),
   Component.ApplicationMenu(),
