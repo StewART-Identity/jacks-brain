@@ -72,9 +72,9 @@ document.addEventListener("nav", () => {
 
     container.innerHTML = '<div class="table-container jb-table"><table>' +
       '<thead><tr>' +
-      '<th class="sortable" data-sort="date">Date' + arrow("date") + '</th>' +
+      '<th class="sortable" data-sort="date">Acquired' + arrow("date") + '</th>' +
       '<th class="sortable" data-sort="action">Action' + arrow("action") + '</th>' +
-      '<th class="sortable" data-sort="filename">Document' + arrow("filename") + '</th>' +
+      '<th class="sortable" data-sort="filename">Source' + arrow("filename") + '</th>' +
       '<th class="sortable" data-sort="title">Title' + arrow("title") + '</th>' +
       '</tr></thead>' +
       '<tbody>' +
@@ -242,7 +242,7 @@ RetentionList.css = `
    flush-left) comes from quartz/styles/jbtable.scss via the .jb-table
    class on the wrapping <div>. */
 
-/* Date — fits "2026-04-23" plus padding */
+/* Acquired — fits "2026-04-23" plus padding */
 #retention-list-app thead th:nth-child(1),
 #retention-list-app tbody td:nth-child(1) {
   width: 7rem;
@@ -254,7 +254,7 @@ RetentionList.css = `
   width: 6.5rem;
   white-space: nowrap;
 }
-/* Document — fixed width so Title can grow */
+/* Source — fixed width so Title can grow */
 #retention-list-app thead th:nth-child(3),
 #retention-list-app tbody td:nth-child(3) {
   width: 13rem;
