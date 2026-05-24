@@ -20,10 +20,12 @@ export const sharedPageComponents: SharedLayout = {
       condition: (page) => page.fileData.slug === "reflect/sources",
     }),
     Component.ConditionalRender({
-      component: Component.Notes(),
-      condition: (page) =>
-        page.fileData.slug === "study/notes" ||
-        page.fileData.slug === "study/notes/index",
+      component: Component.NoteForm(),
+      condition: (page) => page.fileData.slug === "notes/write",
+    }),
+    Component.ConditionalRender({
+      component: Component.NotesList(),
+      condition: (page) => page.fileData.slug === "notes/browse",
     }),
     Component.ConditionalRender({
       component: Component.NukeButton(),
@@ -62,6 +64,15 @@ const sidebarLeft = [
     ],
   }),
   Component.SidebarLink({
+    title: "Notes",
+    slug: "notes",
+    defaultState: "open",
+    links: [
+      { title: "Write", slug: "notes/write" },
+      { title: "Browse", slug: "notes/browse" },
+    ],
+  }),
+  Component.SidebarLink({
     title: "Collect",
     slug: "collect",
     defaultState: "open",
@@ -87,7 +98,6 @@ const sidebarLeft = [
     slug: "study",
     defaultState: "open",
     links: [
-      { title: "Notes", slug: "study/notes" },
       { title: "Graph", slug: "study/graph" },
     ],
   }),
