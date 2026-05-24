@@ -1,30 +1,76 @@
 /**
  * Notes page styles.
  *
- * Layered on top of the existing .catalog-card / .paste-title-input /
- * .card-status conventions from uploadZone.scss — anything that's
- * already styled there is reused verbatim so the Notes page looks
- * like a sibling of the catalog page rather than a stranger.
+ * Both Notes pages (/notes/write and /notes/browse) render inside a
+ * .search-page-card — the same card vocabulary used by the two Search
+ * pages (/search/wiki and /search/web). The rules below scope that
+ * vocabulary under the Notes mount IDs (#note-form-app and
+ * #notes-list-app) so the four pages under Search and Notes read as
+ * visual siblings.
+ *
+ * Rules are self-contained: they don't depend on searchPage.scss or
+ * researchPage.scss being loaded. (Each component's .css is only
+ * shipped when that component is on the page, so duplication is the
+ * right tradeoff against an implicit cross-component dependency.)
  */
 
 #note-form-app,
 #notes-list-app {
-  max-width: 760px;
+  max-width: 720px;
   padding-bottom: 2rem;
 }
 
-/* Tag input gets the same shape as the title input but sits right
-   under it with a smaller gap. */
+/* ───── Card wrapper — mirrors .search-page-card ─────────────────── */
+#note-form-app .search-page-card,
+#notes-list-app .search-page-card {
+  padding: 1.25rem 1.25rem 1.5rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--light) 92%, transparent);
+}
+
+#note-form-app .search-page-label,
+#notes-list-app .search-page-label {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+  color: var(--dark);
+}
+
+/* ───── Text inputs — mirror the Search textarea/count input ─────── */
+#note-form-app .notes-text-input,
+#notes-list-app .notes-text-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-family: inherit;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+#note-form-app .notes-text-input:focus,
+#notes-list-app .notes-text-input:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+#note-form-app .notes-text-input::placeholder,
+#notes-list-app .notes-text-input::placeholder {
+  color: var(--gray);
+  opacity: 0.7;
+}
+
+/* Tag input sits right under the title with a smaller gap. */
 .notes-tags-input {
   margin-top: -0.25rem;
-  margin-bottom: 0.5rem;
 }
 
 /* ───── Tabs (Edit / Preview) ────────────────────────────────────── */
 .notes-tabs {
   display: flex;
   gap: 0;
-  margin-bottom: 0.5rem;
+  margin: 0.5rem 0;
   border-bottom: 1px solid var(--lightgray);
 }
 .notes-tab {
@@ -147,8 +193,8 @@
   }
 }
 
-/* Wikilink + hashtag preview pills — visually distinct so it's obvious
-   they'll be live on the published page. */
+/* Wikilink + hashtag preview pills — visually distinct so it's
+   obvious they'll be live on the published page. */
 .notes-wikilink {
   background: color-mix(in srgb, var(--secondary) 12%, transparent);
   color: var(--secondary);
@@ -161,8 +207,55 @@
   font-weight: 500;
 }
 
+/* ───── Controls row ─────────────────────────────────────────────── */
+.notes-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* ───── Status helpers ──────────────────────────────────────────── */
+.notes-status {
+  margin-top: 0.75rem;
+}
+.notes-status .card-status-msg {
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  background: var(--lightgray);
+  color: var(--darkgray);
+
+  &.success {
+    background: color-mix(in srgb, #3A7D53 15%, var(--light));
+    color: #2A5A3D;
+  }
+  &.error {
+    background: color-mix(in srgb, #8B3232 12%, var(--light));
+    color: #8B3232;
+  }
+  &.pending {
+    background: color-mix(in srgb, var(--secondary) 12%, var(--light));
+    color: var(--secondary);
+  }
+}
+:root[saved-theme="dark"] .notes-status .card-status-msg.success {
+  background: color-mix(in srgb, #3A7D53 25%, var(--light));
+  color: #C8E6D2;
+}
+:root[saved-theme="dark"] .notes-status .card-status-msg.error {
+  background: color-mix(in srgb, #C46B6B 20%, var(--light));
+  color: #F3CFCF;
+}
+
 /* ───── Buttons ─────────────────────────────────────────────────── */
-.notes-primary-btn {
+/* Primary action — mirrors .search-page-btn (defined locally under
+   the Notes mount IDs so it doesn't depend on searchPage.scss
+   being on the page). */
+#note-form-app .search-page-btn,
+#notes-list-app .search-page-btn {
+  margin-left: auto;
   padding: 0.6rem 1.2rem;
   background: var(--secondary);
   color: var(--light);
@@ -175,10 +268,12 @@
   transition: opacity 0.15s ease;
   white-space: nowrap;
 }
-.notes-primary-btn:hover {
+#note-form-app .search-page-btn:hover,
+#notes-list-app .search-page-btn:hover {
   opacity: 0.85;
 }
-.notes-primary-btn:disabled {
+#note-form-app .search-page-btn:disabled,
+#notes-list-app .search-page-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -209,8 +304,8 @@
 .notes-danger-btn {
   padding: 0.45rem 0.9rem;
   background: transparent;
-  color: #8b3232;
-  border: 1px solid color-mix(in srgb, #8b3232 30%, transparent);
+  color: #8B3232;
+  border: 1px solid color-mix(in srgb, #8B3232 30%, transparent);
   border-radius: 6px;
   font-family: inherit;
   font-weight: 500;
@@ -223,7 +318,7 @@
 }
 .notes-danger-btn:hover {
   background: rgba(139, 50, 50, 0.08);
-  border-color: #8b3232;
+  border-color: #8B3232;
 }
 .notes-danger-btn:disabled {
   opacity: 0.5;
@@ -231,21 +326,21 @@
 }
 
 .notes-icon-btn {
-  // Compact button shape used inside list items where space is tight.
+  /* Compact button shape used inside list rows where space is tight. */
   padding: 0.3rem 0.7rem;
   font-size: 0.8rem;
 }
 
 :root[saved-theme="dark"] .notes-danger-btn {
-  color: #c46b6b;
-  border-color: color-mix(in srgb, #c46b6b 30%, transparent);
+  color: #C46B6B;
+  border-color: color-mix(in srgb, #C46B6B 30%, transparent);
 }
 :root[saved-theme="dark"] .notes-danger-btn:hover {
   background: rgba(196, 107, 107, 0.12);
-  border-color: #c46b6b;
+  border-color: #C46B6B;
 }
 
-/* ───── Notes list ───────────────────────────────────────────────── */
+/* ───── Notes list (rows inside the Browse card) ────────────────── */
 .notes-list {
   display: flex;
   flex-direction: column;
@@ -261,8 +356,8 @@
   background: color-mix(in srgb, var(--light) 92%, transparent);
 }
 .notes-list-item[data-editing="true"] {
-  // Subtle highlight on the active editor card so it stands out from
-  // its still-collapsed siblings.
+  /* Subtle highlight on the active editor row so it stands out from
+     its still-collapsed siblings. */
   border-color: color-mix(in srgb, var(--secondary) 35%, var(--lightgray));
 }
 .notes-list-item-header {
@@ -317,9 +412,9 @@
 
 /* ───── Inline per-row editor ────────────────────────────────────── */
 .notes-list-item-editor {
-  // Visual break from the meta row above so the editor doesn't look
-  // pasted on. A subtle rule + top margin does the job without adding
-  // a heavy outline.
+  /* Visual break from the meta row above so the editor doesn't look
+     pasted on. A subtle rule + top margin does the job without
+     adding a heavy outline. */
   margin-top: 0.75rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--lightgray);
@@ -327,10 +422,88 @@
 .notes-list-item-editor[hidden] {
   display: none;
 }
+/* Inputs inside the editor reuse .notes-text-input — they were
+   .paste-title-input in the first cut, then renamed when the
+   form input class was renamed. The script generates them
+   programmatically; see notesList.inline.ts. */
+.notes-list-item-editor .paste-title-input {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  margin-bottom: 0.4rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 6px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-family: inherit;
+  font-size: 0.92rem;
+  box-sizing: border-box;
+}
+.notes-list-item-editor .paste-title-input:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
 .notes-editor-actions {
   display: flex;
   gap: 0.5rem;
   margin-top: 0.5rem;
+  /* Save (primary) sits on the right, Cancel on its left.
+     margin-left:auto on the primary pushes both to the end. */
+}
+.notes-editor-actions .notes-primary-btn,
+.notes-editor-actions .search-page-btn {
+  margin-left: auto;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+/* Primary button used inside the inline editor (the script writes
+   .notes-primary-btn into the DOM). Mirrors .search-page-btn so the
+   visual is consistent with the form's Save button. */
+.notes-primary-btn {
+  padding: 0.5rem 1rem;
+  background: var(--secondary);
+  color: var(--light);
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+.notes-primary-btn:hover {
+  opacity: 0.85;
+}
+.notes-primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inline editor status — slimmer than the form's status because it
+   sits inside a per-row card. */
+.notes-list-item-editor .card-status {
+  margin-top: 0.5rem;
+}
+.notes-list-item-editor .card-status-msg {
+  padding: 0.4rem 0.6rem;
+  border-radius: 5px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  background: var(--lightgray);
+  color: var(--darkgray);
+
+  &.success {
+    background: color-mix(in srgb, #3A7D53 15%, var(--light));
+    color: #2A5A3D;
+  }
+  &.error {
+    background: color-mix(in srgb, #8B3232 12%, var(--light));
+    color: #8B3232;
+  }
+  &.pending {
+    background: color-mix(in srgb, var(--secondary) 12%, var(--light));
+    color: var(--secondary);
+  }
 }
 
 /* ───── Delete confirmation modal ───────────────────────────────── */
