@@ -54,3 +54,7 @@ The creator argues that large survivalist groups are structurally dysfunctional:
 ## Relationship to outrage culture
 
 The preparedness mindset is explicitly positioned as an alternative to the outrage-and-victimhood cultural mode. "Instead of non-stop outrage, that's what I do. My whole goal is to try to get people equipped mentally, with gear, training." The argument: screaming online changes nothing; becoming more capable changes your situation. See [[reflect/entities/blackscout-survival]].
+
+## Historical parallel: the latchkey generation
+
+The unperformed self-reliance at the core of the preparedness mindset has a historical antecedent in the [[reflect/concepts/latchkey-generation]] experience of Gen-X: children who came home to empty houses in the 1980s and built genuine competence without adult supervision, witnesses, or assigned outcomes. The result was the same disposition the preparedness mindset prescribes — capability that functions without an audience. See [[reflect/synthesis/gen-x-skepticism-and-self-reliance]] for how this connected to the metalhead subculture and low institutional deference.

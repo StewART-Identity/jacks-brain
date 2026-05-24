@@ -47,3 +47,7 @@ This framing is speculative but coherent with the observable incentive structure
 ## Countermeasures
 
 The [[reflect/entities/blackscout-survival]] creator advocates for [[reflect/concepts/critical-thinking]] and deliberate echo-chamber avoidance — including not watching other influencers — as the primary defense against algorithmic manipulation. His reasoning: "Bias makes you lose the ability to critically think." If your information environment is curated by an algorithm optimizing for your emotional reactions, your reasoning will gradually conform to whatever the algorithm rewards.
+
+## Historical precedent: broadcast-era moral panics
+
+The mechanism of amplifying alarm disproportionate to evidence is not unique to algorithmic platforms. The 1980s [[reflect/concepts/moral-panic]] around heavy metal operated through the dominant broadcast infrastructure of its era — Congressional hearings on television, newspaper coverage — with the same structural dynamics: confident institutional alarm, minimal evidence, maximum engagement. The [[reflect/entities/pmrc]]'s campaign is a pre-algorithmic case study in how distribution systems reward outrage regardless of whether the outrage tracks reality.

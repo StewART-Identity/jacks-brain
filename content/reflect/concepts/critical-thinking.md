@@ -50,3 +50,7 @@ The creator grounds critical thinking not in abstract philosophy but in observab
 - Not watching other influencers, to avoid absorbing their framing
 
 These are the behavioral consequences of a genuine commitment to independent reasoning rather than tribal loyalty.
+
+## Empirical case: Gen-X metalheads
+
+[[reflect/synthesis/gen-x-skepticism-and-self-reliance]] documents how Gen-X metalheads' documented low deference to authority (Big Five data) was an evidence-based response to observable institutional failures — the [[reflect/entities/pmrc]]'s confidence in claims that proved wrong, governments conducting policy through documented lying. Their skepticism tracked evidence, not group identity. This makes them an unusual empirical illustration of critical thinking as an *adaptive* trait rather than a contrarian one.
