@@ -15,13 +15,20 @@
 // most recent state-change commit) returned by /api/status.
 //
 // Column sorting:
-//   Document, Acquired, and Status columns are clickable headers that
+//   Source, Acquired, and Status columns are clickable headers that
 //   toggle ascending ↔ descending sort. Acquired column starts descending
 //   (newest first); other columns start ascending. Active sort is shown
 //   via filled triangles (▲▼) appended to the column header — same
 //   convention as the Retention table (which set the precedent). Sort
 //   state lives in module scope and survives polling re-renders; resets
 //   to default order on SPA nav away.
+//
+//   Note: the internal sort-key identifier is "document" (matches the
+//   underlying DocumentRow.document field). The visible column label
+//   is "Source" — that's the user-facing vocabulary the rest of the
+//   wiki uses for the filename of a thing being cataloged. Don't
+//   rename the data-sort-col attribute or the SortColumn union type
+//   without also touching the cycleSort/applySort branches.
 //
 // State:
 //   selectedFilenames — in-memory Set<string>, lives for the current
@@ -302,7 +309,7 @@ document.addEventListener("nav", () => {
       `<div class="table-container jb-table"><table>
         <thead><tr>
           <th class="queue-checkbox-cell" aria-label="Select"></th>
-          <th class="sortable" data-sort-col="document" tabindex="0" role="button" aria-label="Sort by document">Document${sortIndicator("document")}</th>
+          <th class="sortable" data-sort-col="document" tabindex="0" role="button" aria-label="Sort by source">Source${sortIndicator("document")}</th>
           <th class="sortable" data-sort-col="acquired" tabindex="0" role="button" aria-label="Sort by acquired date">Acquired${sortIndicator("acquired")}</th>
           <th class="sortable" data-sort-col="status" tabindex="0" role="button" aria-label="Sort by status">Status${sortIndicator("status")}</th>
         </tr></thead>
