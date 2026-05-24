@@ -7,7 +7,8 @@
  * like a sibling of the catalog page rather than a stranger.
  */
 
-#notes-app {
+#note-form-app,
+#notes-list-app {
   max-width: 760px;
   padding-bottom: 2rem;
 }
@@ -200,6 +201,10 @@
   background: var(--highlight);
   border-color: var(--gray);
 }
+.notes-secondary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .notes-danger-btn {
   padding: 0.45rem 0.9rem;
@@ -240,10 +245,7 @@
   border-color: #c46b6b;
 }
 
-/* ───── Recent notes list ────────────────────────────────────────── */
-.notes-recent-section {
-  margin-top: 1.5rem;
-}
+/* ───── Notes list ───────────────────────────────────────────────── */
 .notes-list {
   display: flex;
   flex-direction: column;
@@ -257,6 +259,11 @@
 }
 :root[saved-theme="dark"] .notes-list-item {
   background: color-mix(in srgb, var(--light) 92%, transparent);
+}
+.notes-list-item[data-editing="true"] {
+  // Subtle highlight on the active editor card so it stands out from
+  // its still-collapsed siblings.
+  border-color: color-mix(in srgb, var(--secondary) 35%, var(--lightgray));
 }
 .notes-list-item-header {
   display: flex;
@@ -306,6 +313,24 @@
 .notes-empty-state {
   margin: 0;
   padding: 0.4rem 0;
+}
+
+/* ───── Inline per-row editor ────────────────────────────────────── */
+.notes-list-item-editor {
+  // Visual break from the meta row above so the editor doesn't look
+  // pasted on. A subtle rule + top margin does the job without adding
+  // a heavy outline.
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--lightgray);
+}
+.notes-list-item-editor[hidden] {
+  display: none;
+}
+.notes-editor-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 /* ───── Delete confirmation modal ───────────────────────────────── */
