@@ -8,13 +8,18 @@ conventions, and workflows you follow. Read it at the start of every session.
 ```
 content/                # The wiki — you own this layer entirely
   index.md              # Welcome page (custom landing — do not turn into a catalog)
-  collect/
-    selection.md        # Upload form — add a source to the collection
-    acquisition.md      # Live status of the cataloging pipeline
-    retention.md        # Chronological audit log of cataloged documents
   search/
     wiki.md             # Search the wiki (in-collection search)
     web.md              # Search the web (external research)
+  notes/
+    index.md            # Notes landing — links to write.md and browse.md
+    write.md            # Capture form — creates a new note
+    browse.md           # Notes list — every note as an expandable card
+    <slug>.md           # Individual notes (slug = YYYYMMDD-HHMMSS timestamp)
+  collect/
+    selection.md        # Upload form — add a source to the collection
+    acquisition.md      # Cataloging — live status of the pipeline
+    retention.md        # Chronological audit log of cataloged sources
   reflect/
     sources/            # One summary page per cataloged source
       index.md          # Sources page — intro only; table auto-rendered
@@ -24,7 +29,7 @@ content/                # The wiki — you own this layer entirely
       index.md          # Concepts page — intro only; table auto-rendered
     synthesis/          # Cross-cutting analysis, comparisons, theses
       index.md          # Synthesis page — intro only; table auto-rendered
-  visualize/
+  study/
     graph.md            # Full-page graph view
     help.md             # Graph view help and shortcuts
 static/originals/       # Immutable source documents — never modify these
@@ -34,6 +39,25 @@ CLAUDE.md               # This file — read-only during operations
 Quartz serves everything in `content/` as the browsable wiki. Files in `raw/`
 are not published.
 
+### Sidebar structure
+
+The sidebar's top-level groups mirror the directory structure, and the
+groups are arranged to express two pairings:
+
+1. **Search and Notes** are peers — both about where information
+   *comes from*. Search brings in information gathered by others
+   (Wiki, Web); Notes captures information gathered by you (Write,
+   Browse). They sit at the top of the sidebar, side by side.
+2. **Collect and Reflect** are the cataloging pipeline — Collect is
+   the verb (Selection, Acquisition, Retention), Reflect is what
+   results from it (Sources, Entities, Concepts, Synthesis).
+3. **Study** holds the visualization tools — currently just Graph.
+
+Notes are top-level (peer of Search) rather than sub-pages of Collect
+because notes are not part of the cataloging pipeline — they are
+first-class captures of the user's own thinking, not downstream of an
+acquisition. Don't move them back under Collect or Study.
+
 ## Page format
 
 Every wiki page uses this template:
@@ -42,7 +66,7 @@ Every wiki page uses this template:
 ---
 title: "Page Title"
 summary: "One-sentence description (≤140 chars) shown in Reflect table listings."
-type: source | entity | concept | synthesis
+type: source | entity | concept | synthesis | note
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 subjects:
@@ -100,6 +124,26 @@ views:
   cataloging.") or a re-view with a specific outcome ("Reframed from
   argument to evidence base; added four concept links").
 
+### Note-specific frontmatter
+
+Note pages (`type: note`, optional but encouraged) are simpler than
+source pages. They carry no `role:` or `views:`, and the `created:` /
+`modified:` timestamps are ISO datetimes rather than YYYY-MM-DD dates
+(because notes are precise-time captures, not day-grain catalog
+events):
+
+```yaml
+title: "Quick observation about X"
+created: 2026-05-24T18:32:00.000Z
+modified: 2026-05-24T18:32:00.000Z
+tags:
+  - some-tag
+```
+
+The form on `/notes/write` writes notes with this shape. The slug is
+the timestamp itself in `YYYYMMDD-HHMMSS` form, so notes sort
+chronologically by filename without any frontmatter inspection.
+
 ### Naming conventions
 
 - Filenames: lowercase, hyphens for spaces. `quantum-entanglement.md`, not
@@ -111,6 +155,10 @@ views:
 - Entity pages: `reflect/entities/entity-name.md`
 - Concept pages: `reflect/concepts/concept-name.md`
 - Synthesis pages: `reflect/synthesis/descriptive-title.md`
+- Note pages: `notes/YYYYMMDD-HHMMSS.md` (timestamp slug, generated
+  automatically by the form). Notes can also be given descriptive
+  slugs for hand-written reference notes — the
+  `notes/graph-theory-glossary.md` page is an example.
 
 ### Wikilinks
 
@@ -340,17 +388,52 @@ above the auto-generated table; their bodies stay empty. Putting a
 markdown table in an index.md would duplicate the auto-rendered listing
 and create drift between the two views.
 
+### Capture (notes)
+
+Trigger: user shares a thought, observation, or fragment they want
+recorded — not a cataloging task.
+
+Notes are first-class wiki pages, but they don't go through the
+cataloging pipeline. There is no source document, no `views:` log, no
+retention entry. A note is just a captured thought, filed under
+`content/notes/` with a timestamp slug.
+
+1. Decide whether the user wants a note or a wiki page. If the content
+   is a thought, observation, or fragment — call it a note. If the
+   content is a structured reference (a glossary, a how-to, a
+   summary of a topic), it can still live in `content/notes/` but
+   should be given a descriptive slug rather than a timestamp slug
+   (e.g. `notes/graph-theory-glossary.md`).
+
+2. For a fresh capture, POST to `/api/notes` with `{ title, tags,
+   body }`. The endpoint generates the timestamp slug, writes the
+   file, and returns the published URL. Don't write the file directly
+   via the repo tools when the form-driven flow will do — let the
+   endpoint handle the slug and frontmatter shape.
+
+3. For a structured reference note, write the file directly under
+   `content/notes/<descriptive-slug>.md` with full frontmatter and
+   cross-references. Use the standard page frontmatter (`title`,
+   `summary`, `created`, `subjects`, `tags`, etc.) — same shape as
+   any other wiki page.
+
+4. Cross-reference. Notes connect to other notes and to cataloged
+   pages via `[[wikilinks]]` exactly as other pages do. If you create
+   a note that connects to existing concepts or sources, link them.
+
 ### Query
 
 Trigger: user asks a question about the wiki's domain.
 
 1. Find candidate pages with `list_wiki_pages` (filter by prefix:
    `content/reflect/sources/`, `content/reflect/entities/`,
-   `content/reflect/concepts/`, `content/reflect/synthesis/`).
+   `content/reflect/concepts/`, `content/reflect/synthesis/`,
+   `content/notes/`).
 2. Read the relevant pages with `read_wiki_page`.
 3. Synthesize an answer with `[[wikilinks]]` to supporting pages.
 4. If the answer is substantial and reusable, offer to file it as a new
-   synthesis page. Good answers shouldn't disappear into chat history.
+   synthesis page or note. Good answers shouldn't disappear into chat
+   history.
 
 ### Lint
 
@@ -409,10 +492,32 @@ Always write to the data file, never to the rendered page.
 | 2026-04-15 | Re-viewed | 2026-04-14-source-title.png |
 ```
 
+The raw `Date` column on disk is rendered as `Acquired` in the UI
+table — same concept, named to align with the rest of the
+cataloging-pipeline vocabulary. Don't rename the column header in
+`retention-log.md`; only the UI display label changed.
+
 Action values:
 - `Cataloged` — first catalog of an acquisition
 - `Re-viewed` — subsequent re-catalog (updates the source page in place)
 - `Renamed` — title-only change via inline edit on the Retention page
+
+## Terminology
+
+The cataloging-pipeline and table-rendering vocabulary is pinned —
+consistent naming makes the user's UX coherent across pages. When
+adding or modifying a table-rendering component, use these words.
+Don't drift back to older names (Document, File, Date) if you find
+them in legacy code; fix them.
+
+| Term | Meaning | Used on |
+|------|---------|---------|
+| **Source** | The filename of a thing being cataloged — whether queued, in-flight, or already cataloged. Multimodal: a PDF, an image, a YouTube transcript, a web page. The wiki's central noun. | Acquisition column header, Reflect → Sources second-table column header, Retention column header |
+| **Acquired** | When a source entered the pipeline (its acquisition timestamp). | Acquisition column header, Reflect → Sources second-table column header, Retention column header (UI label; on-disk column stays `Date` for backward compatibility) |
+| **Status** | The lifecycle state of a source on a pipeline-status table: `pending`, `in_progress`, `cataloged`, `failed`. | Acquisition column header, Reflect → Sources second-table column header |
+| **Action** | The log-entry type on the Retention table: `Cataloged`, `Re-viewed`, `Renamed`. Distinct from Status (which is lifecycle state); Action is "what kind of log entry this is." | Retention column header |
+| **Title** | The human-readable name of a wiki page (the `title:` frontmatter field). Distinct from Source: a source is a filename, a title is a page name. | Reflect main tables (Sources, Entities, Concepts, Synthesis), Retention table |
+| **Cataloging** | The pipeline section header on the Acquisition page (was "Document Processing"). Names the process the table is showing. | Acquisition page header |
 
 ## Principles
 
