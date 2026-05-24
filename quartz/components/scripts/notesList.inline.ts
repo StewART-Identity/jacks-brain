@@ -323,7 +323,7 @@ document.addEventListener("nav", () => {
 
       const titleInput = document.createElement("input")
       titleInput.type = "text"
-      titleInput.className = "paste-title-input"
+      titleInput.className = "notes-text-input"
       titleInput.id = `note-title-${safeSlug}`
       titleInput.placeholder = "Title"
       titleInput.setAttribute("aria-label", "Note title")
@@ -331,7 +331,7 @@ document.addEventListener("nav", () => {
 
       const tagsInput = document.createElement("input")
       tagsInput.type = "text"
-      tagsInput.className = "paste-title-input notes-tags-input"
+      tagsInput.className = "notes-text-input notes-tags-input"
       tagsInput.id = `note-tags-${safeSlug}`
       tagsInput.placeholder = "Tags (comma-separated, optional)"
       tagsInput.setAttribute("aria-label", "Note tags")
@@ -394,7 +394,7 @@ document.addEventListener("nav", () => {
       panePreview.appendChild(preview)
 
       const actionsRow = document.createElement("div")
-      actionsRow.className = "paste-row notes-editor-actions"
+      actionsRow.className = "notes-controls notes-editor-actions"
 
       const saveBtn = document.createElement("button")
       saveBtn.type = "button"
