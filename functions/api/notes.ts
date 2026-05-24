@@ -4,7 +4,7 @@
  * GET  /api/notes              → list all notes (newest first)
  * POST /api/notes              → create a new note from {title, tags, body}
  *
- * Notes live at content/study/notes/<slug>.md where slug is an ISO
+ * Notes live at content/notes/<slug>.md where slug is an ISO
  * timestamp YYYYMMDD-HHMMSS. The timestamp is computed in USER_TIMEZONE
  * (same fallback to UTC as upload.ts) — the second-level precision means
  * many-per-day capture never collides, which is the entire point of the
@@ -28,7 +28,7 @@ interface Env {
 }
 
 const BRANCH = "main"
-const NOTES_DIR = "content/study/notes"
+const NOTES_DIR = "content/notes"
 
 interface NoteSummary {
   slug: string
@@ -191,9 +191,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       type: string
     }>
 
-    // Filter to .md files, exclude index.md (it's the page shell, not a note).
+    // Filter to .md files, excluding the section pages (index/write/browse)
+    // which are page shells rather than notes.
+    const SECTION_PAGES = new Set(["index.md", "write.md", "browse.md"])
     const noteEntries = entries.filter(
-      (e) => e.type === "file" && e.name.endsWith(".md") && e.name !== "index.md",
+      (e) => e.type === "file" && e.name.endsWith(".md") && !SECTION_PAGES.has(e.name),
     )
 
     // For each, fetch the raw file to read frontmatter. Parallel to keep
@@ -246,12 +248,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       }),
     )
 
-    // Sort newest-first by slug (timestamp slugs sort lexicographically
-    // identically to chronological). created field as tiebreaker for
-    // legacy notes that might not match the slug pattern.
+    // Sort newest-first. Timestamp slugs sort lexicographically identical
+    // to chronological — but legacy notes (like graph-theory-glossary)
+    // don't have timestamp slugs, so fall back to created date for those.
     notes.sort((a, b) => {
-      if (b.slug !== a.slug) return b.slug.localeCompare(a.slug)
-      return (b.created || "").localeCompare(a.created || "")
+      const aTime = a.modified || a.created
+      const bTime = b.modified || b.created
+      if (aTime && bTime) return bTime.localeCompare(aTime)
+      // Either lacks a timestamp — defer to slug ordering as a stable fallback.
+      return b.slug.localeCompare(a.slug)
     })
 
     return Response.json({ notes })
@@ -343,7 +348,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       success: true,
       slug,
       path,
-      url: `/study/notes/${slug}`,
+      url: `/notes/${slug}`,
       title,
       tags,
       message: `Note saved to ${path}. The next Quartz build (≈30s) will publish the page and update the graph.`,
