@@ -33,7 +33,8 @@ import ResearchPage from "./ResearchPage"
 import Acquisition from "./Acquisition"
 import RetentionList from "./RetentionList"
 import Hamburger from "./Hamburger"
-import Notes from "./Notes"
+import NoteForm from "./NoteForm"
+import NotesList from "./NotesList"
 
 export {
   ArticleTitle,
@@ -71,5 +72,6 @@ export {
   Acquisition,
   RetentionList,
   Hamburger,
-  Notes,
+  NoteForm,
+  NotesList,
 }
