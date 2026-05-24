@@ -8,7 +8,7 @@ const Acquisition: QuartzComponent = ({ displayClass }: QuartzComponentProps) =>
     <div class={displayClass} id="acquisition-app">
       <div class="recent-runs">
         <div class="recent-runs-header">
-          <h3>Document Processing</h3>
+          <h3>Cataloging</h3>
           <div class="recent-runs-actions">
             <button id="refresh-runs-btn" class="runs-action-btn" title="Refresh">
               &#8635;
