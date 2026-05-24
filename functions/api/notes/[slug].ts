@@ -23,7 +23,7 @@ interface Env {
 }
 
 const BRANCH = "main"
-const NOTES_DIR = "content/study/notes"
+const NOTES_DIR = "content/notes"
 
 interface FileMeta {
   sha: string
@@ -266,7 +266,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
       success: true,
       slug,
       path,
-      url: `/study/notes/${slug}`,
+      url: `/notes/${slug}`,
       title,
       tags,
       created,
