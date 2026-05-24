@@ -1,6 +1,6 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 
-/* SourcesList — the dynamic table on `collection/sources` that lists
+/* SourcesList — the dynamic table on `reflect/sources` that lists
    raw uploaded files (acquired but not yet cataloged) by fetching from
    `/api/originals`.
 
@@ -106,7 +106,7 @@ document.addEventListener("nav", () => {
 
     container.innerHTML = '<table>' +
       '<thead><tr>' +
-      thFor("name", "File") +
+      thFor("name", "Source") +
       thFor("acquired", "Acquired") +
       thFor("status", "Status") +
       '</tr></thead>' +
@@ -169,7 +169,7 @@ SourcesList.css = `
 }
 
 /* Column widths for the SourcesList dynamic table.
-   File: bulk of the row (filenames are long).
+   Source: bulk of the row (filenames are long).
    Acquired: fixed timestamp width.
    Status: just enough for the badge. */
 #sources-list.jb-table th.col-name,
@@ -188,7 +188,7 @@ SourcesList.css = `
   white-space: nowrap;
 }
 
-/* The link in the File column inherits the site's --secondary color
+/* The link in the Source column inherits the site's --secondary color
    via base.scss's \`a\` rule, which on dark green rows reads as a
    muted green-on-green. Override to the warm sand (matches the
    header text) so filenames pop against the row backgrounds. */
