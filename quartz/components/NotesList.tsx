@@ -6,8 +6,9 @@ import styles from "./styles/notes.scss"
 /**
  * List-and-edit component for /notes/browse.
  *
- * Split half of the original Notes component — this is the side that
- * lists existing notes and lets the user edit or delete them inline.
+ * Visually mirrors the Search card (.search-page-card): rounded card,
+ * semi-transparent dark fill, "All notes" label, list rendered inside.
+ * Sits at the same 720px max-width as Search/Wiki and Search/Web.
  *
  * Renders an empty container plus the shared delete modal. The inline
  * script populates the list at runtime (GET /api/notes) and handles
@@ -16,8 +17,8 @@ import styles from "./styles/notes.scss"
 const NotesList: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="notes-list-app">
-      <div class="catalog-card">
-        <h3 class="section-label">All notes</h3>
+      <div class="search-page-card">
+        <h3 class="search-page-label">All notes</h3>
         <div id="notes-list" class="notes-list">
           <p class="muted notes-empty-state">Loading notes…</p>
         </div>
