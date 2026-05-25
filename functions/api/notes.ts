@@ -4,11 +4,15 @@
  * GET  /api/notes              → list all notes (newest first)
  * POST /api/notes              → create a new note from {title, tags, body}
  *
- * Notes live at content/notes/<slug>.md where slug is an ISO
+ * Notes live at content/notes/journal/<slug>.md where slug is an ISO
  * timestamp YYYYMMDD-HHMMSS. The timestamp is computed in USER_TIMEZONE
  * (same fallback to UTC as upload.ts) — the second-level precision means
  * many-per-day capture never collides, which is the entire point of the
  * timestamp-slug convention Jack chose.
+ *
+ * The 'journal' subfolder isolates notes from the Notes section landing
+ * page (Write, Browse) so the folder listing on /notes/ doesn't show
+ * actual notes alongside the section pages.
  *
  * Both endpoints are gated by cf-access-authenticated-user-email — the
  * same auth model as every other write endpoint in this site. Cloudflare
@@ -28,7 +32,7 @@ interface Env {
 }
 
 const BRANCH = "main"
-const NOTES_DIR = "content/notes"
+const NOTES_DIR = "content/notes/journal"
 
 interface NoteSummary {
   slug: string
@@ -191,9 +195,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       type: string
     }>
 
-    // Filter to .md files, excluding the section pages (index/write/browse)
-    // which are page shells rather than notes.
-    const SECTION_PAGES = new Set(["index.md", "write.md", "browse.md"])
+    // Filter to .md files. We don't expect section pages (index/write/browse)
+    // here since journal/ is one level below the section landing page, but
+    // keep the index.md exclusion defensively — the journal subfolder may
+    // grow its own index.md later as a folder rollup.
+    const SECTION_PAGES = new Set(["index.md"])
     const noteEntries = entries.filter(
       (e) => e.type === "file" && e.name.endsWith(".md") && !SECTION_PAGES.has(e.name),
     )
@@ -348,7 +354,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       success: true,
       slug,
       path,
-      url: `/notes/${slug}`,
+      url: `/notes/journal/${slug}`,
       title,
       tags,
       message: `Note saved to ${path}. The next Quartz build (≈30s) will publish the page and update the graph.`,
