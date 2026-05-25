@@ -195,11 +195,41 @@ body {
 
 /* ==========================================================================
    Page title
+
+   The title sits in the left sidebar above the zone labels (DOING,
+   SEEING, STUDYING, META). The sidebar has horizontal padding of
+   2rem on each side (from base.scss's .sidebar rule:
+   `padding: $topSpacing 2rem 2rem 2rem`). Without intervention,
+   `text-align: center` on the title would center it within the
+   sidebar's *padded content area* — which is the same x-range as
+   the zone labels — making the title visually flush-left with them
+   when the text is wide enough to fill that area.
+
+   Jack wants the title centered between the sidebar's *outer*
+   edges (the page edge on the left, the green divider on the
+   right). Achieved by giving the .page-title negative horizontal
+   margins of -2rem to cancel out the sidebar's padding, so the
+   title's effective box spans the full sidebar width. The
+   text-align: center declaration in PageTitle.tsx then centers
+   the title within that full width.
+
+   The negative margin only fights padding that the sidebar
+   contributes. The collapse button (absolutely positioned at top:
+   1rem, right: 1rem inside the sidebar's bounding box) is
+   unaffected — it sits in its own positioning context and the
+   title's margins don't touch it.
    ========================================================================== */
 
 .page-title {
   font-weight: 700;
   letter-spacing: -0.02em;
+
+  /* Span the sidebar's full width by cancelling its 2rem horizontal
+     padding. The PageTitle component sets text-align: center, so
+     once the title's box is the full sidebar width, the text
+     centers between the left edge and the right edge. */
+  margin-left: -2rem;
+  margin-right: -2rem;
 
   a, a:visited, a:hover {
     color: inherit;
@@ -758,14 +788,22 @@ input.search-bar {
 
    State communicated via html.jb-sidebar-collapsed. Pre-paint state
    restoration in Head.tsx applies the class before first paint.
+
+   Button size: 2rem × 2rem (32×32px) with an 18px SVG icon. Smaller
+   than the original 2.5rem (40px) so the button reads as a chrome
+   affordance rather than an emphatic action — sidebar collapse is
+   a fiddly preference, not a primary call to action. The icon is
+   sized to keep the inner padding visually consistent with the
+   button's overall proportions (~7px of padding on each side of
+   the 18px glyph).
    ========================================================================== */
 
 .jb-sidebar-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
   border-radius: 6px;
   cursor: pointer;
@@ -786,11 +824,12 @@ input.search-bar {
     transform: scale(0.95);
   }
 
-  /* The icon — fixed size, vertically centered. */
+  /* The icon — fixed size, vertically centered. Scaled down from
+     22px to 18px to match the smaller button. */
   & > svg {
     display: block;
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -875,8 +914,8 @@ html.jb-sidebar-collapsed #quartz-body {
    horizontal padding (from the "Page width, grid template, and
    content gutters" block above) applies in both expanded and
    collapsed states. The 4rem floor on the left padding clears the
-   floating expand button (top-left, 2.5rem wide, 1rem from edge
-   → rightmost extent ~3.5rem) at every viewport width. */
+   floating expand button (top-left, 2rem wide, 1rem from edge
+   → rightmost extent ~3rem) at every viewport width. */
 
 /* Mobile: hide both toggle UI elements entirely. Mobile uses the
    existing hamburger pattern. */
