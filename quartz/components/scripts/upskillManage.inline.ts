@@ -139,11 +139,11 @@ document.addEventListener("nav", () => {
               <div class="upskill-row-summary">${summary}</div>
             </div>
             <div class="upskill-row-actions">
-              <button type="button" class="jb-btn jb-btn-sm jb-btn-secondary upskill-edit-btn" data-slug="${escapeHtml(t.slug)}">Edit</button>
-              <button type="button" class="jb-btn jb-btn-sm jb-btn-secondary upskill-toggle-btn" data-slug="${escapeHtml(t.slug)}">
+              <button type="button" class="jb-btn jb-btn-sm upskill-edit-btn" data-slug="${escapeHtml(t.slug)}">Edit</button>
+              <button type="button" class="jb-btn jb-btn-sm upskill-toggle-btn" data-slug="${escapeHtml(t.slug)}">
                 ${t.hidden ? "Unhide" : "Hide"}
               </button>
-              <button type="button" class="jb-btn jb-btn-sm jb-btn-secondary upskill-delete-btn" data-slug="${escapeHtml(t.slug)}">Delete</button>
+              <button type="button" class="jb-btn jb-btn-sm upskill-delete-btn" data-slug="${escapeHtml(t.slug)}">Delete</button>
             </div>
           </div>
         `
