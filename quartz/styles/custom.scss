@@ -144,6 +144,133 @@ article {
 
 
 /* ==========================================================================
+   Canonical button — .jb-btn
+
+   Used everywhere the wiki shows an action button. The visual style
+   mirrors the look of `a.internal` link pills (e.g. "Download original"
+   on source pages) — rounded pill, brass text on dark green
+   background, subtle border, soft hover — because that's the
+   established "press this" look in the wiki.
+
+   Apply .jb-btn to any <button> or <a> that should look like an action.
+   Optional modifiers:
+   - .jb-btn-primary  — brass border for highest emphasis (the "do this
+     thing" button when there's exactly one such on the page)
+   - .jb-btn-secondary — lighter variant for less-critical actions
+   - .jb-btn-sm        — smaller version for tighter contexts (toolbar
+     buttons, inline actions)
+
+   Both light and dark mode variants follow the established palette.
+   ========================================================================== */
+
+.jb-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba($brass-100, 0.5);
+  }
+}
+
+.jb-btn-sm {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+:root:not([saved-theme="dark"]) {
+  .jb-btn {
+    background: $green-600;
+    color: $brass-100;
+    border: 1px solid $green-500;
+
+    &:hover:not(:disabled) {
+      background: $green-500;
+      color: $brass-50;
+      border-color: $brass-300;
+    }
+  }
+
+  .jb-btn.jb-btn-primary {
+    background: $green-600;
+    color: $brass-50;
+    border: 1px solid $brass-500;
+
+    &:hover:not(:disabled) {
+      background: $green-500;
+      border-color: $brass-300;
+    }
+  }
+
+  .jb-btn.jb-btn-secondary {
+    background: transparent;
+    color: $green-800;
+    border: 1px solid $green-300;
+
+    &:hover:not(:disabled) {
+      background: rgba($green-100, 0.5);
+      border-color: $green-500;
+    }
+  }
+}
+
+:root[saved-theme="dark"] {
+  .jb-btn {
+    background: $green-800;
+    color: $brass-100;
+    border: 1px solid $green-600;
+
+    &:hover:not(:disabled) {
+      background: $green-600;
+      color: $brass-50;
+      border-color: $brass-300;
+    }
+  }
+
+  .jb-btn.jb-btn-primary {
+    background: $green-800;
+    color: $brass-50;
+    border: 1px solid $brass-300;
+
+    &:hover:not(:disabled) {
+      background: $green-600;
+      border-color: $brass-100;
+    }
+  }
+
+  .jb-btn.jb-btn-secondary {
+    background: transparent;
+    color: $brass-100;
+    border: 1px solid $green-600;
+
+    &:hover:not(:disabled) {
+      background: rgba($green-800, 0.6);
+      border-color: $brass-300;
+    }
+  }
+}
+
+
+/* ==========================================================================
    Links
    ========================================================================== */
 
