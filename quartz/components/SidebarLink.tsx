@@ -9,18 +9,31 @@ interface Options {
   slug: string
   links: { title: string; slug: string }[]
   /**
-   * Initial open/closed state. Read by the inline script on mount
-   * via the `data-state` attribute on .sidebar-nav. Callers typically
-   * compute this from the current page's slug — pass "open" if the
-   * page belongs to this section, "collapsed" otherwise — so the user
-   * always sees their current location expanded and everything else
-   * tucked away.
+   * Explicit-override initial state. SidebarLink also auto-opens the
+   * section if the current page's slug belongs to it (see
+   * isCurrentPageInSection in the render function); this option is
+   * the fallback when that's not true.
+   *
+   * Most callers should pass "collapsed" — the per-page auto-expand
+   * does the right thing for the section the user is currently in,
+   * and a quiet sidebar is the better default for everything else.
+   * Pass "open" only when you want a section open regardless of
+   * which page is being rendered (rare).
    */
   defaultState: "collapsed" | "open"
 }
 
 /**
  * One collapsible section in the left sidebar.
+ *
+ * Per-page open/closed behavior: the section auto-opens if the
+ * current page's slug belongs to it. Specifically, opens when
+ * fileData.slug equals opts.slug OR starts with opts.slug + "/".
+ * That covers both the section index page (e.g. /notes when opts.slug
+ * is "notes") and any descendant page (e.g. /notes/write,
+ * /notes/entries/20250524-093102).
+ *
+ * If neither matches, falls back to opts.defaultState.
  *
  * Anatomy:
  *
@@ -36,17 +49,25 @@ interface Options {
  *
  * The heading text is a real link to the section's index page; the
  * chevron is the collapse toggle. Two click targets, two meanings —
- * direct navigation to the section vs. revealing its sub-pages — so
- * the user doesn't lose the click-to-section behavior the wiki has
- * had since day one just because the section is now collapsible.
+ * direct navigation to the section vs. revealing its sub-pages.
  */
 export default ((opts: Options) => {
   const SidebarLink: QuartzComponent = ({ fileData, displayClass }: QuartzComponentProps) => {
+    const pageSlug = fileData.slug ?? ""
+    const sectionSlug = opts.slug
+    const isCurrentPageInSection =
+      pageSlug === sectionSlug ||
+      pageSlug.startsWith(sectionSlug + "/")
+
+    // Per-page open behavior takes precedence over the constructor
+    // default. Pages outside the section fall back to opts.defaultState.
+    const initiallyOpen = isCurrentPageInSection || opts.defaultState === "open"
+    const initialState = initiallyOpen ? "open" : "closed"
+
     // Generated id for aria-controls. Slug is already a-z0-9- and
     // unique across the layout, so a deterministic id is fine.
     const listId = `sidebar-nav-list-${opts.slug.replace(/\//g, "-")}`
-    const initiallyOpen = opts.defaultState === "open"
-    const initialState = initiallyOpen ? "open" : "closed"
+
     return (
       <div
         class={classNames(displayClass, "sidebar-nav")}
@@ -152,8 +173,7 @@ export default ((opts: Options) => {
 .sidebar-nav-toggle-icon {
   transition: transform 0.15s ease;
   /* Default: pointing down (caret-down). Rotates -90deg when closed
-     so it points right. Anchored at the center because the viewBox
-     centers the path. */
+     so it points right. */
 }
 .sidebar-nav[data-state="closed"] .sidebar-nav-toggle-icon {
   transform: rotate(-90deg);
