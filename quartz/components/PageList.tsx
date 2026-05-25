@@ -49,14 +49,25 @@ type Props = {
 } & QuartzComponentProps
 
 // Reflect sub-pages render as actual data tables instead of the default
-// flex-with-tags-floated-right layout. Date column appears on Sources and
-// Synthesis (where date carries information), but not on Concepts or
-// Entities (which are evergreen and don't have a meaningful "date").
-const COLLECTION_TABLE_SLUGS: Record<string, { showDate: boolean }> = {
-  "reflect/sources": { showDate: true },
-  "reflect/synthesis": { showDate: true },
-  "reflect/concepts": { showDate: false },
-  "reflect/entities": { showDate: false },
+// flex-with-tags-floated-right layout. Configuration per page:
+//
+//   showDate    — Date column is rendered (Sources, Synthesis). Concepts
+//                 and Entities are evergreen and have no meaningful date.
+//   titleLabel  — User-facing label for the first sortable column.
+//                 Sources/Synthesis/Concepts use "Title" because the
+//                 cataloged items have titles; Entities use "Name"
+//                 because people, organizations, and tools have names,
+//                 not titles. The underlying data-sort attribute stays
+//                 "title" regardless — only the visible header label
+//                 differs.
+const COLLECTION_TABLE_SLUGS: Record<
+  string,
+  { showDate: boolean; titleLabel: string }
+> = {
+  "reflect/sources": { showDate: true, titleLabel: "Title" },
+  "reflect/synthesis": { showDate: true, titleLabel: "Title" },
+  "reflect/concepts": { showDate: false, titleLabel: "Title" },
+  "reflect/entities": { showDate: false, titleLabel: "Name" },
 }
 
 export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort }: Props) => {
@@ -75,8 +86,8 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
   if (tableConfig) {
     // Reflect sub-page: render as a real table.
     //
-    // Column order: Disclose -> Title -> Date -> Summary -> Subjects
-    // Sortable: Title (alphabetical) and Date (chronological).
+    // Column order: Tags-disclose -> Title/Name -> Date -> Summary -> Subjects
+    // Sortable: Title/Name (alphabetical) and Date (chronological).
     // Default sort applied by the SSR sorter above is "newest first" via
     // byDateAndAlphabeticalFolderFirst. The client-side sort script in
     // PageList.afterDOMLoaded picks up that default and lets the user
@@ -84,8 +95,8 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
     //
     // Each item renders as TWO <tr> elements:
     //   1. A primary row carrying the title, date, summary, and
-    //      subjects cells, plus a leading "disclose" cell with the
-    //      chevron-plus-count button.
+    //      subjects cells, plus a leading "Tags" disclosure cell with
+    //      the chevron-plus-count-plus-noun button.
     //   2. A tag row, initially hidden, with a single full-width <td
     //      colspan> containing the wrapping pill list of tags (or a
     //      muted "—" if the item has no tags).
@@ -93,6 +104,7 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
     // state is persisted to localStorage per slug — see the toggle
     // script in afterDOMLoaded.
     const showDate = tableConfig.showDate
+    const titleLabel = tableConfig.titleLabel
 
     // Column count for the tag-row's colspan. Includes the disclose
     // column. Sources/Synthesis: 5 (disclose+title+date+summary+subjects).
@@ -148,18 +160,19 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
         <table>
           <thead>
             <tr>
-              {/* Disclose column header — empty label. The chevron+count
-                  in body rows is self-explanatory, and a header label
-                  for a control column would be noise. */}
-              <th class="col-disclose" aria-label="Tags disclosure" />
+              {/* Tags column header — labels the disclose column. The
+                  user-facing word "Tags" lives here so the buttons
+                  underneath only have to communicate count and state,
+                  not topic. */}
+              <th class="col-disclose">Tags</th>
               <th class="col-title sortable sort-active" data-sort="title">
-                Title
-                <span class="sort-indicator">⇅</span>
+                {titleLabel}
+                <span class="sort-indicator">▾</span>
               </th>
               {showDate && (
                 <th class="col-date sortable" data-sort="date">
                   Date
-                  <span class="sort-indicator">⇅</span>
+                  <span class="sort-indicator">▾</span>
                 </th>
               )}
               <th class="col-summary">Summary</th>
@@ -215,6 +228,9 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                         >
                           <span class="jb-tag-toggle-chevron" aria-hidden="true">▸</span>
                           <span class="jb-tag-toggle-count">{tags.length}</span>
+                          <span class="jb-tag-toggle-label">
+                            {tags.length === 1 ? "tag" : "tags"}
+                          </span>
                         </button>
                       ) : (
                         <span class="jb-tag-toggle-empty muted" aria-label="No tags">
@@ -351,43 +367,44 @@ PageList.css = `
    regardless of viewport width. With table-layout: fixed (set by
    jbtable.scss), widths are ratios.
 
-   Column order: Disclose -> Title -> Date -> Summary -> Subjects. */
+   Column order: Tags-disclose -> Title -> Date -> Summary -> Subjects. */
 
-/* Disclose column — narrow fixed slot for the chevron+count button.
-   ~4.5rem fits "▸ 99" with breathing room on either side. Centered
-   so the chevron-and-count cluster reads as a single control. */
+/* Tags-disclose column — fits "▸ N tags" comfortably. ~6.5rem accommodates
+   "▸ 99 tags" with breathing room. Centered so the cluster reads as a
+   single control element. */
 .jb-table th.col-disclose,
 .jb-table td.col-disclose {
-  width: 4.5rem;
+  width: 6.5rem;
   text-align: center;
   white-space: nowrap;
 }
 
-/* Sources & Synthesis (5 columns: Disclose / Title / Date / Summary / Subjects) */
+/* Sources & Synthesis (5 columns: Tags / Title / Date / Summary / Subjects).
+   Date widened from 12% → 14% so "May 25, 2026" fits on one line. */
 .jb-table th.col-title,
 .jb-table td.col-title {
-  width: 25%;
+  width: 24%;
   font-weight: 500;
 }
 .jb-table th.col-date,
 .jb-table td.col-date {
-  width: 12%;
+  width: 14%;
   white-space: nowrap;
 }
 .jb-table th.col-summary,
 .jb-table td.col-summary {
-  width: 33%;
+  width: 32%;
 }
 .jb-table th.col-subjects,
 .jb-table td.col-subjects {
-  width: 22%;
+  width: 21%;
 }
 
 /* When Date column is absent (Concepts & Entities), redistribute the
    freed-up space across the remaining columns. */
 .jb-table > table:not(:has(.col-date)) th.col-title,
 .jb-table > table:not(:has(.col-date)) td.col-title {
-  width: 28%;
+  width: 27%;
 }
 .jb-table > table:not(:has(.col-date)) th.col-summary,
 .jb-table > table:not(:has(.col-date)) td.col-summary {
@@ -413,15 +430,9 @@ PageList.css = `
    the lighter fill (group A: 4n+1 = primary, 4n+2 = tag). Items 2, 4,
    6, … get the darker fill (group B: 4n+3 = primary, 4n+4 = tag).
 
-   This overrides the odd/even rules in _jbtable.scss for tables that
-   contain primary-row + tag-row pairs. The override is selector-
-   specific to .jb-table tbody tr so the simpler one-row-per-item
-   tables (none right now in jb-table form, but the convention should
-   tolerate them) would still get the basic odd/even striping. */
-.jb-table > table tbody tr:nth-child(4n+1),
-.jb-table > table tbody tr:nth-child(4n+2) {
-  /* group A — lighter (same as old odd) */
-}
+   The PAIR shares one background fill so when the tag row is open,
+   the visual effect is one continuous shaded block per item. This is
+   the "less distinction between rows" requirement. */
 .jb-table > table tbody tr:nth-child(4n+1) td,
 .jb-table > table tbody tr:nth-child(4n+2) td {
   background-color: #1B3F29;
@@ -431,18 +442,23 @@ PageList.css = `
   background-color: #163524;
 }
 
-/* Tag row: full-width disclosure target. The <td colspan> spans the
-   whole table width; we drop the top border so the tag row visually
-   joins its primary row, and lighten the bottom border to match the
-   inter-item separator already established by the cells. */
+/* Tag row: full-width disclosure target.
+
+   No top border so the tag row visually fuses with its primary row
+   (same background fill from the pair-aware striping above). Padding
+   indents the content to align with the Title column's text content
+   — col-disclose is 6.5rem + cell padding (0.75rem), so the left
+   padding here matches the visual start of the Title column above.
+   This makes the tags read as "belonging to" the title rather than
+   sitting in their own anonymous strip. */
 .jb-table > table tbody tr.tag-row > td {
   border-top: none;
-  padding: 0.4rem 0.75rem 0.75rem;
+  padding: 0.2rem 0.75rem 0.75rem 7.25rem;
 }
 
-/* Tags list inside the tag row — horizontal wrapping pill row, full
-   width of the table. Generous gap because tags are now THE primary
-   content of this row, not a cramped column. */
+/* Tags list inside the tag row — horizontal wrapping pill row.
+   Generous gap because tags are now THE primary content of this row,
+   not a cramped column. */
 .jb-table .col-tags-full .tags {
   list-style: none;
   margin: 0;
@@ -484,18 +500,22 @@ PageList.css = `
   white-space: nowrap;
 }
 
-/* Disclose button — the chevron+count cluster. Real <button> for
-   keyboard operability and screen-reader semantics. Visual styling is
-   restrained: just a tappable cluster, no border or background that
-   would compete with the table's overall feel. */
+/* Disclose button — chevron + count + "tags" noun.
+
+   Real <button> for keyboard operability and screen-reader semantics.
+   Text uses the same warm sand yellow as the column headers so the
+   button visually anchors to the column it belongs to. Hover/focus
+   states use a soft yellow background wash; transparent → 12% yellow
+   gives a discoverable but not distracting affordance. */
 .jb-table .jb-tag-toggle {
   background: transparent;
   border: none;
-  color: inherit;
+  color: #F0DDB3;
   padding: 0.15rem 0.4rem;
   cursor: pointer;
   font: inherit;
-  font-size: 0.95em;
+  font-size: 0.9em;
+  font-weight: 500;
   border-radius: 4px;
   display: inline-flex;
   align-items: baseline;
@@ -504,7 +524,7 @@ PageList.css = `
 }
 .jb-table .jb-tag-toggle:hover,
 .jb-table .jb-tag-toggle:focus-visible {
-  background: rgba(240, 221, 179, 0.10);  /* warm sand at low alpha — matches header text color */
+  background: rgba(240, 221, 179, 0.12);
   outline: none;
 }
 .jb-table .jb-tag-toggle:focus-visible {
@@ -520,7 +540,12 @@ PageList.css = `
 }
 .jb-table .jb-tag-toggle-count {
   font-variant-numeric: tabular-nums;
-  font-weight: 500;
+  font-weight: 600;
+}
+.jb-table .jb-tag-toggle-label {
+  /* Smaller noun to keep the count visually prominent. */
+  font-size: 0.9em;
+  opacity: 0.85;
 }
 .jb-table .jb-tag-toggle-empty {
   display: inline-block;
@@ -561,8 +586,8 @@ PageList.css = `
 // Client-side behavior for the Reflect tables — covers two distinct
 // interactions on the same table:
 //
-//  1) Column-header sorting (Title / Date), as before but updated to
-//     keep primary-row + tag-row pairs together when reordering.
+//  1) Column-header sorting (Title/Name / Date), as before but updated
+//     to keep primary-row + tag-row pairs together when reordering.
 //  2) Per-item tag-row disclosure (chevron buttons), with localStorage
 //     persistence so the open set survives sorting, SPA nav, and full
 //     reload.
@@ -711,7 +736,9 @@ document.addEventListener("nav", () => {
         indEl.textContent = indicator(sortAsc)
       } else {
         th.classList.remove("sort-active")
-        indEl.textContent = "⇅"
+        // Inactive indicator: muted ▾, same glyph family as the active
+        // ▲/▼. Opacity is applied via CSS — we only set the character.
+        indEl.textContent = "▾"
       }
     })
 
