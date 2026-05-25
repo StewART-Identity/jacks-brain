@@ -67,7 +67,7 @@ const SearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
             {/* The visible Search button. NO engine classes — fully
                 styled by our own searchPage.scss with no leakage from
                 the sidebar's .search-button rules. */}
-            <button class="search-page-btn" type="button">
+            <button class="jb-btn" type="button">
               Search
             </button>
           </div>
@@ -124,7 +124,7 @@ document.addEventListener("nav", () => {
   }
 
   // The visible Search button focuses the input.
-  const btn = root.querySelector(".search-page-btn")
+  const btn = root.querySelector(".jb-btn")
   const focusBar = () => bar.focus()
   if (btn) btn.addEventListener("click", focusBar)
 
