@@ -10,7 +10,20 @@
    item tag counts grew (a routine outcome of the controlled
    vocabulary). The vertical scan is now down a list of compact
    meta/title rows, with tags fanning out horizontally beneath each
-   one — much easier to read at the scale of dozens of tags per item. */
+   one — much easier to read at the scale of dozens of tags per item.
+
+   DOM structure assumed (from PageList.tsx's default branch):
+
+     <div class="section">
+       <p class="meta">{date}</p>
+       <div class="desc"><h3>...</h3></div>
+       <ul class="tags">...</ul>
+     </div>
+
+   All three are siblings — .meta and .desc don't nest. The top row
+   (date + title) is composed by making .section a column flex
+   container and giving .meta + .desc inline display so they sit side
+   by side, while .tags falls below them as a block-level row. */
 
 ul.section-ul {
   list-style: none;
@@ -23,29 +36,25 @@ li.section-li {
 
   & > .section {
     display: flex;
-    flex-direction: column;
-    gap: 0.4em;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4em 0.75em;
 
-    /* Top row: date + title side-by-side. */
+    /* Meta (date) — fixed-width slot at the start of the row. */
+    & > .meta {
+      margin: 0;
+      opacity: 0.6;
+      flex: 0 0 auto;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Title — takes the rest of the top row's width. */
     & > .desc {
-      display: flex;
-      align-items: baseline;
-      gap: 0.75em;
-
-      /* Meta lives inside .desc on this layout (was a grid sibling
-         before). We position it via flex order so the date appears
-         before the title, but we author it in source order
-         meta-then-title for natural reading flow. */
-      & .meta {
-        margin: 0;
-        opacity: 0.6;
-        flex: 0 0 auto;
-        font-variant-numeric: tabular-nums;
-      }
+      flex: 1 1 60%;
+      min-width: 0;  /* so long titles can shrink and wrap rather than overflow */
 
       & > h3 {
         margin: 0;
-        flex: 1 1 auto;
         line-height: 1.3;
       }
 
@@ -54,11 +63,13 @@ li.section-li {
       }
     }
 
-    /* Bottom row: tags wrap horizontally across the card's full
-       width. A soft top border separates meta/title above from tags
-       below — gives the card internal structure without needing an
-       outer border that would compete with the wiki chrome. */
+    /* Tags — full-width row beneath meta/title. flex-basis: 100%
+       forces it onto its own line within the parent's flex flow.
+       A soft top border separates meta/title above from tags below,
+       giving the card internal structure without needing an outer
+       border that would compete with surrounding wiki chrome. */
     & > .tags {
+      flex: 1 1 100%;
       display: flex;
       flex-wrap: wrap;
       gap: 0.3em;
@@ -73,35 +84,21 @@ li.section-li {
       }
     }
 
-    /* Mobile: collapse to date/title only. The tag row is hidden
-       (existing behavior) AND its top border is removed so there's
-       no orphan rule under the title pair. */
+    /* Mobile: hide tags (existing behavior). Remove the orphan
+       top-border rule that would otherwise sit empty. */
     @media all and ($mobile) {
       & > .tags {
         display: none;
-      }
-
-      & > .desc {
-        /* Stack vertically when there isn't room for date and title
-           side-by-side. */
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.15em;
       }
     }
   }
 }
 
-/* modifications in popover context — same as before. Popovers don't
-   have room for the card layout; the meta/title pair reads fine
-   on its own. */
+/* Modifications in popover context — popovers don't have room for the
+   card layout; the meta/title pair reads fine on its own. */
 .popover .section {
   display: grid;
   grid-template-columns: fit-content(8em) 1fr !important;
-
-  & > .desc {
-    display: contents;
-  }
 
   & > .tags {
     display: none;
