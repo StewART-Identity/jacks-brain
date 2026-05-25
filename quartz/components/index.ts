@@ -42,6 +42,7 @@ import Timeline from "./Timeline"
 import Subjects from "./Subjects"
 import Tags from "./Tags"
 import Confidence from "./Confidence"
+import QuizTake from "./QuizTake"
 
 export {
   ArticleTitle,
@@ -88,4 +89,5 @@ export {
   Subjects,
   Tags,
   Confidence,
+  QuizTake,
 }
