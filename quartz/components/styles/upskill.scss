@@ -105,26 +105,10 @@
   margin-top: 1rem;
 }
 
-#upskill-manage-app .search-page-btn {
+/* Create button now uses .jb-btn from custom.scss. Layout-only
+   override: push it to the right of the controls row. */
+#upskill-manage-app .jb-btn {
   margin-left: auto;
-  padding: 0.6rem 1.3rem;
-  background: var(--secondary);
-  color: var(--light);
-  border: none;
-  border-radius: 8px;
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-  white-space: nowrap;
-}
-#upskill-manage-app .search-page-btn:hover {
-  opacity: 0.85;
-}
-#upskill-manage-app .search-page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* ───── Status banners — same vocabulary as notes ───────────────── */
