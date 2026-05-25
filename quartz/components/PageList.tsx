@@ -387,9 +387,13 @@ PageList.css = `
 }
 
 /* Sources (5 columns: Tags / Title / Date / Summary / Subjects).
-   Date column carries text-align: center in addition to the
-   _jbtable.scss global rule — belt-and-braces so the property
-   travels with the column-width definition. */
+   Date column carries text-align: center !important — diagnostic
+   while we figure out what's been beating the previous text-align
+   declarations. Two earlier text-align: center rules (one in
+   _jbtable.scss, one in this file) didn't visually center the
+   dates, so something with higher specificity is overriding.
+   !important forces the issue; if THIS works, we know it's a
+   specificity problem and can craft a proper-specificity fix. */
 .jb-table th.col-title,
 .jb-table td.col-title {
   width: 24%;
@@ -399,7 +403,7 @@ PageList.css = `
 .jb-table td.col-date {
   width: 14%;
   white-space: nowrap;
-  text-align: center;
+  text-align: center !important;
 }
 .jb-table th.col-summary,
 .jb-table td.col-summary {
