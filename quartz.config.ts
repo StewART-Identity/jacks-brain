@@ -81,7 +81,6 @@ const config: QuartzConfig = {
       Plugin.ComponentResources(),
       Plugin.ContentPage(),
       Plugin.FolderPage(),
-      Plugin.UpskillPage(),
       Plugin.TagPage(),
       Plugin.SubjectPage(),
       Plugin.ContentIndex({

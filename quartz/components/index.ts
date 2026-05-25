@@ -46,6 +46,7 @@ import Tags from "./Tags"
 import Confidence from "./Confidence"
 import QuizTake from "./QuizTake"
 import QuizSuggest from "./QuizSuggest"
+import UpskillManage from "./UpskillManage"
 
 export {
   ArticleTitle,
@@ -96,4 +97,5 @@ export {
   Confidence,
   QuizTake,
   QuizSuggest,
+  UpskillManage,
 }
