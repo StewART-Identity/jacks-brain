@@ -11,7 +11,8 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
  *      already collapsed. Click to EXPAND the sidebar.
  *
  * The toggle communicates state by setting / removing the
- * `jb-sidebar-collapsed` class on the document body. CSS rules in
+ * `jb-sidebar-collapsed` class on the document root element
+ * (document.documentElement, the <html> tag). CSS rules in
  * custom.scss watch for that class and reshape the layout
  * accordingly:
  *   - With the class:   sidebar hidden, content area gets full width,
@@ -21,9 +22,12 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
  *
  * State persists in localStorage under the key `jb-sidebar-collapsed`
  * (string "true" when collapsed; absent otherwise). The persisted
- * state is applied BEFORE first paint via an inline script tag in
- * the head — see the addGlobalPageResources path for that. The
- * after-DOM-loaded script here only wires up click handlers.
+ * state is applied BEFORE first paint via a tiny inline script
+ * injected into the head — see addGlobalPageResources or the Head
+ * component for that injection. Applying the class to
+ * document.documentElement (the <html> tag) is what makes pre-paint
+ * application possible: document.body doesn't exist when head
+ * scripts execute, but documentElement does.
  *
  * Mobile: the sidebar is already off-screen on viewports below 800px
  * (the existing Quartz mobile layout uses a hamburger pattern), so
@@ -85,12 +89,13 @@ document.addEventListener("nav", () => {
       }
     } catch (e) {
       // localStorage can throw (private mode, quota); ignore — the
-      // class on the body still reflects the current-session state.
+      // class on the html element still reflects the current-session
+      // state.
     }
     if (collapsed) {
-      document.body.classList.add("jb-sidebar-collapsed")
+      document.documentElement.classList.add("jb-sidebar-collapsed")
     } else {
-      document.body.classList.remove("jb-sidebar-collapsed")
+      document.documentElement.classList.remove("jb-sidebar-collapsed")
     }
   }
 
