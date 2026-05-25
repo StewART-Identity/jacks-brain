@@ -5,6 +5,25 @@ import { googleFontHref, googleFontSubsetHref } from "../util/theme"
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 import { unescapeHTML } from "../util/escape"
 import { CustomOgImagesEmitterName } from "../plugins/emitters/ogImage"
+
+// Pre-paint script: restore the sidebar's collapsed state from
+// localStorage before the browser's first style/layout pass. This
+// avoids a brief flash where a collapsed sidebar would render
+// expanded for one frame on initial load, then collapse once the
+// after-DOM-loaded SidebarToggle script ran.
+//
+// Runs in the <head> before any CSS or body markup. Targets
+// document.documentElement (the <html> tag) because document.body
+// doesn't exist yet at this point. The class is what CSS rules in
+// custom.scss key off — they target html.jb-sidebar-collapsed
+// descendants.
+//
+// try/catch around localStorage in case the user is in private mode
+// or storage is otherwise unavailable. If storage isn't reachable,
+// we just don't pre-apply the class — the after-DOM-loaded script
+// will handle the (less common) post-paint state restoration.
+const sidebarCollapsedRestoreScript = `(function(){try{if(localStorage.getItem("jb-sidebar-collapsed")==="true"){document.documentElement.classList.add("jb-sidebar-collapsed")}}catch(e){}})();`
+
 export default (() => {
   const Head: QuartzComponent = ({
     cfg,
@@ -38,6 +57,10 @@ export default (() => {
 
     return (
       <head>
+        {/* Pre-paint sidebar-collapsed restoration. Runs synchronously
+            before any CSS or body markup so the collapsed class is
+            already on <html> by the time the browser paints. */}
+        <script dangerouslySetInnerHTML={{ __html: sidebarCollapsedRestoreScript }} />
         <title>{title}</title>
         <meta charSet="utf-8" />
         {cfg.theme.cdnCaching && cfg.theme.fontOrigin === "googleFonts" && (
