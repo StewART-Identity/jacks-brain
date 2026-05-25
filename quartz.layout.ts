@@ -44,6 +44,14 @@ export const sharedPageComponents: SharedLayout = {
       condition: (page) => page.fileData.slug === "notes/browse",
     }),
     Component.ConditionalRender({
+      component: Component.JournalForm(),
+      condition: (page) => page.fileData.slug === "journal/write",
+    }),
+    Component.ConditionalRender({
+      component: Component.JournalList(),
+      condition: (page) => page.fileData.slug === "journal/browse",
+    }),
+    Component.ConditionalRender({
       component: Component.NukeButton(),
       condition: (page) => page.fileData.slug === "application/nuke",
     }),
@@ -84,8 +92,17 @@ const sidebarLeft = [
     slug: "notes",
     defaultState: "open",
     links: [
-      { title: "Write", slug: "notes/write" },
       { title: "Browse", slug: "notes/browse" },
+      { title: "Write", slug: "notes/write" },
+    ],
+  }),
+  Component.SidebarLink({
+    title: "Journal",
+    slug: "journal",
+    defaultState: "open",
+    links: [
+      { title: "Browse", slug: "journal/browse" },
+      { title: "Write", slug: "journal/write" },
     ],
   }),
   Component.SidebarLink({
