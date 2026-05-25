@@ -15,8 +15,10 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
  *   done       → quiz count increased. Show success + refresh link.
  *   failed     → POST failed, or polling timed out.
  *
- * The button uses the canonical .jb-btn style (with the secondary
- * modifier — this is a side action, not the focus of the page).
+ * The button uses the canonical filled .jb-btn style (brass text on
+ * green fill) to match every other action button on the wiki. The
+ * "side action" framing comes from its position (bottom of page,
+ * below a horizontal rule), not from a softened visual treatment.
  */
 const QuizSuggest: QuartzComponent = (props: QuartzComponentProps) => {
   const slug = props.fileData.slug ?? ""
@@ -34,7 +36,7 @@ const QuizSuggest: QuartzComponent = (props: QuartzComponentProps) => {
           <button
             type="button"
             id="quiz-suggest-btn"
-            class="jb-btn jb-btn-secondary quiz-suggest-btn"
+            class="jb-btn quiz-suggest-btn"
             disabled
           >
             Generate quiz questions
@@ -232,9 +234,9 @@ QuizSuggest.css = `
   gap: 0.5rem;
 }
 
-/* Visual styling of the button comes from .jb-btn / .jb-btn-secondary
-   in custom.scss. The .quiz-suggest-btn class is retained for any
-   future component-scoped layout adjustments but currently sets no
+/* Visual styling of the button comes from .jb-btn in custom.scss.
+   The .quiz-suggest-btn class is retained for any future
+   component-scoped layout adjustments but currently sets no
    properties. */
 
 .quiz-suggest-status {
