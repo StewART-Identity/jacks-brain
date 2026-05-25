@@ -26,6 +26,13 @@ export const sharedPageComponents: SharedLayout = {
   head: Component.Head(),
   header: [],
   afterBody: [
+    // Floating sidebar-expand button. Lives in afterBody, NOT in the
+    // sidebar — see SidebarExpand.tsx for the rationale. Visible only
+    // when the sidebar is collapsed (CSS-controlled via the
+    // html.jb-sidebar-collapsed class). Registered first in afterBody
+    // so it renders as the topmost interactive element on the page
+    // (z-index also handles ordering).
+    Component.SidebarExpand(),
     Component.Hamburger(),
     Component.ConditionalRender({
       component: Component.UploadZone(),
@@ -104,12 +111,9 @@ export const sharedPageComponents: SharedLayout = {
 }
 
 const sidebarLeft = [
-  // Sidebar toggle — collapse/expand buttons. Renders two: the
-  // in-sidebar collapse button (absolutely positioned top-right of
-  // the sidebar) and the floating expand button (fixed-position,
-  // visible when sidebar is collapsed). Listed first so the buttons
-  // are in the DOM early, but their visual position is determined
-  // by CSS, not source order.
+  // In-sidebar collapse button. Positioned absolutely in the
+  // top-right of the sidebar via CSS. Source order at the top of the
+  // array doesn't determine visual position; CSS does.
   Component.SidebarToggle(),
   Component.PageTitle(),
   Component.MobileOnly(Component.Spacer()),
