@@ -1,6 +1,5 @@
 import { PageLayout, SharedLayout } from "./quartz/cfg"
 import * as Component from "./quartz/components"
-import { scanTopics } from "./quartz/util/upskill"
 
 // Predicate: this page can host quiz questions. Used both by
 // QuizSuggest (renders the "Generate questions" button) and matches
@@ -14,24 +13,30 @@ const QUIZZABLE_PREFIXES = [
   "journal/entries/",
   "upskill/",
 ]
+// UI-shell pages that match a quizzable prefix but aren't actual
+// content. The upskill/ tree mixes content pages (e.g. upskill/git/
+// object-model) with management/navigation shells (upskill/manage,
+// upskill/topics) — the prefix alone can't tell them apart, so we
+// list the shells here explicitly.
+const QUIZ_SHELL_EXCLUSIONS = new Set([
+  "upskill/manage",
+  "upskill/topics",
+])
 function isQuizzablePage(slug: string | undefined): boolean {
   if (!slug) return false
   if (slug.endsWith("/index")) return false
+  if (QUIZ_SHELL_EXCLUSIONS.has(slug)) return false
   for (const prefix of QUIZZABLE_PREFIXES) {
     if (slug.startsWith(prefix) && slug.length > prefix.length) return true
   }
   return false
 }
 
-// Upskill topics — scanned from data/upskill/<slug>/meta.json at build
-// time. See quartz/util/upskill.ts for the format and contract. The
-// scan runs once when this module loads. Topics with `hidden: true`
-// are filtered out before this list is returned.
-//
-// The sidebar sub-links for Upskill are: a static "Manage" link first
-// (always present, regardless of whether topics exist) followed by one
-// link per visible topic from the scan.
-const upskillTopics = scanTopics()
+// Upskill sidebar: the per-topic listing was removed in favor of a
+// single "Topics" link pointing at /upskill/topics, where
+// UpskillTopics renders a card grid that scans data/upskill/ at
+// build time. quartz/util/upskill.ts (scanTopics) is now consumed
+// only by that component, not here.
 
 /**
  * Compute the default open/closed state for a sidebar section based
@@ -127,6 +132,10 @@ export const sharedPageComponents: SharedLayout = {
     Component.ConditionalRender({
       component: Component.UpskillManage(),
       condition: (page) => page.fileData.slug === "upskill/manage",
+    }),
+    Component.ConditionalRender({
+      component: Component.UpskillTopics(),
+      condition: (page) => page.fileData.slug === "upskill/topics",
     }),
     Component.ConditionalRender({
       component: Component.NukeButton(),
@@ -262,10 +271,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       defaultState: sectionDefaultState(pageSlug, "upskill"),
       links: [
         { title: "Manage", slug: "upskill/manage" },
-        ...upskillTopics.map((t) => ({
-          title: t.title,
-          slug: `upskill/${t.slug}`,
-        })),
+        { title: "Topics", slug: "upskill/topics" },
       ],
     }),
     Component.SidebarLink({
