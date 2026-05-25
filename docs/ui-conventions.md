@@ -167,13 +167,19 @@ Persistence survives sort, SPA nav, and full reload.
 
 ### Glyphs
 
-- Closed: `▸` (right-pointing triangle)
-- Open: same glyph, CSS-rotated 90° via `transform: rotate(90deg)` to
-  become a downward-pointing chevron. The rotation is animated
-  (0.15s ease).
-- Inactive sort indicator: `▾` (muted, same glyph family as the active
-  ▲/▼). Opacity is dropped via CSS — only the character changes when
-  active.
+- **Closed disclosure**: `▸` (U+25B8, right-pointing triangle)
+- **Open disclosure**: same glyph, CSS-rotated 90° via
+  `transform: rotate(90deg)` to become a downward-pointing chevron.
+  The rotation is animated (0.15s ease).
+- **Sort indicators**: active state uses `▲` (U+25B2, ascending) or
+  `▼` (U+25BC, descending); inactive state ALSO uses `▼`. The visual
+  difference comes from opacity (0.55 inactive, 1.0 active), not
+  from picking a different glyph. Earlier code used `▾` (U+25BE) as
+  the inactive glyph, but that's a separate Unicode character with
+  smaller intrinsic visual weight, causing inactive columns'
+  chevrons to look smaller than active ones. **Keep glyphs in the
+  same Unicode family and let opacity express state** — this is the
+  canonical pattern for any future status-via-glyph element.
 
 ### Don't change
 
@@ -184,6 +190,34 @@ Persistence survives sort, SPA nav, and full reload.
   above.
 - The chevron lives on the LEFT of the count. (Conventional disclosure
   pattern; right-side chevrons read as "more" links instead.)
+
+## Reflect tables — Date column policy
+
+Of the four Reflect collection tables, **only Sources renders a Date
+column**. Synthesis, Concepts, and Entities are atemporal.
+
+The rationale:
+
+- **Sources** captures URL-based content (web pages, YouTube videos,
+  evolving reports) where the catalog date pins the version cataloged.
+  Without the date, you can't tell which version of an evolving page
+  the wiki summary reflects. The date earns its column.
+- **Synthesis** is interpretive — the content is "what does this
+  argument or comparison establish?" The date a synthesis was filed
+  doesn't change its interpretive content.
+- **Concepts** and **Entities** are evergreen — there's no meaningful
+  "date" for a concept page about OAuth or an entity page about a
+  colleague.
+- Anyone who wants chronological intake order goes to the Retention
+  page (under Collect), which is the canonical view of "what was
+  cataloged when."
+
+Implementation: `COLLECTION_TABLE_SLUGS` in `PageList.tsx` carries a
+`showDate: boolean` flag per Reflect slug. When `showDate: false`,
+the Date column is skipped at render time, the colspan for the tag
+row drops to 4 (from 5), and the `:not(:has(.col-date))` selector in
+PageList.css redistributes the freed-up column width across Title,
+Summary, and Subjects.
 
 ## Tag-page card layout
 
@@ -279,6 +313,20 @@ Naming convention for these column classes: `<scope>-<column-semantic>`
 (e.g. `queue-document-cell`, `col-status`, `col-disclose`). Lowercase
 hyphens, semantic role first, never positional words like "first" or
 "left".
+
+## Pills with long content
+
+Subject pills, tag pills, and any other inline-pill styling that
+displays user-supplied or controlled-vocabulary text should NOT
+carry `white-space: nowrap`. Long pill content (e.g. the subject
+`identity-management`) needs to wrap inside the pill rather than
+overflow its column.
+
+Pattern: the pill list's CSS uses `display: flex; flex-wrap: wrap`
+(so multiple pills stack into rows when needed) AND the individual
+pill uses `overflow-wrap: anywhere` (so a single long pill's text
+can break at any character if its column width is narrower than the
+text). Together these guarantee no pill ever overflows its column.
 
 ## Where things live
 
