@@ -36,6 +36,8 @@ import RetentionList from "./RetentionList"
 import Hamburger from "./Hamburger"
 import NoteForm from "./NoteForm"
 import NotesList from "./NotesList"
+import JournalForm from "./JournalForm"
+import JournalList from "./JournalList"
 import Timeline from "./Timeline"
 import Subjects from "./Subjects"
 import Tags from "./Tags"
@@ -80,6 +82,8 @@ export {
   Hamburger,
   NoteForm,
   NotesList,
+  JournalForm,
+  JournalList,
   Timeline,
   Subjects,
   Tags,
