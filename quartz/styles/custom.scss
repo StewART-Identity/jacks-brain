@@ -789,31 +789,46 @@ input.search-bar {
    State communicated via html.jb-sidebar-collapsed. Pre-paint state
    restoration in Head.tsx applies the class before first paint.
 
-   Button size: 2rem × 2rem (32×32px) with an 18px SVG icon. Smaller
-   than the original 2.5rem (40px) so the button reads as a chrome
-   affordance rather than an emphatic action — sidebar collapse is
-   a fiddly preference, not a primary call to action. The icon is
-   sized to keep the inner padding visually consistent with the
-   button's overall proportions (~7px of padding on each side of
-   the 18px glyph).
+   Visual style: bare icon, no chrome — matches the modern app
+   convention (Claude.ai, Linear, Notion). No background fill, no
+   border, just the SVG glyph at low opacity. Hover lifts opacity
+   to full and adds a subtle background tint so the click target
+   is still discoverable, but at rest the button reads as a quiet
+   piece of chrome rather than an emphatic action.
+
+   Button size: 1.5rem × 1.5rem (24×24px) with a 16px SVG icon.
+   Much smaller than the original 2.5rem (40px) and the earlier
+   intermediate 2rem (32px) — without the border and background,
+   the button no longer needs structural padding around the glyph,
+   so the overall footprint can shrink to roughly icon-plus-a-few-
+   pixels. The icon at 16px reads cleanly at this size.
    ========================================================================== */
 
 .jb-sidebar-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.5rem;
+  height: 1.5rem;
   padding: 0;
-  border-radius: 6px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
   cursor: pointer;
   font-family: inherit;
   line-height: 1;
+  /* Resting opacity gives the icon a quiet, chrome-y feel. Hover
+     lifts it to full opacity. */
+  opacity: 0.7;
   transition:
     background 0.12s ease,
-    border-color 0.12s ease,
     color 0.12s ease,
+    opacity 0.12s ease,
     transform 0.12s ease;
+
+  &:hover {
+    opacity: 1;
+  }
 
   &:focus-visible {
     outline: none;
@@ -821,39 +836,36 @@ input.search-bar {
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.92);
   }
 
-  /* The icon — fixed size, vertically centered. Scaled down from
-     22px to 18px to match the smaller button. */
+  /* The icon — fixed size, vertically centered. 16px matches the
+     bare-icon size convention in modern app chrome. */
   & > svg {
     display: block;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 }
 
+/* Theme-specific colors. No backgrounds, no borders — just the
+   glyph color. Hover adds a faint background tint to confirm the
+   click target without competing with the icon. */
 :root:not([saved-theme="dark"]) .jb-sidebar-toggle {
-  background: rgba($green-100, 0.5);
   color: $green-600;
-  border: 1px solid $brass-500;
 
   &:hover {
-    background: $green-100;
+    background: rgba($green-100, 0.5);
     color: $green-800;
-    border-color: $brass-300;
   }
 }
 
 :root[saved-theme="dark"] .jb-sidebar-toggle {
-  background: rgba($green-800, 0.6);
   color: $brass-100;
-  border: 1px solid $brass-300;
 
   &:hover {
-    background: $green-800;
+    background: rgba($green-800, 0.5);
     color: $brass-50;
-    border-color: $brass-100;
   }
 }
 
@@ -914,8 +926,8 @@ html.jb-sidebar-collapsed #quartz-body {
    horizontal padding (from the "Page width, grid template, and
    content gutters" block above) applies in both expanded and
    collapsed states. The 4rem floor on the left padding clears the
-   floating expand button (top-left, 2rem wide, 1rem from edge
-   → rightmost extent ~3rem) at every viewport width. */
+   floating expand button (top-left, 1.5rem wide, 1rem from edge
+   → rightmost extent ~2.5rem) at every viewport width. */
 
 /* Mobile: hide both toggle UI elements entirely. Mobile uses the
    existing hamburger pattern. */
