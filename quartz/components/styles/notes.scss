@@ -250,32 +250,14 @@
 }
 
 /* ───── Buttons ─────────────────────────────────────────────────── */
-/* Primary action — mirrors .search-page-btn (defined locally under
-   the Notes mount IDs so it doesn't depend on searchPage.scss
-   being on the page). */
-#note-form-app .search-page-btn,
-#notes-list-app .search-page-btn {
+/* Primary action — uses .jb-btn from custom.scss. The only thing
+   we need locally is the layout tweak (push to the right edge of the
+   controls row). */
+#note-form-app .jb-btn,
+#notes-list-app .jb-btn,
+#journal-form-app .jb-btn,
+#journal-list-app .jb-btn {
   margin-left: auto;
-  padding: 0.6rem 1.2rem;
-  background: var(--secondary);
-  color: var(--light);
-  border: none;
-  border-radius: 8px;
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-  white-space: nowrap;
-}
-#note-form-app .search-page-btn:hover,
-#notes-list-app .search-page-btn:hover {
-  opacity: 0.85;
-}
-#note-form-app .search-page-btn:disabled,
-#notes-list-app .search-page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .notes-secondary-btn {
@@ -450,13 +432,13 @@
      margin-left:auto on the primary pushes both to the end. */
 }
 .notes-editor-actions .notes-primary-btn,
-.notes-editor-actions .search-page-btn {
+.notes-editor-actions .jb-btn {
   margin-left: auto;
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
 }
 /* Primary button used inside the inline editor (the script writes
-   .notes-primary-btn into the DOM). Mirrors .search-page-btn so the
+   .notes-primary-btn into the DOM). Mirrors .jb-btn so the
    visual is consistent with the form's Save button. */
 .notes-primary-btn {
   padding: 0.5rem 1rem;
