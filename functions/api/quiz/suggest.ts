@@ -40,6 +40,7 @@ const ALLOWED_SLUG_PREFIXES = [
   "reflect/synthesis/",
   "notes/entries/",
   "journal/entries/",
+  "upskill/",
 ]
 
 function isAllowedSlug(slug: string): boolean {
