@@ -1,0 +1,237 @@
+/**
+ * Upskill management page styles.
+ *
+ * The /upskill/manage page mounts the UpskillManage component, which
+ * visually mirrors the Notes form pages (the .search-page-card
+ * vocabulary). This stylesheet:
+ *
+ *   1. Scopes that card vocabulary under #upskill-manage-app — same
+ *      pattern Notes uses with #note-form-app and #notes-list-app.
+ *   2. Adds the .upskill-row vocabulary for the existing-topics list
+ *      that sits below the form.
+ *
+ * Like notes.scss, this stylesheet is self-contained — it does NOT
+ * depend on searchPage.scss or notes.scss being loaded. Each
+ * component ships its own CSS only when mounted, so duplication of
+ * a few card-vocabulary rules is the correct tradeoff against an
+ * implicit cross-component import.
+ */
+
+#upskill-manage-app {
+  max-width: 720px;
+  padding-bottom: 2rem;
+}
+
+/* ───── Card wrapper — mirrors .search-page-card ─────────────────── */
+#upskill-manage-app .search-page-card {
+  padding: 1.25rem 1.25rem 1.5rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--light) 92%, transparent);
+}
+
+#upskill-manage-app .search-page-label {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.1rem;
+  color: var(--dark);
+}
+
+/* ───── Text inputs — same as notes ───────────────────────────────── */
+#upskill-manage-app .notes-text-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-family: inherit;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+#upskill-manage-app .notes-text-input:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+#upskill-manage-app .notes-text-input::placeholder {
+  color: var(--gray);
+  opacity: 0.7;
+}
+
+#upskill-manage-app .notes-textarea {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-family: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  resize: vertical;
+  box-sizing: border-box;
+  min-height: 70px;
+}
+#upskill-manage-app .notes-textarea:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+
+/* ───── Controls row ──────────────────────────────────────────── */
+#upskill-manage-app .notes-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+#upskill-manage-app .search-page-btn {
+  margin-left: auto;
+  padding: 0.6rem 1.2rem;
+  background: var(--secondary);
+  color: var(--light);
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+#upskill-manage-app .search-page-btn:hover {
+  opacity: 0.85;
+}
+#upskill-manage-app .search-page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ───── Status banners — same vocabulary as notes ───────────────── */
+#upskill-manage-app .notes-status {
+  margin-top: 0.75rem;
+}
+#upskill-manage-app .notes-status .card-status-msg {
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  background: var(--lightgray);
+  color: var(--darkgray);
+
+  &.success {
+    background: color-mix(in srgb, #3A7D53 15%, var(--light));
+    color: #2A5A3D;
+  }
+  &.error {
+    background: color-mix(in srgb, #8B3232 12%, var(--light));
+    color: #8B3232;
+  }
+  &.pending {
+    background: color-mix(in srgb, var(--secondary) 12%, var(--light));
+    color: var(--secondary);
+  }
+}
+:root[saved-theme="dark"] #upskill-manage-app .notes-status .card-status-msg.success {
+  background: color-mix(in srgb, #3A7D53 25%, var(--light));
+  color: #C8E6D2;
+}
+:root[saved-theme="dark"] #upskill-manage-app .notes-status .card-status-msg.error {
+  background: color-mix(in srgb, #C46B6B 20%, var(--light));
+  color: #F3CFCF;
+}
+
+/* ───── Existing-topics list ────────────────────────────────────── */
+.upskill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+}
+.upskill-list .muted {
+  color: var(--gray);
+  margin: 0;
+}
+
+.upskill-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+}
+:root[saved-theme="dark"] .upskill-row {
+  background: color-mix(in srgb, var(--light) 92%, transparent);
+}
+
+.upskill-row-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.upskill-row-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--dark);
+}
+.upskill-row-title a {
+  color: inherit;
+  text-decoration: none;
+}
+.upskill-row-title a:hover {
+  color: var(--secondary);
+}
+.upskill-row-order {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--gray);
+  font-variant-numeric: tabular-nums;
+}
+.upskill-row-summary {
+  margin-top: 0.25rem;
+  font-size: 0.88rem;
+  color: var(--darkgray);
+  line-height: 1.45;
+}
+.upskill-row-summary .muted {
+  color: var(--gray);
+  font-style: italic;
+}
+
+.upskill-row-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+/* Compact badges — for the "hidden" tag and any future flags. */
+.upskill-badge {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.upskill-badge-hidden {
+  background: color-mix(in srgb, var(--gray) 22%, transparent);
+  color: var(--gray);
+}
+
+/* Tight row layout on narrow viewports — stack actions under the
+   main content so labels don't get squashed. */
+@media (max-width: 540px) {
+  .upskill-row {
+    flex-direction: column;
+  }
+  .upskill-row-actions {
+    margin-top: 0.5rem;
+  }
+}
