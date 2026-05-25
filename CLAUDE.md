@@ -32,6 +32,8 @@ content/                # The wiki — you own this layer entirely
   visualize/
     graph.md            # Full-page graph view
 static/originals/       # Immutable source documents — never modify these
+docs/                   # Developer documentation (not served as wiki content)
+  ui-conventions.md     # UI patterns, button family, table system — read before modifying components
 CLAUDE.md               # This file — read-only during operations
 ```
 
@@ -513,10 +515,52 @@ them in legacy code; fix them.
 |------|---------|---------|
 | **Source** | The filename of a thing being cataloged — whether queued, in-flight, or already cataloged. Multimodal: a PDF, an image, a YouTube transcript, a web page. The wiki's central noun. | Acquisition column header, Reflect → Sources second-table column header, Retention column header |
 | **Acquired** | When a source entered the pipeline (its acquisition timestamp). | Acquisition column header, Reflect → Sources second-table column header, Retention column header (UI label; on-disk column stays `Date` for backward compatibility) |
-| **Status** | The lifecycle state of a source on a pipeline-status table: `pending`, `in_progress`, `cataloged`, `failed`. | Acquisition column header, Reflect → Sources second-table column header |
-| **Action** | The log-entry type on the Retention table: `Cataloged`, `Re-viewed`, `Renamed`. Distinct from Status (which is lifecycle state); Action is "what kind of log entry this is." | Retention column header |
-| **Title** | The human-readable name of a wiki page (the `title:` frontmatter field). Distinct from Source: a source is a filename, a title is a page name. | Reflect main tables (Sources, Entities, Concepts, Synthesis), Retention table |
+| **Status** | The lifecycle state of a source on a pipeline-status table: `pending`, `in_progress`, `cataloged`, `failed`. Also the Retention column showing log-entry type. | Acquisition column header, Retention column header, Reflect → Sources second-table column header |
+| **Title** | The human-readable name of a wiki page (the `title:` frontmatter field). Distinct from Source: a source is a filename, a title is a page name. On the Entities table, this column is labeled "Name" instead, because entities have names, not titles. | Reflect tables (Sources, Concepts, Synthesis use "Title"; Entities uses "Name"), Retention table |
 | **Cataloging** | The pipeline section header on the Acquisition page (was "Document Processing"). Names the process the table is showing. | Acquisition page header |
+
+## UI and code conventions
+
+This file covers WHAT the wiki contains. Modifying HOW the wiki
+displays its contents — components, stylesheets, button styles, table
+layouts — follows a separate set of conventions documented in
+**[docs/ui-conventions.md](docs/ui-conventions.md)**. Read that file
+before changing anything under `quartz/components/` or
+`quartz/styles/`.
+
+The most-important invariants, stated inline so you can't miss them:
+
+1. **Buttons use `.jb-btn`.** The wiki has exactly one button look
+   (rounded green pill, brass text). Variants: `.jb-btn-primary` for
+   highest emphasis, `.jb-btn-secondary` for lower emphasis,
+   `.jb-btn-sm` for smaller contexts. Don't create new bespoke button
+   styles — extend the family in `custom.scss` if a new variant is
+   genuinely needed.
+
+2. **Data tables use `.jb-table`.** Wrap with `<div class="table-container jb-table">`.
+   The class gives you the yellow-header dark-green-band styling,
+   horizontal rules only, fixed table layout, and centered headers.
+
+3. **Anchor column styles on classes, not positions.** Use `.col-date`
+   for date columns (centers content), `.col-status` for status
+   columns (centers content), and component-scoped classes
+   (`queue-document-cell`, etc.) for everything else. Positional
+   selectors (`nth-child(3)`) break silently when columns are
+   reordered.
+
+4. **Popovers are disabled on touch devices.** The media query
+   `(hover: none) and (pointer: coarse)` in `popover.scss` catches
+   iPad, tablets, and phones regardless of viewport width. Don't
+   re-enable popovers there without a JS-based dismissal mechanism.
+
+5. **Dates always include the day.** "March 6, 2026", not "March
+   2026". Applies to document covers, wiki content, and component-
+   rendered cells.
+
+When introducing a new UI pattern that doesn't fit an existing
+convention, update `docs/ui-conventions.md` in the same commit. The
+detail doc is the canonical reference; this section is just the
+short pointer.
 
 ## Principles
 
