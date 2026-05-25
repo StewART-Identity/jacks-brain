@@ -31,7 +31,7 @@ const ResearchPage: QuartzComponent = ({ displayClass }: QuartzComponentProps) =
             <input type="checkbox" id="research-rank" checked />
             Rank with Claude
           </label>
-          <button id="research-btn" class="research-btn">
+          <button id="research-btn" class="jb-btn">
             Search
           </button>
         </div>
