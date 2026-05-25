@@ -1,4 +1,5 @@
 @use "./base.scss";
+@use "./variables.scss" as *;
 
 /* ==========================================================================
    Jack's Brain — Full Custom Theme
@@ -96,48 +97,91 @@ body {
 
 
 /* ==========================================================================
-   Page max-width — give iPad and tablet viewports more breathing room
+   Page width, grid template, and content centering
 
-   Quartz's base.scss caps .page at $desktopBreakpoint + 300px = 1500px.
-   Below that breakpoint (which iPad landscape often hits — 1024-1366px,
-   including iPad Pro 12.9" at 1366px), the cap doesn't matter and the
-   page is viewport-wide, BUT the inner grid template still allocates
-   320px to the sidebar regardless.
+   Three coordinated rules that together control how the page lays out
+   on tablet and desktop viewports.
 
-   This rule overrides the base .page max-width on tablet sizes so the
-   page can grow as wide as the viewport itself. The grid inside still
-   gives 320px to the sidebar; the remainder goes to the content area.
-   When the sidebar is collapsed, all of that space is reclaimed by the
-   center column via the collapsed-state rules below.
+   1. PAGE CAP — lift the .page max-width on viewports under 1500px so
+      the page can grow with the viewport. Quartz's base.scss caps
+      .page at $desktopBreakpoint + 300px = 1500px. Below that
+      (iPad landscape 1024-1366px, including iPad Pro 12.9" at 1366px),
+      the cap left empty bands on the right side of the page even
+      though the viewport had room.
+
+   2. GRID TEMPLATE — drop the right sidebar column on desktop. The
+      base grid template is "320px auto 320px" with the right column
+      reserved for an empty right-sidebar slot. Jack's Brain doesn't
+      use the right sidebar, so that 320px was dead space that
+      pushed the center column narrow. Override the desktop grid to
+      "320px 1fr" so the center column can fill all the space between
+      the left sidebar's divider and the page edge. The
+      grid-sidebar-right area is folded into grid-center; the empty
+      right-sidebar element doesn't render anything, so this is safe.
+
+   3. CONTENT CAP + CENTERING — cap the article at 72rem (~1150px)
+      reading width and center it within the grid-center column. The
+      cap is wide enough for the five-column Reflect tables to
+      breathe and narrow enough that prose paragraphs stay in a
+      comfortable eye-tracking range. On viewports where the center
+      column is narrower than 72rem (sidebar open on smaller iPads),
+      the cap doesn't bite and the article fills the column. On
+      wider viewports (large monitor, or sidebar collapsed on iPad
+      Pro), the cap kicks in and the article centers between the
+      sidebar's right edge and the page's right edge.
+
+   All three rules apply at tablet+ widths (800px and up). Mobile
+   keeps its single-column stack untouched.
    ========================================================================== */
 
+/* (1) Lift the page cap on tablet-sized viewports. */
 @media all and (max-width: 1499px) {
   .page {
     max-width: 100%;
   }
 }
 
+/* (2) Override the desktop grid to use only two columns: sidebar +
+       center. The right-sidebar grid area is folded into grid-center
+       so any component nominally registered to the right slot stacks
+       below the article (we don't currently use the right slot, but
+       this is the safe fallback if anything is ever added).
 
-/* ==========================================================================
-   Content column gutters — let the article fill more of the viewport
+       !important is needed because base.scss's grid-template-columns
+       lives inside an @media query, which beats a non-media-query
+       rule on source order. Same pattern as the sidebar-collapsed
+       override below. */
+@media all and ($desktop) {
+  .page > #quartz-body {
+    grid-template-columns: #{$sidePanelWidth} 1fr !important;
+    grid-template-areas:
+      "grid-sidebar-left grid-header"
+      "grid-sidebar-left grid-center"
+      "grid-sidebar-left grid-sidebar-right"
+      "grid-sidebar-left grid-footer" !important;
+  }
+}
 
-   By default Quartz's .center column gets no explicit max-width or
-   inline padding beyond what the grid imposes. On tablet+ that
-   produces an article that fills the grid column but crashes right
-   into the viewport edge on the right side because there's no
-   right-side sidebar to act as a gutter.
+/* (3) Cap the article at 72rem reading width and center it in its
+       grid column. Applies whenever the sidebar is open OR collapsed
+       — the grid-center area is the canvas in both cases, and 72rem
+       is a sensible upper bound either way. The margin: 0 auto pair
+       does the centering; max-width: min(72rem, calc(100% - 8rem))
+       does the cap AND guarantees a 4rem gutter on each side so the
+       floating expand button (top-left, 2.5rem wide, 1rem from
+       edge) always has clearance on narrow collapsed viewports.
 
-   This rule gives the article a modest right gutter so content
-   doesn't crash into the page edge, while letting the table and
-   prose use almost all the horizontal space the grid provides.
-   Same intent as Claude.ai's chat column — content goes nearly
-   edge-to-edge of its grid column, with just enough breathing room
-   on the trailing edge to read comfortably.
-   ========================================================================== */
-
+       Selector targets .center > article specifically rather than
+       .center itself, because .center has min-width: 100% from
+       base.scss (load-bearing for the grid-area to fill its
+       column). Capping .center directly would break that contract;
+       capping the inner <article> keeps the grid-area full-width
+       and just constrains the visible content within. */
 @media all and (min-width: 800px) {
-  .page > #quartz-body > .center {
-    padding-right: 2rem;
+  .page > #quartz-body > .center > article {
+    max-width: min(72rem, calc(100% - 8rem));
+    margin-left: auto;
+    margin-right: auto;
   }
 }
 
@@ -787,14 +831,12 @@ html.jb-sidebar-collapsed #quartz-body {
     "grid-footer" !important;
 }
 
-/* When collapsed, add a small left padding to the center column so
-   the content doesn't crash into the viewport edge. The padding is
-   enough to clear the floating expand button (top-left, 2.5rem wide
-   plus 1rem left offset = ~3.5rem). */
-html.jb-sidebar-collapsed .page > #quartz-body > .center,
-html.jb-sidebar-collapsed #quartz-body > .center {
-  padding-left: 4rem;
-}
+/* No padding adjustment needed on the collapsed-state .center —
+   the article-level reading-width cap (see "Page width, grid
+   template, and content centering" above) guarantees a 4rem gutter
+   on each side, which clears the floating expand button (top-left,
+   2.5rem wide, 1rem from edge → rightmost extent ~3.5rem). The
+   article centers within .center on its own. */
 
 /* Mobile: hide both toggle UI elements entirely. Mobile uses the
    existing hamburger pattern. */
@@ -809,7 +851,7 @@ html.jb-sidebar-collapsed #quartz-body > .center {
 
 
 /* ==========================================================================
-   Date column centering — flex on the inner wrapper, not on the td
+   Date column centering — text-align on the wrapper, not flex
 
    The td MUST remain display: table-cell so it participates in the
    table's column-width algorithm. Setting display: flex on the td
@@ -817,33 +859,30 @@ html.jb-sidebar-collapsed #quartz-body > .center {
    of the column grid, the row visually fragments, the column width
    stops being honored.
 
-   Right answer: keep the td as a table cell, and put the flex
-   container on the inner wrapper div .col-date-inner (which is a
-   plain div, free to take any display value without breaking table
-   semantics). The wrapper fills 100% of the cell width, then uses
-   flex to center its child <time> horizontally.
+   What we use INSTEAD: keep the td as a table cell with
+   vertical-align: middle (vertical centering), and let the wrapper
+   div .col-date-inner do horizontal centering via text-align: center
+   (defined in PageList.css alongside its width: 100%). No flex.
 
-   Targeting both contexts: standalone Reflect tables AND any future
-   table that adopts the col-date class.
+   We tried flex on .col-date-inner earlier and it caused a paint
+   artifact: the flex container's height collapsed to one line (the
+   <time> child's height), leaving the rest of the cell visible
+   below. When the column was wide enough (sidebar collapsed) you
+   could see a darker rectangle below the date — the difference
+   between the flex line's height and the cell's full row height.
+   Removing flex lets the inner wrapper fill the cell's vertical
+   space naturally as block-level content, which the td's
+   vertical-align: middle then centers as a single block.
    ========================================================================== */
 
-/* Make sure the td stays a normal table cell. This is mostly
-   defensive — base.scss already gives td the table-cell display
-   from the user-agent stylesheet, but earlier commits attempted to
-   override it. */
+/* Vertical centering happens on the td itself. Horizontal centering
+   happens on .col-date-inner via text-align: center (in PageList.css).
+   This rule pins the display + vertical-align so neither base.scss
+   nor any future override can quietly change them. */
 .jb-table td.col-date,
 .table-container.jb-table td.col-date {
   display: table-cell;
   vertical-align: middle;
-}
-
-/* The inner wrapper handles centering. Flex on a div is safe —
-   no table-layout side effects. */
-.jb-table td.col-date .col-date-inner {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
 }
 
 
