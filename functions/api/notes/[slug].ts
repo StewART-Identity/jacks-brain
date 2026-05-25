@@ -23,19 +23,13 @@ interface Env {
 }
 
 const BRANCH = "main"
-const NOTES_DIR = "content/notes/journal"
+const NOTES_DIR = "content/notes/entries"
 
 interface FileMeta {
   sha: string
-  content: string // base64
+  content: string
   encoding: string
 }
-
-// Duplicated locally rather than imported from notes.ts. Pages Functions
-// each ship their own bundle and can import siblings, but keeping these
-// two files self-contained makes them easier to reason about and avoids
-// a hidden coupling between an endpoint module and a shared helper. If
-// these grow, lift them into a shared `functions/api/_notes/util.ts`.
 
 function parseFrontmatter(raw: string): { fm: Record<string, any>; body: string } {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/)
@@ -92,27 +86,20 @@ function buildNoteMarkdown(
   ].join("\n")
 }
 
-/** Slug must match the timestamp shape we generate. Cheap, deterministic
- *  defense against path traversal — no slashes can appear here. */
 function isValidSlug(slug: string): boolean {
   return /^\d{8}-\d{6}$/.test(slug)
 }
 
-/** Decode base64 → UTF-8 string, the way GitHub returns file contents. */
 function decodeBase64Utf8(b64: string): string {
-  // GitHub wraps base64 at 60 chars per line. atob doesn't care, but
-  // strip whitespace defensively.
   const clean = b64.replace(/\s/g, "")
   const bytes = atob(clean)
   return decodeURIComponent(escape(bytes))
 }
 
-/** Encode UTF-8 string → base64 for sending back to GitHub. */
 function encodeBase64Utf8(s: string): string {
   return btoa(unescape(encodeURIComponent(s)))
 }
 
-/** Fetch a note file's contents + metadata. Returns null on 404. */
 async function fetchNoteFile(
   env: Env,
   path: string,
@@ -135,8 +122,6 @@ async function fetchNoteFile(
   return data
 }
 
-/** Common auth + slug check used by every method. Returns either a
- *  response (caller should return it as-is) or null (caller proceeds). */
 function preflight(context: { request: Request; params: any; env: Env }): Response | null {
   const accessUser = context.request.headers.get("cf-access-authenticated-user-email")
   if (!accessUser) {
@@ -155,10 +140,6 @@ function preflight(context: { request: Request; params: any; env: Env }): Respon
   }
   return null
 }
-
-/* ──────────────────────────────────────────────────────────────────── */
-/*  GET — read one note                                                 */
-/* ──────────────────────────────────────────────────────────────────── */
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const pre = preflight(context)
@@ -190,10 +171,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 }
 
-/* ──────────────────────────────────────────────────────────────────── */
-/*  PUT — update one note                                               */
-/* ──────────────────────────────────────────────────────────────────── */
-
 export const onRequestPut: PagesFunction<Env> = async (context) => {
   const pre = preflight(context)
   if (pre) return pre
@@ -223,7 +200,6 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
     }
     tags = Array.from(new Set(tags.map((t) => t.trim()).filter(Boolean)))
 
-    // Read existing file to preserve `created` and to get the sha.
     const existing = await fetchNoteFile(context.env, path)
     if (!existing) {
       return Response.json({ error: "Note not found" }, { status: 404 })
@@ -266,7 +242,7 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
       success: true,
       slug,
       path,
-      url: `/notes/journal/${slug}`,
+      url: `/notes/entries/${slug}`,
       title,
       tags,
       created,
@@ -279,10 +255,6 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
   }
 }
 
-/* ──────────────────────────────────────────────────────────────────── */
-/*  DELETE — remove one note                                            */
-/* ──────────────────────────────────────────────────────────────────── */
-
 export const onRequestDelete: PagesFunction<Env> = async (context) => {
   const pre = preflight(context)
   if (pre) return pre
@@ -293,7 +265,6 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   try {
     const existing = await fetchNoteFile(context.env, path)
     if (!existing) {
-      // Idempotent: deleting something that's already gone is success.
       return Response.json({ success: true, slug, message: "Note was already absent." })
     }
 
