@@ -1,5 +1,17 @@
 @use "../../styles/variables.scss" as *;
 
+/* Tag pages, search results, and other contexts that fall through to
+   PageList's default branch render each item as a card:
+   - Top row: date (meta) on the left, title on the right
+   - Bottom row: tags wrapping horizontally across the card's width
+
+   This replaces the prior 3-column grid layout which pinned tags to a
+   narrow rightmost column and caused them to tower vertically when
+   item tag counts grew (a routine outcome of the controlled
+   vocabulary). The vertical scan is now down a list of compact
+   meta/title rows, with tags fanning out horizontally beneath each
+   one — much easier to read at the scale of dozens of tags per item. */
+
 ul.section-ul {
   list-style: none;
   margin-top: 2em;
@@ -7,32 +19,89 @@ ul.section-ul {
 }
 
 li.section-li {
-  margin-bottom: 1em;
+  margin-bottom: 1.5em;
 
   & > .section {
-    display: grid;
-    grid-template-columns: fit-content(8em) 3fr 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4em;
 
+    /* Top row: date + title side-by-side. */
+    & > .desc {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75em;
+
+      /* Meta lives inside .desc on this layout (was a grid sibling
+         before). We position it via flex order so the date appears
+         before the title, but we author it in source order
+         meta-then-title for natural reading flow. */
+      & .meta {
+        margin: 0;
+        opacity: 0.6;
+        flex: 0 0 auto;
+        font-variant-numeric: tabular-nums;
+      }
+
+      & > h3 {
+        margin: 0;
+        flex: 1 1 auto;
+        line-height: 1.3;
+      }
+
+      & > h3 > a {
+        background-color: transparent;
+      }
+    }
+
+    /* Bottom row: tags wrap horizontally across the card's full
+       width. A soft top border separates meta/title above from tags
+       below — gives the card internal structure without needing an
+       outer border that would compete with the wiki chrome. */
+    & > .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3em;
+      margin: 0;
+      padding: 0.5em 0 0 0;
+      list-style: none;
+      border-top: 1px solid var(--lightgray);
+
+      & > li {
+        margin: 0;
+        padding: 0;
+      }
+    }
+
+    /* Mobile: collapse to date/title only. The tag row is hidden
+       (existing behavior) AND its top border is removed so there's
+       no orphan rule under the title pair. */
     @media all and ($mobile) {
       & > .tags {
         display: none;
       }
-    }
 
-    & > .desc > h3 > a {
-      background-color: transparent;
-    }
-
-    & .meta {
-      margin: 0 1em 0 0;
-      opacity: 0.6;
+      & > .desc {
+        /* Stack vertically when there isn't room for date and title
+           side-by-side. */
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.15em;
+      }
     }
   }
 }
 
-// modifications in popover context
+/* modifications in popover context — same as before. Popovers don't
+   have room for the card layout; the meta/title pair reads fine
+   on its own. */
 .popover .section {
+  display: grid;
   grid-template-columns: fit-content(8em) 1fr !important;
+
+  & > .desc {
+    display: contents;
+  }
 
   & > .tags {
     display: none;
