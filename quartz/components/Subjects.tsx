@@ -1,20 +1,5 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 
-/**
- * Subjects — treemap visualization of the corpus's controlled
- * subject vocabulary.
- *
- * The component shell is small; all the rendering happens in the
- * inline script after fetching /static/corpus.json. Two reasons to
- * defer to runtime:
- *
- *   1. The data is needed at runtime anyway for tooltips and
- *      navigation. Pre-rendering only saves a fetch, not actual
- *      compute.
- *   2. Keeping the geometry in one place (the inline script) makes
- *      the layout algorithm easier to reason about than splitting
- *      it across server-render and client-hover.
- */
 const Subjects: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="subjects-app">
@@ -51,12 +36,17 @@ const Subjects: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
 
 Subjects.afterDOMLoaded = `
 document.addEventListener("nav", () => {
+  // SCOPED NAV HANDLER: bail early if we're not on the Subjects page.
   const root = document.getElementById("subjects-app")
   if (!root) return
 
   const wrap = document.getElementById("subjects-svg-wrap")
   const tooltip = document.getElementById("subjects-tooltip")
   if (!wrap || !tooltip) return
+
+  // Per-mount timestamp for stale-mount detection.
+  const mountedAt = Date.now()
+  wrap.__subjectsMountedAt = mountedAt
 
   // ─── Constants ───────────────────────────────────────────────────
   const TYPE_COLOR = {
@@ -75,9 +65,6 @@ document.addEventListener("nav", () => {
     note: "Notes",
   }
 
-  // SVG viewBox dimensions. Width matches the card's content width;
-  // height is fixed at 480 to give the treemap room to breathe even
-  // when one or two subjects dominate.
   const VB_W = 720
   const VB_H = 480
 
@@ -91,22 +78,8 @@ document.addEventListener("nav", () => {
   }
 
   // ─── Squarified treemap layout ───────────────────────────────────
-  //
-  // Bruls, Huijing & van Wijk (2000), "Squarified Treemaps".
-  //
-  // Given a rectangle and a list of items (each with a numeric value),
-  // place each item as a sub-rectangle inside the parent. At each
-  // step the algorithm tries to add the next item to the current
-  // "row" of rectangles, and only commits the row when adding another
-  // item would make the worst aspect ratio worse than it is now.
-  //
-  // This produces rectangles that are as close to square as possible
-  // given the constraints — which is what makes squarified treemaps
-  // visually scannable. The naive alternative (slice-and-dice) gives
-  // long thin rectangles for small items, which are unreadable.
 
   function worst(row, w) {
-    // Worst aspect ratio in a row of given total side length w.
     let rMax = -Infinity, rMin = Infinity, total = 0
     for (const r of row) {
       if (r > rMax) rMax = r
@@ -119,12 +92,8 @@ document.addEventListener("nav", () => {
   }
 
   function layoutRow(items, row, x, y, w, h, horizontal) {
-    // Place a committed row of items into the available rectangle.
-    // Returns the new available rectangle (remaining space after
-    // this row is consumed).
     const total = row.reduce((a, b) => a + b.value, 0)
     if (horizontal) {
-      // Row occupies a horizontal strip of height (total / w).
       const stripH = total / w
       let cursor = x
       for (const item of row) {
@@ -134,7 +103,6 @@ document.addEventListener("nav", () => {
       }
       return { x, y: y + stripH, w, h: h - stripH }
     } else {
-      // Row occupies a vertical strip of width (total / h).
       const stripW = total / h
       let cursor = y
       for (const item of row) {
@@ -147,16 +115,11 @@ document.addEventListener("nav", () => {
   }
 
   function squarify(items, x, y, w, h) {
-    // Scale item values so they sum exactly to (w * h). This makes
-    // the worst-ratio calculation in worst() use comparable units.
     const totalValue = items.reduce((a, b) => a + b.value, 0)
     if (totalValue === 0) return items
     const area = w * h
     const scale = area / totalValue
-    const scaledItems = items.map((it) => ({
-      ...it,
-      value: it.value * scale,
-    }))
+    const scaledItems = items.map((it) => ({ ...it, value: it.value * scale }))
 
     let remaining = { x, y, w, h }
     let queue = scaledItems.slice()
@@ -172,8 +135,6 @@ document.addEventListener("nav", () => {
       const rowValues = row.map((r) => r.value)
       const horizontal = remaining.w >= remaining.h
 
-      // If adding next would make the worst ratio worse, commit the
-      // current row and start a new one (with next at its head).
       if (
         row.length > 0 &&
         worst(candidateValues, shortSide) > worst(rowValues, shortSide)
@@ -186,14 +147,11 @@ document.addEventListener("nav", () => {
       }
     }
 
-    // Flush the final row.
     if (row.length > 0) {
       const horizontal = remaining.w >= remaining.h
       layoutRow(items, row, remaining.x, remaining.y, remaining.w, remaining.h, horizontal)
     }
 
-    // Copy the rect from scaledItems back to the original items
-    // (same indices, since we only re-mapped, not reordered).
     for (let i = 0; i < items.length; i++) {
       items[i].rect = scaledItems[i].rect
     }
@@ -201,12 +159,6 @@ document.addEventListener("nav", () => {
   }
 
   // ─── Aggregation ────────────────────────────────────────────────
-  //
-  // From the corpus, produce one entry per subject:
-  //   { subject, total, byType: {source: N, entity: N, ...},
-  //     multiSubject: N }
-  // multiSubject = count of pages tagged with this subject that
-  // ALSO have at least one other subject.
 
   function aggregate(corpus) {
     const bySubject = new Map()
@@ -230,22 +182,24 @@ document.addEventListener("nav", () => {
         if (isMulti) entry.multiSubject += 1
       }
     }
-    // Return as a list, sorted by total descending. Squarification
-    // works best when the items are sorted largest-first.
     return Array.from(bySubject.values()).sort((a, b) => b.total - a.total)
   }
 
   // ─── Rendering ──────────────────────────────────────────────────
 
+  let currentItems = []
+
   function renderTreemap(subjects) {
+    if (wrap.__subjectsMountedAt !== mountedAt) return  // stale-mount guard
+
     if (subjects.length === 0) {
       wrap.innerHTML = '<p class="muted" style="text-align:center;padding:2rem 0">No subjects in the corpus yet. Add a <code>subjects:</code> field to your page frontmatter to start filling this in.</p>'
       return
     }
 
-    // Layout: full viewBox.
     const items = subjects.map((s) => ({ ...s, value: s.total }))
     squarify(items, 0, 0, VB_W, VB_H)
+    currentItems = items
 
     let svg = '<svg viewBox="0 0 ' + VB_W + ' ' + VB_H + '" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Subject distribution treemap">'
 
@@ -253,14 +207,8 @@ document.addEventListener("nav", () => {
       const r = item.rect
       if (!r || r.w <= 0 || r.h <= 0) continue
 
-      // Outer group acts as the click target and hover-detect surface.
       svg += '<g class="subjects-cell" data-subject="' + escapeXml(item.subject) + '" tabindex="0" role="button" aria-label="' + escapeXml(item.subject) + ', ' + item.total + ' pages">'
 
-      // The cell is composed of type-colored horizontal strips
-      // proportional to that type's count within this subject.
-      // Strips are stacked top-to-bottom in TYPE_ORDER, with a 1px
-      // gap between them so the divisions are visible without
-      // needing extra borders.
       let cursorY = r.y
       const totalForType = TYPE_ORDER.reduce((a, t) => a + item.byType[t], 0)
       for (const t of TYPE_ORDER) {
@@ -272,21 +220,14 @@ document.addEventListener("nav", () => {
         cursorY += stripH
       }
 
-      // Border for the cell, to separate it from neighbors.
       svg += '<rect x="' + r.x + '" y="' + r.y + '" width="' + r.w + '" height="' + r.h + '" fill="none" stroke="var(--light)" stroke-width="1.5" pointer-events="none"/>'
 
-      // Label, only if the cell is big enough to fit.
       if (r.w > 60 && r.h > 28) {
         const lx = r.x + 8
         const ly = r.y + 18
         const labelText = item.subject
         const countText = String(item.total)
-        // The text is clipped via the cell's own bounding box (the
-        // background rects). Using a foreignObject would let HTML
-        // ellipsize natively, but SVG <text> is faster and the wiki
-        // doesn't have subject names long enough to need it.
         svg += '<text class="subjects-label" x="' + lx + '" y="' + ly + '" pointer-events="none">' + escapeXml(labelText) + '</text>'
-        // Count text below the label, in a smaller, dimmer style.
         if (r.h > 38) {
           svg += '<text class="subjects-count" x="' + lx + '" y="' + (ly + 14) + '" pointer-events="none">' + countText + '</text>'
         }
@@ -297,67 +238,47 @@ document.addEventListener("nav", () => {
 
     svg += '</svg>'
     wrap.innerHTML = svg
-    bindEvents(items)
   }
 
-  function bindEvents(items) {
-    const svg = wrap.querySelector("svg")
-    if (!svg) return
+  // ─── Single-bind listener delegation on the wrap ─────────────────
 
-    // Map subject → item so the hover handler can look up the
-    // tooltip data without rescanning.
-    const lookup = new Map()
-    for (const it of items) lookup.set(it.subject, it)
-
-    function onMove(e) {
-      const cell = e.target.closest(".subjects-cell")
-      if (!cell) {
-        hideTooltip()
-        clearHoverDim()
-        return
-      }
-      const subject = cell.getAttribute("data-subject")
-      const item = lookup.get(subject)
-      if (!item) return
-      setHoverDim(cell)
-      showTooltip(item, e.clientX, e.clientY)
+  function lookupItem(subject) {
+    for (const it of currentItems) {
+      if (it.subject === subject) return it
     }
-    function onLeave() {
+    return null
+  }
+
+  function onMove(e) {
+    const cell = e.target.closest && e.target.closest(".subjects-cell")
+    if (!cell) {
       hideTooltip()
       clearHoverDim()
+      return
     }
-    function onClick(e) {
-      const cell = e.target.closest(".subjects-cell")
-      if (!cell) return
-      const subject = cell.getAttribute("data-subject")
-      if (subject) {
-        window.location.href = "/subjects/" + encodeURIComponent(subject)
-      }
-    }
-    function onKey(e) {
-      if (e.key !== "Enter" && e.key !== " ") return
-      const cell = e.target.closest && e.target.closest(".subjects-cell")
-      if (!cell) return
-      e.preventDefault()
-      const subject = cell.getAttribute("data-subject")
-      if (subject) {
-        window.location.href = "/subjects/" + encodeURIComponent(subject)
-      }
-    }
-
-    svg.addEventListener("mousemove", onMove)
-    svg.addEventListener("mouseleave", onLeave)
-    svg.addEventListener("click", onClick)
-    svg.addEventListener("keydown", onKey)
-
-    if (window.addCleanup) {
-      window.addCleanup(() => {
-        svg.removeEventListener("mousemove", onMove)
-        svg.removeEventListener("mouseleave", onLeave)
-        svg.removeEventListener("click", onClick)
-        svg.removeEventListener("keydown", onKey)
-      })
-    }
+    const subject = cell.getAttribute("data-subject")
+    const item = lookupItem(subject)
+    if (!item) return
+    setHoverDim(cell)
+    showTooltip(item, e.clientX, e.clientY)
+  }
+  function onLeave() {
+    hideTooltip()
+    clearHoverDim()
+  }
+  function onClick(e) {
+    const cell = e.target.closest && e.target.closest(".subjects-cell")
+    if (!cell) return
+    const subject = cell.getAttribute("data-subject")
+    if (subject) window.location.href = "/subjects/" + encodeURIComponent(subject)
+  }
+  function onKey(e) {
+    if (e.key !== "Enter" && e.key !== " ") return
+    const cell = e.target.closest && e.target.closest(".subjects-cell")
+    if (!cell) return
+    e.preventDefault()
+    const subject = cell.getAttribute("data-subject")
+    if (subject) window.location.href = "/subjects/" + encodeURIComponent(subject)
   }
 
   function setHoverDim(activeCell) {
@@ -386,7 +307,6 @@ document.addEventListener("nav", () => {
     const multiBadge = item.multiSubject > 0
       ? '<div class="subjects-tooltip-multi">' + item.multiSubject + ' ' + (item.multiSubject === 1 ? 'page spans' : 'pages span') + ' multiple subjects</div>'
       : ''
-
     tooltip.innerHTML =
       '<div class="subjects-tooltip-title">' + escapeXml(item.subject) + '</div>' +
       '<div class="subjects-tooltip-total">' + item.total + ' ' + (item.total === 1 ? 'page' : 'pages') + '</div>' +
@@ -402,15 +322,34 @@ document.addEventListener("nav", () => {
     tooltip.hidden = true
   }
 
+  wrap.addEventListener("mousemove", onMove)
+  wrap.addEventListener("mouseleave", onLeave)
+  wrap.addEventListener("click", onClick)
+  wrap.addEventListener("keydown", onKey)
+
+  if (window.addCleanup) {
+    window.addCleanup(() => {
+      if (wrap.__subjectsMountedAt === mountedAt) {
+        wrap.__subjectsMountedAt = null
+      }
+      wrap.removeEventListener("mousemove", onMove)
+      wrap.removeEventListener("mouseleave", onLeave)
+      wrap.removeEventListener("click", onClick)
+      wrap.removeEventListener("keydown", onKey)
+    })
+  }
+
   // ─── Load and render ─────────────────────────────────────────────
 
   fetch("/static/corpus.json")
     .then((r) => r.json())
     .then((data) => {
+      if (wrap.__subjectsMountedAt !== mountedAt) return
       const aggregated = aggregate(data)
       renderTreemap(aggregated)
     })
     .catch((err) => {
+      if (wrap.__subjectsMountedAt !== mountedAt) return
       wrap.innerHTML = '<p class="muted">Could not load the corpus: ' + escapeXml(err.message) + '</p>'
     })
 })
@@ -435,8 +374,6 @@ Subjects.css = `
   color: var(--dark);
 }
 
-/* SVG wrap — relative so the tooltip can be absolutely-positioned
-   inside it, anchored to the wrap rather than the page. */
 .subjects-svg-wrap {
   position: relative;
   width: 100%;
@@ -453,10 +390,6 @@ Subjects.css = `
   padding: 1rem 0;
 }
 
-/* Cells. The hover behavior mirrors Quartz's graph node hover: the
-   hovered cell stays full-opacity, every other cell dims. This is
-   pre-attentively obvious — your eye locks onto the hovered cell
-   without conscious effort. */
 .subjects-cell {
   cursor: pointer;
   transition: opacity 0.15s ease;
@@ -472,15 +405,11 @@ Subjects.css = `
   outline-offset: -2px;
 }
 
-/* SVG text */
 .subjects-label {
   fill: var(--light);
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-  /* Background-blend technique would be ideal but isn't widely
-     supported in SVG <text>. The cells are dark enough on every
-     palette swatch that --light reads cleanly without a halo. */
 }
 .subjects-count {
   fill: var(--light);
@@ -490,7 +419,6 @@ Subjects.css = `
   opacity: 0.75;
 }
 
-/* Legend */
 .subjects-legend {
   display: flex;
   flex-wrap: wrap;
@@ -516,7 +444,6 @@ Subjects.css = `
 .subjects-legend-swatch[data-type="synthesis"] { background: #C75B7A; }
 .subjects-legend-swatch[data-type="note"]      { background: #9F7BB8; }
 
-/* Tooltip */
 .subjects-tooltip {
   position: absolute;
   pointer-events: none;
