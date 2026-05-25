@@ -725,8 +725,10 @@ input.search-bar {
   /* Divider — runs the sidebar's full height. Sidebar is
      position: sticky with height: 100vh (from base.scss), so the
      border tracks the viewport top-to-bottom while the sidebar
-     is in view. */
-  border-right: 1px solid $green-300;
+     is in view. Uses $green-500 (the muted mid-tone) rather than
+     the brighter $green-300 — at 1px the bright mint reads as
+     strident; the mid-tone reads as intentional but quiet. */
+  border-right: 1px solid $green-500;
 
   /* Scrollbar suppression — Firefox. The "none" value is well
      supported in modern Firefox and is a no-op everywhere else. */
@@ -1239,6 +1241,86 @@ article.hide-folder-listing ~ .page-listing,
 .popover-hint:has(article.hide-folder-listing) .page-listing {
   display: none;
 }
+
+
+/* ==========================================================================
+   Form-app width override — let forms fill the article column
+
+   Every form-bearing page in the wiki has a top-level mount element
+   with an ID and an inline `max-width: 720px` from its component
+   SCSS (uploadZone.scss, researchPage.scss, notes.scss,
+   acquisition.scss, QuizTake's inline CSS). That cap was originally
+   tuned for the old narrow-column layout. With the current
+   5% / 90% / 5% gutter scheme on .center, the article column is
+   already a comfortable width — the 720px cap inside it leaves
+   awkward whitespace on the right of every form card.
+
+   Override the cap at the page-shell layer so the forms inherit the
+   article column's width, like tables do. The selector list covers
+   every form mount point in the wiki:
+
+     #upload-app       — Selection (file/text/URL/YouTube upload)
+     #research-app     — Web search (Ask Claude to find sources)
+     #note-form-app    — Notes write
+     #notes-list-app   — Notes browse (also a form-like list)
+     #journal-form-app — Journal write
+     #journal-list-app — Journal browse
+     #acquisition-app  — Acquisition queue
+     #quiz-app         — Quiz take
+
+   Applied only at tablet+ (800px+) since mobile already uses
+   single-column flow and the inline 720px cap doesn't bite there.
+
+   !important is needed because the inline rules in each component's
+   SCSS have equal specificity (#id) but load AFTER custom.scss in
+   the bundle (Quartz emits component CSS after main CSS). Without
+   !important, source order wins and the 720px caps stand.
+   ========================================================================== */
+
+@media all and (min-width: 800px) {
+  #upload-app,
+  #research-app,
+  #note-form-app,
+  #notes-list-app,
+  #journal-form-app,
+  #journal-list-app,
+  #acquisition-app,
+  #quiz-app {
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+
+/* ==========================================================================
+   Tag-row indent — align disclosed tag pills with the Title column
+
+   PageList.css (in PageList.tsx) sets padding-left: 7.25rem on the
+   tag-row's full-width td, intending to align tag content with
+   Title-column content. The math was:
+     col-disclose width (6.5rem) + Title cell padding (0.75rem) = 7.25rem
+
+   In practice 7.25rem under-shoots because table-layout: fixed
+   distributes leftover horizontal space across columns when the
+   table is wider than the sum of declared widths, making the
+   disclose column wider than 6.5rem at typical viewport widths.
+   So the Title column starts further right than 6.5rem from the
+   table's left edge.
+
+   This override bumps the padding to a value that empirically aligns
+   tag pills with Title content at the current 5% / 90% / 5% gutter
+   regime. The selector mirrors PageList.css's selector but lives
+   here so the override travels with the rest of the layout
+   decisions in custom.scss. (Alternative: change the disclose
+   column width from 6.5rem to a percentage in PageList.css. That
+   would be the "right" fix but requires editing the 32KB
+   PageList.tsx; this single-line override is cheaper to maintain.) */
+
+.table-container.jb-table > table tbody tr.tag-row > td {
+  padding-left: 10rem;
+}
+
 
 
 /* ==========================================================================
