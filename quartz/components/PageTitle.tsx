@@ -17,6 +17,17 @@ PageTitle.css = `
 .page-title {
   font-size: 2.25rem;
   margin: 0;
+  /* Symmetric vertical padding gives the title its own header zone
+     — visually bounded above by the absolute-positioned sidebar
+     collapse button (which the sidebar's padding-top: 4.5rem clears)
+     and below by the first zone label (DOING, with its own
+     margin-top: 0.6rem). */
+  padding: 1.75rem 0;
+  /* Center the title horizontally between the column's edges.
+     Simpler framing than "centered between specific anchor elements"
+     — the column has natural edges, and text-align: center on a
+     block-level <h2> centers itself in them. */
+  text-align: center;
   font-family: var(--titleFont);
 }
 `
