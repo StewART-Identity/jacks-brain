@@ -5,6 +5,11 @@
 // the queue via /api/queue/delete; a floating selection bar at the
 // bottom of the page surfaces the action.
 //
+// Column order: Checkbox / Acquired / Status / Source
+//   The cataloging-state columns lead so a scan of the table answers
+//   "what's happening" before "to what." The long filename in Source
+//   trails, where it doesn't crowd the more-scannable date/status.
+//
 // Each row's Acquired cell shows the date on the first line and a
 // state-appropriate relative-time string on the second line:
 //   PENDING     → "waiting Nm"    (queue wait time, growing)
@@ -259,14 +264,14 @@ document.addEventListener("nav", () => {
   // match the underlying file path (status.ts strips date prefixes
   // and matches against source-page slugs).
   //
-  // The Acquired cell carries both `queue-acquired-cell` (queue-specific
-  // two-line layout) and `col-date` (global centering rule from
-  // _jbtable.scss). The two-line block-level children inherit the
-  // centered text-align from the td so both lines center as a unit.
-  //
-  // The Status cell carries `col-status` so the badge centers under
-  // the same global rule. The inline-block run-badge inside the td
-  // centers naturally within the centered td.
+  // Column order: Checkbox / Acquired / Status / Source
+  //   - The Acquired cell carries both `queue-acquired-cell` (queue-
+  //     specific two-line layout) and `col-date` (global centering
+  //     rule from _jbtable.scss).
+  //   - The Status cell carries `col-status` so the badge centers
+  //     under the same global rule.
+  //   - The Source cell trails; long filenames there don't push date
+  //     and status off-screen.
   function rowHTML(doc: DocumentRow): string {
     const checkboxCell = doc.status === "pending"
       ? `<td class="queue-checkbox-cell">
@@ -289,9 +294,9 @@ document.addEventListener("nav", () => {
          </td>`
     return `<tr>
       ${checkboxCell}
-      <td>${escapeText(doc.document)}</td>
       ${acquiredCell}
       <td class="col-status"><span class="run-badge ${doc.status}">${doc.status}</span></td>
+      <td class="queue-document-cell">${escapeText(doc.document)}</td>
     </tr>`
   }
 
@@ -318,9 +323,9 @@ document.addEventListener("nav", () => {
       `<div class="table-container jb-table"><table>
         <thead><tr>
           <th class="queue-checkbox-cell" aria-label="Select"></th>
-          <th class="sortable" data-sort-col="document" tabindex="0" role="button" aria-label="Sort by source">Source${sortIndicator("document")}</th>
           <th class="col-date sortable" data-sort-col="acquired" tabindex="0" role="button" aria-label="Sort by acquired date">Acquired${sortIndicator("acquired")}</th>
           <th class="col-status sortable" data-sort-col="status" tabindex="0" role="button" aria-label="Sort by status">Status${sortIndicator("status")}</th>
+          <th class="queue-document-cell sortable" data-sort-col="document" tabindex="0" role="button" aria-label="Sort by source">Source${sortIndicator("document")}</th>
         </tr></thead>
         <tbody>` +
       sortedDocs.map(rowHTML).join("") +
