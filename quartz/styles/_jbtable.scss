@@ -7,7 +7,13 @@
    - Yellow header text on a solid dark-green band, no vertical borders.
    - Body rows: horizontal rules only (no vertical cell borders).
    - Body rows: alternating opaque green backgrounds so the neuron
-     wallpaper never bleeds through.
+     wallpaper never bleeds through. Striping is the responsibility of
+     each table's component CSS (see PageList.tsx for the pair-aware
+     striping pattern, or RetentionList.tsx for the per-row variant).
+     This file deliberately does NOT define a default odd/even rule
+     because the four Collection tables now render as two-row-per-item
+     pairs (primary row + disclosable tag row), where naive odd/even
+     would alternate within an item rather than between items.
    - Table edge flush-left with the page title and prose above it.
    - No horizontal scrollbar — width is governed entirely by the
      percentage column widths defined in PageList.tsx.
@@ -106,7 +112,9 @@
   opacity: 1;
 }
 
-/* BODY rows — horizontal rules only, alternating opaque green fills. */
+/* BODY rows — horizontal rules only. Background fills are applied by
+   each component's CSS (see PageList.tsx for the pair-aware 4n+
+   striping pattern). */
 .table-container.jb-table > table tbody td {
   border-top: none;
   border-bottom: 1px solid #3A7D53;  /* matches site --gray (mid mint-green) */
@@ -117,8 +125,8 @@
    renders the table. Every table with a date column tags those cells
    with .col-date so this single rule covers all of them: PageList
    tables (Sources, Synthesis), the Retention table's "Acquired"
-   column, and any future date-bearing tables (e.g. the Upskill
-   landing page's listing). */
+   column, the Acquisition table's "Acquired" column, and any future
+   date-bearing tables (e.g. the Upskill landing page's listing). */
 .table-container.jb-table > table td.col-date {
   text-align: center;
 }
@@ -136,19 +144,4 @@
 /* Drop the bottom rule on the final row so the table ends cleanly. */
 .table-container.jb-table > table tbody tr:last-child td {
   border-bottom: none;
-}
-
-/* Alternating opaque row backgrounds.
-
-   Both shades sit clearly BELOW the average tone of the neuron
-   wallpaper, so neither row reads as "tinted glass" — the alternation
-   inverts away from the wallpaper rather than toward it. Odd rows are
-   the lighter of the two; even rows step a bit darker. The contrast
-   between the two is small (~4%) so the stripe reads as siblings, not
-   as light-row/dark-row. */
-.table-container.jb-table > table tbody tr:nth-child(odd) td {
-  background-color: #1B3F29;
-}
-.table-container.jb-table > table tbody tr:nth-child(even) td {
-  background-color: #163524;
 }
