@@ -43,6 +43,18 @@ export function byDateAndAlphabeticalFolderFirst(cfg: GlobalConfiguration): Sort
   }
 }
 
+// Title-first sorter for the Reflect tables. Returns A-Z by title;
+// pages with no title fall to the bottom.
+export function byTitleAlphabetical(): SortFn {
+  return (f1, f2) => {
+    const t1 = f1.frontmatter?.title?.toLowerCase() ?? ""
+    const t2 = f2.frontmatter?.title?.toLowerCase() ?? ""
+    if (t1 === "" && t2 !== "") return 1
+    if (t2 === "" && t1 !== "") return -1
+    return t1.localeCompare(t2)
+  }
+}
+
 type Props = {
   limit?: number
   sort?: SortFn
@@ -77,27 +89,34 @@ const COLLECTION_TABLE_SLUGS: Record<
 }
 
 export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort }: Props) => {
-  const sorter = sort ?? byDateAndAlphabeticalFolderFirst(cfg)
-  let list = allFiles.sort(sorter)
-  if (limit) {
-    list = list.slice(0, limit)
-  }
-
   const currentSlug = fileData.slug ?? ""
   // Quartz's FullSlug for an index page includes the trailing 'index'
   // segment (e.g. "reflect/sources/index"). Strip it for the lookup.
   const lookupSlug = currentSlug.replace(/\/index$/, "")
   const tableConfig = COLLECTION_TABLE_SLUGS[lookupSlug]
 
+  // For Reflect table pages, default sort is Title alphabetical.
+  // For everything else (tag pages, search results, etc.), default
+  // sort is the legacy byDateAndAlphabeticalFolderFirst (newest first).
+  // Caller can override either via the `sort` prop.
+  const defaultSorter = tableConfig
+    ? byTitleAlphabetical()
+    : byDateAndAlphabeticalFolderFirst(cfg)
+  const sorter = sort ?? defaultSorter
+  let list = allFiles.sort(sorter)
+  if (limit) {
+    list = list.slice(0, limit)
+  }
+
   if (tableConfig) {
     // Reflect sub-page: render as a real table.
     //
     // Column order: Tags-disclose -> Title/Name -> [Date] -> Summary -> Subjects
     // Sortable: Title/Name (alphabetical), Date (chronological) when present.
-    // Default sort applied by the SSR sorter above is "newest first" via
-    // byDateAndAlphabeticalFolderFirst. The client-side sort script in
-    // PageList.afterDOMLoaded picks up that default and lets the user
-    // toggle by clicking a sortable header.
+    // Default sort is Title ascending — picked because (a) it gives a
+    // stable, predictable browse order for evergreen collections, and
+    // (b) it avoids a flicker on first paint where the SSR rendered a
+    // different sort than the client-side JS would have applied.
     //
     // Each item renders as TWO <tr> elements:
     //   1. A primary row carrying the title, date, summary, and
@@ -171,9 +190,11 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                   underneath only have to communicate count and state,
                   not topic. */}
               <th class="col-disclose">Tags</th>
+              {/* Title is the default sort (ascending), so its header
+                  gets sort-active and the ▲ glyph. */}
               <th class="col-title sortable sort-active" data-sort="title">
                 {titleLabel}
-                <span class="sort-indicator">▼</span>
+                <span class="sort-indicator">▲</span>
               </th>
               {showDate && (
                 <th class="col-date sortable" data-sort="date">
@@ -254,9 +275,17 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                     </td>
                     {showDate && (
                       <td class="col-date">
-                        {page.dates && (
-                          <Date date={getDate(cfg, page)!} locale={cfg.locale} />
-                        )}
+                        {/* Wrapper div for unambiguous centering — two
+                            earlier attempts at text-align: center on
+                            the td didn't visually center the date.
+                            Putting it on a width:100% wrapper div
+                            sidesteps whatever cascade quirk was
+                            winning at the td level. */}
+                        <div class="col-date-inner">
+                          {page.dates && (
+                            <Date date={getDate(cfg, page)!} locale={cfg.locale} />
+                          )}
+                        </div>
                       </td>
                     )}
                     <td class="col-summary">
@@ -386,14 +415,7 @@ PageList.css = `
   white-space: nowrap;
 }
 
-/* Sources (5 columns: Tags / Title / Date / Summary / Subjects).
-   Date column carries text-align: center !important — diagnostic
-   while we figure out what's been beating the previous text-align
-   declarations. Two earlier text-align: center rules (one in
-   _jbtable.scss, one in this file) didn't visually center the
-   dates, so something with higher specificity is overriding.
-   !important forces the issue; if THIS works, we know it's a
-   specificity problem and can craft a proper-specificity fix. */
+/* Sources (5 columns: Tags / Title / Date / Summary / Subjects). */
 .jb-table th.col-title,
 .jb-table td.col-title {
   width: 24%;
@@ -403,7 +425,6 @@ PageList.css = `
 .jb-table td.col-date {
   width: 14%;
   white-space: nowrap;
-  text-align: center !important;
 }
 .jb-table th.col-summary,
 .jb-table td.col-summary {
@@ -412,6 +433,16 @@ PageList.css = `
 .jb-table th.col-subjects,
 .jb-table td.col-subjects {
   width: 21%;
+}
+
+/* Date cell content — centered via a wrapper div, since two earlier
+   attempts at td-level text-align: center (one in _jbtable.scss, one
+   here) didn't visually center the date. The wrapper carries
+   width: 100% so it fills the td, and text-align: center on a div is
+   unambiguous regardless of what's happening to the td above it. */
+.jb-table td.col-date .col-date-inner {
+  width: 100%;
+  text-align: center;
 }
 
 /* When Date column is absent (Synthesis, Concepts, Entities), redistribute
@@ -736,12 +767,11 @@ document.addEventListener("nav", () => {
 
   // ───── Column-header sorting ─────
 
-  // Default state matches the SSR render: sorted by date descending.
-  // If this table has no Date column (Concepts/Entities/Synthesis),
-  // default to title ascending instead.
-  const hasDate = !!table.querySelector("th.col-date")
-  let sortKey = hasDate ? "date" : "title"
-  let sortAsc = hasDate ? false : true
+  // Default state matches the SSR render: Title ascending (alphabetical).
+  // This applies to all four Reflect tables. Date sort is available on
+  // Sources via header click but is not the default.
+  let sortKey = "title"
+  let sortAsc = true
 
   function indicator(asc) {
     return asc ? "▲" : "▼"
@@ -827,23 +857,8 @@ document.addEventListener("nav", () => {
     )
   })
 
-  // Set the initial indicator to match the SSR-applied sort order
-  // without re-sorting the rows (they're already in the right order).
-  const activeHeader = table.querySelector('th.sortable[data-sort="' + sortKey + '"]')
-  if (activeHeader) {
-    activeHeader.classList.add("sort-active")
-    const indEl = activeHeader.querySelector(".sort-indicator")
-    if (indEl) indEl.textContent = indicator(sortAsc)
-  }
-
-  // If Title is not the active sort key (because Date is), it still
-  // has class="sort-active" from the SSR render. Remove it so only
-  // the truly active column appears active. Same defensive cleanup
-  // for the indicator glyph — the SSR rendered ▼ on Title as a
-  // placeholder; if it's not active, the JS above set it back to ▼
-  // already, but ensure sort-active is dropped.
-  const titleHeader = table.querySelector('th.sortable[data-sort="title"]')
-  if (titleHeader && sortKey !== "title") {
-    titleHeader.classList.remove("sort-active")
-  }})
+  // Set the initial indicator state. The SSR markup already has
+  // sort-active on Title and ▲/▼ glyphs in place, so this is mostly
+  // defensive — runs in case anything was tampered with mid-render.
+  applySort()})
 `
