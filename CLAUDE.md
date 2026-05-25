@@ -43,7 +43,11 @@ content/                # The wiki — you own this layer entirely
   quiz/
     take.md             # Subject-filtered free-recall quiz session
   upskill/              # Self-directed study material — DATA-DRIVEN, see below
-    <topic>/            # Per-topic study pages, where <topic> matches data/upskill/<topic>/
+    index.md            # Section landing — hand-curated intro prose
+    manage.md           # Topic-management form (Create/Edit/Hide/Delete)
+    <topic>/
+      index.md          # Topic landing page (auto-created by /api/upskill/topics)
+      <slug>.md         # Individual study pages for the topic
 data/                   # Machine-managed data outside the wiki
   retention-log.md      # The cataloging audit log
   upskill/              # Per-topic metadata driving the Upskill sidebar
@@ -82,8 +86,9 @@ ordered to tell a story:
    - Graph, Timeline, Subjects, Tags, Confidence.
 
 4. **Upskill** — self-directed study material.
-   - Sub-links are derived from `data/upskill/<slug>/meta.json` at
-     build time. See "Dynamic sections (Upskill)" below.
+   - First sub-link is always **Manage** (the topic-management form).
+   - Remaining sub-links are derived from `data/upskill/<slug>/meta.json`
+     at build time. See "Dynamic sections (Upskill)" below.
 
 5. **Quiz** — test what you've retained.
    - Take.
@@ -99,13 +104,22 @@ under Collect.
 ### Dynamic sections (Upskill)
 
 Upskill is the wiki's first **dynamic section**: its sidebar sub-links
-and topic landing pages are derived from data files at build time
-rather than hand-listed in `quartz.layout.ts`.
+come from data files scanned at build time, and topics are created /
+edited / hidden / deleted via a form at `/upskill/manage`, not by
+hand-editing JSON files.
 
-**How it works:**
+**The two-file contract per topic.**
 
-- Each topic is a directory at `data/upskill/<slug>/` containing a
-  `meta.json` file.
+Every Upskill topic is represented on disk by *two files*, both of which
+are managed automatically by the API. You should not normally write
+either by hand.
+
+```
+data/upskill/<slug>/meta.json     # descriptor — drives sidebar
+content/upskill/<slug>/index.md   # landing page — gets full Quartz pipeline
+```
+
+- `meta.json` is the source of truth for the sidebar:
 
   ```json
   {
@@ -118,48 +132,48 @@ rather than hand-listed in `quartz.layout.ts`.
 
   - `slug` — must match the directory name. Authoritative source for
     the URL is the directory name; the field is informational.
-  - `title` — display label in the sidebar and on the topic landing
-    page.
-  - `order` — ascending sort priority. Topics without `order` sort to
-    the end.
-  - `summary` — optional one-liner shown on the topic landing page.
-  - `hidden: true` — optional. Topic is excluded from the sidebar and
-    no landing page is emitted. Use to park a half-written topic.
+  - `title` — display label in the sidebar.
+  - `order` — ascending sort priority. Lower numbers come first.
+    Topics without `order` sort to the end.
+  - `summary` — short description, surfaced on the manage page.
+  - `hidden: true` (optional) — exclude from the sidebar without
+    deleting anything. Use to park a half-written topic.
 
-- The actual study material lives at `content/upskill/<slug>/*.md` as
-  normal wiki pages. They go through the standard Quartz pipeline,
-  appear in search, can carry frontmatter (subjects, tags), and link
-  to other wiki pages via `[[wikilinks]]` like any other page.
+- `content/upskill/<slug>/index.md` is a normal Quartz page. It gets
+  breadcrumbs, dates, the `FolderContent` listing of any study pages
+  under it, search indexing, etc. — all the standard wiki machinery,
+  for free. The body is initialized to the topic's summary at create
+  time; you can edit it later to add a longer intro for the topic.
 
-- At build time, `quartz/util/upskill.ts` scans `data/upskill/`, and
-  the `UpskillPage` emitter (`quartz/plugins/emitters/upskillPage.tsx`)
-  generates one HTML landing page per topic at `/upskill/<slug>/`.
-  Those landing pages use the same `FolderContent` component that
-  drives `/reflect/<category>/` — they list the topic's pages as a
-  sortable table and surface the `summary` from `meta.json` above it.
+**Topic management workflow:**
 
-**Adding a new topic:**
+The form at `/upskill/manage` is the only correct way to create, edit,
+hide, or delete topics. It posts to four endpoints:
 
-1. Create `data/upskill/<slug>/meta.json` with the four fields above.
-2. (Optional) Drop one or more `content/upskill/<slug>/*.md` study
-   pages in. The topic landing page will list them automatically.
-3. The next build picks up the topic — both the sidebar link and the
-   landing page.
+- `GET    /api/upskill/topics`         — list all topics
+- `POST   /api/upskill/topics`         — create a new topic (writes both files atomically)
+- `GET    /api/upskill/topics/:slug`   — read one topic's meta.json
+- `PUT    /api/upskill/topics/:slug`   — update meta.json (title, order, summary, hidden)
+- `DELETE /api/upskill/topics/:slug`   — remove meta.json AND content/upskill/:slug/index.md
 
-**Updating an existing topic:**
+The create endpoint uses GitHub's Git Data API to commit both files in
+a single atomic commit, so there's no window where the sidebar entry
+exists without a landing page or vice versa.
 
-- Edit `meta.json` for label or sort-order changes.
-- Add or remove pages under `content/upskill/<slug>/` to grow the
-  study material.
+**Adding a study page to a topic:**
 
-**Removing a topic:**
+Once a topic exists, drop study pages at `content/upskill/<topic>/<slug>.md`
+as normal wiki pages with full frontmatter. They go through the
+standard Quartz pipeline and auto-list on the topic's landing page via
+`FolderContent`. No API call needed.
 
-- Set `hidden: true` in `meta.json` to take it out of the sidebar
-  without losing the content.
-- Or delete the `data/upskill/<slug>/` directory entirely; the
-  landing page stops being emitted, and any pages still at
-  `content/upskill/<slug>/` revert to being listed by the standard
-  FolderPage emitter (no per-topic summary).
+**When to write to the data files directly:**
+
+Almost never. The API enforces invariants (slug validity, file pairing,
+atomic commits) that direct edits skip. Hand-edit only if the API is
+broken or you're recovering from a partial commit; if you do, write both
+`data/upskill/<slug>/meta.json` and `content/upskill/<slug>/index.md`
+together to keep them in sync.
 
 ## Page format
 
@@ -272,6 +286,8 @@ but their frontmatter contract is identical.
 - Upskill study pages: `upskill/<topic>/<slug>.md` where `<topic>`
   matches a `data/upskill/<topic>/` directory and `<slug>` is a
   descriptive kebab-case name (e.g. `upskill/git/object-model.md`).
+  The `index.md` slug is reserved — it's the topic landing page,
+  managed by the API.
 
 ### Wikilinks
 
@@ -539,6 +555,25 @@ Journal entries follow the same workflow, against `/api/journal` and
 where note-style fragments feel too short; both share the same
 timestamp-slug shape so they sort the same way.
 
+### Upskill (topic management)
+
+Trigger: user wants to add a new study area, hide an existing one,
+rename it, or delete it.
+
+Always direct the user to `/upskill/manage`. That page hosts the form
+that talks to `/api/upskill/topics` and keeps the two-file contract
+(meta.json + content/upskill/<slug>/index.md) consistent.
+
+Don't hand-write to `data/upskill/<slug>/meta.json` or to
+`content/upskill/<slug>/index.md` unless the API is broken and you're
+recovering from a partial commit. If you do need to write directly,
+update both files in a single multi-file commit so they stay paired.
+
+Adding study material to an existing topic does NOT go through
+`/api/upskill/topics`. Write the study page directly at
+`content/upskill/<topic>/<slug>.md` with full wiki frontmatter; it
+appears on the topic's landing page automatically.
+
 ### Query
 
 Trigger: user asks a question about the wiki's domain.
@@ -635,7 +670,7 @@ them in legacy code; fix them.
 | **Status** | The lifecycle state of a source on a pipeline-status table: `pending`, `in_progress`, `cataloged`, `failed`. Also the Retention column showing log-entry type. | Acquisition column header, Retention column header, Reflect → Sources second-table column header |
 | **Title** | The human-readable name of a wiki page (the `title:` frontmatter field). Distinct from Source: a source is a filename, a title is a page name. On the Entities table, this column is labeled "Name" instead, because entities have names, not titles. | Reflect tables (Sources, Concepts, Synthesis use "Title"; Entities uses "Name"), Retention table |
 | **Cataloging** | The pipeline section header on the Acquisition page (was "Document Processing"). Names the process the table is showing. | Acquisition page header |
-| **Topic** | A study area under Upskill. Backed by a `data/upskill/<slug>/meta.json` descriptor and zero or more study pages at `content/upskill/<slug>/`. | Upskill sidebar group, Upskill landing pages |
+| **Topic** | A study area under Upskill. Backed by a `data/upskill/<slug>/meta.json` descriptor AND a `content/upskill/<slug>/index.md` landing page, both managed atomically via `/api/upskill/topics`. | Upskill sidebar group, Upskill landing pages |
 
 ## UI and code conventions
 
