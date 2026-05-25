@@ -75,13 +75,29 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
   if (tableConfig) {
     // Reflect sub-page: render as a real table.
     //
-    // Column order: Title -> Date -> Summary -> Subjects -> Tags
+    // Column order: Disclose -> Title -> Date -> Summary -> Subjects
     // Sortable: Title (alphabetical) and Date (chronological).
     // Default sort applied by the SSR sorter above is "newest first" via
     // byDateAndAlphabeticalFolderFirst. The client-side sort script in
     // PageList.afterDOMLoaded picks up that default and lets the user
     // toggle by clicking a sortable header.
+    //
+    // Each item renders as TWO <tr> elements:
+    //   1. A primary row carrying the title, date, summary, and
+    //      subjects cells, plus a leading "disclose" cell with the
+    //      chevron-plus-count button.
+    //   2. A tag row, initially hidden, with a single full-width <td
+    //      colspan> containing the wrapping pill list of tags (or a
+    //      muted "—" if the item has no tags).
+    // The button in cell 1 toggles cell 2's visibility. Open/closed
+    // state is persisted to localStorage per slug — see the toggle
+    // script in afterDOMLoaded.
     const showDate = tableConfig.showDate
+
+    // Column count for the tag-row's colspan. Includes the disclose
+    // column. Sources/Synthesis: 5 (disclose+title+date+summary+subjects).
+    // Concepts/Entities: 4 (disclose+title+summary+subjects, no date).
+    const colspanCount = showDate ? 5 : 4
 
     // When the page list is empty, show an explanatory notice instead
     // of the table. Each Reflect sub-page's empty state has its own
@@ -132,6 +148,10 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
         <table>
           <thead>
             <tr>
+              {/* Disclose column header — empty label. The chevron+count
+                  in body rows is self-explanatory, and a header label
+                  for a control column would be noise. */}
+              <th class="col-disclose" aria-label="Tags disclosure" />
               <th class="col-title sortable sort-active" data-sort="title">
                 Title
                 <span class="sort-indicator">⇅</span>
@@ -144,7 +164,6 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
               )}
               <th class="col-summary">Summary</th>
               <th class="col-subjects">Subjects</th>
-              <th class="col-tags">Tags</th>
             </tr>
           </thead>
           <tbody>
@@ -170,59 +189,104 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
               // handling in the SSR sorters above.
               const isoDate = page.dates ? getDate(cfg, page)!.toISOString() : ""
 
+              const pageSlug = page.slug ?? ""
+              const hasTags = tags.length > 0
+
               return (
-                <tr data-title={title.toLowerCase()} data-date={isoDate}>
-                  <td class="col-title">
-                    <a
-                      href={resolveRelative(fileData.slug!, page.slug!)}
-                      class="internal"
-                    >
-                      {title}
-                    </a>
-                  </td>
-                  {showDate && (
-                    <td class="col-date">
-                      {page.dates && (
-                        <Date date={getDate(cfg, page)!} locale={cfg.locale} />
+                <>
+                  {/* Primary row — carries the row-level data attributes
+                      that the sort script reads. The tag row below
+                      inherits its sort position by being the
+                      nextElementSibling at re-attach time. */}
+                  <tr
+                    class="primary-row"
+                    data-slug={pageSlug}
+                    data-title={title.toLowerCase()}
+                    data-date={isoDate}
+                  >
+                    <td class="col-disclose">
+                      {hasTags ? (
+                        <button
+                          type="button"
+                          class="jb-tag-toggle"
+                          aria-expanded="false"
+                          aria-label={`Show ${tags.length} tag${tags.length === 1 ? "" : "s"} for ${title}`}
+                          data-target-slug={pageSlug}
+                        >
+                          <span class="jb-tag-toggle-chevron" aria-hidden="true">▸</span>
+                          <span class="jb-tag-toggle-count">{tags.length}</span>
+                        </button>
+                      ) : (
+                        <span class="jb-tag-toggle-empty muted" aria-label="No tags">
+                          —
+                        </span>
                       )}
                     </td>
-                  )}
-                  <td class="col-summary">
-                    {summary ? (
-                      <span>{summary}</span>
-                    ) : (
-                      <span class="muted">—</span>
+                    <td class="col-title">
+                      <a
+                        href={resolveRelative(fileData.slug!, page.slug!)}
+                        class="internal"
+                      >
+                        {title}
+                      </a>
+                    </td>
+                    {showDate && (
+                      <td class="col-date">
+                        {page.dates && (
+                          <Date date={getDate(cfg, page)!} locale={cfg.locale} />
+                        )}
+                      </td>
                     )}
-                  </td>
-                  <td class="col-subjects">
-                    {subjects.length > 0 ? (
-                      <ul class="subjects">
-                        {subjects.map((subject) => (
-                          <li>{subject}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <span class="muted">—</span>
-                    )}
-                  </td>
-                  <td class="col-tags">
-                    <ul class="tags">
-                      {tags.map((tag) => (
-                        <li>
-                          <a
-                            class="internal tag-link"
-                            href={resolveRelative(
-                              fileData.slug!,
-                              `tags/${tag}` as FullSlug,
-                            )}
-                          >
-                            {tag}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </td>
-                </tr>
+                    <td class="col-summary">
+                      {summary ? (
+                        <span>{summary}</span>
+                      ) : (
+                        <span class="muted">—</span>
+                      )}
+                    </td>
+                    <td class="col-subjects">
+                      {subjects.length > 0 ? (
+                        <ul class="subjects">
+                          {subjects.map((subject) => (
+                            <li>{subject}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span class="muted">—</span>
+                      )}
+                    </td>
+                  </tr>
+                  {/* Tag row — full-width disclosure target. The
+                      `hidden` HTML attribute (not CSS display: none) is
+                      the source of truth; the toggle script flips it
+                      and updates aria-expanded on the matching button.
+                      Pairing is via DOM adjacency, not an explicit id
+                      reference, which keeps the sort script's
+                      pair-move logic simple. */}
+                  <tr class="tag-row" data-pair-slug={pageSlug} hidden>
+                    <td colspan={colspanCount} class="col-tags-full">
+                      {hasTags ? (
+                        <ul class="tags">
+                          {tags.map((tag) => (
+                            <li>
+                              <a
+                                class="internal tag-link"
+                                href={resolveRelative(
+                                  fileData.slug!,
+                                  `tags/${tag}` as FullSlug,
+                                )}
+                              >
+                                {tag}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span class="muted">—</span>
+                      )}
+                    </td>
+                  </tr>
+                </>
               )
             })}
           </tbody>
@@ -287,12 +351,22 @@ PageList.css = `
    regardless of viewport width. With table-layout: fixed (set by
    jbtable.scss), widths are ratios.
 
-   Column order: Title -> Date -> Summary -> Subjects -> Tags. */
+   Column order: Disclose -> Title -> Date -> Summary -> Subjects. */
 
-/* Sources & Synthesis (5 columns: Title / Date / Summary / Subjects / Tags) */
+/* Disclose column — narrow fixed slot for the chevron+count button.
+   ~4.5rem fits "▸ 99" with breathing room on either side. Centered
+   so the chevron-and-count cluster reads as a single control. */
+.jb-table th.col-disclose,
+.jb-table td.col-disclose {
+  width: 4.5rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Sources & Synthesis (5 columns: Disclose / Title / Date / Summary / Subjects) */
 .jb-table th.col-title,
 .jb-table td.col-title {
-  width: 22%;
+  width: 25%;
   font-weight: 500;
 }
 .jb-table th.col-date,
@@ -302,34 +376,26 @@ PageList.css = `
 }
 .jb-table th.col-summary,
 .jb-table td.col-summary {
-  width: 28%;
+  width: 33%;
 }
 .jb-table th.col-subjects,
 .jb-table td.col-subjects {
-  width: 20%;
-}
-.jb-table th.col-tags,
-.jb-table td.col-tags {
-  width: 18%;
+  width: 22%;
 }
 
 /* When Date column is absent (Concepts & Entities), redistribute the
-   freed-up space across the remaining four columns. */
+   freed-up space across the remaining columns. */
 .jb-table > table:not(:has(.col-date)) th.col-title,
 .jb-table > table:not(:has(.col-date)) td.col-title {
-  width: 24%;
+  width: 28%;
 }
 .jb-table > table:not(:has(.col-date)) th.col-summary,
 .jb-table > table:not(:has(.col-date)) td.col-summary {
-  width: 30%;
+  width: 38%;
 }
 .jb-table > table:not(:has(.col-date)) th.col-subjects,
 .jb-table > table:not(:has(.col-date)) td.col-subjects {
-  width: 22%;
-}
-.jb-table > table:not(:has(.col-date)) th.col-tags,
-.jb-table > table:not(:has(.col-date)) td.col-tags {
-  width: 24%;
+  width: 26%;
 }
 
 .jb-table td.col-title a {
@@ -342,18 +408,58 @@ PageList.css = `
   font-style: italic;
 }
 
-/* Tags list inside the table cell — inline-flex, wrap, tight spacing. */
-.jb-table .tags {
+/* Tag-row striping: each item is two <tr>s (primary + tag), so
+   alternation must happen per-pair, not per-row. Items 1, 3, 5, … get
+   the lighter fill (group A: 4n+1 = primary, 4n+2 = tag). Items 2, 4,
+   6, … get the darker fill (group B: 4n+3 = primary, 4n+4 = tag).
+
+   This overrides the odd/even rules in _jbtable.scss for tables that
+   contain primary-row + tag-row pairs. The override is selector-
+   specific to .jb-table tbody tr so the simpler one-row-per-item
+   tables (none right now in jb-table form, but the convention should
+   tolerate them) would still get the basic odd/even striping. */
+.jb-table > table tbody tr:nth-child(4n+1),
+.jb-table > table tbody tr:nth-child(4n+2) {
+  /* group A — lighter (same as old odd) */
+}
+.jb-table > table tbody tr:nth-child(4n+1) td,
+.jb-table > table tbody tr:nth-child(4n+2) td {
+  background-color: #1B3F29;
+}
+.jb-table > table tbody tr:nth-child(4n+3) td,
+.jb-table > table tbody tr:nth-child(4n+4) td {
+  background-color: #163524;
+}
+
+/* Tag row: full-width disclosure target. The <td colspan> spans the
+   whole table width; we drop the top border so the tag row visually
+   joins its primary row, and lighten the bottom border to match the
+   inter-item separator already established by the cells. */
+.jb-table > table tbody tr.tag-row > td {
+  border-top: none;
+  padding: 0.4rem 0.75rem 0.75rem;
+}
+
+/* Tags list inside the tag row — horizontal wrapping pill row, full
+   width of the table. Generous gap because tags are now THE primary
+   content of this row, not a cramped column. */
+.jb-table .col-tags-full .tags {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
+  gap: 0.4rem;
 }
-.jb-table .tags > li {
+.jb-table .col-tags-full .tags > li {
   margin: 0;
   padding: 0;
+}
+
+/* Muted "—" placeholder when an item has no tags. */
+.jb-table .col-tags-full .muted {
+  color: var(--gray);
+  font-style: italic;
 }
 
 /* Subjects list — same shape as tags but unlinked plain pills, with a
@@ -376,6 +482,51 @@ PageList.css = `
   font-size: 0.85em;
   color: var(--dark);
   white-space: nowrap;
+}
+
+/* Disclose button — the chevron+count cluster. Real <button> for
+   keyboard operability and screen-reader semantics. Visual styling is
+   restrained: just a tappable cluster, no border or background that
+   would compete with the table's overall feel. */
+.jb-table .jb-tag-toggle {
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0.15rem 0.4rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.95em;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  transition: background 0.12s ease;
+}
+.jb-table .jb-tag-toggle:hover,
+.jb-table .jb-tag-toggle:focus-visible {
+  background: rgba(240, 221, 179, 0.10);  /* warm sand at low alpha — matches header text color */
+  outline: none;
+}
+.jb-table .jb-tag-toggle:focus-visible {
+  box-shadow: 0 0 0 2px rgba(240, 221, 179, 0.55);
+}
+.jb-table .jb-tag-toggle-chevron {
+  display: inline-block;
+  font-size: 0.85em;
+  transition: transform 0.15s ease;
+}
+.jb-table .jb-tag-toggle[aria-expanded="true"] .jb-tag-toggle-chevron {
+  transform: rotate(90deg);  /* ▸ pivots into ▾ */
+}
+.jb-table .jb-tag-toggle-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.jb-table .jb-tag-toggle-empty {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  color: var(--gray);
+  font-style: italic;
 }
 
 /* Empty-state notice shown on Reflect sub-pages when there are no
@@ -407,21 +558,26 @@ PageList.css = `
 }
 `
 
-// Client-side sort behavior for the Reflect table headers.
+// Client-side behavior for the Reflect tables — covers two distinct
+// interactions on the same table:
 //
-// The SSR render emits rows in "newest first" order via the Quartz
-// sorter. This script runs on every Quartz `nav` event (which fires on
-// initial load AND on every SPA navigation) and:
+//  1) Column-header sorting (Title / Date), as before but updated to
+//     keep primary-row + tag-row pairs together when reordering.
+//  2) Per-item tag-row disclosure (chevron buttons), with localStorage
+//     persistence so the open set survives sorting, SPA nav, and full
+//     reload.
 //
-// 1. Finds the .table-container.jb-table table on the page (if any).
-// 2. Wires a click handler onto every <th class="sortable">.
-// 3. On click, reorders the <tr> elements in <tbody> by the active key
-//    (data-title or data-date), respecting the current ascending/
-//    descending direction and updating the chevron indicator.
+// The two interactions share state implicitly via the DOM: open state
+// lives on the tag-row's `hidden` attribute and on the matching
+// button's `aria-expanded` attribute. When sort moves a primary row,
+// we also move its sibling tag-row to follow it — the hidden
+// attribute travels with the node, so open state is preserved across
+// sort with no extra bookkeeping.
 //
-// State is held in plain locals — there's only ever one such table per
-// page, so we don't need to scope state per element. `addCleanup` is
-// Quartz's hook for tearing down listeners before the next nav event.
+// localStorage key: "jb-tag-open" — a JSON-serialized object
+// { [slug]: true, … }. We only store opened slugs (no false entries)
+// to keep the stored value compact and to make the empty/default
+// state self-evident.
 PageList.afterDOMLoaded = `
 document.addEventListener("nav", () => {
   const wrapper = document.querySelector(".table-container.jb-table")
@@ -429,6 +585,109 @@ document.addEventListener("nav", () => {
   const table = wrapper.querySelector("table")
   const tbody = table && table.querySelector("tbody")
   if (!table || !tbody) return
+
+  // ───── Tag-row disclosure (localStorage-backed) ─────
+
+  const STORAGE_KEY = "jb-tag-open"
+
+  function loadOpenSet() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) return new Set()
+      const parsed = JSON.parse(raw)
+      if (!parsed || typeof parsed !== "object") return new Set()
+      return new Set(Object.keys(parsed).filter((k) => parsed[k] === true))
+    } catch (e) {
+      // Bad JSON in localStorage (manual edit, version skew). Treat as
+      // empty and don't propagate the error — disclosure should never
+      // break the page.
+      return new Set()
+    }
+  }
+
+  function persistOpenSet(set) {
+    try {
+      const obj = {}
+      set.forEach((slug) => { obj[slug] = true })
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(obj))
+    } catch (e) {
+      // localStorage can throw (private mode, quota). Silent failure
+      // here is correct: the UI state stays right for the current
+      // session, persistence just doesn't carry over.
+    }
+  }
+
+  const openSlugs = loadOpenSet()
+
+  // Find the tag-row paired with a primary row. Pairing is by DOM
+  // adjacency — the tag-row is always the primary-row's
+  // nextElementSibling at SSR time, and the sort handler below
+  // preserves that adjacency.
+  function tagRowFor(primaryRow) {
+    const next = primaryRow.nextElementSibling
+    if (next && next.classList.contains("tag-row")) return next
+    return null
+  }
+
+  function setOpen(primaryRow, open) {
+    const tagRow = tagRowFor(primaryRow)
+    const button = primaryRow.querySelector(".jb-tag-toggle")
+    if (!tagRow || !button) return
+    const slug = primaryRow.getAttribute("data-slug") || ""
+    if (open) {
+      tagRow.hidden = false
+      button.setAttribute("aria-expanded", "true")
+      if (slug) openSlugs.add(slug)
+    } else {
+      tagRow.hidden = true
+      button.setAttribute("aria-expanded", "false")
+      if (slug) openSlugs.delete(slug)
+    }
+    persistOpenSet(openSlugs)
+  }
+
+  // Apply persisted open-state to all primary rows on mount. Runs once
+  // after the SSR DOM is in place, before any user interaction.
+  function applyPersistedState() {
+    const primaryRows = tbody.querySelectorAll("tr.primary-row")
+    primaryRows.forEach((row) => {
+      const slug = row.getAttribute("data-slug") || ""
+      const button = row.querySelector(".jb-tag-toggle")
+      const tagRow = tagRowFor(row)
+      if (!button || !tagRow) return  // item with no tags — nothing to restore
+      if (slug && openSlugs.has(slug)) {
+        tagRow.hidden = false
+        button.setAttribute("aria-expanded", "true")
+      } else {
+        // Defensive: ensure consistent baseline. The SSR hidden + aria
+        // attributes should already match, but a navigated-to page
+        // could have been rendered with stale defaults.
+        tagRow.hidden = true
+        button.setAttribute("aria-expanded", "false")
+      }
+    })
+  }
+
+  function onToggleClick(ev) {
+    const button = ev.currentTarget
+    const primaryRow = button.closest("tr.primary-row")
+    if (!primaryRow) return
+    const isOpen = button.getAttribute("aria-expanded") === "true"
+    setOpen(primaryRow, !isOpen)
+  }
+
+  // Wire toggle handlers. Each .jb-tag-toggle is a real <button> so
+  // Enter/Space activation comes free; we only need the click
+  // listener.
+  const toggleButtons = tbody.querySelectorAll(".jb-tag-toggle")
+  toggleButtons.forEach((btn) => {
+    btn.addEventListener("click", onToggleClick)
+    window.addCleanup(() => btn.removeEventListener("click", onToggleClick))
+  })
+
+  applyPersistedState()
+
+  // ───── Column-header sorting ─────
 
   // Default state matches the SSR render: sorted by date descending.
   // If this table has no Date column (Concepts/Entities), default to
@@ -456,8 +715,9 @@ document.addEventListener("nav", () => {
       }
     })
 
-    const rows = Array.from(tbody.querySelectorAll("tr"))
-    rows.sort((a, b) => {
+    // Enumerate primary rows only — tag rows ride along.
+    const primaryRows = Array.from(tbody.querySelectorAll("tr.primary-row"))
+    primaryRows.sort((a, b) => {
       const av = a.getAttribute("data-" + sortKey) || ""
       const bv = b.getAttribute("data-" + sortKey) || ""
       // Empty values (rows with no date, mostly) sort to the bottom in
@@ -465,12 +725,6 @@ document.addEventListener("nav", () => {
       // with the SSR sorter's handling of missing dates.
       if (av === "" && bv !== "") return sortAsc ? 1 : -1
       if (bv === "" && av !== "") return sortAsc ? -1 : 1
-      // For dates, parse to numeric timestamps and compare. ISO 8601
-      // strings happen to sort correctly under string comparison, but
-      // making the comparison explicitly numeric guarantees correct
-      // chronological ordering even if the date format ever changes.
-      // For titles (or any other string key), fall through to a plain
-      // case-aware string compare.
       if (sortKey === "date") {
         const at = Date.parse(av)
         const bt = Date.parse(bv)
@@ -482,7 +736,19 @@ document.addEventListener("nav", () => {
       if (av > bv) return sortAsc ? 1 : -1
       return 0
     })
-    rows.forEach((row) => tbody.appendChild(row))
+
+    // Re-append each primary row in sorted order, immediately followed
+    // by its paired tag row. appendChild moves existing nodes (it
+    // doesn't clone) so the open state on the tag row's hidden
+    // attribute is preserved across sort. After the loop, the tbody's
+    // child order is primary, tag, primary, tag, … in the new sorted
+    // order — striping selectors (4n+1, +2, +3, +4) still match
+    // correctly.
+    primaryRows.forEach((primaryRow) => {
+      const tagRow = tagRowFor(primaryRow)
+      tbody.appendChild(primaryRow)
+      if (tagRow) tbody.appendChild(tagRow)
+    })
   }
 
   function onHeaderClick(ev) {
