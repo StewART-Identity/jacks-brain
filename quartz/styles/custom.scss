@@ -694,7 +694,7 @@ input.search-bar {
 
 :root:not([saved-theme="dark"]) .jb-sidebar-toggle {
   background: rgba($green-100, 0.5);
-  color: $green-700 ? $green-700 : $green-600;
+  color: $green-600;
   border: 1px solid $brass-500;
 
   &:hover {
