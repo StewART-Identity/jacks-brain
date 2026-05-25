@@ -258,6 +258,11 @@ document.addEventListener("nav", () => {
   // visible "document" string is for display only and doesn't always
   // match the underlying file path (status.ts strips date prefixes
   // and matches against source-page slugs).
+  //
+  // The Acquired cell carries both `queue-acquired-cell` (queue-specific
+  // two-line layout) and `col-date` (global centering rule from
+  // _jbtable.scss). The two-line block-level children inherit the
+  // centered text-align from the td so both lines center as a unit.
   function rowHTML(doc: DocumentRow): string {
     const checkboxCell = doc.status === "pending"
       ? `<td class="queue-checkbox-cell">
@@ -271,11 +276,11 @@ document.addEventListener("nav", () => {
     const dateText = escapeText(doc.acquired || "Unknown")
     const relText = escapeText(relativeTimeLine(doc))
     const acquiredCell = relText
-      ? `<td class="queue-acquired-cell">
+      ? `<td class="col-date queue-acquired-cell">
            <div class="queue-acquired-date">${dateText}</div>
            <div class="queue-acquired-relative">${relText}</div>
          </td>`
-      : `<td class="queue-acquired-cell">
+      : `<td class="col-date queue-acquired-cell">
            <div class="queue-acquired-date">${dateText}</div>
          </td>`
     return `<tr>
@@ -310,7 +315,7 @@ document.addEventListener("nav", () => {
         <thead><tr>
           <th class="queue-checkbox-cell" aria-label="Select"></th>
           <th class="sortable" data-sort-col="document" tabindex="0" role="button" aria-label="Sort by source">Source${sortIndicator("document")}</th>
-          <th class="sortable" data-sort-col="acquired" tabindex="0" role="button" aria-label="Sort by acquired date">Acquired${sortIndicator("acquired")}</th>
+          <th class="col-date sortable" data-sort-col="acquired" tabindex="0" role="button" aria-label="Sort by acquired date">Acquired${sortIndicator("acquired")}</th>
           <th class="sortable" data-sort-col="status" tabindex="0" role="button" aria-label="Sort by status">Status${sortIndicator("status")}</th>
         </tr></thead>
         <tbody>` +
