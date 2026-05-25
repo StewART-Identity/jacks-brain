@@ -20,6 +20,16 @@ tags:
 confidence: high
 sources:
   - "[[reflect/sources/2026-05-24-the-cognitive-peak-that-will-never-happen-again]]"
+quiz:
+  - q: "Why does the within-family finding in the Norwegian study matter so much for explaining the Flynn Effect reversal?"
+    a: "Comparing brothers in the same household controls for genetics, socioeconomic status, and family environment — so if the younger sibling still scores lower, the cause must be something in the external environment that changed between their developmental windows, not inherited factors or who was having children."
+    added: 2026-05-25
+  - q: "Why did millennials — who grew up with even less lead exposure than Gen X — not score higher on IQ tests?"
+    a: "Because screens arrived during their childhood and replaced the effortful, unsupervised problem-solving that had been building cognitive capacity. The environmental gain from further lead reduction was offset by reduced cognitive demand during development."
+    added: 2026-05-25
+  - q: "What does the Flynn Effect reversal suggest about how cognitive capacity is built during childhood?"
+    a: "It supports the cognitive reserve hypothesis: complex reasoning capacity is built through effortful, unsupervised problem-solving. Environments that replace this demand with passive or low-effort stimulation (like screens) produce less neural architecture, showing up as declines in fluid and abstract reasoning."
+    added: 2026-05-25
 ---
 
 The Flynn Effect refers to the decades-long trend of rising average IQ test scores observed across much of the 20th century in industrialized nations. Named after researcher James Flynn, who systematically documented the phenomenon. The cause was long debated — better nutrition, expanded education, increased test familiarity, and environmental improvements were all proposed as contributing factors.
