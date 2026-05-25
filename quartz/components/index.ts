@@ -38,6 +38,7 @@ import NoteForm from "./NoteForm"
 import NotesList from "./NotesList"
 import Timeline from "./Timeline"
 import Subjects from "./Subjects"
+import Tags from "./Tags"
 
 export {
   ArticleTitle,
@@ -80,4 +81,5 @@ export {
   NotesList,
   Timeline,
   Subjects,
+  Tags,
 }
