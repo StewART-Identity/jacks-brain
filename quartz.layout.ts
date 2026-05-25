@@ -28,6 +28,10 @@ export const sharedPageComponents: SharedLayout = {
       condition: (page) => page.fileData.slug === "visualize/tags",
     }),
     Component.ConditionalRender({
+      component: Component.Confidence(),
+      condition: (page) => page.fileData.slug === "visualize/confidence",
+    }),
+    Component.ConditionalRender({
       component: Component.SourcesList(),
       condition: (page) => page.fileData.slug === "reflect/sources",
     }),
@@ -114,6 +118,7 @@ const sidebarLeft = [
       { title: "Timeline", slug: "visualize/timeline" },
       { title: "Subjects", slug: "visualize/subjects" },
       { title: "Tags", slug: "visualize/tags" },
+      { title: "Confidence", slug: "visualize/confidence" },
     ],
   }),
   Component.ApplicationMenu(),
