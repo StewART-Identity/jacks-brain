@@ -26,6 +26,10 @@ function isQuizzablePage(slug: string | undefined): boolean {
 // time. See quartz/util/upskill.ts for the format and contract. The
 // scan runs once when this module loads. Topics with `hidden: true`
 // are filtered out before this list is returned.
+//
+// The sidebar sub-links for Upskill are: a static "Manage" link first
+// (always present, regardless of whether topics exist) followed by one
+// link per visible topic from the scan.
 const upskillTopics = scanTopics()
 
 // components shared across all pages
@@ -92,6 +96,10 @@ export const sharedPageComponents: SharedLayout = {
     Component.ConditionalRender({
       component: Component.QuizSuggest(),
       condition: (page) => isQuizzablePage(page.fileData.slug),
+    }),
+    Component.ConditionalRender({
+      component: Component.UpskillManage(),
+      condition: (page) => page.fileData.slug === "upskill/manage",
     }),
     Component.ConditionalRender({
       component: Component.NukeButton(),
@@ -184,19 +192,21 @@ const sidebarLeft = [
       { title: "Confidence", slug: "visualize/confidence" },
     ],
   }),
-  // Upskill — data-driven sub-links from data/upskill/<slug>/meta.json.
-  // Sits between Visualize and Quiz because the sidebar's groups tell
-  // a story: bring stuff in (Search, Notes, Journal, Collect), make
-  // sense of it (Reflect, Visualize), expand your foundation (Upskill),
-  // test yourself (Quiz).
+  // Upskill — Manage entry first (always present), then dynamic
+  // sub-links from data/upskill/<slug>/meta.json. Sits between
+  // Visualize and Quiz: bring stuff in → make sense of it → expand
+  // foundation → test yourself.
   Component.SidebarLink({
     title: "Upskill",
     slug: "upskill",
     defaultState: "open",
-    links: upskillTopics.map((t) => ({
-      title: t.title,
-      slug: `upskill/${t.slug}`,
-    })),
+    links: [
+      { title: "Manage", slug: "upskill/manage" },
+      ...upskillTopics.map((t) => ({
+        title: t.title,
+        slug: `upskill/${t.slug}`,
+      })),
+    ],
   }),
   Component.SidebarLink({
     title: "Quiz",
