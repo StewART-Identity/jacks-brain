@@ -274,40 +274,57 @@ article {
 /* ==========================================================================
    Canonical button — .jb-btn
 
-   Used everywhere the wiki shows an action button. The visual style
-   mirrors the look of `a.internal` link pills (e.g. "Download original"
-   on source pages) — rounded pill, brass text on dark green
-   background, subtle border, soft hover — because that's the
-   established "press this" look in the wiki.
+   ONE button style for the whole wiki: brass background, dark-green
+   text, rounded corners. This is the look the wiki has actually been
+   using on Search, Research, Notes/Write, Journal/Write, and
+   Upskill/Manage (where it was defined four separate times under
+   .search-page-btn / .research-btn in each component's stylesheet
+   before consolidation). Everything that wants to read as a
+   primary action — Generate quiz, Create topic, Save note, Search,
+   Edit/Hide/Delete on Upskill — now uses this single class.
 
-   Apply .jb-btn to any <button> or <a> that should look like an action.
-   Optional modifiers:
-   - .jb-btn-primary  — brass border for highest emphasis (the "do this
-     thing" button when there's exactly one such on the page)
-   - .jb-btn-secondary — lighter variant for less-critical actions
-   - .jb-btn-sm        — smaller version for tighter contexts (toolbar
-     buttons, inline actions)
+   Apply .jb-btn to any <button> or <a> that should look like an
+   action. The only modifier kept is .jb-btn-sm for tighter contexts
+   (inline row actions, toolbars). The old .jb-btn-primary and
+   .jb-btn-secondary modifiers are gone — they were redundant tiers
+   in a hierarchy nothing actually used.
 
-   Both light and dark mode variants follow the established palette.
+   Visual contract intentionally matches the previous
+   .search-page-btn definitions:
+     - background: var(--secondary)    (brass in dark mode)
+     - color:      var(--light)        (dark green in dark mode)
+     - border-radius: 8px              (gentle pill, not capsule)
+     - hover: 85% opacity              (subtle dim)
+     - disabled: 50% opacity, no-cursor
+
+   The semantic CSS vars (--secondary, --light) mean the button
+   inverts gracefully in light mode without a separate light-mode
+   rule — light mode --secondary is green-600, --light is green-50,
+   producing green-on-cream which reads as the same "press this"
+   affordance.
    ========================================================================== */
 
 .jb-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  border-radius: 999px;
-  padding: 0.45rem 1rem;
+  padding: 0.6rem 1.2rem;
+  background: var(--secondary);
+  color: var(--light);
+  border: none;
+  border-radius: 8px;
   font-family: inherit;
-  font-size: 0.92rem;
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 600;
   letter-spacing: 0.01em;
   cursor: pointer;
   text-decoration: none;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease,
-    opacity 0.15s ease;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 0.85;
+  }
 
   &:disabled {
     opacity: 0.5;
@@ -316,85 +333,16 @@ article {
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px rgba($brass-100, 0.5);
+    box-shadow: 0 0 0 2px rgba($brass-100, 0.55);
   }
 }
 
+/* Compact size for inline row actions (Edit / Hide / Delete on
+   Upskill Manage's topic rows, future toolbar buttons). */
 .jb-btn-sm {
-  padding: 0.3rem 0.7rem;
+  padding: 0.35rem 0.75rem;
   font-size: 0.85rem;
-}
-
-:root:not([saved-theme="dark"]) {
-  .jb-btn {
-    background: $green-600;
-    color: $brass-100;
-    border: 1px solid $green-500;
-
-    &:hover:not(:disabled) {
-      background: $green-500;
-      color: $brass-50;
-      border-color: $brass-300;
-    }
-  }
-
-  .jb-btn.jb-btn-primary {
-    background: $green-600;
-    color: $brass-50;
-    border: 1px solid $brass-500;
-
-    &:hover:not(:disabled) {
-      background: $green-500;
-      border-color: $brass-300;
-    }
-  }
-
-  .jb-btn.jb-btn-secondary {
-    background: transparent;
-    color: $green-800;
-    border: 1px solid $green-300;
-
-    &:hover:not(:disabled) {
-      background: rgba($green-100, 0.5);
-      border-color: $green-500;
-    }
-  }
-}
-
-:root[saved-theme="dark"] {
-  .jb-btn {
-    background: $green-800;
-    color: $brass-100;
-    border: 1px solid $green-600;
-
-    &:hover:not(:disabled) {
-      background: $green-600;
-      color: $brass-50;
-      border-color: $brass-300;
-    }
-  }
-
-  .jb-btn.jb-btn-primary {
-    background: $green-800;
-    color: $brass-50;
-    border: 1px solid $brass-300;
-
-    &:hover:not(:disabled) {
-      background: $green-600;
-      border-color: $brass-100;
-    }
-  }
-
-  .jb-btn.jb-btn-secondary {
-    background: transparent;
-    color: $brass-100;
-    border: 1px solid $green-600;
-
-    &:hover:not(:disabled) {
-      background: rgba($green-800, 0.6);
-      border-color: $brass-300;
-    }
-  }
+  border-radius: 6px;
 }
 
 
