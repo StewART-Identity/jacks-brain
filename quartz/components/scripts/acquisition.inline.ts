@@ -263,6 +263,10 @@ document.addEventListener("nav", () => {
   // two-line layout) and `col-date` (global centering rule from
   // _jbtable.scss). The two-line block-level children inherit the
   // centered text-align from the td so both lines center as a unit.
+  //
+  // The Status cell carries `col-status` so the badge centers under
+  // the same global rule. The inline-block run-badge inside the td
+  // centers naturally within the centered td.
   function rowHTML(doc: DocumentRow): string {
     const checkboxCell = doc.status === "pending"
       ? `<td class="queue-checkbox-cell">
@@ -287,7 +291,7 @@ document.addEventListener("nav", () => {
       ${checkboxCell}
       <td>${escapeText(doc.document)}</td>
       ${acquiredCell}
-      <td><span class="run-badge ${doc.status}">${doc.status}</span></td>
+      <td class="col-status"><span class="run-badge ${doc.status}">${doc.status}</span></td>
     </tr>`
   }
 
@@ -316,7 +320,7 @@ document.addEventListener("nav", () => {
           <th class="queue-checkbox-cell" aria-label="Select"></th>
           <th class="sortable" data-sort-col="document" tabindex="0" role="button" aria-label="Sort by source">Source${sortIndicator("document")}</th>
           <th class="col-date sortable" data-sort-col="acquired" tabindex="0" role="button" aria-label="Sort by acquired date">Acquired${sortIndicator("acquired")}</th>
-          <th class="sortable" data-sort-col="status" tabindex="0" role="button" aria-label="Sort by status">Status${sortIndicator("status")}</th>
+          <th class="col-status sortable" data-sort-col="status" tabindex="0" role="button" aria-label="Sort by status">Status${sortIndicator("status")}</th>
         </tr></thead>
         <tbody>` +
       sortedDocs.map(rowHTML).join("") +
