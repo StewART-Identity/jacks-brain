@@ -29,9 +29,8 @@ content/                # The wiki — you own this layer entirely
       index.md          # Concepts page — intro only; table auto-rendered
     synthesis/          # Cross-cutting analysis, comparisons, theses
       index.md          # Synthesis page — intro only; table auto-rendered
-  study/
+  visualize/
     graph.md            # Full-page graph view
-    help.md             # Graph view help and shortcuts
 static/originals/       # Immutable source documents — never modify these
 CLAUDE.md               # This file — read-only during operations
 ```
@@ -51,12 +50,12 @@ groups are arranged to express two pairings:
 2. **Collect and Reflect** are the cataloging pipeline — Collect is
    the verb (Selection, Acquisition, Retention), Reflect is what
    results from it (Sources, Entities, Concepts, Synthesis).
-3. **Study** holds the visualization tools — currently just Graph.
+3. **Visualize** holds the visualization tools — currently just Graph.
 
 Notes are top-level (peer of Search) rather than sub-pages of Collect
 because notes are not part of the cataloging pipeline — they are
 first-class captures of the user's own thinking, not downstream of an
-acquisition. Don't move them back under Collect or Study.
+acquisition. Don't move them back under Collect or Visualize.
 
 ## Page format
 
