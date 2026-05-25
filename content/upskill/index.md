@@ -1,7 +1,6 @@
 ---
 title: "Upskill"
+cssclasses: [hide-folder-listing]
 ---
 
-Self-directed study material. Each topic in the sidebar collects pages
-on a specific area I'm working through to build foundational
-competence. New topics are added via [[upskill/manage]].
+Self-directed study material organized by topic. Browse [[upskill/topics|Topics]] to see what's here; add or rearrange topics via [[upskill/manage|Manage]].
