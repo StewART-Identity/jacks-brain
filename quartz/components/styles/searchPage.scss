@@ -108,27 +108,17 @@
   border-color: var(--secondary);
 }
 
-/* Visible Search button — exact mirror of .research-btn.
+/* Visible Search button now uses the canonical .jb-btn class
+   (see custom.scss). The only thing left to do here is the layout
+   tweak — push the button to the right edge of the controls row.
 
-   Note: !important on width and height isn't needed here because the
-   button has NO `.search-button` class, so the sidebar's
-   `.search .search-button { width: 100%; height: 2rem }` rules don't
-   match. This is the whole point of the JSX refactor — the visible
-   button is selectorically isolated from engine-targeted styles. */
-#search-page .search-page-btn {
+   Historically this file (and three others) each defined an
+   identical yellow-on-green button under .search-page-btn /
+   .research-btn. The visual contract has been consolidated to a
+   single .jb-btn definition in custom.scss; component stylesheets
+   now retain only the component-specific layout overrides. */
+#search-page .jb-btn {
   margin-left: auto;
-  padding: 0.6rem 1.2rem;
-  background: var(--secondary);
-  color: var(--light);
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-#search-page .search-page-btn:hover {
-  opacity: 0.85;
 }
 
 /* Override the sidebar's modal-style .search-container positioning.
