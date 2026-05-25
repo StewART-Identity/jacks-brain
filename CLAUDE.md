@@ -16,6 +16,11 @@ content/                # The wiki — you own this layer entirely
     write.md            # Capture form — creates a new note
     browse.md           # Notes list — every note as an expandable card
     <slug>.md           # Individual notes (slug = YYYYMMDD-HHMMSS timestamp)
+  journal/
+    index.md            # Journal landing — links to write.md and browse.md
+    write.md            # Capture form — creates a new journal entry
+    browse.md           # Journal entries list
+    <slug>.md           # Individual entries (slug = YYYYMMDD-HHMMSS timestamp)
   collect/
     selection.md        # Upload form — add a source to the collection
     acquisition.md      # Cataloging — live status of the pipeline
@@ -31,6 +36,19 @@ content/                # The wiki — you own this layer entirely
       index.md          # Synthesis page — intro only; table auto-rendered
   visualize/
     graph.md            # Full-page graph view
+    timeline.md         # Activity over time, by page type
+    subjects.md         # Treemap of pages by controlled-vocabulary subject
+    tags.md             # Tag cloud / tag co-occurrence view
+    confidence.md       # Distribution of confidence levels across the wiki
+  quiz/
+    take.md             # Subject-filtered free-recall quiz session
+  upskill/              # Self-directed study material — DATA-DRIVEN, see below
+    <topic>/            # Per-topic study pages, where <topic> matches data/upskill/<topic>/
+data/                   # Machine-managed data outside the wiki
+  retention-log.md      # The cataloging audit log
+  upskill/              # Per-topic metadata driving the Upskill sidebar
+    <topic>/
+      meta.json         # Topic descriptor: slug, title, order, summary, hidden
 static/originals/       # Immutable source documents — never modify these
 docs/                   # Developer documentation (not served as wiki content)
   ui-conventions.md     # UI patterns, button family, table system — read before modifying components
@@ -38,26 +56,110 @@ CLAUDE.md               # This file — read-only during operations
 ```
 
 Quartz serves everything in `content/` as the browsable wiki. Files in `raw/`
-are not published.
+are not published. `data/` is read by build-time emitters and runtime API
+endpoints but is never served as wiki content.
 
 ### Sidebar structure
 
-The sidebar's top-level groups mirror the directory structure, and the
-groups are arranged to express two pairings:
+The sidebar's top-level groups mirror the directory structure, and they're
+ordered to tell a story:
 
-1. **Search and Notes** are peers — both about where information
-   *comes from*. Search brings in information gathered by others
-   (Wiki, Web); Notes captures information gathered by you (Write,
-   Browse). They sit at the top of the sidebar, side by side.
-2. **Collect and Reflect** are the cataloging pipeline — Collect is
-   the verb (Selection, Acquisition, Retention), Reflect is what
-   results from it (Sources, Entities, Concepts, Synthesis).
-3. **Visualize** holds the visualization tools — currently just Graph.
+1. **Intake** — where information comes from.
+   - **Search** brings in information gathered by others (Wiki, Web).
+   - **Notes** captures information gathered by you (Browse, Write).
+   - **Journal** captures longer-form reflection (Browse, Write). A
+     visual twin of Notes; the two are peers because they capture
+     different kinds of your own thinking — notes are observational
+     fragments, journal entries are reflective passages.
 
-Notes are top-level (peer of Search) rather than sub-pages of Collect
-because notes are not part of the cataloging pipeline — they are
-first-class captures of the user's own thinking, not downstream of an
-acquisition. Don't move them back under Collect or Visualize.
+2. **Cataloging pipeline** — what happens to a thing once it's been
+   chosen for catalog.
+   - **Collect** is the verb (Selection, Acquisition, Retention).
+   - **Reflect** is what results from it (Sources, Entities, Concepts,
+     Synthesis).
+
+3. **Visualize** — views over the corpus.
+   - Graph, Timeline, Subjects, Tags, Confidence.
+
+4. **Upskill** — self-directed study material.
+   - Sub-links are derived from `data/upskill/<slug>/meta.json` at
+     build time. See "Dynamic sections (Upskill)" below.
+
+5. **Quiz** — test what you've retained.
+   - Take.
+
+The grouping reflects a flow: bring stuff in (Search, Notes, Journal,
+Collect), make sense of it (Reflect, Visualize), expand your foundation
+(Upskill), test yourself (Quiz). Notes and Journal are top-level (peers
+of Search) rather than sub-pages of Collect because they're not part of
+the cataloging pipeline — they're first-class captures of the user's
+own thinking, not downstream of an acquisition. Don't move them back
+under Collect.
+
+### Dynamic sections (Upskill)
+
+Upskill is the wiki's first **dynamic section**: its sidebar sub-links
+and topic landing pages are derived from data files at build time
+rather than hand-listed in `quartz.layout.ts`.
+
+**How it works:**
+
+- Each topic is a directory at `data/upskill/<slug>/` containing a
+  `meta.json` file.
+
+  ```json
+  {
+    "slug": "git",
+    "title": "Git",
+    "order": 1,
+    "summary": "Object model, refs, internals, history-rewriting safely."
+  }
+  ```
+
+  - `slug` — must match the directory name. Authoritative source for
+    the URL is the directory name; the field is informational.
+  - `title` — display label in the sidebar and on the topic landing
+    page.
+  - `order` — ascending sort priority. Topics without `order` sort to
+    the end.
+  - `summary` — optional one-liner shown on the topic landing page.
+  - `hidden: true` — optional. Topic is excluded from the sidebar and
+    no landing page is emitted. Use to park a half-written topic.
+
+- The actual study material lives at `content/upskill/<slug>/*.md` as
+  normal wiki pages. They go through the standard Quartz pipeline,
+  appear in search, can carry frontmatter (subjects, tags), and link
+  to other wiki pages via `[[wikilinks]]` like any other page.
+
+- At build time, `quartz/util/upskill.ts` scans `data/upskill/`, and
+  the `UpskillPage` emitter (`quartz/plugins/emitters/upskillPage.tsx`)
+  generates one HTML landing page per topic at `/upskill/<slug>/`.
+  Those landing pages use the same `FolderContent` component that
+  drives `/reflect/<category>/` — they list the topic's pages as a
+  sortable table and surface the `summary` from `meta.json` above it.
+
+**Adding a new topic:**
+
+1. Create `data/upskill/<slug>/meta.json` with the four fields above.
+2. (Optional) Drop one or more `content/upskill/<slug>/*.md` study
+   pages in. The topic landing page will list them automatically.
+3. The next build picks up the topic — both the sidebar link and the
+   landing page.
+
+**Updating an existing topic:**
+
+- Edit `meta.json` for label or sort-order changes.
+- Add or remove pages under `content/upskill/<slug>/` to grow the
+  study material.
+
+**Removing a topic:**
+
+- Set `hidden: true` in `meta.json` to take it out of the sidebar
+  without losing the content.
+- Or delete the `data/upskill/<slug>/` directory entirely; the
+  landing page stops being emitted, and any pages still at
+  `content/upskill/<slug>/` revert to being listed by the standard
+  FolderPage emitter (no per-topic summary).
 
 ## Page format
 
@@ -145,6 +247,11 @@ The form on `/notes/write` writes notes with this shape. The slug is
 the timestamp itself in `YYYYMMDD-HHMMSS` form, so notes sort
 chronologically by filename without any frontmatter inspection.
 
+Journal entries (under `content/journal/`) follow the same shape as
+notes — same form-driven capture, same timestamp slug pattern. The two
+are kept separate by directory so they list and browse independently,
+but their frontmatter contract is identical.
+
 ### Naming conventions
 
 - Filenames: lowercase, hyphens for spaces. `quantum-entanglement.md`, not
@@ -160,6 +267,11 @@ chronologically by filename without any frontmatter inspection.
   automatically by the form). Notes can also be given descriptive
   slugs for hand-written reference notes — the
   `notes/graph-theory-glossary.md` page is an example.
+- Journal entries: `journal/YYYYMMDD-HHMMSS.md`. Same convention as
+  notes.
+- Upskill study pages: `upskill/<topic>/<slug>.md` where `<topic>`
+  matches a `data/upskill/<topic>/` directory and `<slug>` is a
+  descriptive kebab-case name (e.g. `upskill/git/object-model.md`).
 
 ### Wikilinks
 
@@ -422,6 +534,11 @@ retention entry. A note is just a captured thought, filed under
    pages via `[[wikilinks]]` exactly as other pages do. If you create
    a note that connects to existing concepts or sources, link them.
 
+Journal entries follow the same workflow, against `/api/journal` and
+`content/journal/`. Use journal for longer, more reflective passages
+where note-style fragments feel too short; both share the same
+timestamp-slug shape so they sort the same way.
+
 ### Query
 
 Trigger: user asks a question about the wiki's domain.
@@ -429,7 +546,7 @@ Trigger: user asks a question about the wiki's domain.
 1. Find candidate pages with `list_wiki_pages` (filter by prefix:
    `content/reflect/sources/`, `content/reflect/entities/`,
    `content/reflect/concepts/`, `content/reflect/synthesis/`,
-   `content/notes/`).
+   `content/notes/`, `content/journal/`).
 2. Read the relevant pages with `read_wiki_page`.
 3. Synthesize an answer with `[[wikilinks]]` to supporting pages.
 4. If the answer is substantial and reusable, offer to file it as a new
@@ -518,6 +635,7 @@ them in legacy code; fix them.
 | **Status** | The lifecycle state of a source on a pipeline-status table: `pending`, `in_progress`, `cataloged`, `failed`. Also the Retention column showing log-entry type. | Acquisition column header, Retention column header, Reflect → Sources second-table column header |
 | **Title** | The human-readable name of a wiki page (the `title:` frontmatter field). Distinct from Source: a source is a filename, a title is a page name. On the Entities table, this column is labeled "Name" instead, because entities have names, not titles. | Reflect tables (Sources, Concepts, Synthesis use "Title"; Entities uses "Name"), Retention table |
 | **Cataloging** | The pipeline section header on the Acquisition page (was "Document Processing"). Names the process the table is showing. | Acquisition page header |
+| **Topic** | A study area under Upskill. Backed by a `data/upskill/<slug>/meta.json` descriptor and zero or more study pages at `content/upskill/<slug>/`. | Upskill sidebar group, Upskill landing pages |
 
 ## UI and code conventions
 

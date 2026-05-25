@@ -1,5 +1,6 @@
 import { PageLayout, SharedLayout } from "./quartz/cfg"
 import * as Component from "./quartz/components"
+import { scanTopics } from "./quartz/util/upskill"
 
 // Predicate: this page can host quiz questions. Used both by
 // QuizSuggest (renders the "Generate questions" button) and matches
@@ -20,6 +21,12 @@ function isQuizzablePage(slug: string | undefined): boolean {
   }
   return false
 }
+
+// Upskill topics — scanned from data/upskill/<slug>/meta.json at build
+// time. See quartz/util/upskill.ts for the format and contract. The
+// scan runs once when this module loads. Topics with `hidden: true`
+// are filtered out before this list is returned.
+const upskillTopics = scanTopics()
 
 // components shared across all pages
 export const sharedPageComponents: SharedLayout = {
@@ -176,6 +183,20 @@ const sidebarLeft = [
       { title: "Tags", slug: "visualize/tags" },
       { title: "Confidence", slug: "visualize/confidence" },
     ],
+  }),
+  // Upskill — data-driven sub-links from data/upskill/<slug>/meta.json.
+  // Sits between Visualize and Quiz because the sidebar's groups tell
+  // a story: bring stuff in (Search, Notes, Journal, Collect), make
+  // sense of it (Reflect, Visualize), expand your foundation (Upskill),
+  // test yourself (Quiz).
+  Component.SidebarLink({
+    title: "Upskill",
+    slug: "upskill",
+    defaultState: "open",
+    links: upskillTopics.map((t) => ({
+      title: t.title,
+      slug: `upskill/${t.slug}`,
+    })),
   }),
   Component.SidebarLink({
     title: "Quiz",

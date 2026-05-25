@@ -1,0 +1,6 @@
+{
+  "slug": "git",
+  "title": "Git",
+  "order": 1,
+  "summary": "Object model, refs, internals, and history-rewriting safely."
+}
