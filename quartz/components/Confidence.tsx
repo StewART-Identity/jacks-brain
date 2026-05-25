@@ -1,12 +1,5 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 
-/**
- * Confidence — dashboard view of the corpus's calibration shape.
- *
- * Three stacked-bar charts in one SVG. Component shell is small; the
- * inline script does the work after fetching /static/corpus.json.
- * Same pattern as the other Visualize sub-pages.
- */
 const Confidence: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="confidence-app">
@@ -43,6 +36,7 @@ const Confidence: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
 
 Confidence.afterDOMLoaded = `
 document.addEventListener("nav", () => {
+  // SCOPED NAV HANDLER.
   const root = document.getElementById("confidence-app")
   if (!root) return
 
@@ -50,7 +44,9 @@ document.addEventListener("nav", () => {
   const tooltip = document.getElementById("confidence-tooltip")
   if (!wrap || !tooltip) return
 
-  // ─── Constants ───────────────────────────────────────────────────
+  const mountedAt = Date.now()
+  wrap.__confidenceMountedAt = mountedAt
+
   const LEVELS = ["high", "medium", "low", "speculative", "missing"]
   const LEVEL_LABEL = {
     high: "High",
@@ -60,23 +56,20 @@ document.addEventListener("nav", () => {
     missing: "Missing",
   }
   const LEVEL_COLOR = {
-    high:        "#7BBF95",   // --tertiary, sage
-    medium:      "#F0DDB3",   // --dark, warm sand
-    low:         "#B8845A",   // muted amber
-    speculative: "#5A8569",   // dimmed sage
-    missing:     "#4A5A50",   // dim gray-green
+    high:        "#7BBF95",
+    medium:      "#F0DDB3",
+    low:         "#B8845A",
+    speculative: "#5A8569",
+    missing:     "#4A5A50",
   }
 
-  // SVG viewBox. Width matches the card; height accommodates the
-  // three sections (overall + N subjects + 5 types) computed
-  // dynamically below — we initially set the viewBox at render time.
   const VB_W = 720
-  const BAR_HEIGHT = 22       // visual height of each bar
-  const ROW_GAP = 6           // gap between bars within a section
-  const SECTION_GAP = 26      // gap between sections
-  const SECTION_HEADER_H = 24 // height of each section's title row
-  const LABEL_COL_W = 140     // width of the label column on the left
-  const COUNT_COL_W = 50      // width of the count column on the right
+  const BAR_HEIGHT = 22
+  const ROW_GAP = 6
+  const SECTION_GAP = 26
+  const SECTION_HEADER_H = 24
+  const LABEL_COL_W = 140
+  const COUNT_COL_W = 50
   const PAD_LEFT = 8
   const PAD_RIGHT = 8
   const BAR_W = VB_W - PAD_LEFT - PAD_RIGHT - LABEL_COL_W - COUNT_COL_W
@@ -90,19 +83,10 @@ document.addEventListener("nav", () => {
       .replace(/'/g, "&#39;")
   }
 
-  // ─── Data extraction ─────────────────────────────────────────────
-  //
-  // For each grouping (overall / subject / type), compute the count
-  // per confidence level. Pages with no confidence field count as
-  // "missing." Pages are counted whole-once per group except for
-  // subjects, where multi-subject pages count once per subject (same
-  // whole-counting convention as the Subjects treemap).
-
   function bucket(corpus) {
     function emptyDist() {
       return { high: 0, medium: 0, low: 0, speculative: 0, missing: 0, total: 0 }
     }
-
     function addPage(dist, page) {
       const c = page.confidence
       if (c === "high" || c === "medium" || c === "low" || c === "speculative") {
@@ -114,17 +98,15 @@ document.addEventListener("nav", () => {
     }
 
     const overall = emptyDist()
-    const bySubject = new Map()  // subject -> dist
-    const byType = new Map()     // type -> dist
+    const bySubject = new Map()
+    const byType = new Map()
 
     for (const page of corpus.pages) {
       addPage(overall, page)
-
       if (page.type) {
         if (!byType.has(page.type)) byType.set(page.type, emptyDist())
         addPage(byType.get(page.type), page)
       }
-
       if (Array.isArray(page.subjects) && page.subjects.length > 0) {
         for (const s of page.subjects) {
           if (!bySubject.has(s)) bySubject.set(s, emptyDist())
@@ -133,8 +115,6 @@ document.addEventListener("nav", () => {
       }
     }
 
-    // Subjects sorted by total descending. Types in a fixed order
-    // so the rendering stays stable across builds.
     const subjects = Array.from(bySubject.entries())
       .map(([name, dist]) => ({ name, dist }))
       .sort((a, b) => b.dist.total - a.dist.total)
@@ -153,20 +133,11 @@ document.addEventListener("nav", () => {
     return { overall, subjects, types }
   }
 
-  // ─── Rendering ───────────────────────────────────────────────────
-  //
-  // Each bar is a row at a known y-offset. We render every segment
-  // as a <rect> with data-* attributes so the hover handler can look
-  // up the counts without re-scanning the data.
-
   function renderBar(y, label, dist) {
     if (dist.total === 0) return ""
     let svg = ""
-
-    // Label.
     svg += '<text class="confidence-bar-label" x="' + (PAD_LEFT + LABEL_COL_W - 8) + '" y="' + (y + BAR_HEIGHT * 0.7) + '" text-anchor="end">' + escapeXml(label) + '</text>'
 
-    // Stacked segments.
     let cursorX = PAD_LEFT + LABEL_COL_W
     for (const level of LEVELS) {
       const n = dist[level]
@@ -176,10 +147,7 @@ document.addEventListener("nav", () => {
       svg += '<rect class="confidence-segment" x="' + cursorX + '" y="' + y + '" width="' + w + '" height="' + BAR_HEIGHT + '" fill="' + LEVEL_COLOR[level] + '" data-label="' + escapeXml(label) + '" data-level="' + level + '" data-count="' + n + '" data-total="' + dist.total + '" data-pct="' + pct + '"/>'
       cursorX += w
     }
-
-    // Count label on the right.
     svg += '<text class="confidence-bar-count" x="' + (VB_W - PAD_RIGHT) + '" y="' + (y + BAR_HEIGHT * 0.7) + '" text-anchor="end">' + dist.total + '</text>'
-
     return svg
   }
 
@@ -188,7 +156,8 @@ document.addEventListener("nav", () => {
   }
 
   function renderSVG(data) {
-    // Compute total SVG height based on row count.
+    if (wrap.__confidenceMountedAt !== mountedAt) return  // stale-mount guard
+
     const overallRows = 1
     const subjectRows = data.subjects.length
     const typeRows = data.types.length
@@ -203,13 +172,11 @@ document.addEventListener("nav", () => {
 
     let y = 16
 
-    // ─── Overall section ───
     svg += renderSectionHeader(y, "Overall")
     y += SECTION_HEADER_H - 6
     svg += renderBar(y, "All pages", data.overall)
     y += BAR_HEIGHT + ROW_GAP + SECTION_GAP
 
-    // ─── By subject section ───
     svg += renderSectionHeader(y, "By subject")
     y += SECTION_HEADER_H - 6
     if (data.subjects.length === 0) {
@@ -223,7 +190,6 @@ document.addEventListener("nav", () => {
     }
     y += SECTION_GAP - ROW_GAP
 
-    // ─── By type section ───
     svg += renderSectionHeader(y, "By type")
     y += SECTION_HEADER_H - 6
     if (data.types.length === 0) {
@@ -237,50 +203,34 @@ document.addEventListener("nav", () => {
 
     svg += '</svg>'
     wrap.innerHTML = svg
-    bindEvents()
   }
 
-  // ─── Hover ───────────────────────────────────────────────────────
+  // Single-bind listeners on the wrap.
 
-  function bindEvents() {
-    const svg = wrap.querySelector("svg")
-    if (!svg) return
-
-    function onMove(e) {
-      const target = e.target.closest(".confidence-segment")
-      if (!target) {
-        hideTooltip()
-        clearHoverDim(svg)
-        return
-      }
-      setHoverDim(svg, target)
-      showTooltip(target, e.clientX, e.clientY)
-    }
-    function onLeave() {
+  function onMove(e) {
+    const target = e.target.closest && e.target.closest(".confidence-segment")
+    if (!target) {
       hideTooltip()
-      clearHoverDim(svg)
+      clearHoverDim()
+      return
     }
-
-    svg.addEventListener("mousemove", onMove)
-    svg.addEventListener("mouseleave", onLeave)
-
-    if (window.addCleanup) {
-      window.addCleanup(() => {
-        svg.removeEventListener("mousemove", onMove)
-        svg.removeEventListener("mouseleave", onLeave)
-      })
-    }
+    setHoverDim(target)
+    showTooltip(target, e.clientX, e.clientY)
+  }
+  function onLeave() {
+    hideTooltip()
+    clearHoverDim()
   }
 
-  function setHoverDim(svg, activeSegment) {
-    const segments = svg.querySelectorAll(".confidence-segment")
+  function setHoverDim(activeSegment) {
+    const segments = wrap.querySelectorAll(".confidence-segment")
     segments.forEach((s) => {
       if (s === activeSegment) s.classList.add("hovered")
       else s.classList.add("dimmed")
     })
   }
-  function clearHoverDim(svg) {
-    const segments = svg.querySelectorAll(".confidence-segment")
+  function clearHoverDim() {
+    const segments = wrap.querySelectorAll(".confidence-segment")
     segments.forEach((s) => {
       s.classList.remove("hovered")
       s.classList.remove("dimmed")
@@ -295,21 +245,7 @@ document.addEventListener("nav", () => {
     const total = segment.getAttribute("data-total") || "0"
     const pct = segment.getAttribute("data-pct") || "0"
 
-    const LEVEL_LABEL = {
-      high: "High",
-      medium: "Medium",
-      low: "Low",
-      speculative: "Speculative",
-      missing: "Missing",
-    }
     const levelLabel = LEVEL_LABEL[level] || level
-    const LEVEL_COLOR = {
-      high:        "#7BBF95",
-      medium:      "#F0DDB3",
-      low:         "#B8845A",
-      speculative: "#5A8569",
-      missing:     "#4A5A50",
-    }
     const color = LEVEL_COLOR[level] || "#888"
 
     tooltip.innerHTML =
@@ -331,11 +267,23 @@ document.addEventListener("nav", () => {
     tooltip.hidden = true
   }
 
-  // ─── Load and render ─────────────────────────────────────────────
+  wrap.addEventListener("mousemove", onMove)
+  wrap.addEventListener("mouseleave", onLeave)
+
+  if (window.addCleanup) {
+    window.addCleanup(() => {
+      if (wrap.__confidenceMountedAt === mountedAt) {
+        wrap.__confidenceMountedAt = null
+      }
+      wrap.removeEventListener("mousemove", onMove)
+      wrap.removeEventListener("mouseleave", onLeave)
+    })
+  }
 
   fetch("/static/corpus.json")
     .then((r) => r.json())
     .then((data) => {
+      if (wrap.__confidenceMountedAt !== mountedAt) return
       const bucketed = bucket(data)
       if (bucketed.overall.total === 0) {
         wrap.innerHTML = '<p class="muted" style="text-align:center;padding:2rem 0">No pages in the corpus yet.</p>'
@@ -344,6 +292,7 @@ document.addEventListener("nav", () => {
       renderSVG(bucketed)
     })
     .catch((err) => {
+      if (wrap.__confidenceMountedAt !== mountedAt) return
       wrap.innerHTML = '<p class="muted">Could not load the corpus: ' + escapeXml(err.message) + '</p>'
     })
 })
@@ -368,7 +317,6 @@ Confidence.css = `
   color: var(--dark);
 }
 
-/* Legend */
 .confidence-legend {
   display: flex;
   flex-wrap: wrap;
@@ -394,7 +342,6 @@ Confidence.css = `
 .confidence-legend-swatch[data-level="speculative"] { background: #5A8569; }
 .confidence-legend-swatch[data-level="missing"]     { background: #4A5A50; }
 
-/* SVG wrap */
 .confidence-svg-wrap {
   position: relative;
   width: 100%;
@@ -410,7 +357,6 @@ Confidence.css = `
   padding: 1rem 0;
 }
 
-/* SVG text */
 .confidence-section-header {
   fill: var(--dark);
   font-family: inherit;
@@ -438,8 +384,6 @@ Confidence.css = `
   font-style: italic;
 }
 
-/* Segment hover behavior — same hover-dim pattern as the Subjects
-   treemap. The hovered segment stays full opacity; siblings dim. */
 .confidence-segment {
   cursor: default;
   transition: opacity 0.12s ease;
@@ -451,7 +395,6 @@ Confidence.css = `
   opacity: 1;
 }
 
-/* Tooltip */
 .confidence-tooltip {
   position: absolute;
   pointer-events: none;
