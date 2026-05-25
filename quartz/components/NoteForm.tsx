@@ -97,7 +97,7 @@ const NoteForm: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
         </div>
 
         <div class="notes-controls">
-          <button type="button" id="note-save-btn" class="search-page-btn">
+          <button type="button" id="note-save-btn" class="jb-btn">
             Save note
           </button>
         </div>
