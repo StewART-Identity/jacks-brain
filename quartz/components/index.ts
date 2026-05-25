@@ -35,6 +35,7 @@ import RetentionList from "./RetentionList"
 import Hamburger from "./Hamburger"
 import NoteForm from "./NoteForm"
 import NotesList from "./NotesList"
+import Timeline from "./Timeline"
 
 export {
   ArticleTitle,
@@ -74,4 +75,5 @@ export {
   Hamburger,
   NoteForm,
   NotesList,
+  Timeline,
 }
