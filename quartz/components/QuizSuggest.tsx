@@ -15,9 +15,8 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
  *   done       → quiz count increased. Show success + refresh link.
  *   failed     → POST failed, or polling timed out.
  *
- * The button is intentionally low-key — small, secondary styling,
- * sits near the bottom of the page. It's not the focus of the page;
- * it's a side action.
+ * The button uses the canonical .jb-btn style (with the secondary
+ * modifier — this is a side action, not the focus of the page).
  */
 const QuizSuggest: QuartzComponent = (props: QuartzComponentProps) => {
   const slug = props.fileData.slug ?? ""
@@ -35,7 +34,7 @@ const QuizSuggest: QuartzComponent = (props: QuartzComponentProps) => {
           <button
             type="button"
             id="quiz-suggest-btn"
-            class="quiz-suggest-btn"
+            class="jb-btn jb-btn-secondary quiz-suggest-btn"
             disabled
           >
             Generate quiz questions
@@ -233,25 +232,10 @@ QuizSuggest.css = `
   gap: 0.5rem;
 }
 
-.quiz-suggest-btn {
-  background: transparent;
-  border: 1px solid var(--lightgray);
-  color: var(--darkgray);
-  font-family: inherit;
-  font-size: 0.88rem;
-  padding: 0.45rem 0.9rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-}
-.quiz-suggest-btn:hover:not(:disabled) {
-  border-color: var(--secondary);
-  color: var(--secondary);
-}
-.quiz-suggest-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
+/* Visual styling of the button comes from .jb-btn / .jb-btn-secondary
+   in custom.scss. The .quiz-suggest-btn class is retained for any
+   future component-scoped layout adjustments but currently sets no
+   properties. */
 
 .quiz-suggest-status {
   font-size: 0.85rem;
