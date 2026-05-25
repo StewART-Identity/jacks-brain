@@ -1,6 +1,26 @@
 import { PageLayout, SharedLayout } from "./quartz/cfg"
 import * as Component from "./quartz/components"
 
+// Predicate: this page can host quiz questions. Used both by
+// QuizSuggest (renders the "Generate questions" button) and matches
+// the slug-allowlist that /api/quiz/suggest enforces server-side.
+const QUIZZABLE_PREFIXES = [
+  "reflect/concepts/",
+  "reflect/entities/",
+  "reflect/sources/",
+  "reflect/synthesis/",
+  "notes/entries/",
+  "journal/entries/",
+]
+function isQuizzablePage(slug: string | undefined): boolean {
+  if (!slug) return false
+  if (slug.endsWith("/index")) return false
+  for (const prefix of QUIZZABLE_PREFIXES) {
+    if (slug.startsWith(prefix) && slug.length > prefix.length) return true
+  }
+  return false
+}
+
 // components shared across all pages
 export const sharedPageComponents: SharedLayout = {
   head: Component.Head(),
@@ -54,6 +74,10 @@ export const sharedPageComponents: SharedLayout = {
     Component.ConditionalRender({
       component: Component.QuizTake(),
       condition: (page) => page.fileData.slug === "quiz/take",
+    }),
+    Component.ConditionalRender({
+      component: Component.QuizSuggest(),
+      condition: (page) => isQuizzablePage(page.fileData.slug),
     }),
     Component.ConditionalRender({
       component: Component.NukeButton(),
