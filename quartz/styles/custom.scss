@@ -774,6 +774,30 @@ body[data-slug="collect/retention"] .table-container > table td:nth-child(3) {
 
 
 /* ==========================================================================
+   Section landing pages — hide auto-folder listing
+
+   Page-listing block is hidden via the .hide-folder-listing class set
+   in frontmatter (cssclasses). The article body's curated bullets are
+   the authoritative listing on these pages.
+
+   Quartz applies the cssclasses to the inner <article> element (see
+   FolderContent.tsx), so we target ~ .page-listing as a sibling. The
+   sibling lives outside the .article so we walk up to a containing
+   .popover-hint and find .page-listing within.
+   ========================================================================== */
+
+article.hide-folder-listing ~ .page-listing,
+.hide-folder-listing ~ .page-listing {
+  display: none;
+}
+/* Belt and braces: also catch the page-listing when it's nested next
+   to an article inside a popover-hint wrapper. */
+.popover-hint:has(article.hide-folder-listing) .page-listing {
+  display: none;
+}
+
+
+/* ==========================================================================
    Selection highlight
    ========================================================================== */
 
