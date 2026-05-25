@@ -2,10 +2,6 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
 
 /**
  * Tags — force-directed network of tag co-occurrence.
- *
- * Component shell is small; the inline script does the heavy
- * lifting after fetching /static/corpus.json. Same pattern as the
- * other Visualize sub-pages (Timeline, Subjects).
  */
 const Tags: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
@@ -34,12 +30,6 @@ const Tags: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
 
 Tags.afterDOMLoaded = `
 document.addEventListener("nav", () => {
-  // SCOPED NAV HANDLER (fix #5):
-  // Bail early if this isn't the Tags page. Without this, every
-  // SPA navigation across the site would run the entire Tags
-  // bootstrap, attach listeners, etc — leading to listener
-  // accumulation and (in the worst case) the Tags SVG bleeding
-  // into other pages' content.
   const root = document.getElementById("tags-app")
   if (!root) return
 
@@ -47,12 +37,7 @@ document.addEventListener("nav", () => {
   const tooltip = document.getElementById("tags-tooltip")
   if (!wrap || !tooltip) return
 
-  // SINGLE-ENTRY GUARD (fix #6):
-  // Each call to this handler represents a fresh mount of the
-  // Tags page. Use a per-mount timestamp so the animation loop
-  // from any prior mount can detect it's stale and stop.
   const mountedAt = Date.now()
-  // Stash on the wrap element so the cleanup callback can read it.
   wrap.__tagsMountedAt = mountedAt
 
   // ─── Constants ───────────────────────────────────────────────────
@@ -63,35 +48,20 @@ document.addEventListener("nav", () => {
   const VB_W = 720
   const VB_H = 520
 
-  // Simulation parameters. See commit message for rationale on
-  // which knobs are load-bearing for stability.
-  const CHARGE_STRENGTH = -180
-  const LINK_DISTANCE = 48
+  // Simulation parameters — retuned to actually spread nodes.
+  // The previous tuning had repulsion lose to centering past about
+  // 80 units of distance, which produced the central clump.
+  const CHARGE_STRENGTH = -350     // ↑ stronger
+  const LINK_DISTANCE = 72         // ↑ longer
   const LINK_STRENGTH = 0.4
-  const CENTER_STRENGTH = 0.04
+  const CENTER_STRENGTH = 0.015    // ↓ much weaker
   const VELOCITY_DECAY = 0.4
-  const ALPHA_DECAY = 0.012
+  const ALPHA_DECAY = 0.008        // ↓ longer cool-down
 
-  // STABILITY GUARDS (fixes #1, #2, #4):
-  // - MAX_VELOCITY caps per-frame node speed. Without this, a
-  //   pathological force pair (two nodes nearly identical, dist²
-  //   tiny, charge force enormous) produces an unbounded velocity
-  //   that the next integration step turns into an enormous
-  //   position delta — the root cause of the "all nodes clumped
-  //   in upper-left" symptom.
-  // - MIN_DISTANCE_SQ is the squared distance below which we
-  //   perturb nodes apart rather than computing an actual force.
-  //   The previous threshold (0.01) was too low; raising it
-  //   prevents near-singular force calculations.
-  // - MAX_ITERATIONS caps total simulation steps regardless of
-  //   alpha. The loop will exit after this many frames even if
-  //   alpha never decays to zero (which can happen if the system
-  //   never settles).
-  const MAX_VELOCITY = 8
+  const MAX_VELOCITY = 14          // ↑ allow faster spread before cool-down
   const MIN_DISTANCE_SQ = 4
-  const MAX_ITERATIONS = 600  // ~10 seconds at 60fps — plenty for any healthy graph
+  const MAX_ITERATIONS = 600
 
-  // Node radius scale (log).
   const MIN_NODE_RADIUS = 4
   const MAX_NODE_RADIUS = 18
 
@@ -107,8 +77,6 @@ document.addEventListener("nav", () => {
   function clamp(v, lo, hi) {
     return v < lo ? lo : v > hi ? hi : v
   }
-
-  // ─── Data extraction ─────────────────────────────────────────────
 
   function extract(corpus) {
     const tagCount = new Map()
@@ -139,13 +107,6 @@ document.addEventListener("nav", () => {
       }
     }
 
-    // Spread initial positions across the FULL viewBox rather than
-    // a sub-region. Random uniform across [0, VB_W] and [0, VB_H]
-    // gives the simulation a healthy starting spread to work from.
-    // (Previously: random across the same range, but I'm calling it
-    // out as load-bearing — a clustered initial layout would create
-    // exactly the near-singular force conditions the clamping was
-    // added to handle, so keeping nodes well-spread at start matters.)
     const nodes = Array.from(tagCount.entries()).map(([tag, count]) => ({
       id: tag,
       count,
@@ -194,8 +155,6 @@ document.addEventListener("nav", () => {
     }
   }
 
-  // ─── Force simulation ────────────────────────────────────────────
-
   let simulation = null
   let iterationCount = 0
 
@@ -204,10 +163,6 @@ document.addEventListener("nav", () => {
     const maxWeight = Math.max(...edges.map((e) => e.weight), 1)
 
     function resetNaNNode(n) {
-      // NAN GUARD (fix #3):
-      // If a node's position has gone NaN, reset it to a random
-      // position in the viewBox. This keeps the rest of the
-      // simulation from infecting on the next step.
       n.x = 40 + Math.random() * (VB_W - 80)
       n.y = 40 + Math.random() * (VB_H - 80)
       n.vx = 0
@@ -219,7 +174,6 @@ document.addEventListener("nav", () => {
       if (iterationCount > MAX_ITERATIONS) return false
       if (alpha < 0.005) return false
 
-      // Repulsion. Guard near-singular pairs by perturbing.
       for (let i = 0; i < nodes.length; i++) {
         const ni = nodes[i]
         for (let j = i + 1; j < nodes.length; j++) {
@@ -228,8 +182,6 @@ document.addEventListener("nav", () => {
           let dy = nj.y - ni.y
           let dist2 = dx * dx + dy * dy
           if (dist2 < MIN_DISTANCE_SQ) {
-            // Perturb harder than before, so the next iteration's
-            // distance is safely outside the singular zone.
             dx = (Math.random() - 0.5) * 4
             dy = (Math.random() - 0.5) * 4
             dist2 = MIN_DISTANCE_SQ
@@ -245,7 +197,6 @@ document.addEventListener("nav", () => {
         }
       }
 
-      // Edge spring forces.
       for (const e of edges) {
         const dx = e.target.x - e.source.x
         const dy = e.target.y - e.source.y
@@ -261,7 +212,6 @@ document.addEventListener("nav", () => {
         e.target.vy -= fy
       }
 
-      // Centering pull.
       const cx = VB_W / 2
       const cy = VB_H / 2
       for (const n of nodes) {
@@ -269,27 +219,19 @@ document.addEventListener("nav", () => {
         n.vy += (cy - n.y) * CENTER_STRENGTH * alpha
       }
 
-      // Integrate with full safety: velocity clamp, NaN check, position clamp.
       for (const n of nodes) {
         n.vx *= (1 - VELOCITY_DECAY)
         n.vy *= (1 - VELOCITY_DECAY)
-
-        // VELOCITY CLAMP (fix #2): bound speed regardless of force
-        // magnitude. This is the actual safeguard against runaway.
         n.vx = clamp(n.vx, -MAX_VELOCITY, MAX_VELOCITY)
         n.vy = clamp(n.vy, -MAX_VELOCITY, MAX_VELOCITY)
-
         n.x += n.vx
         n.y += n.vy
 
-        // NaN check (fix #3).
         if (!isFinite(n.x) || !isFinite(n.y)) {
           resetNaNNode(n)
           continue
         }
 
-        // POSITION CLAMP (fix #1): keep nodes inside the viewBox.
-        // Padding margin lets node labels stay visible at edges.
         const margin = 20
         n.x = clamp(n.x, margin, VB_W - margin)
         n.y = clamp(n.y, margin, VB_H - margin)
@@ -305,8 +247,6 @@ document.addEventListener("nav", () => {
       getIteration: () => iterationCount,
     }
   }
-
-  // ─── Rendering ───────────────────────────────────────────────────
 
   let hoveredTag = null
   let viewTransform = { tx: 0, ty: 0, k: 1 }
@@ -356,16 +296,11 @@ document.addEventListener("nav", () => {
     wrap.innerHTML = svg
   }
 
-  // ─── Animation loop with single-entry guard ──────────────────────
-
   let animFrame = null
   let stopAnimation = false
 
   function startAnimation(nodes, edges, maxEdgeWeight) {
     function loop() {
-      // Stale-mount check (fix #6): if a newer mount has registered
-      // a different mountedAt timestamp, this loop is stale and
-      // should exit.
       if (stopAnimation || wrap.__tagsMountedAt !== mountedAt) return
       const still = simulation.step()
       renderSVG(nodes, edges, maxEdgeWeight)
@@ -375,20 +310,6 @@ document.addEventListener("nav", () => {
     }
     animFrame = requestAnimationFrame(loop)
   }
-
-  // ─── Event binding (idempotent — single set of listeners) ────────
-  //
-  // EVENT-LISTENER DEDUPING (fix #7):
-  // Previously bindEvents was called on every animation frame,
-  // re-attaching listeners to a fresh SVG element each time. The
-  // old elements' listeners weren't released until GC, which under
-  // SPA-nav churn produced enormous listener counts.
-  //
-  // Now we attach listeners ONCE to the wrap element (which doesn't
-  // get replaced by renderSVG). Inside the handler we use closest()
-  // to find the relevant node. Since the wrap survives across
-  // renderSVG calls, listeners attach once and stay valid until
-  // SPA-nav cleanup runs.
 
   let topCoTagsFor = new Map()
   let currentNodes = []
@@ -429,9 +350,6 @@ document.addEventListener("nav", () => {
     tooltip.hidden = true
   }
 
-  // Single mousemove handler delegated to wrap. Uses closest() to
-  // find the node element; falls back to "no hover" if not on a
-  // node.
   function onMouseMove(e) {
     const target = e.target.closest && e.target.closest(".tags-node")
     if (!target) {
@@ -529,7 +447,6 @@ document.addEventListener("nav", () => {
     if (svg) svg.style.cursor = ""
   }
 
-  // Bind once on the wrap.
   wrap.addEventListener("mousemove", onMouseMove)
   wrap.addEventListener("mousemove", onMouseMovePan)
   wrap.addEventListener("mouseleave", onMouseLeave)
@@ -541,8 +458,6 @@ document.addEventListener("nav", () => {
 
   if (window.addCleanup) {
     window.addCleanup(() => {
-      // Mark this mount stale (any pending animation frame from
-      // this mount will see the mountedAt mismatch and exit).
       stopAnimation = true
       if (wrap.__tagsMountedAt === mountedAt) {
         wrap.__tagsMountedAt = null
@@ -558,8 +473,6 @@ document.addEventListener("nav", () => {
       document.removeEventListener("mouseup", onMouseUpPan)
     })
   }
-
-  // ─── Load and start ──────────────────────────────────────────────
 
   fetch("/static/corpus.json")
     .then((r) => r.json())
@@ -602,7 +515,6 @@ Tags.css = `
   color: var(--dark);
 }
 
-/* Legend */
 .tags-legend {
   display: flex;
   flex-wrap: wrap;
