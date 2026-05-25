@@ -79,6 +79,28 @@
   @media all and ($mobile) {
     display: none !important;
   }
+
+  /* Disable popovers on touch devices regardless of viewport width.
+
+     The link-preview popover is a hover-based UX. On touch devices,
+     :hover is sticky — once a tap "enters" an element, the :hover
+     state can persist until the next tap elsewhere. Combined with
+     .active-popover being added via mouseenter (which DOES fire on
+     touch), this caused popovers to get stuck visible on iPad after
+     tapping a source-page link — the popover would float over the
+     actual page until the user managed to dismiss it by tapping in
+     empty space outside the popover (which itself captures :hover).
+
+     The (hover: none) and (pointer: coarse) media features both
+     identify touch devices in slightly different ways. Combining
+     them with AND matches every common touch device — phones,
+     tablets — while leaving conventional mouse/trackpad setups
+     untouched. (A few hybrid devices like Surfaces with stylus may
+     report different combinations; this rule prioritizes correctness
+     on the common cases.) */
+  @media (hover: none) and (pointer: coarse) {
+    display: none !important;
+  }
 }
 
 .active-popover,
