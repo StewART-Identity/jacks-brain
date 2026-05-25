@@ -5,9 +5,14 @@
 
 /* Acquisition table: column widths.
    The unified table look (header band, alternating rows, cell borders,
-   flush-left) comes from quartz/styles/jbtable.scss via the .jb-table
-   class on the wrapping <div>. Sort header convention (cursor, hover,
-   triangle indicators) matches the Retention table. */
+   flush-left, centered headers, centered date/status cells) comes from
+   quartz/styles/_jbtable.scss via the .jb-table class on the wrapping
+   <div>. Sort header convention (cursor, hover, triangle indicators)
+   matches the Retention table.
+
+   Column order: Checkbox / Acquired / Status / Source.
+   Widths are anchored on class names rather than nth-child so any
+   future reordering of columns doesn't silently mis-apply widths. */
 
 #acquisition-app thead th.queue-checkbox-cell,
 #acquisition-app tbody td.queue-checkbox-cell {
@@ -17,12 +22,8 @@
   padding-left: 0.5rem;
   padding-right: 0.5rem;
 }
-#acquisition-app thead th:nth-child(2) {
-  /* Document — takes whatever's left */
-  width: auto;
-}
-#acquisition-app thead th:nth-child(3),
-#acquisition-app tbody td:nth-child(3) {
+#acquisition-app thead th.col-date,
+#acquisition-app tbody td.col-date {
   /* Acquired — fits "2026-04-23" on top and "processing 8m"/"waiting 4m"
      /"12m ago" underneath. Slightly wider than just the date because of
      the two-line layout and the longer relative-time strings. */
@@ -43,14 +44,17 @@
   color: var(--gray);
   font-style: italic;
 }
-#acquisition-app thead th:nth-child(4),
-#acquisition-app tbody td:nth-child(4) {
+#acquisition-app thead th.col-status,
+#acquisition-app tbody td.col-status {
   /* Status — fits the widest badge ("IN_PROGRESS") plus padding */
   width: 8rem;
   white-space: nowrap;
 }
-#acquisition-app tbody td:nth-child(2) {
-  /* Document name can be long — allow wrapping and break on hyphens */
+#acquisition-app thead th.queue-document-cell,
+#acquisition-app tbody td.queue-document-cell {
+  /* Source — trailing column, takes whatever's left. Long filenames
+     wrap inside the cell rather than expanding the column. */
+  width: auto;
   overflow-wrap: anywhere;
 }
 
