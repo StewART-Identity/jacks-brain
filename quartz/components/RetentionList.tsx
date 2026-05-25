@@ -73,7 +73,7 @@ document.addEventListener("nav", () => {
     container.innerHTML = '<div class="table-container jb-table"><table>' +
       '<thead><tr>' +
       '<th class="col-date sortable" data-sort="date">Acquired' + arrow("date") + '</th>' +
-      '<th class="sortable" data-sort="action">Action' + arrow("action") + '</th>' +
+      '<th class="col-status sortable" data-sort="action">Status' + arrow("action") + '</th>' +
       '<th class="sortable" data-sort="filename">Source' + arrow("filename") + '</th>' +
       '<th class="sortable" data-sort="title">Title' + arrow("title") + '</th>' +
       '</tr></thead>' +
@@ -84,7 +84,7 @@ document.addEventListener("nav", () => {
           : '<span class="title-missing" title="Source page no longer exists \\u2014 read-only">\\u2014</span>'
         return '<tr>' +
           '<td class="col-date">' + escapeHtml(r.date) + '</td>' +
-          '<td>' + escapeHtml(r.action) + '</td>' +
+          '<td class="col-status">' + escapeHtml(r.action) + '</td>' +
           '<td><code>' + escapeHtml(r.filename) + '</code></td>' +
           '<td>' + titleCell + '</td>' +
           '</tr>'
@@ -239,9 +239,9 @@ RetentionList.css = `
 
 /* Retention table: column widths and inline-edit interaction states.
    The unified table look (header band, alternating rows, cell borders,
-   flush-left, centered headers, centered date cells) comes from
-   quartz/styles/_jbtable.scss via the .jb-table class on the wrapping
-   <div>. */
+   flush-left, centered headers, centered date cells, centered status
+   cells) comes from quartz/styles/_jbtable.scss via the .jb-table
+   class on the wrapping <div>. */
 
 /* Acquired — fits "2026-04-23" plus padding. Selector anchored on
    .col-date (instead of nth-child(1)) so this column's styling stays
@@ -251,9 +251,10 @@ RetentionList.css = `
   width: 7rem;
   white-space: nowrap;
 }
-/* Action — fits "Re-viewed" */
-#retention-list-app thead th:nth-child(2),
-#retention-list-app tbody td:nth-child(2) {
+/* Status — fits "Re-viewed". Anchored on .col-status (matching the
+   global centering rule from _jbtable.scss) rather than nth-child(2). */
+#retention-list-app thead th.col-status,
+#retention-list-app tbody td.col-status {
   width: 6.5rem;
   white-space: nowrap;
 }
