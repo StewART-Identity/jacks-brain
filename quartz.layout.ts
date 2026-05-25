@@ -52,6 +52,10 @@ export const sharedPageComponents: SharedLayout = {
       condition: (page) => page.fileData.slug === "journal/browse",
     }),
     Component.ConditionalRender({
+      component: Component.QuizTake(),
+      condition: (page) => page.fileData.slug === "quiz/take",
+    }),
+    Component.ConditionalRender({
       component: Component.NukeButton(),
       condition: (page) => page.fileData.slug === "application/nuke",
     }),
@@ -136,6 +140,14 @@ const sidebarLeft = [
       { title: "Subjects", slug: "visualize/subjects" },
       { title: "Tags", slug: "visualize/tags" },
       { title: "Confidence", slug: "visualize/confidence" },
+    ],
+  }),
+  Component.SidebarLink({
+    title: "Quiz",
+    slug: "quiz",
+    defaultState: "open",
+    links: [
+      { title: "Take", slug: "quiz/take" },
     ],
   }),
   Component.ApplicationMenu(),
