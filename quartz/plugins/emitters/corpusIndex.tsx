@@ -8,13 +8,13 @@ import { getDate } from "../../components/Date"
  * /static/corpus.json file containing one rich record per page.
  *
  * Designed to be consumed by the Visualize sub-pages (Timeline,
- * Subjects, Tags, Confidence) and future analytics components. It is
- * intentionally separate from ContentIndex's linkIndex.json — that
- * file's shape is constrained by the existing search/graph consumers,
- * and adding richer frontmatter to it would risk breaking them.
+ * Subjects, Tags, Confidence), the Quiz section, and future analytics
+ * components. It is intentionally separate from ContentIndex's
+ * linkIndex.json — that file's shape is constrained by the existing
+ * search/graph consumers, and adding richer frontmatter to it would
+ * risk breaking them.
  *
- * Schema (also documented in the commit message and in CLAUDE.md if
- * we add a "shared static data" section later):
+ * Schema:
  *
  *   {
  *     "generated": "2026-05-24T18:32:00.000Z",
@@ -33,7 +33,8 @@ import { getDate } from "../../components/Date"
  *                       null,
  *         "role": "argument" | "evidence" | ... | null,
  *         "views": [ { "date": "...", "note": "..." } ],
- *         "links": [ "slug-1", "slug-2" ]
+ *         "links": [ "slug-1", "slug-2" ],
+ *         "quiz": [ { "q": "...", "a": "...", "added": "..." } ]
  *       },
  *       ...
  *     ]
@@ -41,14 +42,14 @@ import { getDate } from "../../components/Date"
  *
  * Implementation notes:
  *
- *   - Same walk pattern as ContentIndex: iterate ctx.cfg.plugins'
- *     transformed content array, pull each file's frontmatter +
- *     parsed-link data, normalize, push to the array.
+ *   - Same walk pattern as ContentIndex: iterate the transformed
+ *     content array, pull each file's frontmatter + parsed-link data,
+ *     normalize, push.
  *
  *   - Frontmatter normalization happens once here. We don't want
  *     each visualization re-implementing "what if `tags` is a single
- *     string vs. array vs. null vs. undefined" — that's a recipe
- *     for drift.
+ *     string vs. array vs. null vs. undefined" — that's a recipe for
+ *     drift.
  *
  *   - Dates are emitted as ISO strings. Notes carry ISO datetimes
  *     (with hours/minutes/seconds) so chronological sorting within a
@@ -58,13 +59,11 @@ import { getDate } from "../../components/Date"
  *   - Type inference: frontmatter.type is the canonical source. If
  *     missing, we infer from the slug prefix so older pages without
  *     explicit type are still classified for the visualizations.
- *     Visualizations that filter by type should rely on the emitted
- *     value rather than re-inferring on the client.
  *
  *   - We emit empty arrays rather than undefined for tags / subjects
- *     / views / links so the JSON shape is uniform. Consumers can
- *     iterate without null-checking; `.length === 0` is the absence
- *     test.
+ *     / views / links / quiz so the JSON shape is uniform. Consumers
+ *     can iterate without null-checking; `.length === 0` is the
+ *     absence test.
  */
 
 type ConfidenceLevel = "high" | "medium" | "low" | "speculative"
@@ -73,6 +72,12 @@ type PageType = "source" | "entity" | "concept" | "synthesis" | "note"
 interface CorpusView {
   date: string
   note: string
+}
+
+interface CorpusQuizEntry {
+  q: string
+  a: string
+  added: string | null
 }
 
 interface CorpusPage {
@@ -88,6 +93,7 @@ interface CorpusPage {
   role: string | null
   views: CorpusView[]
   links: string[]
+  quiz: CorpusQuizEntry[]
 }
 
 interface CorpusOutput {
@@ -97,9 +103,6 @@ interface CorpusOutput {
 
 /* ───── Frontmatter normalization helpers ────────────────────────── */
 
-// Coerce a frontmatter value that should be string[] into a clean
-// array. Handles single-string, array, null, undefined, and stray
-// non-string entries (numbers, nulls) by stringifying and trimming.
 function normalizeStringArray(raw: unknown): string[] {
   if (raw === undefined || raw === null) return []
   const arr = Array.isArray(raw) ? raw : [raw]
@@ -109,8 +112,6 @@ function normalizeStringArray(raw: unknown): string[] {
     .filter((v) => v.length > 0)
 }
 
-// Coerce a frontmatter value that should be a single string. Returns
-// the trimmed string, or null if missing/empty/non-stringable.
 function normalizeStringOrNull(raw: unknown): string | null {
   if (raw === undefined || raw === null) return null
   if (typeof raw !== "string" && typeof raw !== "number") return null
@@ -118,10 +119,6 @@ function normalizeStringOrNull(raw: unknown): string | null {
   return s.length > 0 ? s : null
 }
 
-// Confidence is a constrained vocabulary — only the four values
-// listed in CLAUDE.md are valid. Anything else returns null so a
-// visualization filtering by confidence doesn't have to handle
-// freeform values.
 function normalizeConfidence(raw: unknown): ConfidenceLevel | null {
   const s = normalizeStringOrNull(raw)
   if (s === null) return null
@@ -137,10 +134,6 @@ function normalizeConfidence(raw: unknown): ConfidenceLevel | null {
   return null
 }
 
-// Page type is the canonical classifier. Frontmatter.type is preferred;
-// if missing we infer from the slug prefix so pages predating the
-// `type:` convention still classify. The slug-prefix inference matches
-// the directory layout in CLAUDE.md.
 function inferType(
   frontmatterType: unknown,
   slug: string,
@@ -158,9 +151,6 @@ function inferType(
       return lower
     }
   }
-  // Slug-prefix fallback. Order matters: notes lives at top level so
-  // the prefix is just "notes/", while sources/entities/concepts/
-  // synthesis live under reflect/.
   if (slug.startsWith("reflect/sources/")) return "source"
   if (slug.startsWith("reflect/entities/")) return "entity"
   if (slug.startsWith("reflect/concepts/")) return "concept"
@@ -169,9 +159,6 @@ function inferType(
   return null
 }
 
-// Views — source-only. Frontmatter parser leaves them as an array of
-// objects with date + note keys. We coerce each to {date: string,
-// note: string} and drop any malformed entries.
 function normalizeViews(raw: unknown): CorpusView[] {
   if (!Array.isArray(raw)) return []
   const out: CorpusView[] = []
@@ -180,21 +167,34 @@ function normalizeViews(raw: unknown): CorpusView[] {
     const e = entry as Record<string, unknown>
     const date = normalizeStringOrNull(e.date)
     const note = normalizeStringOrNull(e.note)
-    if (date === null) continue // date is required
+    if (date === null) continue
     out.push({ date, note: note ?? "" })
   }
   return out
 }
 
-// Date emission. Prefer the frontmatter string if present (notes have
-// ISO datetimes; other pages have YYYY-MM-DD). Fall back to the
-// CreatedModifiedDate plugin's parsed Date, formatted as YYYY-MM-DD.
-// Returns null if neither source has a value.
+// Quiz entries — same shape as views, defensively normalized. An
+// entry needs both `q` and `a` to be a non-empty string; otherwise
+// it's dropped. `added` is optional.
+function normalizeQuiz(raw: unknown): CorpusQuizEntry[] {
+  if (!Array.isArray(raw)) return []
+  const out: CorpusQuizEntry[] = []
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue
+    const e = entry as Record<string, unknown>
+    const q = normalizeStringOrNull(e.q)
+    const a = normalizeStringOrNull(e.a)
+    if (q === null || a === null) continue
+    const added = normalizeStringOrNull(e.added)
+    out.push({ q, a, added })
+  }
+  return out
+}
+
 function emitDate(frontmatterValue: unknown, fallback: Date | undefined): string | null {
   const fm = normalizeStringOrNull(frontmatterValue)
   if (fm !== null) return fm
   if (fallback) {
-    // Format as YYYY-MM-DD to match the rest of the wiki's date convention.
     const y = fallback.getUTCFullYear()
     const m = String(fallback.getUTCMonth() + 1).padStart(2, "0")
     const d = String(fallback.getUTCDate()).padStart(2, "0")
@@ -203,10 +203,6 @@ function emitDate(frontmatterValue: unknown, fallback: Date | undefined): string
   return null
 }
 
-// Outbound wikilink normalization. Quartz hands us SimpleSlug[] but
-// they may include duplicates and case variations. Dedupe and
-// lowercase. Self-links (page links to itself) are dropped because
-// they're noise in every visualization that uses them.
 function normalizeLinks(rawLinks: SimpleSlug[] | undefined, selfSlug: string): string[] {
   if (!Array.isArray(rawLinks)) return []
   const seen = new Set<string>()
@@ -242,10 +238,8 @@ export const CorpusIndex: QuartzEmitterPlugin = () => {
         const role = normalizeStringOrNull(frontmatter.role)
         const type = inferType(frontmatter.type, slug)
         const views = normalizeViews(frontmatter.views)
+        const quiz = normalizeQuiz(frontmatter.quiz)
 
-        // Date sources:
-        //   - frontmatter.created / frontmatter.updated when present
-        //   - file.data.dates (set by CreatedModifiedDate plugin) as fallback
         const parsedDate = getDate(ctx.cfg.configuration, file.data)
         const created = emitDate(frontmatter.created, parsedDate)
         const updated = emitDate(frontmatter.updated, parsedDate)
@@ -265,13 +259,10 @@ export const CorpusIndex: QuartzEmitterPlugin = () => {
           role,
           views,
           links,
+          quiz,
         })
       }
 
-      // Stable output order: by slug ascending. The visualizations
-      // sort as they need, but a stable order means the emitted JSON
-      // diffs cleanly across builds when content hasn't materially
-      // changed.
       pages.sort((a, b) => a.slug.localeCompare(b.slug))
 
       const output: CorpusOutput = {
