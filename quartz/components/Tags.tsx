@@ -2,28 +2,59 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
 
 /**
  * Tags — force-directed network of tag co-occurrence.
+ *
+ * Full-page layout modeled on FullGraph: takes the whole article
+ * column, has a fullscreen affordance and zoom controls. Simulation
+ * is the same hand-rolled physics as before — only the surface
+ * differs from earlier card-style versions.
  */
 const Tags: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="tags-app">
-      <div class="search-page-card">
-        <h3 class="search-page-label">Tags</h3>
-
-        <div class="tags-legend" aria-label="Node color legend">
-          <span class="tags-legend-item">
-            <span class="tags-legend-swatch" data-kind="subject"></span> Also a subject
-          </span>
-          <span class="tags-legend-item">
-            <span class="tags-legend-swatch" data-kind="tag-only"></span> Tag only
-          </span>
-        </div>
-
-        <div class="tags-svg-wrap" id="tags-svg-wrap">
-          <p class="muted tags-loading">Loading the corpus…</p>
-        </div>
-
-        <div class="tags-tooltip" id="tags-tooltip" hidden></div>
+      <div class="tags-controls">
+        <button
+          type="button"
+          id="tags-fullscreen-btn"
+          class="tags-ctrl-btn"
+          title="Full screen"
+          aria-label="Full screen"
+        >
+          &#x26F6;
+        </button>
+        <button
+          type="button"
+          id="tags-zoom-in"
+          class="tags-ctrl-btn"
+          title="Zoom in"
+          aria-label="Zoom in"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          id="tags-zoom-out"
+          class="tags-ctrl-btn"
+          title="Zoom out"
+          aria-label="Zoom out"
+        >
+          &minus;
+        </button>
       </div>
+
+      <div class="tags-legend" aria-label="Node color legend">
+        <span class="tags-legend-item">
+          <span class="tags-legend-swatch" data-kind="subject"></span> Also a subject
+        </span>
+        <span class="tags-legend-item">
+          <span class="tags-legend-swatch" data-kind="tag-only"></span> Tag only
+        </span>
+      </div>
+
+      <div class="tags-container" id="tags-svg-wrap">
+        <p class="muted tags-loading">Loading the corpus…</p>
+      </div>
+
+      <div class="tags-tooltip" id="tags-tooltip" hidden></div>
     </div>
   )
 }
@@ -35,6 +66,9 @@ document.addEventListener("nav", () => {
 
   const wrap = document.getElementById("tags-svg-wrap")
   const tooltip = document.getElementById("tags-tooltip")
+  const fullscreenBtn = document.getElementById("tags-fullscreen-btn")
+  const zoomInBtn = document.getElementById("tags-zoom-in")
+  const zoomOutBtn = document.getElementById("tags-zoom-out")
   if (!wrap || !tooltip) return
 
   const mountedAt = Date.now()
@@ -45,25 +79,24 @@ document.addEventListener("nav", () => {
   const COLOR_TAG_ONLY = "#7BBF95"
   const COLOR_EDGE = "#1B3F29"
 
-  const VB_W = 720
-  const VB_H = 520
+  // Larger viewBox now that we have the full article column to work
+  // with. Aspect ratio matches a typical 70vh × full-width container.
+  const VB_W = 1200
+  const VB_H = 700
 
-  // Simulation parameters — retuned to actually spread nodes.
-  // The previous tuning had repulsion lose to centering past about
-  // 80 units of distance, which produced the central clump.
-  const CHARGE_STRENGTH = -350     // ↑ stronger
-  const LINK_DISTANCE = 72         // ↑ longer
+  const CHARGE_STRENGTH = -350
+  const LINK_DISTANCE = 72
   const LINK_STRENGTH = 0.4
-  const CENTER_STRENGTH = 0.015    // ↓ much weaker
+  const CENTER_STRENGTH = 0.015
   const VELOCITY_DECAY = 0.4
-  const ALPHA_DECAY = 0.008        // ↓ longer cool-down
+  const ALPHA_DECAY = 0.008
 
-  const MAX_VELOCITY = 14          // ↑ allow faster spread before cool-down
+  const MAX_VELOCITY = 14
   const MIN_DISTANCE_SQ = 4
   const MAX_ITERATIONS = 600
 
-  const MIN_NODE_RADIUS = 4
-  const MAX_NODE_RADIUS = 18
+  const MIN_NODE_RADIUS = 5
+  const MAX_NODE_RADIUS = 22
 
   function escapeXml(s) {
     return String(s)
@@ -232,7 +265,7 @@ document.addEventListener("nav", () => {
           continue
         }
 
-        const margin = 20
+        const margin = 24
         n.x = clamp(n.x, margin, VB_W - margin)
         n.y = clamp(n.y, margin, VB_H - margin)
       }
@@ -284,9 +317,9 @@ document.addEventListener("nav", () => {
       svg += '<g class="tags-node" data-tag="' + escapeXml(n.id) + '" tabindex="0" role="button" aria-label="' + escapeXml(n.id) + ', ' + n.count + ' pages" opacity="' + opacity + '">'
       svg += '<circle cx="' + n.x + '" cy="' + n.y + '" r="' + (n.r + 4) + '" fill="transparent"/>'
       svg += '<circle cx="' + n.x + '" cy="' + n.y + '" r="' + n.r + '" fill="' + color + '" stroke="var(--light)" stroke-width="1.2"/>'
-      if (n.r >= 8 || hoveredTag === n.id) {
-        const fontSize = hoveredTag === n.id ? 13 : 11
-        svg += '<text x="' + n.x + '" y="' + (n.y + n.r + 12) + '" text-anchor="middle" class="tags-node-label" font-size="' + fontSize + '">' + escapeXml(label) + '</text>'
+      if (n.r >= 10 || hoveredTag === n.id) {
+        const fontSize = hoveredTag === n.id ? 14 : 12
+        svg += '<text x="' + n.x + '" y="' + (n.y + n.r + 13) + '" text-anchor="middle" class="tags-node-label" font-size="' + fontSize + '">' + escapeXml(label) + '</text>'
       }
       svg += '</g>'
     }
@@ -397,6 +430,35 @@ document.addEventListener("nav", () => {
     }
   }
 
+  // Zoom keeping the viewport center fixed (used by the + / − buttons).
+  function applyZoomAtCenter(factor) {
+    const newK = clamp(viewTransform.k * factor, 0.4, 3)
+    const cx = VB_W / 2
+    const cy = VB_H / 2
+    viewTransform.tx = cx - (cx - viewTransform.tx) * (newK / viewTransform.k)
+    viewTransform.ty = cy - (cy - viewTransform.ty) * (newK / viewTransform.k)
+    viewTransform.k = newK
+    renderSVG(currentNodes, currentEdges, currentMaxEdgeWeight)
+  }
+
+  function onZoomInClick(e) {
+    e.preventDefault()
+    applyZoomAtCenter(1.2)
+  }
+  function onZoomOutClick(e) {
+    e.preventDefault()
+    applyZoomAtCenter(1 / 1.2)
+  }
+
+  function onFullscreenClick(e) {
+    e.preventDefault()
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      root.requestFullscreen()
+    }
+  }
+
   function onWheel(e) {
     const svg = wrap.querySelector("svg")
     if (!svg) return
@@ -456,6 +518,10 @@ document.addEventListener("nav", () => {
   wrap.addEventListener("mousedown", onMouseDown)
   document.addEventListener("mouseup", onMouseUpPan)
 
+  if (fullscreenBtn) fullscreenBtn.addEventListener("click", onFullscreenClick)
+  if (zoomInBtn) zoomInBtn.addEventListener("click", onZoomInClick)
+  if (zoomOutBtn) zoomOutBtn.addEventListener("click", onZoomOutClick)
+
   if (window.addCleanup) {
     window.addCleanup(() => {
       stopAnimation = true
@@ -471,6 +537,9 @@ document.addEventListener("nav", () => {
       wrap.removeEventListener("wheel", onWheel)
       wrap.removeEventListener("mousedown", onMouseDown)
       document.removeEventListener("mouseup", onMouseUpPan)
+      if (fullscreenBtn) fullscreenBtn.removeEventListener("click", onFullscreenClick)
+      if (zoomInBtn) zoomInBtn.removeEventListener("click", onZoomInClick)
+      if (zoomOutBtn) zoomOutBtn.removeEventListener("click", onZoomOutClick)
     })
   }
 
@@ -497,64 +566,144 @@ document.addEventListener("nav", () => {
 `
 
 Tags.css = `
+/* Full-page wrapper. Takes the article column. Position relative so
+   the toolbar and tooltip can be absolutely positioned inside it. */
 #tags-app {
-  max-width: 720px;
+  width: 100%;
+  position: relative;
+  margin: 1rem 0;
   padding-bottom: 2rem;
 }
 
-#tags-app .search-page-card {
-  padding: 1.25rem 1.25rem 1.5rem;
+/* The actual canvas — matches .graph-outer / .graph-container shape. */
+#tags-app > .tags-container {
+  border-radius: 8px;
   border: 1px solid var(--lightgray);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--light) 92%, transparent);
+  background-color: var(--light);
+  box-sizing: border-box;
+  height: 70vh;
+  width: 100%;
+  overflow: hidden;
+  touch-action: none;
+  position: relative;
+}
+:root:not([saved-theme="dark"]) #tags-app > .tags-container {
+  background: rgba(193, 223, 204, 0.2);
+}
+:root[saved-theme="dark"] #tags-app > .tags-container {
+  background: rgba(27, 63, 41, 0.3);
 }
 
-#tags-app .search-page-label {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.1rem;
-  color: var(--dark);
+#tags-app > .tags-container > svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: grab;
+  user-select: none;
 }
 
-.tags-legend {
+/* Fullscreen presentation — same treatment as #full-graph */
+#tags-app:fullscreen,
+#tags-app:-webkit-full-screen {
+  background: var(--light);
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
+}
+#tags-app:fullscreen > .tags-container,
+#tags-app:-webkit-full-screen > .tags-container {
+  height: 100%;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+}
+#tags-app:fullscreen > .tags-controls,
+#tags-app:-webkit-full-screen > .tags-controls {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+}
+#tags-app:fullscreen > .tags-legend,
+#tags-app:-webkit-full-screen > .tags-legend {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+}
+
+/* Toolbar — top-left, vertical stack. Mirrors .graph-controls
+   geometry from FullGraph for visual consistency. */
+.tags-controls {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 5;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
-  margin: 0.5rem 0;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.tags-ctrl-btn {
+  background: var(--light);
+  border: 2px solid var(--lightgray);
+  border-radius: 8px;
+  color: var(--dark);
+  font-size: 1.5rem;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  opacity: 0.95;
+  transition: opacity 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  line-height: 1;
+  width: 2.8rem;
+  height: 2.8rem;
+  text-align: center;
+}
+.tags-ctrl-btn:hover {
+  opacity: 1;
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+
+/* Legend — top-right of the container. */
+.tags-legend {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--light);
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
   font-size: 0.82rem;
   color: var(--gray);
 }
 .tags-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.4rem;
+  white-space: nowrap;
 }
 .tags-legend-swatch {
   display: inline-block;
   width: 0.7rem;
   height: 0.7rem;
   border-radius: 999px;
+  flex-shrink: 0;
 }
 .tags-legend-swatch[data-kind="subject"]   { background: #D4AD5A; }
 .tags-legend-swatch[data-kind="tag-only"]  { background: #7BBF95; }
 
-.tags-svg-wrap {
-  position: relative;
-  width: 100%;
-  min-height: 520px;
-  margin-top: 0.5rem;
-}
-.tags-svg-wrap svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  cursor: grab;
-  user-select: none;
-}
 .tags-loading {
   margin: 0;
-  padding: 1rem 0;
+  padding: 2rem;
+  text-align: center;
 }
 
+/* Nodes & labels */
 .tags-node {
   cursor: pointer;
   transition: opacity 0.12s ease;
@@ -582,6 +731,7 @@ Tags.css = `
   stroke-linejoin: round;
 }
 
+/* Tooltip */
 .tags-tooltip {
   position: absolute;
   pointer-events: none;
