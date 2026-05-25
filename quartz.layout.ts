@@ -13,7 +13,7 @@ export const sharedPageComponents: SharedLayout = {
     }),
     Component.ConditionalRender({
       component: Component.FullGraph(),
-      condition: (page) => page.fileData.slug === "study/graph",
+      condition: (page) => page.fileData.slug === "visualize/graph",
     }),
     Component.ConditionalRender({
       component: Component.SourcesList(),
@@ -94,11 +94,11 @@ const sidebarLeft = [
     ],
   }),
   Component.SidebarLink({
-    title: "Study",
-    slug: "study",
+    title: "Visualize",
+    slug: "visualize",
     defaultState: "open",
     links: [
-      { title: "Graph", slug: "study/graph" },
+      { title: "Graph", slug: "visualize/graph" },
     ],
   }),
   Component.ApplicationMenu(),
