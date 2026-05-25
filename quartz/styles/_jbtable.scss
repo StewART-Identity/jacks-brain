@@ -123,6 +123,16 @@
   text-align: center;
 }
 
+/* Status cells — centered in their column regardless of which component
+   renders the table. Same shape as .col-date: a reusable class any
+   table can opt into when it has a status column. Currently used by
+   the Acquisition table's "Status" column (CATALOGED / IN_PROGRESS /
+   PENDING / FAILED badges); future tables with status-like columns
+   can adopt the class to inherit centering for free. */
+.table-container.jb-table > table td.col-status {
+  text-align: center;
+}
+
 /* Drop the bottom rule on the final row so the table ends cleanly. */
 .table-container.jb-table > table tbody tr:last-child td {
   border-bottom: none;
