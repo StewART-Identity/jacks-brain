@@ -82,24 +82,10 @@
   height: 0.95rem;
   cursor: pointer;
 }
-.research-btn {
+/* Research button now uses .jb-btn from custom.scss. Layout-only
+   override: push it to the right edge of the controls row. */
+#research-app .jb-btn {
   margin-left: auto;
-  padding: 0.6rem 1.2rem;
-  background: var(--secondary);
-  color: var(--light);
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 0.95rem;
-  transition: opacity 0.15s ease;
-}
-.research-btn:hover {
-  opacity: 0.85;
-}
-.research-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .research-results {
