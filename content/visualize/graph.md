@@ -3,7 +3,7 @@ title: "Graph"
 summary: "Interactive map of all wiki pages and their connections. Best in fullscreen mode."
 type: concept
 created: 2026-04-26
-updated: 2026-05-20
+updated: 2026-05-24
 subjects:
   - operations
 tags:
