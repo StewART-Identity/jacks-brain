@@ -31,7 +31,7 @@ const QuizTake: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
         </p>
 
         <div class="notes-controls">
-          <button type="button" id="quiz-start-btn" class="search-page-btn" disabled>
+          <button type="button" id="quiz-start-btn" class="jb-btn jb-btn-primary" disabled>
             Start
           </button>
         </div>
@@ -48,13 +48,13 @@ const QuizTake: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
         <div class="quiz-source" id="quiz-source" hidden></div>
 
         <div class="notes-controls quiz-controls">
-          <button type="button" id="quiz-show-answer-btn" class="search-page-btn">
+          <button type="button" id="quiz-show-answer-btn" class="jb-btn">
             Show answer
           </button>
-          <button type="button" id="quiz-missed-btn" class="notes-secondary-btn" hidden>
+          <button type="button" id="quiz-missed-btn" class="jb-btn jb-btn-secondary" hidden>
             Missed it
           </button>
-          <button type="button" id="quiz-got-btn" class="notes-primary-btn" hidden>
+          <button type="button" id="quiz-got-btn" class="jb-btn jb-btn-primary" hidden>
             Got it
           </button>
         </div>
@@ -72,7 +72,7 @@ const QuizTake: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
         </div>
 
         <div class="notes-controls">
-          <button type="button" id="quiz-restart-btn" class="search-page-btn">
+          <button type="button" id="quiz-restart-btn" class="jb-btn jb-btn-primary">
             Take another
           </button>
         </div>
