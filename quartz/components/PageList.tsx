@@ -51,8 +51,14 @@ type Props = {
 // Reflect sub-pages render as actual data tables instead of the default
 // flex-with-tags-floated-right layout. Configuration per page:
 //
-//   showDate    — Date column is rendered (Sources, Synthesis). Concepts
-//                 and Entities are evergreen and have no meaningful date.
+//   showDate    — Date column is rendered (Sources only). The catalog
+//                 date matters on Sources because URL-based content
+//                 (web pages, YouTube videos, evolving reports) is
+//                 only meaningful pinned to the version cataloged.
+//                 Synthesis/Concepts/Entities are conceptually
+//                 evergreen — dates there would be intake-log noise.
+//                 If you ever want chronological intake order, that's
+//                 the Retention page's job.
 //   titleLabel  — User-facing label for the first sortable column.
 //                 Sources/Synthesis/Concepts use "Title" because the
 //                 cataloged items have titles; Entities use "Name"
@@ -65,7 +71,7 @@ const COLLECTION_TABLE_SLUGS: Record<
   { showDate: boolean; titleLabel: string }
 > = {
   "reflect/sources": { showDate: true, titleLabel: "Title" },
-  "reflect/synthesis": { showDate: true, titleLabel: "Title" },
+  "reflect/synthesis": { showDate: false, titleLabel: "Title" },
   "reflect/concepts": { showDate: false, titleLabel: "Title" },
   "reflect/entities": { showDate: false, titleLabel: "Name" },
 }
@@ -86,8 +92,8 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
   if (tableConfig) {
     // Reflect sub-page: render as a real table.
     //
-    // Column order: Tags-disclose -> Title/Name -> Date -> Summary -> Subjects
-    // Sortable: Title/Name (alphabetical) and Date (chronological).
+    // Column order: Tags-disclose -> Title/Name -> [Date] -> Summary -> Subjects
+    // Sortable: Title/Name (alphabetical), Date (chronological) when present.
     // Default sort applied by the SSR sorter above is "newest first" via
     // byDateAndAlphabeticalFolderFirst. The client-side sort script in
     // PageList.afterDOMLoaded picks up that default and lets the user
@@ -107,8 +113,8 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
     const titleLabel = tableConfig.titleLabel
 
     // Column count for the tag-row's colspan. Includes the disclose
-    // column. Sources/Synthesis: 5 (disclose+title+date+summary+subjects).
-    // Concepts/Entities: 4 (disclose+title+summary+subjects, no date).
+    // column. Sources: 5 (disclose+title+date+summary+subjects).
+    // Synthesis/Concepts/Entities: 4 (disclose+title+summary+subjects).
     const colspanCount = showDate ? 5 : 4
 
     // When the page list is empty, show an explanatory notice instead
@@ -167,12 +173,12 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
               <th class="col-disclose">Tags</th>
               <th class="col-title sortable sort-active" data-sort="title">
                 {titleLabel}
-                <span class="sort-indicator">▾</span>
+                <span class="sort-indicator">▼</span>
               </th>
               {showDate && (
                 <th class="col-date sortable" data-sort="date">
                   Date
-                  <span class="sort-indicator">▾</span>
+                  <span class="sort-indicator">▼</span>
                 </th>
               )}
               <th class="col-summary">Summary</th>
@@ -367,7 +373,8 @@ PageList.css = `
    regardless of viewport width. With table-layout: fixed (set by
    jbtable.scss), widths are ratios.
 
-   Column order: Tags-disclose -> Title -> Date -> Summary -> Subjects. */
+   Column order: Tags-disclose -> Title -> [Date on Sources only] ->
+   Summary -> Subjects. */
 
 /* Tags-disclose column — fits "▸ N tags" comfortably. ~6.5rem accommodates
    "▸ 99 tags" with breathing room. Centered so the cluster reads as a
@@ -379,8 +386,10 @@ PageList.css = `
   white-space: nowrap;
 }
 
-/* Sources & Synthesis (5 columns: Tags / Title / Date / Summary / Subjects).
-   Date widened from 12% → 14% so "May 25, 2026" fits on one line. */
+/* Sources (5 columns: Tags / Title / Date / Summary / Subjects).
+   Date column carries text-align: center in addition to the
+   _jbtable.scss global rule — belt-and-braces so the property
+   travels with the column-width definition. */
 .jb-table th.col-title,
 .jb-table td.col-title {
   width: 24%;
@@ -390,6 +399,7 @@ PageList.css = `
 .jb-table td.col-date {
   width: 14%;
   white-space: nowrap;
+  text-align: center;
 }
 .jb-table th.col-summary,
 .jb-table td.col-summary {
@@ -400,8 +410,10 @@ PageList.css = `
   width: 21%;
 }
 
-/* When Date column is absent (Concepts & Entities), redistribute the
-   freed-up space across the remaining columns. */
+/* When Date column is absent (Synthesis, Concepts, Entities), redistribute
+   the freed-up space across the remaining columns. The :has() selector
+   targets only tables without a .col-date cell — the three atemporal
+   Reflect tables. */
 .jb-table > table:not(:has(.col-date)) th.col-title,
 .jb-table > table:not(:has(.col-date)) td.col-title {
   width: 27%;
@@ -481,7 +493,13 @@ PageList.css = `
 /* Subjects list — same shape as tags but unlinked plain pills, with a
    slightly stronger visual weight (subjects are deliberate; tags are
    descriptive). The styling is restrained on purpose: subjects
-   shouldn't shout. */
+   shouldn't shout.
+
+   NO white-space: nowrap on the pill — long subject names like
+   "identity-management" can wrap their text inside the pill rather
+   than overflowing the column. The flex-wrap on the parent already
+   lets multiple pills stack vertically; this lets a single long pill
+   wrap its content when it exceeds the column width. */
 .jb-table .subjects {
   list-style: none;
   margin: 0;
@@ -497,7 +515,7 @@ PageList.css = `
   border-radius: 4px;
   font-size: 0.85em;
   color: var(--dark);
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* Disclose button — chevron + count + "tags" noun.
@@ -715,8 +733,8 @@ document.addEventListener("nav", () => {
   // ───── Column-header sorting ─────
 
   // Default state matches the SSR render: sorted by date descending.
-  // If this table has no Date column (Concepts/Entities), default to
-  // title ascending instead.
+  // If this table has no Date column (Concepts/Entities/Synthesis),
+  // default to title ascending instead.
   const hasDate = !!table.querySelector("th.col-date")
   let sortKey = hasDate ? "date" : "title"
   let sortAsc = hasDate ? false : true
@@ -736,9 +754,13 @@ document.addEventListener("nav", () => {
         indEl.textContent = indicator(sortAsc)
       } else {
         th.classList.remove("sort-active")
-        // Inactive indicator: muted ▾, same glyph family as the active
-        // ▲/▼. Opacity is applied via CSS — we only set the character.
-        indEl.textContent = "▾"
+        // Inactive indicator: ▼, same glyph as active. The opacity
+        // rule in _jbtable.scss (.sort-indicator { opacity: 0.55 },
+        // .sort-active .sort-indicator { opacity: 1 }) does the
+        // muting. Using the same glyph keeps the visual weight
+        // consistent — earlier ▾ (U+25BE) was a different glyph and
+        // rendered visibly smaller than the active ▼ (U+25BC).
+        indEl.textContent = "▼"
       }
     })
 
@@ -808,5 +830,16 @@ document.addEventListener("nav", () => {
     activeHeader.classList.add("sort-active")
     const indEl = activeHeader.querySelector(".sort-indicator")
     if (indEl) indEl.textContent = indicator(sortAsc)
+  }
+
+  // If Title is not the active sort key (because Date is), it still
+  // has class="sort-active" from the SSR render. Remove it so only
+  // the truly active column appears active. Same defensive cleanup
+  // for the indicator glyph — the SSR rendered ▼ on Title as a
+  // placeholder; if it's not active, the JS above set it back to ▼
+  // already, but ensure sort-active is dropped.
+  const titleHeader = table.querySelector('th.sortable[data-sort="title"]')
+  if (titleHeader && sortKey !== "title") {
+    titleHeader.classList.remove("sort-active")
   }})
 `
