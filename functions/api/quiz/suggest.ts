@@ -43,6 +43,14 @@ const ALLOWED_SLUG_PREFIXES = [
   "upskill/",
 ]
 
+// UI-shell pages that match a quizzable prefix but aren't actual
+// content (kept in sync with quartz.layout.ts's QUIZ_SHELL_EXCLUSIONS
+// and functions/api/quiz/status.ts's identical list).
+const SHELL_EXCLUSIONS = new Set<string>([
+  "upskill/manage",
+  "upskill/topics",
+])
+
 function isAllowedSlug(slug: string): boolean {
   // Reject any traversal attempts.
   if (slug.includes("..") || slug.startsWith("/") || slug.includes("\\")) {
@@ -51,6 +59,8 @@ function isAllowedSlug(slug: string): boolean {
   // Reject index pages — we don't want to add quiz questions to
   // section landing pages.
   if (slug.endsWith("/index") || slug.endsWith("/")) return false
+  // Reject known UI shells inside otherwise-allowed prefixes.
+  if (SHELL_EXCLUSIONS.has(slug)) return false
 
   for (const prefix of ALLOWED_SLUG_PREFIXES) {
     if (slug.startsWith(prefix) && slug.length > prefix.length) {
