@@ -675,7 +675,7 @@ input.search-bar {
 }
 
 :root:not([saved-theme="dark"]) .jb-sidebar-toggle {
-  color: $green-700 ?? $green-600;
+  color: $green-600;
   &:hover { background: rgba($green-100, 0.5); border-color: $green-300; color: $green-800; }
 }
 :root[saved-theme="dark"] .jb-sidebar-toggle {
@@ -695,11 +695,7 @@ input.search-bar {
 
 /* Floating expand button — fixed to the viewport, top-left edge.
    Visible only when sidebar is collapsed. The button hangs slightly
-   off the left edge to suggest "pulls the panel out from the side."
-
-   Positioned with `top` matching the sticky-sidebar's top spacing
-   ($topSpacing from variables.scss = 6rem) so it visually aligns
-   with where the sidebar's top would be. */
+   off the left edge to suggest "pulls the panel out from the side." */
 .jb-sidebar-toggle.floating {
   position: fixed;
   top: 1rem;
@@ -717,10 +713,7 @@ html.jb-sidebar-collapsed .jb-sidebar-toggle.floating {
 
 /* When the sidebar is collapsed, hide the sidebar element entirely.
    Also reshape the grid so the freed sidebar column collapses to
-   zero width and the content column expands.
-
-   Targets the html.jb-sidebar-collapsed selector so the rules apply
-   regardless of which page is rendered. */
+   zero width and the content column expands. */
 html.jb-sidebar-collapsed .left-sidebar {
   display: none;
 }
