@@ -43,6 +43,7 @@ import Subjects from "./Subjects"
 import Tags from "./Tags"
 import Confidence from "./Confidence"
 import QuizTake from "./QuizTake"
+import QuizSuggest from "./QuizSuggest"
 
 export {
   ArticleTitle,
@@ -90,4 +91,5 @@ export {
   Tags,
   Confidence,
   QuizTake,
+  QuizSuggest,
 }
