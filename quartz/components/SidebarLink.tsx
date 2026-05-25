@@ -13,7 +13,14 @@ export default ((opts: Options) => {
   const SidebarLink: QuartzComponent = ({ fileData, displayClass }: QuartzComponentProps) => {
     return (
       <div class={classNames(displayClass, "sidebar-nav")}>
-        <h2 class="sidebar-nav-heading">{opts.title}</h2>
+        <h2 class="sidebar-nav-heading">
+          <a
+            href={resolveRelative(fileData.slug!, opts.slug as any)}
+            class="sidebar-nav-heading-link"
+          >
+            {opts.title}
+          </a>
+        </h2>
         <ul class="sidebar-nav-list">
           {opts.links.map((link) => (
             <li>
@@ -35,6 +42,16 @@ export default ((opts: Options) => {
   font-size: 1.1rem;
   margin: 0;
   color: var(--dark);
+}
+
+.sidebar-nav-heading a.sidebar-nav-heading-link {
+  color: inherit;
+  text-decoration: none;
+  display: inline-block;
+  transition: color 0.15s ease;
+}
+.sidebar-nav-heading a.sidebar-nav-heading-link:hover {
+  color: var(--secondary);
 }
 
 ul.sidebar-nav-list {
