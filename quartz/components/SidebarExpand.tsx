@@ -21,6 +21,11 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
  * Hidden by default (CSS in custom.scss). Made visible only when
  * the html.jb-sidebar-collapsed class is present.
  *
+ * Persistence: sessionStorage (not localStorage). Clearing the
+ * key on expand mirrors the set-on-collapse in SidebarToggle.tsx.
+ * Both must agree on which storage they're using; see the comment
+ * in SidebarToggle.tsx for the rationale.
+ *
  * Mobile: hidden entirely via media query, same as the collapse
  * button. Mobile keeps the existing hamburger pattern.
  */
@@ -62,10 +67,10 @@ document.addEventListener("nav", () => {
 
   function onClick() {
     try {
-      localStorage.removeItem("jb-sidebar-collapsed")
+      sessionStorage.removeItem("jb-sidebar-collapsed")
     } catch (e) {
-      // localStorage can throw; ignore. The class change below still
-      // happens.
+      // sessionStorage can throw; ignore. The class change below
+      // still happens.
     }
     document.documentElement.classList.remove("jb-sidebar-collapsed")
   }

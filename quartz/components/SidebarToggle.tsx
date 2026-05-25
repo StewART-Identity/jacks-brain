@@ -5,7 +5,7 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
  *
  * Renders a single button at the top-right of the left sidebar.
  * Click to collapse the sidebar (sets the jb-sidebar-collapsed
- * class on <html> and persists to localStorage).
+ * class on <html> and persists to sessionStorage).
  *
  * The companion EXPAND button lives in a separate component
  * (SidebarExpand) registered in afterBody — outside the sidebar —
@@ -19,7 +19,15 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
  * State is communicated via the `jb-sidebar-collapsed` class on
  * document.documentElement (the <html> tag). The class is applied
  * pre-paint by an inline script in Head.tsx so initial render
- * matches localStorage without a flash.
+ * matches sessionStorage without a flash.
+ *
+ * Persistence: sessionStorage (not localStorage). The sidebar
+ * resets to expanded when the user starts a new browser session
+ * (close tab / new tab / new window), while still persisting
+ * across SPA navigations and reloads within the same tab. If you
+ * want to change this, swap sessionStorage for localStorage in
+ * both this file and Head.tsx and SidebarExpand.tsx — all three
+ * must agree.
  *
  * The button uses an inline SVG of a "panel" icon — a rectangle
  * with a vertical line at one edge marking the sidebar boundary.
@@ -66,9 +74,9 @@ document.addEventListener("nav", () => {
 
   function onClick() {
     try {
-      localStorage.setItem("jb-sidebar-collapsed", "true")
+      sessionStorage.setItem("jb-sidebar-collapsed", "true")
     } catch (e) {
-      // localStorage can throw (private mode, quota); ignore — the
+      // sessionStorage can throw (private mode, quota); ignore — the
       // class change still happens and the in-session state is
       // correct, persistence just won't carry over.
     }

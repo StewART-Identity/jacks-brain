@@ -7,10 +7,17 @@ import { unescapeHTML } from "../util/escape"
 import { CustomOgImagesEmitterName } from "../plugins/emitters/ogImage"
 
 // Pre-paint script: restore the sidebar's collapsed state from
-// localStorage before the browser's first style/layout pass. This
+// sessionStorage before the browser's first style/layout pass. This
 // avoids a brief flash where a collapsed sidebar would render
 // expanded for one frame on initial load, then collapse once the
 // after-DOM-loaded SidebarToggle script ran.
+//
+// Why sessionStorage (not localStorage): the sidebar should reset to
+// expanded when the user starts a new browser session (close tab /
+// new tab / new window). sessionStorage is scoped to the tab and
+// cleared when the tab closes, which gives exactly that behavior.
+// Persistence WITHIN a session — across SPA navigations and reloads
+// of the same tab — still works the same as before.
 //
 // Runs in the <head> before any CSS or body markup. Targets
 // document.documentElement (the <html> tag) because document.body
@@ -18,11 +25,11 @@ import { CustomOgImagesEmitterName } from "../plugins/emitters/ogImage"
 // custom.scss key off — they target html.jb-sidebar-collapsed
 // descendants.
 //
-// try/catch around localStorage in case the user is in private mode
-// or storage is otherwise unavailable. If storage isn't reachable,
-// we just don't pre-apply the class — the after-DOM-loaded script
-// will handle the (less common) post-paint state restoration.
-const sidebarCollapsedRestoreScript = `(function(){try{if(localStorage.getItem("jb-sidebar-collapsed")==="true"){document.documentElement.classList.add("jb-sidebar-collapsed")}}catch(e){}})();`
+// try/catch around sessionStorage in case the user is in private
+// mode or storage is otherwise unavailable. If storage isn't
+// reachable, we just don't pre-apply the class — the after-DOM-loaded
+// script will handle the (less common) post-paint state restoration.
+const sidebarCollapsedRestoreScript = `(function(){try{if(sessionStorage.getItem("jb-sidebar-collapsed")==="true"){document.documentElement.classList.add("jb-sidebar-collapsed")}}catch(e){}})();`
 
 export default (() => {
   const Head: QuartzComponent = ({

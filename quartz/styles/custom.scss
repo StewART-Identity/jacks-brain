@@ -119,12 +119,12 @@ body {
       grid-sidebar-right area is folded into grid-center; the empty
       right-sidebar element doesn't render anything, so this is safe.
 
-   3. CONTENT CAP + CENTERING — cap the article at 72rem (~1150px)
+   3. CONTENT CAP + CENTERING — cap the article at 64rem (~1024px)
       reading width and center it within the grid-center column. The
       cap is wide enough for the five-column Reflect tables to
       breathe and narrow enough that prose paragraphs stay in a
       comfortable eye-tracking range. On viewports where the center
-      column is narrower than 72rem (sidebar open on smaller iPads),
+      column is narrower than 64rem (sidebar open on smaller iPads),
       the cap doesn't bite and the article fills the column. On
       wider viewports (large monitor, or sidebar collapsed on iPad
       Pro), the cap kicks in and the article centers between the
@@ -162,11 +162,11 @@ body {
   }
 }
 
-/* (3) Cap the article at 72rem reading width and center it in its
+/* (3) Cap the article at 64rem reading width and center it in its
        grid column. Applies whenever the sidebar is open OR collapsed
-       — the grid-center area is the canvas in both cases, and 72rem
+       — the grid-center area is the canvas in both cases, and 64rem
        is a sensible upper bound either way. The margin: 0 auto pair
-       does the centering; max-width: min(72rem, calc(100% - 8rem))
+       does the centering; max-width: min(64rem, calc(100% - 8rem))
        does the cap AND guarantees a 4rem gutter on each side so the
        floating expand button (top-left, 2.5rem wide, 1rem from
        edge) always has clearance on narrow collapsed viewports.
@@ -179,7 +179,7 @@ body {
        and just constrains the visible content within. */
 @media all and (min-width: 800px) {
   .page > #quartz-body > .center > article {
-    max-width: min(72rem, calc(100% - 8rem));
+    max-width: min(64rem, calc(100% - 8rem));
     margin-left: auto;
     margin-right: auto;
   }
