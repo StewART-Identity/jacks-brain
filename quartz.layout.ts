@@ -20,6 +20,10 @@ export const sharedPageComponents: SharedLayout = {
       condition: (page) => page.fileData.slug === "visualize/timeline",
     }),
     Component.ConditionalRender({
+      component: Component.Subjects(),
+      condition: (page) => page.fileData.slug === "visualize/subjects",
+    }),
+    Component.ConditionalRender({
       component: Component.SourcesList(),
       condition: (page) => page.fileData.slug === "reflect/sources",
     }),
@@ -104,6 +108,7 @@ const sidebarLeft = [
     links: [
       { title: "Graph", slug: "visualize/graph" },
       { title: "Timeline", slug: "visualize/timeline" },
+      { title: "Subjects", slug: "visualize/subjects" },
     ],
   }),
   Component.ApplicationMenu(),
