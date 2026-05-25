@@ -27,10 +27,10 @@ import UploadZone from "./UploadZone"
 import SidebarLink from "./SidebarLink"
 import SidebarToggle from "./SidebarToggle"
 import SidebarExpand from "./SidebarExpand"
+import SidebarZoneHeader from "./SidebarZoneHeader"
 import FullGraph from "./FullGraph"
 import SourcesList from "./SourcesList"
 import NukeButton from "./NukeButton"
-import ApplicationMenu from "./ApplicationMenu"
 import SearchPage from "./SearchPage"
 import ResearchPage from "./ResearchPage"
 import Acquisition from "./Acquisition"
@@ -78,10 +78,10 @@ export {
   SidebarLink,
   SidebarToggle,
   SidebarExpand,
+  SidebarZoneHeader,
   FullGraph,
   SourcesList,
   NukeButton,
-  ApplicationMenu,
   SearchPage,
   ResearchPage,
   Acquisition,

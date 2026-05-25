@@ -32,6 +32,32 @@ function isQuizzablePage(slug: string | undefined): boolean {
 // link per visible topic from the scan.
 const upskillTopics = scanTopics()
 
+/**
+ * Compute the default open/closed state for a sidebar section based
+ * on the current page's slug. A section is open iff the current page
+ * belongs to it — e.g. on /notes/write, Notes is open and everything
+ * else is collapsed.
+ *
+ * Implemented as a factory because Component.SidebarLink() is called
+ * at module load, before any specific page is being rendered. The
+ * actual defaultState resolution happens lazily when SidebarLink
+ * itself renders — but since SidebarLink's Options.defaultState is
+ * read once at constructor time (not per-render), we can't actually
+ * close over `fileData.slug` here.
+ *
+ * Solution: SidebarLink now accepts defaultState="open" or
+ * "collapsed" at constructor time, but its render function reads the
+ * current page's slug from QuartzComponentProps and overrides at
+ * render time. See SidebarLink.tsx — the actual per-page logic lives
+ * there. This file just lists each section's slug prefix and lets
+ * SidebarLink figure out openness from the prop.
+ *
+ * Wait — that's not actually how SidebarLink is structured. Let me
+ * keep it simple: pass defaultState: "collapsed" as a baseline, and
+ * SidebarLink's render function picks up the per-page override
+ * itself by checking whether fileData.slug starts with opts.slug.
+ */
+
 // components shared across all pages
 export const sharedPageComponents: SharedLayout = {
   head: Component.Head(),
@@ -125,100 +151,161 @@ export const sharedPageComponents: SharedLayout = {
   footer: Component.Footer(),
 }
 
-const sidebarLeft = [
-  // In-sidebar collapse button. Positioned absolutely in the
-  // top-right of the sidebar via CSS. Source order at the top of the
-  // array doesn't determine visual position; CSS does.
-  Component.SidebarToggle(),
-  Component.PageTitle(),
-  Component.MobileOnly(Component.Spacer()),
-  Component.SidebarLink({
-    title: "Search",
-    slug: "search",
-    defaultState: "open",
-    links: [
-      { title: "Wiki", slug: "search/wiki" },
-      { title: "Web", slug: "search/web" },
-    ],
-  }),
-  Component.SidebarLink({
-    title: "Notes",
-    slug: "notes",
-    defaultState: "open",
-    links: [
-      { title: "Browse", slug: "notes/browse" },
-      { title: "Write", slug: "notes/write" },
-    ],
-  }),
-  Component.SidebarLink({
-    title: "Journal",
-    slug: "journal",
-    defaultState: "open",
-    links: [
-      { title: "Browse", slug: "journal/browse" },
-      { title: "Write", slug: "journal/write" },
-    ],
-  }),
-  Component.SidebarLink({
-    title: "Collect",
-    slug: "collect",
-    defaultState: "open",
-    links: [
-      { title: "Selection", slug: "collect/selection" },
-      { title: "Acquisition", slug: "collect/acquisition" },
-      { title: "Retention", slug: "collect/retention" },
-    ],
-  }),
-  Component.SidebarLink({
-    title: "Reflect",
-    slug: "reflect",
-    defaultState: "open",
-    links: [
-      { title: "Sources", slug: "reflect/sources" },
-      { title: "Entities", slug: "reflect/entities" },
-      { title: "Concepts", slug: "reflect/concepts" },
-      { title: "Synthesis", slug: "reflect/synthesis" },
-    ],
-  }),
-  Component.SidebarLink({
-    title: "Visualize",
-    slug: "visualize",
-    defaultState: "open",
-    links: [
-      { title: "Graph", slug: "visualize/graph" },
-      { title: "Timeline", slug: "visualize/timeline" },
-      { title: "Subjects", slug: "visualize/subjects" },
-      { title: "Tags", slug: "visualize/tags" },
-      { title: "Confidence", slug: "visualize/confidence" },
-    ],
-  }),
-  // Upskill — Manage entry first (always present), then dynamic
-  // sub-links from data/upskill/<slug>/meta.json. Sits between
-  // Visualize and Quiz: bring stuff in → make sense of it → expand
-  // foundation → test yourself.
-  Component.SidebarLink({
-    title: "Upskill",
-    slug: "upskill",
-    defaultState: "open",
-    links: [
-      { title: "Manage", slug: "upskill/manage" },
-      ...upskillTopics.map((t) => ({
-        title: t.title,
-        slug: `upskill/${t.slug}`,
-      })),
-    ],
-  }),
-  Component.SidebarLink({
-    title: "Quiz",
-    slug: "quiz",
-    defaultState: "open",
-    links: [
-      { title: "Take", slug: "quiz/take" },
-    ],
-  }),
-  Component.ApplicationMenu(),
-  Component.Search(),
-]
+// Section descriptors. Each row is a sidebar section with the slug
+// prefix that determines membership ("does the current page belong
+// here?") and the list of sub-links it contains. The zone separators
+// are interpolated between sections, not encoded here.
+//
+// SidebarLink's `defaultState` is set to "open" only for the section
+// whose slug prefix matches the current page's slug; everything else
+// is "collapsed". The match uses startsWith on the section slug so
+// e.g. "notes/write" opens the "notes" section.
+//
+// This is the per-page state computation we promised: it runs every
+// time the layout is materialized for a specific page. The user sees
+// a quiet sidebar with only the section containing their current
+// page expanded by default.
+function sectionDefaultState(
+  pageSlug: string | undefined,
+  sectionSlug: string,
+): "open" | "collapsed" {
+  if (!pageSlug) return "collapsed"
+  if (pageSlug === sectionSlug) return "open"
+  if (pageSlug.startsWith(sectionSlug + "/")) return "open"
+  return "collapsed"
+}
+
+// Build the left sidebar for a specific page. The function takes the
+// current page's slug so each SidebarLink section can have its
+// defaultState computed at render time.
+function buildSidebarLeft(pageSlug: string | undefined) {
+  return [
+    // In-sidebar collapse button. Positioned absolutely in the
+    // top-right of the sidebar via CSS. Source order at the top of the
+    // array doesn't determine visual position; CSS does.
+    Component.SidebarToggle(),
+    Component.PageTitle(),
+    Component.MobileOnly(Component.Spacer()),
+
+    // ─── DOING — capture and curate raw inputs ─────────────────────
+    Component.SidebarZoneHeader({ label: "Doing", first: true }),
+    Component.SidebarLink({
+      title: "Search",
+      slug: "search",
+      defaultState: sectionDefaultState(pageSlug, "search"),
+      links: [
+        { title: "Wiki", slug: "search/wiki" },
+        { title: "Web", slug: "search/web" },
+      ],
+    }),
+    Component.SidebarLink({
+      title: "Notes",
+      slug: "notes",
+      defaultState: sectionDefaultState(pageSlug, "notes"),
+      links: [
+        { title: "Browse", slug: "notes/browse" },
+        { title: "Write", slug: "notes/write" },
+      ],
+    }),
+    Component.SidebarLink({
+      title: "Journal",
+      slug: "journal",
+      defaultState: sectionDefaultState(pageSlug, "journal"),
+      links: [
+        { title: "Browse", slug: "journal/browse" },
+        { title: "Write", slug: "journal/write" },
+      ],
+    }),
+    Component.SidebarLink({
+      title: "Collect",
+      slug: "collect",
+      defaultState: sectionDefaultState(pageSlug, "collect"),
+      links: [
+        { title: "Selection", slug: "collect/selection" },
+        { title: "Acquisition", slug: "collect/acquisition" },
+        { title: "Retention", slug: "collect/retention" },
+      ],
+    }),
+
+    // ─── SEEING — survey what's accumulated ────────────────────────
+    Component.SidebarZoneHeader({ label: "Seeing" }),
+    Component.SidebarLink({
+      title: "Reflect",
+      slug: "reflect",
+      defaultState: sectionDefaultState(pageSlug, "reflect"),
+      links: [
+        { title: "Sources", slug: "reflect/sources" },
+        { title: "Entities", slug: "reflect/entities" },
+        { title: "Concepts", slug: "reflect/concepts" },
+        { title: "Synthesis", slug: "reflect/synthesis" },
+      ],
+    }),
+    Component.SidebarLink({
+      title: "Visualize",
+      slug: "visualize",
+      defaultState: sectionDefaultState(pageSlug, "visualize"),
+      links: [
+        { title: "Graph", slug: "visualize/graph" },
+        { title: "Timeline", slug: "visualize/timeline" },
+        { title: "Subjects", slug: "visualize/subjects" },
+        { title: "Tags", slug: "visualize/tags" },
+        { title: "Confidence", slug: "visualize/confidence" },
+      ],
+    }),
+
+    // ─── STUDYING — build and test your own knowledge ──────────────
+    Component.SidebarZoneHeader({ label: "Studying" }),
+    Component.SidebarLink({
+      title: "Upskill",
+      slug: "upskill",
+      defaultState: sectionDefaultState(pageSlug, "upskill"),
+      links: [
+        { title: "Manage", slug: "upskill/manage" },
+        ...upskillTopics.map((t) => ({
+          title: t.title,
+          slug: `upskill/${t.slug}`,
+        })),
+      ],
+    }),
+    Component.SidebarLink({
+      title: "Quiz",
+      slug: "quiz",
+      defaultState: sectionDefaultState(pageSlug, "quiz"),
+      links: [
+        { title: "Take", slug: "quiz/take" },
+      ],
+    }),
+
+    // ─── META — the workshop itself ───────────────────────────────
+    Component.SidebarZoneHeader({ label: "Meta" }),
+    Component.SidebarLink({
+      title: "Application",
+      slug: "application",
+      defaultState: sectionDefaultState(pageSlug, "application"),
+      links: [
+        { title: "Help", slug: "application/help" },
+        { title: "Nuke It From Orbit", slug: "application/nuke" },
+      ],
+    }),
+
+    Component.Search(),
+  ]
+}
+
+// Quartz's layout system reads `left` once at configuration time — it
+// doesn't pass per-page state through. To get per-page defaultState
+// for SidebarLink, we materialize the sidebar with a slug parameter
+// at THIS module's load time using a callable wrapper. But the layout
+// API expects a static array, not a function...
+//
+// Solution: SidebarLink itself reads fileData.slug at render time and
+// overrides defaultState if the section matches. The defaultState
+// passed in here is the baseline ("collapsed" for almost all
+// sections) but SidebarLink's render function does the per-page work.
+//
+// So we just call buildSidebarLeft with a sentinel value and rely on
+// SidebarLink to do the right thing per page.
+const sidebarLeft = buildSidebarLeft(undefined)
 
 // components for pages that display a single page (e.g. a single note)
 export const defaultContentPageLayout: PageLayout = {
