@@ -588,22 +588,185 @@ input.search-bar {
 
 /* ==========================================================================
    Left sidebar
+
+   The sidebar lives in the left grid column at $sidePanelWidth (320px)
+   on tablet and desktop. The separator is always visible — a 2px
+   line in $green-300 (mint green) so the sidebar's edge is plainly
+   distinguishable from the wiki content, matching the Claude.ai web
+   app's always-on visual separation between nav and chat.
+
+   Sidebar position is `sticky` (from base.scss). The .sidebar.left
+   itself gets `position: relative` so its in-sidebar toggle button
+   can position absolutely against the sidebar's bounding box.
    ========================================================================== */
 
 .left-sidebar {
-  border-right: 1px solid transparent;
+  border-right: 2px solid transparent;
 }
 
 .sidebar.left {
   overflow-y: auto;
   justify-content: flex-start;
+  position: relative;
 }
+
 :root:not([saved-theme="dark"]) .left-sidebar {
-  border-right-color: $green-100;
+  border-right-color: $green-300;
 }
 
 :root[saved-theme="dark"] .left-sidebar {
-  border-right-color: $green-800;
+  border-right-color: $green-300;
+}
+
+
+/* ==========================================================================
+   Sidebar collapse toggle (Claude.ai-style)
+
+   See quartz/components/SidebarToggle.tsx for the JSX + behavior.
+
+   Two button variants, both class .jb-sidebar-toggle, distinguished
+   by the modifier .in-sidebar (collapse button, lives in the
+   sidebar) or .floating (expand button, fixed-position outside the
+   sidebar).
+
+   State is communicated via html.jb-sidebar-collapsed. When the
+   class is absent, the in-sidebar button is visible and the
+   floating one is hidden. When the class is present, the inverse
+   AND the sidebar itself is hidden and the grid reshapes to give
+   the content column the freed-up space.
+
+   Pre-paint state is applied by a tiny inline script in Head.tsx,
+   so the correct state is on <html> before the browser's first
+   paint — no flash of mis-sized layout on initial load.
+   ========================================================================== */
+
+.jb-sidebar-toggle {
+  /* Shared styling for both variants. The chevron glyph is a single
+     character in a <span aria-hidden="true">; the button itself
+     carries the aria-label for accessibility. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba($brass-100, 0.55);
+  }
+
+  & > span {
+    /* The chevron itself — keep it visually centered. The glyph has
+       its own intrinsic balance; this just prevents inherited
+       line-height from shifting it. */
+    display: block;
+    line-height: 1;
+    transform: translateY(-1px);  /* visual nudge — ‹ and › sit a hair low otherwise */
+  }
+}
+
+:root:not([saved-theme="dark"]) .jb-sidebar-toggle {
+  color: $green-700 ?? $green-600;
+  &:hover { background: rgba($green-100, 0.5); border-color: $green-300; color: $green-800; }
+}
+:root[saved-theme="dark"] .jb-sidebar-toggle {
+  color: $brass-300;
+  &:hover { background: rgba($green-800, 0.5); border-color: $green-600; color: $brass-100; }
+}
+
+/* In-sidebar collapse button — pinned to the top-right corner of
+   the sidebar. Position absolute relative to the .sidebar.left
+   (which we made position:relative above). */
+.jb-sidebar-toggle.in-sidebar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 2;
+}
+
+/* Floating expand button — fixed to the viewport, top-left edge.
+   Visible only when sidebar is collapsed. The button hangs slightly
+   off the left edge to suggest "pulls the panel out from the side."
+
+   Positioned with `top` matching the sticky-sidebar's top spacing
+   ($topSpacing from variables.scss = 6rem) so it visually aligns
+   with where the sidebar's top would be. */
+.jb-sidebar-toggle.floating {
+  position: fixed;
+  top: 1rem;
+  left: 0.75rem;
+  z-index: 10;
+  display: none;  /* hidden by default; shown when sidebar is collapsed */
+}
+
+/* When the sidebar is collapsed, swap the buttons' visibilities.
+   The in-sidebar button is implicitly hidden because its container
+   (.left-sidebar) is hidden. The floating button becomes visible. */
+html.jb-sidebar-collapsed .jb-sidebar-toggle.floating {
+  display: inline-flex;
+}
+
+/* When the sidebar is collapsed, hide the sidebar element entirely.
+   Also reshape the grid so the freed sidebar column collapses to
+   zero width and the content column expands.
+
+   Targets the html.jb-sidebar-collapsed selector so the rules apply
+   regardless of which page is rendered. */
+html.jb-sidebar-collapsed .left-sidebar {
+  display: none;
+}
+
+/* Reshape the grid when the sidebar is collapsed. Originally:
+     tablet:  "$sidePanelWidth auto"
+     desktop: "$sidePanelWidth auto $sidePanelWidth"
+   Collapsed:
+     tablet:  "auto"
+     desktop: "auto $sidePanelWidth"
+   The right-sidebar column on desktop is kept as-is — our layout
+   doesn't put anything in it, but the grid template is shared with
+   base.scss and we don't want to fight that here. */
+html.jb-sidebar-collapsed .page > #quartz-body {
+  grid-template-columns: auto !important;
+  grid-template-areas:
+    "grid-header"
+    "grid-center"
+    "grid-sidebar-right"
+    "grid-footer" !important;
+
+  @media all and (min-width: 1200px) {
+    /* Desktop: still no left column, right column reserved for any
+       future right-sidebar content. Currently empty in our layout. */
+    grid-template-columns: auto 320px !important;
+    grid-template-areas:
+      "grid-header grid-sidebar-right"
+      "grid-center grid-sidebar-right"
+      "grid-footer grid-sidebar-right" !important;
+  }
+}
+
+/* When the sidebar is hidden on tablet/desktop, the center column
+   pulls flush to the viewport edge. Add a little left padding so
+   the content doesn't crash into the page edge — matching the
+   floating expand button's width plus a generous gutter. */
+html.jb-sidebar-collapsed .page > #quartz-body > .center {
+  padding-left: 3.5rem;
+}
+
+/* Mobile: hide the toggle UI entirely. Mobile uses the hamburger
+   pattern and doesn't benefit from collapse/expand. */
+@media all and (max-width: 800px) {
+  .jb-sidebar-toggle {
+    display: none !important;
+  }
 }
 
 
