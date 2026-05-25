@@ -13,7 +13,7 @@ import styles from "./styles/upskill.scss"
  *      while you type; you can override it. The form posts to
  *      POST /api/upskill/topics.
  *
- *   2. Existing topics list — table-style block showing every topic
+ *   2. Topics list — table-style block showing every topic
  *      currently in data/upskill/. Each row has inline Edit and
  *      Delete buttons (and a Hide / Unhide toggle for the sidebar-
  *      visibility flag). Edits go to PUT /api/upskill/topics/<slug>;
@@ -67,7 +67,7 @@ const UpskillManage: QuartzComponent = ({ displayClass }: QuartzComponentProps) 
         ></textarea>
 
         <div class="notes-controls">
-          <button type="button" id="upskill-create-btn" class="search-page-btn">
+          <button type="button" id="upskill-create-btn" class="jb-btn">
             Create topic
           </button>
         </div>
@@ -75,9 +75,9 @@ const UpskillManage: QuartzComponent = ({ displayClass }: QuartzComponentProps) 
         <div id="upskill-create-status" class="notes-status" style="display:none"></div>
       </div>
 
-      {/* ───── Existing topics ───────────────────────────────── */}
+      {/* ───── Topics ───────────────────────────────── */}
       <div class="search-page-card" style="margin-top: 1.5rem;">
-        <h3 class="search-page-label">Existing topics</h3>
+        <h3 class="search-page-label">Topics</h3>
 
         <div
           id="upskill-list"
