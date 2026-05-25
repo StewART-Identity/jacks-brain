@@ -1,5 +1,6 @@
 export { ContentPage } from "./contentPage"
 export { TagPage } from "./tagPage"
+export { SubjectPage } from "./subjectPage"
 export { FolderPage } from "./folderPage"
 export { ContentIndex as ContentIndex } from "./contentIndex"
 export { CorpusIndex } from "./corpusIndex"
