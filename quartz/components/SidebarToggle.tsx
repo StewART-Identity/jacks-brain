@@ -1,129 +1,83 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 
 /**
- * SidebarToggle — collapsible-sidebar toggle button.
+ * SidebarToggle — in-sidebar COLLAPSE button only.
  *
- * Renders two buttons:
- *   1. `.jb-sidebar-toggle.in-sidebar` — lives at the top-right of
- *      the left sidebar. Click to COLLAPSE the sidebar.
- *   2. `.jb-sidebar-toggle.floating` — fixed-position button at the
- *      top-left of the viewport, visible only when the sidebar is
- *      already collapsed. Click to EXPAND the sidebar.
+ * Renders a single button at the top-right of the left sidebar.
+ * Click to collapse the sidebar (sets the jb-sidebar-collapsed
+ * class on <html> and persists to localStorage).
  *
- * The toggle communicates state by setting / removing the
- * `jb-sidebar-collapsed` class on the document root element
- * (document.documentElement, the <html> tag). CSS rules in
- * custom.scss watch for that class and reshape the layout
- * accordingly:
- *   - With the class:   sidebar hidden, content area gets full width,
- *                       floating expand button visible.
- *   - Without:          sidebar visible at its normal 320px width,
- *                       floating button hidden.
+ * The companion EXPAND button lives in a separate component
+ * (SidebarExpand) registered in afterBody — outside the sidebar —
+ * so that when the sidebar is hidden via `display: none`, the
+ * expand button is still in the DOM and clickable. Putting both
+ * buttons inside the sidebar made the expand button unreachable
+ * once collapsed (display:none hides descendants regardless of
+ * their position: fixed), which produced a "collapse works once,
+ * then you can't recover" lockout bug.
  *
- * State persists in localStorage under the key `jb-sidebar-collapsed`
- * (string "true" when collapsed; absent otherwise). The persisted
- * state is applied BEFORE first paint via a tiny inline script
- * injected into the head — see addGlobalPageResources or the Head
- * component for that injection. Applying the class to
- * document.documentElement (the <html> tag) is what makes pre-paint
- * application possible: document.body doesn't exist when head
- * scripts execute, but documentElement does.
+ * State is communicated via the `jb-sidebar-collapsed` class on
+ * document.documentElement (the <html> tag). The class is applied
+ * pre-paint by an inline script in Head.tsx so initial render
+ * matches localStorage without a flash.
  *
- * Mobile: the sidebar is already off-screen on viewports below 800px
- * (the existing Quartz mobile layout uses a hamburger pattern), so
- * these toggle buttons are hidden via media query on mobile.
+ * The button uses an inline SVG of a "panel" icon — a rectangle
+ * with a vertical line at one edge marking the sidebar boundary.
+ * Standard convention in modern app chrome and clearly readable
+ * on dark backgrounds regardless of color settings.
  *
- * The pattern mirrors the Claude.ai web app's left-sidebar collapse,
- * because the Claude.ai design works well and Jack uses it daily.
+ * Mobile: hidden via media query on viewports below 800px (which
+ * use the existing hamburger pattern instead).
  */
 const SidebarToggle: QuartzComponent = (_props: QuartzComponentProps) => {
   return (
-    <>
-      {/* In-sidebar collapse button — shown when sidebar is expanded. */}
-      <button
-        type="button"
-        class="jb-sidebar-toggle in-sidebar"
-        id="jb-sidebar-collapse-btn"
-        aria-label="Collapse sidebar"
-        title="Collapse sidebar"
+    <button
+      type="button"
+      class="jb-sidebar-toggle in-sidebar"
+      id="jb-sidebar-collapse-btn"
+      aria-label="Collapse sidebar"
+      title="Collapse sidebar"
+    >
+      {/* Panel icon: rectangle with a vertical line marking the
+          sidebar edge. The left-side vertical line maps to "hide
+          the panel that's on the left." */}
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
       >
-        <span aria-hidden="true">‹</span>
-      </button>
-      {/* Floating expand button — shown when sidebar is collapsed.
-          Rendered always but hidden via CSS in the expanded state. */}
-      <button
-        type="button"
-        class="jb-sidebar-toggle floating"
-        id="jb-sidebar-expand-btn"
-        aria-label="Expand sidebar"
-        title="Expand sidebar"
-      >
-        <span aria-hidden="true">›</span>
-      </button>
-    </>
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <line x1="9" y1="4" x2="9" y2="20" />
+      </svg>
+    </button>
   )
 }
 
 SidebarToggle.afterDOMLoaded = `
 document.addEventListener("nav", () => {
-  const collapseBtn = document.getElementById("jb-sidebar-collapse-btn")
-  const expandBtn = document.getElementById("jb-sidebar-expand-btn")
-  if (!collapseBtn || !expandBtn) return
+  const btn = document.getElementById("jb-sidebar-collapse-btn")
+  if (!btn) return
 
-  const STORAGE_KEY = "jb-sidebar-collapsed"
-
-  function isCollapsed() {
+  function onClick() {
     try {
-      return localStorage.getItem(STORAGE_KEY) === "true"
-    } catch (e) {
-      return false
-    }
-  }
-
-  function setCollapsed(collapsed) {
-    try {
-      if (collapsed) {
-        localStorage.setItem(STORAGE_KEY, "true")
-      } else {
-        localStorage.removeItem(STORAGE_KEY)
-      }
+      localStorage.setItem("jb-sidebar-collapsed", "true")
     } catch (e) {
       // localStorage can throw (private mode, quota); ignore — the
-      // class on the html element still reflects the current-session
-      // state.
+      // class change still happens and the in-session state is
+      // correct, persistence just won't carry over.
     }
-    if (collapsed) {
-      document.documentElement.classList.add("jb-sidebar-collapsed")
-    } else {
-      document.documentElement.classList.remove("jb-sidebar-collapsed")
-    }
+    document.documentElement.classList.add("jb-sidebar-collapsed")
   }
 
-  // Apply current state on mount. The pre-paint script in the
-  // <head> may have already done this, but reapply on SPA nav to
-  // ensure consistency.
-  setCollapsed(isCollapsed())
-
-  function onCollapseClick() {
-    setCollapsed(true)
-  }
-  function onExpandClick() {
-    setCollapsed(false)
-  }
-
-  collapseBtn.addEventListener("click", onCollapseClick)
-  expandBtn.addEventListener("click", onExpandClick)
-  window.addCleanup(() => {
-    collapseBtn.removeEventListener("click", onCollapseClick)
-    expandBtn.removeEventListener("click", onExpandClick)
-  })
+  btn.addEventListener("click", onClick)
+  window.addCleanup(() => btn.removeEventListener("click", onClick))
 })
 `
-
-// CSS lives in custom.scss because the rules need to interact with
-// the grid layout in base.scss and the .sidebar styling already
-// established elsewhere. Putting the collapse-state CSS here as
-// component-scoped strings would be the wrong layering — it's a
-// site-wide layout concern, not a component-internal one.
 
 export default (() => SidebarToggle) satisfies QuartzComponentConstructor
