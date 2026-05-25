@@ -25,6 +25,7 @@ import Flex from "./Flex"
 import ConditionalRender from "./ConditionalRender"
 import UploadZone from "./UploadZone"
 import SidebarLink from "./SidebarLink"
+import SidebarToggle from "./SidebarToggle"
 import FullGraph from "./FullGraph"
 import SourcesList from "./SourcesList"
 import NukeButton from "./NukeButton"
@@ -73,6 +74,7 @@ export {
   ConditionalRender,
   UploadZone,
   SidebarLink,
+  SidebarToggle,
   FullGraph,
   SourcesList,
   NukeButton,
