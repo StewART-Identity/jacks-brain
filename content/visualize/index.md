@@ -1,5 +1,7 @@
 ---
 title: "Visualize"
+cssclasses:
+  - hide-folder-listing
 ---
 
 Five views of your collection. Each surfaces something the static page rendering can't:
