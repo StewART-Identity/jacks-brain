@@ -22,6 +22,16 @@ tags:
 confidence: high
 sources:
   - "[[reflect/sources/2026-05-02-rfc4513-txt]]"
+quiz:
+  - q: "What is SASL designed to separate, and why does that separation matter?"
+    a: "SASL separates the protocol integration profile (how a specific application protocol like LDAP initiates and conducts SASL exchanges) from the mechanism (the actual authentication algorithm). This means a protocol that integrates SASL acquires all current and future SASL mechanisms for free, without embedding mechanism-specific logic."
+    added: 2026-05-25
+  - q: "What is the distinction between authentication identity and authorization identity in SASL?"
+    a: "Authentication identity is the entity whose credentials are verified (proving who they are). Authorization identity is the entity whose access privileges apply to the session. They may differ — for example, a proxy server might authenticate with its own credentials but request the access privileges of a user it's proxying."
+    added: 2026-05-25
+  - q: "What is a SASL downgrade attack, and how can clients detect it?"
+    a: "A man-in-the-middle modifies the supportedSASLMechanisms attribute before data integrity is installed, downgrading the advertised list to weak mechanisms. Clients should retrieve this attribute again after installing data integrity and compare; if the protected list contains stronger mechanisms than the unprotected one, the unprotected list was tampered with."
+    added: 2026-05-25
 ---
 
 SASL (Simple Authentication and Security Layer), defined in RFC 4422 (June 2006), is a framework that allows application protocols to use interchangeable authentication mechanisms without embedding mechanism-specific logic into each protocol. SASL separates the *protocol integration profile* (how a specific protocol initiates and conducts SASL exchanges) from the *mechanism* (the actual authentication algorithm). A protocol that integrates SASL acquires all current and future SASL mechanisms for free.

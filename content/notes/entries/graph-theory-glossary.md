@@ -18,6 +18,16 @@ tags:
   - formal-definitions
 confidence: high
 sources: []
+quiz:
+  - q: "What is an arborescence?"
+    a: "A directed rooted tree where all edges point away from the root. Equivalently: a directed graph with exactly one in-degree-zero vertex (the root), every other vertex has in-degree exactly 1, and there is a unique directed path from the root to every vertex. Also called an out-tree or branching."
+    added: 2026-05-25
+  - q: "What's the difference between weakly connected and strongly connected in a directed graph, and which one applies to the DIT?"
+    a: "A directed graph is weakly connected if its underlying undirected graph is connected (ignoring edge direction). It is strongly connected if for every pair of vertices there is a directed path in both directions. The DIT is weakly connected but NOT strongly connected — you cannot traverse from a child back to the root following edge directions."
+    added: 2026-05-25
+  - q: "What's the difference between a vertex's degree and its depth, and why does the distinction matter for a DIT?"
+    a: "Degree is a local property — how many edges touch a vertex. Depth is the length of the path from the root. They're independent: an entry buried deep in the DIT (large depth) still has in-degree 1 (low degree) because it has exactly one parent. This matters because the arborescence property is a degree constraint, not a depth constraint."
+    added: 2026-05-25
 ---
 
 This glossary defines graph-theoretic terminology relevant to formalizing the structure of X.500/LDAP directories. Each term includes its formal definition and its directory equivalent.

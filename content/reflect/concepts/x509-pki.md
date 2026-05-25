@@ -35,6 +35,16 @@ sources:
   - "[[reflect/sources/2026-05-04-t-rec-x-500-198811-s-pdf-e]]"
   - "[[reflect/sources/2026-05-04-t-rec-x-509-202110-i-cor1-pdf-e]]"
   - "[[reflect/sources/2026-05-04-t-rec-x-509-202310-i-cor2-pdf-e]]"
+quiz:
+  - q: "In X.509, what does the criticality flag on a v3 extension actually govern?"
+    a: "It only matters when the extension is unrecognized. A recognized extension MUST be processed regardless of criticality. An unrecognized critical extension causes the certificate to be rejected; an unrecognized non-critical extension is ignored."
+    added: 2026-05-25
+  - q: "What does an attribute certificate (AC) bind, and how does it differ from a public-key certificate?"
+    a: "An attribute certificate binds a set of privilege attributes to a holder entity, signed by an Attribute Authority (AA). Where a public-key certificate asserts WHO an entity is (binding a public key to an identity), an AC asserts WHAT PRIVILEGES that entity holds. ACs omit the public key."
+    added: 2026-05-25
+  - q: "What is the noRevAvail extension, and when would it be used?"
+    a: "An X.509 extension (added in TC2 to the 9th edition) signaling that no revocation status information will be provided for a certificate. It's restricted to end-entity certificates, always non-critical, and intended for short-lived certificates (hours to days) where natural expiry serves as the effective revocation mechanism."
+    added: 2026-05-25
 ---
 
 **X.509** is ITU-T Recommendation X.509 | ISO/IEC 9594-8, *The Directory: Authentication Framework* (and, in later editions, *Public-Key and Attribute Certificate Frameworks*). Originally a component of the [[reflect/entities/itu-t|ITU-T]] X.500 directory series, X.509 became the universal standard for public-key certificates and is the foundation of TLS/HTTPS, S/MIME, code signing, and enterprise [[reflect/concepts/ldap-tls|LDAP TLS]] authentication.
@@ -229,4 +239,4 @@ X.509 began as an authentication component of the X.500 directory series and ret
 
 In [[reflect/concepts/ldap-tls|LDAP TLS]], X.509 certificates are used by both clients and servers for mutual authentication via TLS, with [[reflect/concepts/sasl|SASL EXTERNAL]] binding TLS credentials to LDAP authorization identity.
 
-The IETF PKI (PKIX) working group translated the ITU-T X.509 framework into the Internet PKI profile, published as RFC 2459 (superseded by RFC 3280, then RFC 5280). These Internet PKI documents closely parallel the X.509 corrigenda processed in the [[reflect/sources/2026-05-04-t-rec-x-imp500-200109-i-msw-e|Directory Implementors' Guide]] — the certification path processing algorithm in RFC 3280 reflects the same state machine introduced in X.509 Technical Corrigendum 1 (3rd edition).
+The IETF PKI (PKIX) working group translated the ITU-T X.509 framework into the Internet PKI profile, published as RFC 2459 (superseded by RFC 3280, then RFC 5280). These Internet PKI documents closely parallel the X.509 corrigenda processed in the [[reflect/sources/2026-05-04-t-rec-x-imp500-200103-i-msw-e|Directory Implementors' Guide]] — the certification path processing algorithm in RFC 3280 reflects the same state machine introduced in X.509 Technical Corrigendum 1 (3rd edition).

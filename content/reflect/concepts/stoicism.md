@@ -21,6 +21,13 @@ tags:
 confidence: high
 sources:
   - "[[reflect/sources/2026-05-24-the-cognitive-peak-that-will-never-happen-again]]"
+quiz:
+  - q: "What is the practical core of Stoicism, expressed in four working elements?"
+    a: "(1) The judgment/event distinction — your assessment of an event is not the event itself. (2) Control separation — distinguish what is and is not in your control, focus only on the former. (3) Cognitive non-overwhelm — refuse paralysis by what cannot be changed. (4) Observation distance — experience emotions without being identical to them."
+    added: 2026-05-25
+  - q: "What is the difference between emotional suppression and emotional regulation, in the Stoic framing?"
+    a: "Suppression is sustained effort to push feelings down; it requires energy and produces downstream failure. Regulation is the capacity to process difficult states and remain functional through them; it produces stability and adaptability. Stoicism teaches regulation, not suppression."
+    added: 2026-05-25
 ---
 
 Stoicism is an ancient Greek and Roman philosophical school whose practical core is emotional regulation: the capacity to experience difficult circumstances and remain functional, to observe one's own reactions with some distance, and to make decisions based on what's actually present rather than what's felt in the moment. Its key teachers include Marcus Aurelius, Seneca, and Epictetus — the last of whom, a former slave, has become particularly relevant to modern clinical psychology.

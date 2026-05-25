@@ -20,6 +20,13 @@ tags:
 confidence: high
 sources:
   - "[[reflect/sources/2026-05-18-major-brain-structures-and-their-functions]]"
+quiz:
+  - q: "What are the three primary functions of the basal ganglia?"
+    a: "Movement (selecting and suppressing motor programs), habit formation (consolidating repeated behaviors into automatized habits), and reward processing (evaluating the rewarding value of actions and stimuli, primarily via the nucleus accumbens)."
+    added: 2026-05-25
+  - q: "What causes Parkinson's disease at the level of basal ganglia function?"
+    a: "Selective loss of dopaminergic neurons in the substantia nigra disrupts the nigrostriatal pathway, impairing the basal ganglia's ability to facilitate movement — producing the difficulty initiating movement that characterizes the disease."
+    added: 2026-05-25
 ---
 
 The basal ganglia are a collection of subcortical nuclei (clusters of neurons) that work together to regulate movement, habit formation, and reward processing. They are not a single structure but a functionally linked group distributed across the forebrain and midbrain.
