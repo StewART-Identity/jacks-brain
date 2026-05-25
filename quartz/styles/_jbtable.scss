@@ -67,19 +67,27 @@
   border-right: none;
 }
 
-/* HEADER row — solid dark-green band, yellow text, no internal borders. */
+/* HEADER row — solid dark-green band, yellow text, centered labels,
+   no internal borders.
+
+   Centering applies to EVERY column header across every jb-table on
+   the site: the four Reflect sub-page tables, Retention, Acquisition,
+   and any future table that uses this class. Cells in the body remain
+   left-aligned by default — only the header band is centered. The
+   chevron indicator on sortable headers stays inline with the label
+   via margin-left, so the label + indicator center as a unit. */
 .table-container.jb-table > table thead th {
   background-color: #2B5E3E;     /* matches site --secondary */
   color: #F0DDB3;                /* warm sand yellow — readable on dark green */
   font-weight: 600;
-  text-align: left;
+  text-align: center;
   border: none;
   /* 2px bottom rule separates header from body. */
   border-bottom: 2px solid #2B5E3E;
 }
 
 /* Sortable header cells — pointer cursor, hover lightens slightly,
-   chevron indicator sits inline with the label. */
+   chevron indicator sits inline with the centered label. */
 .table-container.jb-table > table thead th.sortable {
   cursor: pointer;
   user-select: none;
@@ -103,6 +111,16 @@
   border-top: none;
   border-bottom: 1px solid #3A7D53;  /* matches site --gray (mid mint-green) */
   color: #EBF5EE;                    /* matches site light-mode --light, used here as body text on dark fill */
+}
+
+/* Date cells — centered in their column regardless of which component
+   renders the table. Every table with a date column tags those cells
+   with .col-date so this single rule covers all of them: PageList
+   tables (Sources, Synthesis), the Retention table's "Acquired"
+   column, and any future date-bearing tables (e.g. the Upskill
+   landing page's listing). */
+.table-container.jb-table > table td.col-date {
+  text-align: center;
 }
 
 /* Drop the bottom rule on the final row so the table ends cleanly. */
