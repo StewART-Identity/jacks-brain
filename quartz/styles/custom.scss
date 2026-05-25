@@ -1257,16 +1257,25 @@ article.hide-folder-listing ~ .page-listing,
 
    Override the cap at the page-shell layer so the forms inherit the
    article column's width, like tables do. The selector list covers
-   every form mount point in the wiki:
+   every form/visualization mount point in the wiki:
 
-     #upload-app       — Selection (file/text/URL/YouTube upload)
-     #research-app     — Web search (Ask Claude to find sources)
-     #note-form-app    — Notes write
-     #notes-list-app   — Notes browse (also a form-like list)
-     #journal-form-app — Journal write
-     #journal-list-app — Journal browse
-     #acquisition-app  — Acquisition queue
-     #quiz-app         — Quiz take
+     #upload-app         — Selection (file/text/URL/YouTube upload)
+     #research-app       — Web search (Ask Claude to find sources)
+     #note-form-app      — Notes write
+     #notes-list-app     — Notes browse (also a form-like list)
+     #journal-form-app   — Journal write
+     #journal-list-app   — Journal browse
+     #acquisition-app    — Acquisition queue
+     #quiz-app           — Quiz take
+     #search-page        — Wiki search
+     #retention-list-app — Retention log
+     #timeline-app       — Visualize / Timeline
+     #subjects-app       — Visualize / Subjects
+     #confidence-app     — Visualize / Confidence
+
+   Notably absent: Graph (FullGraph.tsx) and Tags (Tags.tsx) — those
+   components don't use the standard #xxx-app { max-width: 720px }
+   pattern and already fill the article column without intervention.
 
    Applied only at tablet+ (800px+) since mobile already uses
    single-column flow and the inline 720px cap doesn't bite there.
@@ -1285,7 +1294,12 @@ article.hide-folder-listing ~ .page-listing,
   #journal-form-app,
   #journal-list-app,
   #acquisition-app,
-  #quiz-app {
+  #quiz-app,
+  #search-page,
+  #retention-list-app,
+  #timeline-app,
+  #subjects-app,
+  #confidence-app {
     max-width: none !important;
     margin-left: 0 !important;
     margin-right: 0 !important;
@@ -1302,10 +1316,10 @@ article.hide-folder-listing ~ .page-listing,
      col-disclose width (6.5rem) + Title cell padding (0.75rem) = 7.25rem
 
    In practice 7.25rem under-shoots because table-layout: fixed
-   distributes leftover horizontal space across columns when the
-   table is wider than the sum of declared widths, making the
-   disclose column wider than 6.5rem at typical viewport widths.
-   So the Title column starts further right than 6.5rem from the
+   distributes leftover horizontal space across all columns when the
+   table is wider than the sum of declared widths. The disclose
+   column ends up wider than 6.5rem at typical viewport widths, so
+   the Title column starts further right than 6.5rem from the
    table's left edge.
 
    This override bumps the padding to a value that empirically aligns
@@ -1318,7 +1332,7 @@ article.hide-folder-listing ~ .page-listing,
    PageList.tsx; this single-line override is cheaper to maintain.) */
 
 .table-container.jb-table > table tbody tr.tag-row > td {
-  padding-left: 10rem;
+  padding-left: 8rem;
 }
 
 
