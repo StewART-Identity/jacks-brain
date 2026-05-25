@@ -12,6 +12,7 @@ const QUIZZABLE_PREFIXES = [
   "reflect/synthesis/",
   "notes/entries/",
   "journal/entries/",
+  "upskill/",
 ]
 function isQuizzablePage(slug: string | undefined): boolean {
   if (!slug) return false
