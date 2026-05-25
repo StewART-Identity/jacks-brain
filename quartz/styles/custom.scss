@@ -99,9 +99,10 @@ body {
    Page max-width — give iPad and tablet viewports more breathing room
 
    Quartz's base.scss caps .page at $desktopBreakpoint + 300px = 1500px.
-   Below that breakpoint (which iPad landscape often hits — 1024-1366px),
-   the cap doesn't matter and the page is viewport-wide, BUT the inner
-   grid template still allocates 320px to the sidebar regardless.
+   Below that breakpoint (which iPad landscape often hits — 1024-1366px,
+   including iPad Pro 12.9" at 1366px), the cap doesn't matter and the
+   page is viewport-wide, BUT the inner grid template still allocates
+   320px to the sidebar regardless.
 
    This rule overrides the base .page max-width on tablet sizes so the
    page can grow as wide as the viewport itself. The grid inside still
@@ -113,6 +114,30 @@ body {
 @media all and (max-width: 1499px) {
   .page {
     max-width: 100%;
+  }
+}
+
+
+/* ==========================================================================
+   Content column gutters — let the article fill more of the viewport
+
+   By default Quartz's .center column gets no explicit max-width or
+   inline padding beyond what the grid imposes. On tablet+ that
+   produces an article that fills the grid column but crashes right
+   into the viewport edge on the right side because there's no
+   right-side sidebar to act as a gutter.
+
+   This rule gives the article a modest right gutter so content
+   doesn't crash into the page edge, while letting the table and
+   prose use almost all the horizontal space the grid provides.
+   Same intent as Claude.ai's chat column — content goes nearly
+   edge-to-edge of its grid column, with just enough breathing room
+   on the trailing edge to read comfortably.
+   ========================================================================== */
+
+@media all and (min-width: 800px) {
+  .page > #quartz-body > .center {
+    padding-right: 2rem;
   }
 }
 
@@ -784,38 +809,40 @@ html.jb-sidebar-collapsed #quartz-body > .center {
 
 
 /* ==========================================================================
-   Date column centering — flex on the td, not text-align
+   Date column centering — flex on the inner wrapper, not on the td
 
-   text-align: center on .col-date failed across three attempts (one
-   in _jbtable.scss, one in PageList.css, one with !important). The
-   override winning the cascade was never identified, so this commit
-   gives up trying to win via text-align and uses flex instead.
+   The td MUST remain display: table-cell so it participates in the
+   table's column-width algorithm. Setting display: flex on the td
+   (an earlier attempt) breaks the table layout — the cell falls out
+   of the column grid, the row visually fragments, the column width
+   stops being honored.
 
-   `display: flex; justify-content: center; align-items: center` on
-   the td centers its inline children unambiguously. Flex children
-   don't care about text-align inheritance — they're laid out by the
-   flex algorithm directly.
-
-   The wrapper div .col-date-inner from PageList.tsx is harmless
-   here — it just becomes another centered flex child.
+   Right answer: keep the td as a table cell, and put the flex
+   container on the inner wrapper div .col-date-inner (which is a
+   plain div, free to take any display value without breaking table
+   semantics). The wrapper fills 100% of the cell width, then uses
+   flex to center its child <time> horizontally.
 
    Targeting both contexts: standalone Reflect tables AND any future
    table that adopts the col-date class.
    ========================================================================== */
 
+/* Make sure the td stays a normal table cell. This is mostly
+   defensive — base.scss already gives td the table-cell display
+   from the user-agent stylesheet, but earlier commits attempted to
+   override it. */
 .jb-table td.col-date,
 .table-container.jb-table td.col-date {
-  display: flex !important;
-  justify-content: center;
-  align-items: center;
-  vertical-align: middle;  /* fallback if flex doesn't apply */
+  display: table-cell;
+  vertical-align: middle;
 }
 
-/* The inner wrapper is still in the DOM; make it a transparent
-   pass-through. */
+/* The inner wrapper handles centering. Flex on a div is safe —
+   no table-layout side effects. */
 .jb-table td.col-date .col-date-inner {
-  display: block;
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
 }
 
