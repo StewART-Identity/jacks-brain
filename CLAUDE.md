@@ -65,41 +65,58 @@ endpoints but is never served as wiki content.
 
 ### Sidebar structure
 
-The sidebar's top-level groups mirror the directory structure, and they're
-ordered to tell a story:
+The sidebar is organized into four **zones** — non-clickable scaffolding
+labels that group related sections. Each section under a zone is a
+collapsible link list (chevron toggle, click-through heading), with
+per-page auto-expand: the section containing the user's current page
+opens by default, everything else stays collapsed.
 
-1. **Intake** — where information comes from.
-   - **Search** brings in information gathered by others (Wiki, Web).
-   - **Notes** captures information gathered by you (Browse, Write).
-   - **Journal** captures longer-form reflection (Browse, Write). A
-     visual twin of Notes; the two are peers because they capture
-     different kinds of your own thinking — notes are observational
-     fragments, journal entries are reflective passages.
+```
+DOING       — capture and curate raw inputs
+  Search    — Wiki, Web
+  Notes     — Browse, Write
+  Journal   — Browse, Write
+  Collect   — Selection, Acquisition, Retention
 
-2. **Cataloging pipeline** — what happens to a thing once it's been
-   chosen for catalog.
-   - **Collect** is the verb (Selection, Acquisition, Retention).
-   - **Reflect** is what results from it (Sources, Entities, Concepts,
-     Synthesis).
+SEEING      — survey what's accumulated
+  Reflect   — Sources, Entities, Concepts, Synthesis
+  Visualize — Graph, Timeline, Subjects, Tags, Confidence
 
-3. **Visualize** — views over the corpus.
-   - Graph, Timeline, Subjects, Tags, Confidence.
+STUDYING    — build and test your own knowledge
+  Upskill   — Manage, plus dynamic sub-links from data/upskill/
+  Quiz      — Take
 
-4. **Upskill** — self-directed study material.
-   - First sub-link is always **Manage** (the topic-management form).
-   - Remaining sub-links are derived from `data/upskill/<slug>/meta.json`
-     at build time. See "Dynamic sections (Upskill)" below.
+META        — the workshop itself
+  Application — Help, Nuke It From Orbit
+```
 
-5. **Quiz** — test what you've retained.
-   - Take.
+The zone labels (`DOING`, `SEEING`, etc.) are typography-only — small,
+uppercase, muted-gray, non-clickable. The user navigates by clicking a
+section heading (which goes to the section's index page) or by
+expanding a section via its chevron.
 
-The grouping reflects a flow: bring stuff in (Search, Notes, Journal,
-Collect), make sense of it (Reflect, Visualize), expand your foundation
-(Upskill), test yourself (Quiz). Notes and Journal are top-level (peers
-of Search) rather than sub-pages of Collect because they're not part of
-the cataloging pipeline — they're first-class captures of the user's
-own thinking, not downstream of an acquisition. Don't move them back
-under Collect.
+**Why this grouping:**
+
+- **Doing** is verbs — actions the user performs on the world (searching, capturing, collecting). These are the intake side of the wiki.
+- **Seeing** is contemplation — surveying what's been gathered. Reflect organizes the corpus into typed pages; Visualize provides views over it.
+- **Studying** pairs Upskill (the self-directed study material) with Quiz (testing what you've learned). Quiz used to sit alone as a peer of Visualize; moving it next to Upskill captures that they're both about building and verifying personal knowledge.
+- **Meta** is the workshop itself — application-level controls that don't fit any of the content zones.
+
+The flow reads: bring stuff in (Doing) → make sense of it (Seeing) → expand and verify your foundation (Studying) → maintain the workshop (Meta). Notes and Journal are top-level under Doing (peers of Search) rather than sub-pages of Collect because they're not part of the cataloging pipeline — they're first-class captures of the user's own thinking, not downstream of an acquisition.
+
+**Section collapse behavior:**
+
+Each section's open/closed state is computed per-page from the current
+slug. A section is "open" if `fileData.slug === sectionSlug` or
+`fileData.slug.startsWith(sectionSlug + "/")`. Everything else is
+collapsed. No localStorage persistence — defaults derive fresh on every
+navigation. User chevron clicks during a single page view are honored
+until the next navigation.
+
+The section's heading text is a real link to the section's index page
+(e.g. `/notes`). The chevron beside the heading is the collapse toggle.
+Two click targets, two meanings — direct navigation vs. show me what's
+in it.
 
 ### Dynamic sections (Upskill)
 
