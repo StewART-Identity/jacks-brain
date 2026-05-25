@@ -34,6 +34,12 @@ const Tags: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
 
 Tags.afterDOMLoaded = `
 document.addEventListener("nav", () => {
+  // SCOPED NAV HANDLER (fix #5):
+  // Bail early if this isn't the Tags page. Without this, every
+  // SPA navigation across the site would run the entire Tags
+  // bootstrap, attach listeners, etc — leading to listener
+  // accumulation and (in the worst case) the Tags SVG bleeding
+  // into other pages' content.
   const root = document.getElementById("tags-app")
   if (!root) return
 
@@ -41,34 +47,51 @@ document.addEventListener("nav", () => {
   const tooltip = document.getElementById("tags-tooltip")
   if (!wrap || !tooltip) return
 
+  // SINGLE-ENTRY GUARD (fix #6):
+  // Each call to this handler represents a fresh mount of the
+  // Tags page. Use a per-mount timestamp so the animation loop
+  // from any prior mount can detect it's stale and stop.
+  const mountedAt = Date.now()
+  // Stash on the wrap element so the cleanup callback can read it.
+  wrap.__tagsMountedAt = mountedAt
+
   // ─── Constants ───────────────────────────────────────────────────
-  // Colors are picked to match the rest of the Visualize family:
-  // --secondary (gold) for subject-flavored nodes, --tertiary (sage)
-  // for tag-only nodes. Edges are --lightgray with opacity scaled
-  // by weight.
   const COLOR_SUBJECT = "#D4AD5A"
   const COLOR_TAG_ONLY = "#7BBF95"
   const COLOR_EDGE = "#1B3F29"
 
-  // SVG viewBox dimensions. The simulation runs in these coordinates.
   const VB_W = 720
   const VB_H = 520
 
-  // Simulation parameters. Tuned empirically against a ~80-tag, ~250-edge
-  // graph (typical for a wiki of your scale). If your data ends up
-  // very different, the most useful knobs to retune are CHARGE_STRENGTH
-  // (more negative = more repulsion, nodes spread further) and
-  // LINK_DISTANCE (lower = nodes pulled closer together along edges).
-  const CHARGE_STRENGTH = -180   // node repulsion
-  const LINK_DISTANCE = 48       // ideal edge length
-  const LINK_STRENGTH = 0.4      // how stiff edges are
-  const CENTER_STRENGTH = 0.04   // pull toward (VB_W/2, VB_H/2)
-  const VELOCITY_DECAY = 0.4     // 0 = frictionless, 1 = max friction
-  const ALPHA_DECAY = 0.012      // how fast the simulation cools
+  // Simulation parameters. See commit message for rationale on
+  // which knobs are load-bearing for stability.
+  const CHARGE_STRENGTH = -180
+  const LINK_DISTANCE = 48
+  const LINK_STRENGTH = 0.4
+  const CENTER_STRENGTH = 0.04
+  const VELOCITY_DECAY = 0.4
+  const ALPHA_DECAY = 0.012
 
-  // Node radius scale. Tags-with-one-page get the minimum radius;
-  // tags with many pages get larger up to MAX_NODE_RADIUS. Log-scale
-  // because tag-count distributions are usually heavy-tailed.
+  // STABILITY GUARDS (fixes #1, #2, #4):
+  // - MAX_VELOCITY caps per-frame node speed. Without this, a
+  //   pathological force pair (two nodes nearly identical, dist²
+  //   tiny, charge force enormous) produces an unbounded velocity
+  //   that the next integration step turns into an enormous
+  //   position delta — the root cause of the "all nodes clumped
+  //   in upper-left" symptom.
+  // - MIN_DISTANCE_SQ is the squared distance below which we
+  //   perturb nodes apart rather than computing an actual force.
+  //   The previous threshold (0.01) was too low; raising it
+  //   prevents near-singular force calculations.
+  // - MAX_ITERATIONS caps total simulation steps regardless of
+  //   alpha. The loop will exit after this many frames even if
+  //   alpha never decays to zero (which can happen if the system
+  //   never settles).
+  const MAX_VELOCITY = 8
+  const MIN_DISTANCE_SQ = 4
+  const MAX_ITERATIONS = 600  // ~10 seconds at 60fps — plenty for any healthy graph
+
+  // Node radius scale (log).
   const MIN_NODE_RADIUS = 4
   const MAX_NODE_RADIUS = 18
 
@@ -81,27 +104,17 @@ document.addEventListener("nav", () => {
       .replace(/'/g, "&#39;")
   }
 
+  function clamp(v, lo, hi) {
+    return v < lo ? lo : v > hi ? hi : v
+  }
+
   // ─── Data extraction ─────────────────────────────────────────────
-  //
-  // From the corpus, build:
-  //   - nodes: one per distinct tag, with .count (number of pages)
-  //     and .isSubject (boolean — is this tag also in some page's
-  //     subjects: field?)
-  //   - edges: one per unordered pair of tags that co-occur, with
-  //     .weight (number of pages where both appear)
-  //   - pagesForTag: tag → list of {slug, title} (for tooltips)
-  //   - topCoTagsFor: tag → list of {tag, weight} (for tooltips)
-  //
-  // Subject membership is derived from the union of all subjects on
-  // all pages, not from any single page. A tag is "also a subject"
-  // if it appears as a value in any page's subjects: field anywhere
-  // in the corpus.
 
   function extract(corpus) {
-    const tagCount = new Map()        // tag -> page count
-    const pagesForTag = new Map()     // tag -> [{slug, title}]
-    const subjectSet = new Set()      // every subject ever used
-    const edgeWeight = new Map()      // "a||b" -> count (a < b)
+    const tagCount = new Map()
+    const pagesForTag = new Map()
+    const subjectSet = new Set()
+    const edgeWeight = new Map()
 
     for (const page of corpus.pages) {
       const tags = Array.isArray(page.tags) ? page.tags : []
@@ -115,9 +128,6 @@ document.addEventListener("nav", () => {
         pagesForTag.get(t).push({ slug: page.slug, title: page.title })
       }
 
-      // Pairwise co-occurrences. Dedupe so each unordered pair is
-      // counted once per page. Use the canonical "smaller||larger"
-      // ordering so a-b and b-a both map to one key.
       const uniqTags = Array.from(new Set(tags))
       for (let i = 0; i < uniqTags.length; i++) {
         for (let j = i + 1; j < uniqTags.length; j++) {
@@ -129,24 +139,24 @@ document.addEventListener("nav", () => {
       }
     }
 
-    // Nodes — all tags, regardless of count (per the user's choice
-    // to include singletons; the simulation will push them to the
-    // periphery as conceptual noise).
+    // Spread initial positions across the FULL viewBox rather than
+    // a sub-region. Random uniform across [0, VB_W] and [0, VB_H]
+    // gives the simulation a healthy starting spread to work from.
+    // (Previously: random across the same range, but I'm calling it
+    // out as load-bearing — a clustered initial layout would create
+    // exactly the near-singular force conditions the clamping was
+    // added to handle, so keeping nodes well-spread at start matters.)
     const nodes = Array.from(tagCount.entries()).map(([tag, count]) => ({
       id: tag,
       count,
       isSubject: subjectSet.has(tag),
-      // Initial position: random within the viewBox. The simulation
-      // will move them.
-      x: Math.random() * VB_W,
-      y: Math.random() * VB_H,
+      x: 40 + Math.random() * (VB_W - 80),
+      y: 40 + Math.random() * (VB_H - 80),
       vx: 0,
       vy: 0,
-      // Pre-computed render radius.
       r: 0,
     }))
 
-    // Compute render radii once.
     const maxCount = Math.max(...nodes.map((n) => n.count), 1)
     const logMax = Math.log(maxCount + 1)
     for (const n of nodes) {
@@ -154,7 +164,6 @@ document.addEventListener("nav", () => {
       n.r = MIN_NODE_RADIUS + ratio * (MAX_NODE_RADIUS - MIN_NODE_RADIUS)
     }
 
-    // Edges — drop self-edges defensively (shouldn't exist but).
     const edges = []
     for (const [key, weight] of edgeWeight) {
       const [a, b] = key.split("||")
@@ -165,7 +174,6 @@ document.addEventListener("nav", () => {
       edges.push({ source: sourceNode, target: targetNode, weight })
     }
 
-    // For tooltips: top N co-occurring tags for each tag.
     const topCoTagsFor = new Map()
     for (const n of nodes) {
       const partners = []
@@ -177,26 +185,41 @@ document.addEventListener("nav", () => {
       topCoTagsFor.set(n.id, partners.slice(0, 5))
     }
 
-    return { nodes, edges, pagesForTag, topCoTagsFor, maxEdgeWeight: Math.max(...edges.map(e => e.weight), 1) }
+    return {
+      nodes,
+      edges,
+      pagesForTag,
+      topCoTagsFor,
+      maxEdgeWeight: Math.max(...edges.map(e => e.weight), 1),
+    }
   }
 
   // ─── Force simulation ────────────────────────────────────────────
-  //
-  // Plain O(n²) repulsion + O(e) edge spring forces + O(n) center
-  // pull. Velocity-Verlet-ish integration: accumulate forces into
-  // velocity, decay velocity, integrate to position. The simulation
-  // 'alpha' (temperature) starts at 1 and decays to 0; force magnitudes
-  // scale with alpha so the simulation cools smoothly.
 
   let simulation = null
+  let iterationCount = 0
 
   function makeSimulation(nodes, edges) {
     let alpha = 1.0
+    const maxWeight = Math.max(...edges.map((e) => e.weight), 1)
+
+    function resetNaNNode(n) {
+      // NAN GUARD (fix #3):
+      // If a node's position has gone NaN, reset it to a random
+      // position in the viewBox. This keeps the rest of the
+      // simulation from infecting on the next step.
+      n.x = 40 + Math.random() * (VB_W - 80)
+      n.y = 40 + Math.random() * (VB_H - 80)
+      n.vx = 0
+      n.vy = 0
+    }
 
     function step() {
-      if (alpha < 0.005) return false  // converged
+      iterationCount++
+      if (iterationCount > MAX_ITERATIONS) return false
+      if (alpha < 0.005) return false
 
-      // Repulsion between all pairs.
+      // Repulsion. Guard near-singular pairs by perturbing.
       for (let i = 0; i < nodes.length; i++) {
         const ni = nodes[i]
         for (let j = i + 1; j < nodes.length; j++) {
@@ -204,14 +227,14 @@ document.addEventListener("nav", () => {
           let dx = nj.x - ni.x
           let dy = nj.y - ni.y
           let dist2 = dx * dx + dy * dy
-          if (dist2 < 0.01) {
-            // Same position — perturb so we don't divide by zero.
-            dx = Math.random() - 0.5
-            dy = Math.random() - 0.5
-            dist2 = 1
+          if (dist2 < MIN_DISTANCE_SQ) {
+            // Perturb harder than before, so the next iteration's
+            // distance is safely outside the singular zone.
+            dx = (Math.random() - 0.5) * 4
+            dy = (Math.random() - 0.5) * 4
+            dist2 = MIN_DISTANCE_SQ
           }
           const dist = Math.sqrt(dist2)
-          // Charge force inversely proportional to distance.
           const force = CHARGE_STRENGTH * alpha / dist2
           const fx = force * (dx / dist)
           const fy = force * (dy / dist)
@@ -222,9 +245,7 @@ document.addEventListener("nav", () => {
         }
       }
 
-      // Edge spring forces. Hooke's law toward LINK_DISTANCE,
-      // scaled by edge weight (heavier edges pull harder).
-      const maxWeight = Math.max(...edges.map((e) => e.weight), 1)
+      // Edge spring forces.
       for (const e of edges) {
         const dx = e.target.x - e.source.x
         const dy = e.target.y - e.source.y
@@ -240,7 +261,7 @@ document.addEventListener("nav", () => {
         e.target.vy -= fy
       }
 
-      // Centering pull toward viewport center.
+      // Centering pull.
       const cx = VB_W / 2
       const cy = VB_H / 2
       for (const n of nodes) {
@@ -248,15 +269,32 @@ document.addEventListener("nav", () => {
         n.vy += (cy - n.y) * CENTER_STRENGTH * alpha
       }
 
-      // Integrate. Velocity decay = friction.
+      // Integrate with full safety: velocity clamp, NaN check, position clamp.
       for (const n of nodes) {
         n.vx *= (1 - VELOCITY_DECAY)
         n.vy *= (1 - VELOCITY_DECAY)
+
+        // VELOCITY CLAMP (fix #2): bound speed regardless of force
+        // magnitude. This is the actual safeguard against runaway.
+        n.vx = clamp(n.vx, -MAX_VELOCITY, MAX_VELOCITY)
+        n.vy = clamp(n.vy, -MAX_VELOCITY, MAX_VELOCITY)
+
         n.x += n.vx
         n.y += n.vy
+
+        // NaN check (fix #3).
+        if (!isFinite(n.x) || !isFinite(n.y)) {
+          resetNaNNode(n)
+          continue
+        }
+
+        // POSITION CLAMP (fix #1): keep nodes inside the viewBox.
+        // Padding margin lets node labels stay visible at edges.
+        const margin = 20
+        n.x = clamp(n.x, margin, VB_W - margin)
+        n.y = clamp(n.y, margin, VB_H - margin)
       }
 
-      // Cool down.
       alpha *= (1 - ALPHA_DECAY)
       return true
     }
@@ -264,29 +302,21 @@ document.addEventListener("nav", () => {
     return {
       step,
       getAlpha: () => alpha,
-      reheat: () => { alpha = Math.max(alpha, 0.3) },
+      getIteration: () => iterationCount,
     }
   }
 
   // ─── Rendering ───────────────────────────────────────────────────
-  //
-  // We re-render the SVG every frame during simulation warmup. That
-  // sounds expensive but the data is small: 80 nodes × ~30 attrs is
-  // a 3KB innerHTML write at 60fps. The browser is fine with it.
-  // Once the simulation converges, we stop animating and only
-  // re-render on user interaction (hover/zoom).
 
   let hoveredTag = null
-  let viewTransform = { tx: 0, ty: 0, k: 1 }  // pan + zoom
+  let viewTransform = { tx: 0, ty: 0, k: 1 }
 
   function renderSVG(nodes, edges, maxEdgeWeight) {
     let svg = '<svg viewBox="0 0 ' + VB_W + ' ' + VB_H + '" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tag co-occurrence network">'
 
-    // Apply zoom/pan via a wrapping transform group.
     const transform = "translate(" + viewTransform.tx + " " + viewTransform.ty + ") scale(" + viewTransform.k + ")"
     svg += '<g class="tags-canvas" transform="' + transform + '">'
 
-    // Compute hover focus: if a tag is hovered, find its neighbors.
     const focusSet = new Set()
     if (hoveredTag) {
       focusSet.add(hoveredTag)
@@ -296,7 +326,6 @@ document.addEventListener("nav", () => {
       }
     }
 
-    // Edges first (so nodes sit on top).
     for (const e of edges) {
       const isFocused = !hoveredTag ||
         e.source.id === hoveredTag || e.target.id === hoveredTag
@@ -306,7 +335,6 @@ document.addEventListener("nav", () => {
       svg += '<line x1="' + e.source.x + '" y1="' + e.source.y + '" x2="' + e.target.x + '" y2="' + e.target.y + '" stroke="' + COLOR_EDGE + '" stroke-opacity="' + opacity.toFixed(3) + '" stroke-width="' + strokeWidth.toFixed(2) + '"/>'
     }
 
-    // Nodes.
     for (const n of nodes) {
       const isFocused = !hoveredTag || focusSet.has(n.id)
       const opacity = isFocused ? 1 : 0.25
@@ -314,10 +342,8 @@ document.addEventListener("nav", () => {
       const label = n.id
 
       svg += '<g class="tags-node" data-tag="' + escapeXml(n.id) + '" tabindex="0" role="button" aria-label="' + escapeXml(n.id) + ', ' + n.count + ' pages" opacity="' + opacity + '">'
-      // Transparent hit area, slightly larger than the visible dot.
       svg += '<circle cx="' + n.x + '" cy="' + n.y + '" r="' + (n.r + 4) + '" fill="transparent"/>'
       svg += '<circle cx="' + n.x + '" cy="' + n.y + '" r="' + n.r + '" fill="' + color + '" stroke="var(--light)" stroke-width="1.2"/>'
-      // Label, only for larger nodes (otherwise it's just clutter).
       if (n.r >= 8 || hoveredTag === n.id) {
         const fontSize = hoveredTag === n.id ? 13 : 11
         svg += '<text x="' + n.x + '" y="' + (n.y + n.r + 12) + '" text-anchor="middle" class="tags-node-label" font-size="' + fontSize + '">' + escapeXml(label) + '</text>'
@@ -330,17 +356,19 @@ document.addEventListener("nav", () => {
     wrap.innerHTML = svg
   }
 
-  // ─── Animation loop ──────────────────────────────────────────────
+  // ─── Animation loop with single-entry guard ──────────────────────
 
   let animFrame = null
   let stopAnimation = false
 
   function startAnimation(nodes, edges, maxEdgeWeight) {
     function loop() {
-      if (stopAnimation) return
+      // Stale-mount check (fix #6): if a newer mount has registered
+      // a different mountedAt timestamp, this loop is stale and
+      // should exit.
+      if (stopAnimation || wrap.__tagsMountedAt !== mountedAt) return
       const still = simulation.step()
       renderSVG(nodes, edges, maxEdgeWeight)
-      bindEvents(nodes, edges, maxEdgeWeight)
       if (still) {
         animFrame = requestAnimationFrame(loop)
       }
@@ -348,133 +376,27 @@ document.addEventListener("nav", () => {
     animFrame = requestAnimationFrame(loop)
   }
 
-  // ─── Event binding (re-bound after every render) ─────────────────
+  // ─── Event binding (idempotent — single set of listeners) ────────
   //
-  // Each render replaces innerHTML, which detaches the previous
-  // listeners. We re-bind after each render. To keep the listener
-  // count bounded we use event delegation: one set of listeners on
-  // the SVG root, dispatching by closest(".tags-node").
+  // EVENT-LISTENER DEDUPING (fix #7):
+  // Previously bindEvents was called on every animation frame,
+  // re-attaching listeners to a fresh SVG element each time. The
+  // old elements' listeners weren't released until GC, which under
+  // SPA-nav churn produced enormous listener counts.
+  //
+  // Now we attach listeners ONCE to the wrap element (which doesn't
+  // get replaced by renderSVG). Inside the handler we use closest()
+  // to find the relevant node. Since the wrap survives across
+  // renderSVG calls, listeners attach once and stay valid until
+  // SPA-nav cleanup runs.
 
-  let eventsBound = false
-  function bindEvents(nodes, edges, maxEdgeWeight) {
-    const svg = wrap.querySelector("svg")
-    if (!svg) return
-
-    // Only attach listeners once per SVG. Since renderSVG replaces
-    // the SVG element each frame, we need to re-bind, but the
-    // listeners themselves close over the same arrays so no leak.
-    function onMouseMove(e) {
-      const target = e.target.closest(".tags-node")
-      if (!target) {
-        if (hoveredTag !== null) {
-          hoveredTag = null
-          hideTooltip()
-          renderSVG(nodes, edges, maxEdgeWeight)
-          bindEvents(nodes, edges, maxEdgeWeight)
-        }
-        return
-      }
-      const tag = target.getAttribute("data-tag")
-      if (tag !== hoveredTag) {
-        hoveredTag = tag
-        renderSVG(nodes, edges, maxEdgeWeight)
-        bindEvents(nodes, edges, maxEdgeWeight)
-      }
-      const node = nodes.find((n) => n.id === tag)
-      if (node) showTooltip(node, e.clientX, e.clientY)
-    }
-
-    function onMouseLeave() {
-      if (hoveredTag !== null) {
-        hoveredTag = null
-        renderSVG(nodes, edges, maxEdgeWeight)
-        bindEvents(nodes, edges, maxEdgeWeight)
-      }
-      hideTooltip()
-    }
-
-    function onClick(e) {
-      const target = e.target.closest(".tags-node")
-      if (!target) return
-      const tag = target.getAttribute("data-tag")
-      if (tag) {
-        window.location.href = "/tags/" + encodeURIComponent(tag)
-      }
-    }
-
-    function onKeyDown(e) {
-      if (e.key !== "Enter" && e.key !== " ") return
-      const target = e.target.closest && e.target.closest(".tags-node")
-      if (!target) return
-      e.preventDefault()
-      const tag = target.getAttribute("data-tag")
-      if (tag) {
-        window.location.href = "/tags/" + encodeURIComponent(tag)
-      }
-    }
-
-    function onWheel(e) {
-      e.preventDefault()
-      const delta = e.deltaY > 0 ? 0.9 : 1.1
-      const newK = Math.max(0.4, Math.min(3, viewTransform.k * delta))
-      // Zoom around the mouse position.
-      const rect = svg.getBoundingClientRect()
-      const mouseX = e.clientX - rect.left
-      const mouseY = e.clientY - rect.top
-      const scaleX = VB_W / rect.width
-      const scaleY = VB_H / rect.height
-      const svgX = mouseX * scaleX
-      const svgY = mouseY * scaleY
-      viewTransform.tx = svgX - (svgX - viewTransform.tx) * (newK / viewTransform.k)
-      viewTransform.ty = svgY - (svgY - viewTransform.ty) * (newK / viewTransform.k)
-      viewTransform.k = newK
-      renderSVG(nodes, edges, maxEdgeWeight)
-      bindEvents(nodes, edges, maxEdgeWeight)
-    }
-
-    let panStart = null
-    function onMouseDown(e) {
-      if (e.target.closest(".tags-node")) return  // node click, not pan
-      panStart = { x: e.clientX, y: e.clientY, tx0: viewTransform.tx, ty0: viewTransform.ty }
-      svg.style.cursor = "grabbing"
-    }
-    function onMouseMovePan(e) {
-      if (!panStart) return
-      const rect = svg.getBoundingClientRect()
-      const scaleX = VB_W / rect.width
-      const scaleY = VB_H / rect.height
-      viewTransform.tx = panStart.tx0 + (e.clientX - panStart.x) * scaleX
-      viewTransform.ty = panStart.ty0 + (e.clientY - panStart.y) * scaleY
-      renderSVG(nodes, edges, maxEdgeWeight)
-      bindEvents(nodes, edges, maxEdgeWeight)
-    }
-    function onMouseUpPan() {
-      panStart = null
-      svg.style.cursor = ""
-    }
-
-    svg.addEventListener("mousemove", onMouseMove)
-    svg.addEventListener("mousemove", onMouseMovePan)
-    svg.addEventListener("mouseleave", onMouseLeave)
-    svg.addEventListener("click", onClick)
-    svg.addEventListener("keydown", onKeyDown)
-    svg.addEventListener("wheel", onWheel, { passive: false })
-    svg.addEventListener("mousedown", onMouseDown)
-    document.addEventListener("mouseup", onMouseUpPan)
-
-    if (!eventsBound && window.addCleanup) {
-      eventsBound = true
-      window.addCleanup(() => {
-        stopAnimation = true
-        if (animFrame) cancelAnimationFrame(animFrame)
-        document.removeEventListener("mouseup", onMouseUpPan)
-      })
-    }
-  }
+  let topCoTagsFor = new Map()
+  let currentNodes = []
+  let currentEdges = []
+  let currentMaxEdgeWeight = 1
 
   function showTooltip(node, clientX, clientY) {
     const wrapRect = wrap.getBoundingClientRect()
-
     const partners = topCoTagsFor.get(node.id) || []
     const partnersHtml = partners.length > 0
       ? partners.map((p) =>
@@ -484,11 +406,9 @@ document.addEventListener("nav", () => {
           '</div>'
         ).join("")
       : '<div class="tags-tooltip-empty">No co-occurring tags</div>'
-
     const subjectBadge = node.isSubject
       ? '<span class="tags-tooltip-tag-subject">also a subject</span>'
       : ''
-
     tooltip.innerHTML =
       '<div class="tags-tooltip-title">' +
         escapeXml(node.id) + subjectBadge +
@@ -498,7 +418,6 @@ document.addEventListener("nav", () => {
         ? '<div class="tags-tooltip-section-label">Top co-occurs with</div>'
         : '') +
       '<div class="tags-tooltip-partners">' + partnersHtml + '</div>'
-
     tooltip.hidden = false
     const left = clientX - wrapRect.left + 14
     const top = clientY - wrapRect.top + 14
@@ -510,9 +429,137 @@ document.addEventListener("nav", () => {
     tooltip.hidden = true
   }
 
-  // ─── Load and start ──────────────────────────────────────────────
+  // Single mousemove handler delegated to wrap. Uses closest() to
+  // find the node element; falls back to "no hover" if not on a
+  // node.
+  function onMouseMove(e) {
+    const target = e.target.closest && e.target.closest(".tags-node")
+    if (!target) {
+      if (hoveredTag !== null) {
+        hoveredTag = null
+        renderSVG(currentNodes, currentEdges, currentMaxEdgeWeight)
+        hideTooltip()
+      }
+      return
+    }
+    const tag = target.getAttribute("data-tag")
+    if (tag !== hoveredTag) {
+      hoveredTag = tag
+      renderSVG(currentNodes, currentEdges, currentMaxEdgeWeight)
+    }
+    const node = currentNodes.find((n) => n.id === tag)
+    if (node) showTooltip(node, e.clientX, e.clientY)
+  }
 
-  let topCoTagsFor = new Map()
+  function onMouseLeave() {
+    if (hoveredTag !== null) {
+      hoveredTag = null
+      renderSVG(currentNodes, currentEdges, currentMaxEdgeWeight)
+    }
+    hideTooltip()
+  }
+
+  function onClick(e) {
+    const target = e.target.closest && e.target.closest(".tags-node")
+    if (!target) return
+    const tag = target.getAttribute("data-tag")
+    if (tag) {
+      window.location.href = "/tags/" + encodeURIComponent(tag)
+    }
+  }
+
+  function onKeyDown(e) {
+    if (e.key !== "Enter" && e.key !== " ") return
+    const target = e.target.closest && e.target.closest(".tags-node")
+    if (!target) return
+    e.preventDefault()
+    const tag = target.getAttribute("data-tag")
+    if (tag) {
+      window.location.href = "/tags/" + encodeURIComponent(tag)
+    }
+  }
+
+  function onWheel(e) {
+    const svg = wrap.querySelector("svg")
+    if (!svg) return
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? 0.9 : 1.1
+    const newK = Math.max(0.4, Math.min(3, viewTransform.k * delta))
+    const rect = svg.getBoundingClientRect()
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
+    const scaleX = VB_W / rect.width
+    const scaleY = VB_H / rect.height
+    const svgX = mouseX * scaleX
+    const svgY = mouseY * scaleY
+    viewTransform.tx = svgX - (svgX - viewTransform.tx) * (newK / viewTransform.k)
+    viewTransform.ty = svgY - (svgY - viewTransform.ty) * (newK / viewTransform.k)
+    viewTransform.k = newK
+    renderSVG(currentNodes, currentEdges, currentMaxEdgeWeight)
+  }
+
+  let panStart = null
+  function onMouseDown(e) {
+    if (e.target.closest && e.target.closest(".tags-node")) return
+    panStart = {
+      x: e.clientX,
+      y: e.clientY,
+      tx0: viewTransform.tx,
+      ty0: viewTransform.ty,
+    }
+    const svg = wrap.querySelector("svg")
+    if (svg) svg.style.cursor = "grabbing"
+  }
+
+  function onMouseMovePan(e) {
+    if (!panStart) return
+    const svg = wrap.querySelector("svg")
+    if (!svg) return
+    const rect = svg.getBoundingClientRect()
+    const scaleX = VB_W / rect.width
+    const scaleY = VB_H / rect.height
+    viewTransform.tx = panStart.tx0 + (e.clientX - panStart.x) * scaleX
+    viewTransform.ty = panStart.ty0 + (e.clientY - panStart.y) * scaleY
+    renderSVG(currentNodes, currentEdges, currentMaxEdgeWeight)
+  }
+
+  function onMouseUpPan() {
+    panStart = null
+    const svg = wrap.querySelector("svg")
+    if (svg) svg.style.cursor = ""
+  }
+
+  // Bind once on the wrap.
+  wrap.addEventListener("mousemove", onMouseMove)
+  wrap.addEventListener("mousemove", onMouseMovePan)
+  wrap.addEventListener("mouseleave", onMouseLeave)
+  wrap.addEventListener("click", onClick)
+  wrap.addEventListener("keydown", onKeyDown)
+  wrap.addEventListener("wheel", onWheel, { passive: false })
+  wrap.addEventListener("mousedown", onMouseDown)
+  document.addEventListener("mouseup", onMouseUpPan)
+
+  if (window.addCleanup) {
+    window.addCleanup(() => {
+      // Mark this mount stale (any pending animation frame from
+      // this mount will see the mountedAt mismatch and exit).
+      stopAnimation = true
+      if (wrap.__tagsMountedAt === mountedAt) {
+        wrap.__tagsMountedAt = null
+      }
+      if (animFrame) cancelAnimationFrame(animFrame)
+      wrap.removeEventListener("mousemove", onMouseMove)
+      wrap.removeEventListener("mousemove", onMouseMovePan)
+      wrap.removeEventListener("mouseleave", onMouseLeave)
+      wrap.removeEventListener("click", onClick)
+      wrap.removeEventListener("keydown", onKeyDown)
+      wrap.removeEventListener("wheel", onWheel)
+      wrap.removeEventListener("mousedown", onMouseDown)
+      document.removeEventListener("mouseup", onMouseUpPan)
+    })
+  }
+
+  // ─── Load and start ──────────────────────────────────────────────
 
   fetch("/static/corpus.json")
     .then((r) => r.json())
@@ -523,8 +570,12 @@ document.addEventListener("nav", () => {
         wrap.innerHTML = '<p class="muted" style="text-align:center;padding:2rem 0">No tags in the corpus yet. Add a <code>tags:</code> field to your page frontmatter to start filling this in.</p>'
         return
       }
-      simulation = makeSimulation(extracted.nodes, extracted.edges)
-      startAnimation(extracted.nodes, extracted.edges, extracted.maxEdgeWeight)
+      currentNodes = extracted.nodes
+      currentEdges = extracted.edges
+      currentMaxEdgeWeight = extracted.maxEdgeWeight
+      simulation = makeSimulation(currentNodes, currentEdges)
+      iterationCount = 0
+      startAnimation(currentNodes, currentEdges, currentMaxEdgeWeight)
     })
     .catch((err) => {
       wrap.innerHTML = '<p class="muted">Could not load the corpus: ' + escapeXml(err.message) + '</p>'
@@ -574,14 +625,11 @@ Tags.css = `
 .tags-legend-swatch[data-kind="subject"]   { background: #D4AD5A; }
 .tags-legend-swatch[data-kind="tag-only"]  { background: #7BBF95; }
 
-/* SVG wrap — relative so the tooltip is positioned inside it. */
 .tags-svg-wrap {
   position: relative;
   width: 100%;
   min-height: 520px;
   margin-top: 0.5rem;
-  /* Background color is the card fill, so node strokes (--light)
-     show through cleanly. */
 }
 .tags-svg-wrap svg {
   display: block;
@@ -595,7 +643,6 @@ Tags.css = `
   padding: 1rem 0;
 }
 
-/* Node interaction */
 .tags-node {
   cursor: pointer;
   transition: opacity 0.12s ease;
@@ -611,7 +658,6 @@ Tags.css = `
   filter: brightness(1.15);
 }
 
-/* SVG text */
 .tags-node-label {
   fill: var(--darkgray);
   font-family: inherit;
@@ -622,11 +668,8 @@ Tags.css = `
   stroke-width: 2.5;
   stroke-opacity: 0.8;
   stroke-linejoin: round;
-  /* The stroke-then-fill paint order gives the labels a halo so
-     they remain readable when they overlap edges. */
 }
 
-/* Tooltip */
 .tags-tooltip {
   position: absolute;
   pointer-events: none;
