@@ -104,6 +104,13 @@ export const sharedPageComponents: SharedLayout = {
 }
 
 const sidebarLeft = [
+  // Sidebar toggle — collapse/expand buttons. Renders two: the
+  // in-sidebar collapse button (absolutely positioned top-right of
+  // the sidebar) and the floating expand button (fixed-position,
+  // visible when sidebar is collapsed). Listed first so the buttons
+  // are in the DOM early, but their visual position is determined
+  // by CSS, not source order.
+  Component.SidebarToggle(),
   Component.PageTitle(),
   Component.MobileOnly(Component.Spacer()),
   Component.SidebarLink({
