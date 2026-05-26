@@ -208,8 +208,8 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       slug: "search",
       defaultState: sectionDefaultState(pageSlug, "search"),
       links: [
-        { title: "Wiki", slug: "search/wiki" },
         { title: "Web", slug: "search/web" },
+        { title: "Wiki", slug: "search/wiki" },
       ],
     }),
     Component.SidebarLink({
