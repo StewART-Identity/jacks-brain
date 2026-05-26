@@ -4,7 +4,6 @@ import SubjectContent from "./pages/SubjectContent"
 import FolderContent from "./pages/FolderContent"
 import NotFound from "./pages/404"
 import ArticleTitle from "./ArticleTitle"
-import Darkmode from "./Darkmode"
 import Head from "./Head"
 import PageTitle from "./PageTitle"
 import ContentMeta from "./ContentMeta"
@@ -20,7 +19,6 @@ import DesktopOnly from "./DesktopOnly"
 import MobileOnly from "./MobileOnly"
 import RecentNotes from "./RecentNotes"
 import Breadcrumbs from "./Breadcrumbs"
-import Comments from "./Comments"
 import Flex from "./Flex"
 import ConditionalRender from "./ConditionalRender"
 import UploadZone from "./UploadZone"
@@ -56,7 +54,6 @@ export {
   TagContent,
   SubjectContent,
   FolderContent,
-  Darkmode,
   Head,
   PageTitle,
   ContentMeta,
@@ -73,7 +70,6 @@ export {
   RecentNotes,
   NotFound,
   Breadcrumbs,
-  Comments,
   Flex,
   ConditionalRender,
   UploadZone,
