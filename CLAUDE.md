@@ -12,15 +12,19 @@ content/                # The wiki — you own this layer entirely
     wiki.md             # Search the wiki (in-collection search)
     web.md              # Search the web (external research)
   notes/
-    index.md            # Notes landing — links to write.md and browse.md
-    write.md            # Capture form — creates a new note
-    browse.md           # Notes list — every note as an expandable card
-    <slug>.md           # Individual notes (slug = YYYYMMDD-HHMMSS timestamp)
+    index.md            # Notes landing — links to add.md, update.md, entries/
+    add.md              # Capture form — creates a new note
+    update.md           # Notes list — every note as an expandable card with inline edit
+    entries/            # The notes themselves (timestamp-slug files land here)
+      index.md          # entries listing (auto-rendered)
+      <slug>.md         # Individual notes (slug = YYYYMMDD-HHMMSS timestamp)
   journal/
-    index.md            # Journal landing — links to write.md and browse.md
-    write.md            # Capture form — creates a new journal entry
-    browse.md           # Journal entries list
-    <slug>.md           # Individual entries (slug = YYYYMMDD-HHMMSS timestamp)
+    index.md            # Journal landing — links to add.md, update.md, entries/
+    add.md              # Capture form — creates a new journal entry
+    update.md           # Journal entries list with inline edit
+    entries/            # The journal entries themselves
+      index.md          # entries listing (auto-rendered)
+      <slug>.md         # Individual entries (slug = YYYYMMDD-HHMMSS timestamp)
   collect/
     selection.md        # Upload form — add a source to the collection
     acquisition.md      # Cataloging — live status of the pipeline
@@ -44,7 +48,9 @@ content/                # The wiki — you own this layer entirely
     take.md             # Subject-filtered free-recall quiz session
   upskill/              # Self-directed study material — DATA-DRIVEN, see below
     index.md            # Section landing — hand-curated intro prose
-    manage.md           # Topic-management form (Create/Edit/Hide/Delete)
+    add.md              # Topic-create form (registers a new study area)
+    update.md           # Topic-management form (Edit/Hide/Delete existing topics)
+    topics.md           # Card-grid view of every topic in the wiki
     <topic>/
       index.md          # Topic landing page (auto-created by /api/upskill/topics)
       <slug>.md         # Individual study pages for the topic
@@ -74,8 +80,8 @@ opens by default, everything else stays collapsed.
 ```
 DOING       — capture and curate raw inputs
   Search    — Wiki, Web
-  Notes     — Browse, Write
-  Journal   — Browse, Write
+  Notes     — Add, Update
+  Journal   — Add, Update
   Collect   — Selection, Acquisition, Retention
 
 SEEING      — survey what's accumulated
@@ -83,7 +89,7 @@ SEEING      — survey what's accumulated
   Visualize — Graph, Timeline, Subjects, Tags, Confidence
 
 STUDYING    — build and test your own knowledge
-  Upskill   — Manage, plus dynamic sub-links from data/upskill/
+  Upskill   — Add, Update, Topics, plus dynamic sub-links from data/upskill/
   Quiz      — Take
 
 META        — the workshop itself
@@ -104,6 +110,17 @@ expanding a section via its chevron.
 
 The flow reads: bring stuff in (Doing) → make sense of it (Seeing) → expand and verify your foundation (Studying) → maintain the workshop (Meta). Notes and Journal are top-level under Doing (peers of Search) rather than sub-pages of Collect because they're not part of the cataloging pipeline — they're first-class captures of the user's own thinking, not downstream of an acquisition.
 
+**The Add / Update pattern.**
+
+Three sections — Notes, Journal, and Upskill — share the same shape:
+an **Add** route (a form for creating something new) and an **Update**
+route (a list of what already exists, each row expandable for inline
+edit). The pattern reads as verb → verb: "I want to write a new
+thing" → Add; "I want to revise something I already wrote" → Update.
+Upskill carries a third entry, **Topics**, the card-grid view of every
+topic; Notes and Journal expose the equivalent "list everything"
+surface as `entries/`, which is the actual folder of captured files.
+
 **Section collapse behavior:**
 
 Each section's open/closed state is computed per-page from the current
@@ -121,9 +138,9 @@ in it.
 ### Dynamic sections (Upskill)
 
 Upskill is the wiki's first **dynamic section**: its sidebar sub-links
-come from data files scanned at build time, and topics are created /
-edited / hidden / deleted via a form at `/upskill/manage`, not by
-hand-editing JSON files.
+come from data files scanned at build time, and topics are created at
+`/upskill/add` and edited / hidden / deleted at `/upskill/update`, not
+by hand-editing JSON files.
 
 **The two-file contract per topic.**
 
@@ -164,8 +181,9 @@ content/upskill/<slug>/index.md   # landing page — gets full Quartz pipeline
 
 **Topic management workflow:**
 
-The form at `/upskill/manage` is the only correct way to create, edit,
-hide, or delete topics. It posts to four endpoints:
+`/upskill/add` is the only correct way to create a new topic.
+`/upskill/update` is the only correct way to edit, hide, or delete
+existing topics. Both forms post to the same set of endpoints:
 
 - `GET    /api/upskill/topics`         — list all topics
 - `POST   /api/upskill/topics`         — create a new topic (writes both files atomically)
@@ -274,7 +292,7 @@ tags:
   - some-tag
 ```
 
-The form on `/notes/write` writes notes with this shape. The slug is
+The form on `/notes/add` writes notes with this shape. The slug is
 the timestamp itself in `YYYYMMDD-HHMMSS` form, so notes sort
 chronologically by filename without any frontmatter inspection.
 
@@ -294,12 +312,12 @@ but their frontmatter contract is identical.
 - Entity pages: `reflect/entities/entity-name.md`
 - Concept pages: `reflect/concepts/concept-name.md`
 - Synthesis pages: `reflect/synthesis/descriptive-title.md`
-- Note pages: `notes/YYYYMMDD-HHMMSS.md` (timestamp slug, generated
-  automatically by the form). Notes can also be given descriptive
-  slugs for hand-written reference notes — the
+- Note pages: `notes/entries/YYYYMMDD-HHMMSS.md` (timestamp slug,
+  generated automatically by the form). Notes can also be given
+  descriptive slugs for hand-written reference notes — the
   `notes/graph-theory-glossary.md` page is an example.
-- Journal entries: `journal/YYYYMMDD-HHMMSS.md`. Same convention as
-  notes.
+- Journal entries: `journal/entries/YYYYMMDD-HHMMSS.md`. Same
+  convention as notes.
 - Upskill study pages: `upskill/<topic>/<slug>.md` where `<topic>`
   matches a `data/upskill/<topic>/` directory and `<slug>` is a
   descriptive kebab-case name (e.g. `upskill/git/object-model.md`).
@@ -542,7 +560,7 @@ recorded — not a cataloging task.
 Notes are first-class wiki pages, but they don't go through the
 cataloging pipeline. There is no source document, no `views:` log, no
 retention entry. A note is just a captured thought, filed under
-`content/notes/` with a timestamp slug.
+`content/notes/entries/` with a timestamp slug.
 
 1. Decide whether the user wants a note or a wiki page. If the content
    is a thought, observation, or fragment — call it a note. If the
@@ -553,9 +571,10 @@ retention entry. A note is just a captured thought, filed under
 
 2. For a fresh capture, POST to `/api/notes` with `{ title, tags,
    body }`. The endpoint generates the timestamp slug, writes the
-   file, and returns the published URL. Don't write the file directly
-   via the repo tools when the form-driven flow will do — let the
-   endpoint handle the slug and frontmatter shape.
+   file under `content/notes/entries/`, and returns the published URL.
+   Don't write the file directly via the repo tools when the
+   form-driven flow (`/notes/add`) will do — let the endpoint handle
+   the slug and frontmatter shape.
 
 3. For a structured reference note, write the file directly under
    `content/notes/<descriptive-slug>.md` with full frontmatter and
@@ -568,18 +587,21 @@ retention entry. A note is just a captured thought, filed under
    a note that connects to existing concepts or sources, link them.
 
 Journal entries follow the same workflow, against `/api/journal` and
-`content/journal/`. Use journal for longer, more reflective passages
-where note-style fragments feel too short; both share the same
-timestamp-slug shape so they sort the same way.
+`content/journal/entries/`. Use journal for longer, more reflective
+passages where note-style fragments feel too short; both share the
+same timestamp-slug shape so they sort the same way. The form-driven
+flow is `/journal/add`; the inline-edit list is `/journal/update`.
 
 ### Upskill (topic management)
 
 Trigger: user wants to add a new study area, hide an existing one,
 rename it, or delete it.
 
-Always direct the user to `/upskill/manage`. That page hosts the form
-that talks to `/api/upskill/topics` and keeps the two-file contract
-(meta.json + content/upskill/<slug>/index.md) consistent.
+Direct the user to the right form for the operation: `/upskill/add`
+for creating a new topic, `/upskill/update` for editing, hiding, or
+removing an existing one. Both forms talk to `/api/upskill/topics`
+and keep the two-file contract (meta.json + content/upskill/<slug>/index.md)
+consistent.
 
 Don't hand-write to `data/upskill/<slug>/meta.json` or to
 `content/upskill/<slug>/index.md` unless the API is broken and you're
@@ -701,9 +723,9 @@ before changing anything under `quartz/components/` or
 The most-important invariants, stated inline so you can't miss them:
 
 1. **Buttons use `.jb-btn`.** The wiki has exactly one button look
-   (rounded green pill, brass text). Variants: `.jb-btn-primary` for
-   highest emphasis, `.jb-btn-secondary` for lower emphasis,
-   `.jb-btn-sm` for smaller contexts. Don't create new bespoke button
+   (brass background, dark-green text, rounded pill). The only
+   modifier in active use is `.jb-btn-sm` for compact contexts
+   (inline row actions, toolbars). Don't create new bespoke button
    styles — extend the family in `custom.scss` if a new variant is
    genuinely needed.
 
