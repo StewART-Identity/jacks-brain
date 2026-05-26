@@ -7,4 +7,4 @@ Observations of the world. Things you've read, references you want to keep, frag
 
 - **[[notes/add|Add]]** — a fresh capture. Title, body, optional tags.
 - **[[notes/update|Update]]** — every note you've written so far. Each row expands inline for editing without leaving the page.
-- **[[notes/entries/|List]]** — the entries themselves, newest first.
+- **[[notes/entries/|Entries]]** — every captured note in chronological order, newest first.

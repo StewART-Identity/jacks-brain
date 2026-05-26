@@ -219,6 +219,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       links: [
         { title: "Add", slug: "notes/add" },
         { title: "Update", slug: "notes/update" },
+        { title: "Entries", slug: "notes/entries" },
       ],
     }),
     Component.SidebarLink({
@@ -228,6 +229,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       links: [
         { title: "Add", slug: "journal/add" },
         { title: "Update", slug: "journal/update" },
+        { title: "Entries", slug: "journal/entries" },
       ],
     }),
     Component.SidebarLink({
