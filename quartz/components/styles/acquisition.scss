@@ -1,3 +1,12 @@
+/*
+ * Acquisition queue page styles — /collect/acquisition.
+ *
+ * Theme note: previously this file had `:root[saved-theme="dark"]`
+ * overrides on every run badge, the selection bar, and every toast
+ * variant. Those never matched (saved-theme is never set; see
+ * custom.scss header). Dark-mode values are now the defaults.
+ */
+
 #acquisition-app {
   max-width: 720px;
   padding-bottom: 2rem;
@@ -10,13 +19,10 @@
    <div>. Sort header convention (cursor, hover, triangle indicators)
    matches the Retention table.
 
-   Column order: Checkbox / Acquired / Status / Source.
-   Widths are anchored on class names rather than nth-child so any
-   future reordering of columns doesn't silently mis-apply widths. */
+   Column order: Checkbox / Acquired / Status / Source. */
 
 #acquisition-app thead th.queue-checkbox-cell,
 #acquisition-app tbody td.queue-checkbox-cell {
-  /* Checkbox — fits the input plus minimal padding. Centered. */
   width: 2.5rem;
   text-align: center;
   padding-left: 0.5rem;
@@ -24,14 +30,9 @@
 }
 #acquisition-app thead th.col-date,
 #acquisition-app tbody td.col-date {
-  /* Acquired — fits "2026-04-23" on top and "processing 8m"/"waiting 4m"
-     /"12m ago" underneath. Slightly wider than just the date because of
-     the two-line layout and the longer relative-time strings. */
   width: 8.5rem;
 }
 #acquisition-app tbody td.queue-acquired-cell {
-  /* Two-line cell — vertical alignment to the top so the date doesn't
-     drift center when the relative line is short. */
   vertical-align: top;
 }
 #acquisition-app .queue-acquired-date {
@@ -46,23 +47,16 @@
 }
 #acquisition-app thead th.col-status,
 #acquisition-app tbody td.col-status {
-  /* Status — fits the widest badge ("IN_PROGRESS") plus padding */
   width: 8rem;
   white-space: nowrap;
 }
 #acquisition-app thead th.queue-document-cell,
 #acquisition-app tbody td.queue-document-cell {
-  /* Source — trailing column, takes whatever's left. Long filenames
-     wrap inside the cell rather than expanding the column. */
   width: auto;
   overflow-wrap: anywhere;
 }
 
-/* Sortable column headers — same convention as Retention.
-   Click to toggle asc ↔ desc. Active sort shown via filled triangle
-   (▲▼) appended to header text. Headers have tabindex=0 and role=button
-   so they're keyboard-focusable; the focus styling is left to the
-   browser default since Retention has no custom focus styling either. */
+/* Sortable column headers — same convention as Retention. */
 #acquisition-app th.sortable {
   cursor: pointer;
   user-select: none;
@@ -110,11 +104,14 @@ input.queue-row-checkbox {
   cursor: pointer;
   margin: 0;
   /* Slightly larger than browser default to make tap targets easier on
-     touch devices without dominating the table row. */
+     touch devices. */
   width: 1.05rem;
   height: 1.05rem;
 }
 
+/* Run badges — colors below are the previous dark-mode values
+   (darker backgrounds, brighter foregrounds) which read correctly
+   on the dark hunter-green canvas. */
 .run-badge {
   padding: 2px 8px;
   border-radius: 10px;
@@ -124,53 +121,27 @@ input.queue-row-checkbox {
   letter-spacing: 0.03em;
 }
 .run-badge.cataloged {
-  background: #ebf5ee;
-  color: #2b5e3e;
+  background: #1b3f29;
+  color: #7bbf95;
 }
 .run-badge.success {
-  background: #ebf5ee;
-  color: #2b5e3e;
+  background: #1b3f29;
+  color: #7bbf95;
 }
 .run-badge.failed {
-  background: #f9eded;
-  color: #6b2020;
+  background: #6b2020;
+  color: #c46b6b;
 }
 .run-badge.failure {
-  background: #f9eded;
-  color: #6b2020;
+  background: #6b2020;
+  color: #c46b6b;
 }
 .run-badge.in_progress {
-  background: #fbf4e4;
-  color: #6b4d1a;
-}
-.run-badge.pending,
-.run-badge.queued {
-  background: #eef1f6;
-  color: #2e3d55;
-}
-
-:root[saved-theme="dark"] .run-badge.cataloged {
-  background: #1b3f29;
-  color: #7bbf95;
-}
-:root[saved-theme="dark"] .run-badge.success {
-  background: #1b3f29;
-  color: #7bbf95;
-}
-:root[saved-theme="dark"] .run-badge.failed {
-  background: #6b2020;
-  color: #c46b6b;
-}
-:root[saved-theme="dark"] .run-badge.failure {
-  background: #6b2020;
-  color: #c46b6b;
-}
-:root[saved-theme="dark"] .run-badge.in_progress {
   background: #6b4d1a;
   color: #d4ad5a;
 }
-:root[saved-theme="dark"] .run-badge.pending,
-:root[saved-theme="dark"] .run-badge.queued {
+.run-badge.pending,
+.run-badge.queued {
   background: #2e3d55;
   color: #7b8fad;
 }
@@ -182,7 +153,9 @@ input.queue-row-checkbox {
 
 /* Floating selection bar — fixed at the bottom of the viewport, visible
    only when one or more PENDING checkboxes are selected. Hidden via the
-   [hidden] HTML attribute (toggled by the inline script). */
+   [hidden] HTML attribute (toggled by the inline script). Background
+   uses var(--lightgray) for a slight visual lift against the canvas
+   (the previous dark-mode value). */
 .queue-selection-bar[hidden] {
   display: none;
 }
@@ -196,8 +169,8 @@ input.queue-row-checkbox {
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 0.75rem 0.5rem 1rem;
-  background: var(--light);
-  border: 1px solid var(--lightgray);
+  background: var(--lightgray);
+  border: 1px solid var(--gray);
   border-radius: 999px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   font-size: 0.95rem;
@@ -240,13 +213,9 @@ input.queue-row-checkbox {
   cursor: wait;
 }
 
-:root[saved-theme="dark"] .queue-selection-bar {
-  background: var(--lightgray);
-  border-color: var(--gray);
-}
-
 /* Toast for action feedback — appended to body by the inline script,
-   fades in/out around a 3-second hold. */
+   fades in/out around a 3-second hold. Variant colors are the
+   previous dark-mode values. */
 .queue-toast {
   position: fixed;
   bottom: 5rem; /* clear the selection bar's home position */
@@ -268,33 +237,17 @@ input.queue-row-checkbox {
   transform: translateX(-50%) translateY(0);
 }
 .queue-toast-success {
-  background: #ebf5ee;
-  color: #2b5e3e;
-  border: 1px solid #c8e0cf;
-}
-.queue-toast-info {
-  background: #eef1f6;
-  color: #2e3d55;
-  border: 1px solid #d3d9e2;
-}
-.queue-toast-error {
-  background: #f9eded;
-  color: #6b2020;
-  border: 1px solid #ebcccc;
-}
-
-:root[saved-theme="dark"] .queue-toast-success {
   background: #1b3f29;
   color: #7bbf95;
-  border-color: #2b5e3e;
+  border: 1px solid #2b5e3e;
 }
-:root[saved-theme="dark"] .queue-toast-info {
+.queue-toast-info {
   background: #2e3d55;
   color: #7b8fad;
-  border-color: #3d5070;
+  border: 1px solid #3d5070;
 }
-:root[saved-theme="dark"] .queue-toast-error {
+.queue-toast-error {
   background: #6b2020;
   color: #c46b6b;
-  border-color: #8a3030;
+  border: 1px solid #8a3030;
 }
