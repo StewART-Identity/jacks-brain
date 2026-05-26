@@ -40,7 +40,8 @@ const ALLOWED_SLUG_PREFIXES = [
 // content (kept in sync with quartz.layout.ts's QUIZ_SHELL_EXCLUSIONS
 // and functions/api/quiz/suggest.ts's identical list).
 const SHELL_EXCLUSIONS = new Set<string>([
-  "upskill/manage",
+  "upskill/add",
+  "upskill/update",
   "upskill/topics",
 ])
 
@@ -48,8 +49,20 @@ function isAllowedSlug(slug: string): boolean {
   if (slug.includes("..") || slug.startsWith("/") || slug.includes("\\")) {
     return false
   }
-  if (slug.endsWith("/index") || slug.endsWith("/")) return false
   if (SHELL_EXCLUSIONS.has(slug)) return false
+  // Reject upskill topic landings (upskill/<single-segment>). Quiz
+  // questions on the upskill side live on individual concept pages
+  // (e.g. upskill/git/object-model), aggregated into the Quiz Take
+  // dropdown by subject. Landings are curated intros and don't
+  // carry their own quiz arrays. See suggest.ts for the full
+  // rationale; this file mirrors that policy.
+  if (slug.startsWith("upskill/")) {
+    const rest = slug.slice("upskill/".length)
+    if (rest.length > 0 && !rest.includes("/")) {
+      return false
+    }
+  }
+  if (slug.endsWith("/index") || slug.endsWith("/")) return false
   for (const prefix of ALLOWED_SLUG_PREFIXES) {
     if (slug.startsWith(prefix) && slug.length > prefix.length) {
       return true
