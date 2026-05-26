@@ -17,17 +17,18 @@
  *      only ever appears in /upskill/update.
  *
  * Like notes.scss, this stylesheet is self-contained — it does NOT
- * depend on searchPage.scss or notes.scss being loaded. Each
- * component ships its own CSS only when mounted, so duplication of
- * a few card-vocabulary rules is the correct tradeoff against an
- * implicit cross-component import.
+ * depend on searchPage.scss or notes.scss being loaded.
  *
  * Note on the width cap: Notes uses 720px because its form is a
- * single tall textarea — a wider cap would just leave dead air.
- * Upskill's add form has structured data entry (four short inputs)
- * and the update list has three actions per row, so both benefit
- * from more lateral room. Hence 880px here rather than NoteForm's
- * 720px.
+ * single tall textarea. Upskill's add form has structured data entry
+ * (four short inputs) and the update list has three actions per row,
+ * so both benefit from more lateral room. Hence 880px here rather
+ * than NoteForm's 720px.
+ *
+ * Theme note: previously this file had `:root[saved-theme="dark"]`
+ * overrides on status messages and the row background. Those never
+ * matched (saved-theme is never set; see custom.scss header).
+ * Dark-mode values are now the defaults.
  */
 
 #upskill-add-app,
@@ -39,9 +40,6 @@
 /* ───── Card wrapper — mirrors .search-page-card ─────────────────── */
 #upskill-add-app .search-page-card,
 #upskill-update-app .search-page-card {
-  /* More generous padding than NoteForm's 1.25rem — the cards have
-     more contents (4 inputs + button + status) so the inner margin
-     should grow with them. */
   padding: 1.5rem 1.5rem 1.75rem;
   border: 1px solid var(--lightgray);
   border-radius: 12px;
@@ -50,8 +48,6 @@
 
 #upskill-add-app .search-page-label,
 #upskill-update-app .search-page-label {
-  /* Slightly larger and with more breathing room than the NoteForm
-     label so the two stacked cards read as clearly distinct zones. */
   margin: 0 0 1.1rem 0;
   font-size: 1.15rem;
   color: var(--dark);
@@ -62,8 +58,6 @@
 #upskill-add-app .notes-text-input {
   width: 100%;
   padding: 0.65rem 0.9rem;
-  /* 0.75rem (was 0.5rem) so the stack of four inputs has visible
-     rhythm. The form's spine reads cleanly down the page now. */
   margin-bottom: 0.75rem;
   border: 1px solid var(--lightgray);
   border-radius: 8px;
@@ -94,9 +88,6 @@
   line-height: 1.5;
   resize: vertical;
   box-sizing: border-box;
-  /* Was 70px — bumped so the summary field doesn't look like an
-     afterthought next to the three taller-than-they-look inputs
-     above it (each is ~38px tall with the new padding). */
   min-height: 90px;
 }
 #upskill-add-app .notes-textarea:focus {
@@ -109,14 +100,9 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  /* Slightly more separation between the textarea and the Create
-     button so the button doesn't visually fight the textarea's
-     resize handle. */
   margin-top: 1rem;
 }
 
-/* Create button now uses .jb-btn from custom.scss. Layout-only
-   override: push it to the right of the controls row. */
 #upskill-add-app .jb-btn {
   margin-left: auto;
 }
@@ -135,36 +121,26 @@
   background: var(--lightgray);
   color: var(--darkgray);
 
+  /* Success and error use the dark-canvas-tuned values (previous
+     dark-mode override). Pending stays brass. */
   &.success {
-    background: color-mix(in srgb, #3A7D53 15%, var(--light));
-    color: #2A5A3D;
+    background: color-mix(in srgb, #3A7D53 25%, var(--light));
+    color: #C8E6D2;
   }
   &.error {
-    background: color-mix(in srgb, #8B3232 12%, var(--light));
-    color: #8B3232;
+    background: color-mix(in srgb, #C46B6B 20%, var(--light));
+    color: #F3CFCF;
   }
   &.pending {
     background: color-mix(in srgb, var(--secondary) 12%, var(--light));
     color: var(--secondary);
   }
 }
-:root[saved-theme="dark"] #upskill-add-app .notes-status .card-status-msg.success,
-:root[saved-theme="dark"] #upskill-update-app .notes-status .card-status-msg.success {
-  background: color-mix(in srgb, #3A7D53 25%, var(--light));
-  color: #C8E6D2;
-}
-:root[saved-theme="dark"] #upskill-add-app .notes-status .card-status-msg.error,
-:root[saved-theme="dark"] #upskill-update-app .notes-status .card-status-msg.error {
-  background: color-mix(in srgb, #C46B6B 20%, var(--light));
-  color: #F3CFCF;
-}
 
 /* ───── Existing-topics list ────────────────────────────────────── */
 .upskill-list {
   display: flex;
   flex-direction: column;
-  /* Was 0.5rem — wider gap reads as discrete items rather than a
-     compressed stack. */
   gap: 0.65rem;
   min-height: 2.5rem;
 }
@@ -173,18 +149,15 @@
   margin: 0;
 }
 
+/* Row background uses color-mix on var(--light) for a slight visual
+   lift (the previous dark-mode value). */
 .upskill-row {
   display: flex;
   align-items: flex-start;
   gap: 0.9rem;
-  /* More horizontal padding so the title and action buttons aren't
-     crowded against the row's borders. */
   padding: 0.85rem 1.1rem;
   border: 1px solid var(--lightgray);
   border-radius: 8px;
-  background: var(--light);
-}
-:root[saved-theme="dark"] .upskill-row {
   background: color-mix(in srgb, var(--light) 92%, transparent);
 }
 
