@@ -1,12 +1,12 @@
 /**
- * Journal capture form — client behavior for /journal/write.
+ * Journal capture form — client behavior for /journal/add.
  *
  * Mirror of noteForm.inline.ts. Handles only the form: markdown
  * preview, Edit/Preview tabs, and the POST /api/journal save path.
  * The list-and-edit side lives in journalList.inline.ts.
  *
  * Mounts under the "nav" event so SPA navigation re-binds handlers
- * when the user lands on /journal/write from elsewhere on the site.
+ * when the user lands on /journal/add from elsewhere on the site.
  */
 document.addEventListener("nav", () => {
   const root = document.getElementById("journal-form-app")
@@ -267,7 +267,7 @@ document.addEventListener("nav", () => {
 
       showStatus(
         saveStatus!,
-        'Entry saved. Visit /journal/browse to see it once the page rebuilds (~30s).',
+        'Entry saved. Visit /journal/update to see it once the page rebuilds (~30s).',
         "success",
       )
 
