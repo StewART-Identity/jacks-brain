@@ -1,14 +1,20 @@
 /**
  * Upskill management page styles.
  *
- * The /upskill/manage page mounts the UpskillManage component, which
- * visually mirrors the Notes form pages (the .search-page-card
+ * Used by two pages:
+ *   - /upskill/add    — UpskillAdd component, the new-topic form
+ *   - /upskill/update — UpskillUpdate component, the list with
+ *                       Edit/Hide/Delete buttons per row
+ *
+ * Both visually mirror the Notes form pages (the .search-page-card
  * vocabulary). This stylesheet:
  *
- *   1. Scopes that card vocabulary under #upskill-manage-app — same
- *      pattern Notes uses with #note-form-app and #notes-list-app.
- *   2. Adds the .upskill-row vocabulary for the existing-topics list
- *      that sits below the form.
+ *   1. Scopes that card vocabulary under both wrappers
+ *      (#upskill-add-app and #upskill-update-app) — same pattern
+ *      Notes uses with #note-form-app and #notes-list-app.
+ *   2. Defines the .upskill-row vocabulary for the existing-topics
+ *      list. .upskill-row is global (no wrapper scope) since it
+ *      only ever appears in /upskill/update.
  *
  * Like notes.scss, this stylesheet is self-contained — it does NOT
  * depend on searchPage.scss or notes.scss being loaded. Each
@@ -18,18 +24,21 @@
  *
  * Note on the width cap: Notes uses 720px because its form is a
  * single tall textarea — a wider cap would just leave dead air.
- * Upskill manage has structured data entry (four short inputs) AND
- * a list of topics with three actions per row, so it benefits from
- * more lateral room. Hence 880px here rather than NoteForm's 720px.
+ * Upskill's add form has structured data entry (four short inputs)
+ * and the update list has three actions per row, so both benefit
+ * from more lateral room. Hence 880px here rather than NoteForm's
+ * 720px.
  */
 
-#upskill-manage-app {
+#upskill-add-app,
+#upskill-update-app {
   max-width: 880px;
   padding-bottom: 2rem;
 }
 
 /* ───── Card wrapper — mirrors .search-page-card ─────────────────── */
-#upskill-manage-app .search-page-card {
+#upskill-add-app .search-page-card,
+#upskill-update-app .search-page-card {
   /* More generous padding than NoteForm's 1.25rem — the cards have
      more contents (4 inputs + button + status) so the inner margin
      should grow with them. */
@@ -39,7 +48,8 @@
   background: color-mix(in srgb, var(--light) 92%, transparent);
 }
 
-#upskill-manage-app .search-page-label {
+#upskill-add-app .search-page-label,
+#upskill-update-app .search-page-label {
   /* Slightly larger and with more breathing room than the NoteForm
      label so the two stacked cards read as clearly distinct zones. */
   margin: 0 0 1.1rem 0;
@@ -49,7 +59,7 @@
 }
 
 /* ───── Text inputs — same as notes, with more vertical rhythm ───── */
-#upskill-manage-app .notes-text-input {
+#upskill-add-app .notes-text-input {
   width: 100%;
   padding: 0.65rem 0.9rem;
   /* 0.75rem (was 0.5rem) so the stack of four inputs has visible
@@ -63,16 +73,16 @@
   font-size: 0.95rem;
   box-sizing: border-box;
 }
-#upskill-manage-app .notes-text-input:focus {
+#upskill-add-app .notes-text-input:focus {
   outline: none;
   border-color: var(--secondary);
 }
-#upskill-manage-app .notes-text-input::placeholder {
+#upskill-add-app .notes-text-input::placeholder {
   color: var(--gray);
   opacity: 0.7;
 }
 
-#upskill-manage-app .notes-textarea {
+#upskill-add-app .notes-textarea {
   width: 100%;
   padding: 0.75rem 0.9rem;
   border: 1px solid var(--lightgray);
@@ -89,13 +99,13 @@
      above it (each is ~38px tall with the new padding). */
   min-height: 90px;
 }
-#upskill-manage-app .notes-textarea:focus {
+#upskill-add-app .notes-textarea:focus {
   outline: none;
   border-color: var(--secondary);
 }
 
 /* ───── Controls row ──────────────────────────────────────────── */
-#upskill-manage-app .notes-controls {
+#upskill-add-app .notes-controls {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -107,15 +117,17 @@
 
 /* Create button now uses .jb-btn from custom.scss. Layout-only
    override: push it to the right of the controls row. */
-#upskill-manage-app .jb-btn {
+#upskill-add-app .jb-btn {
   margin-left: auto;
 }
 
 /* ───── Status banners — same vocabulary as notes ───────────────── */
-#upskill-manage-app .notes-status {
+#upskill-add-app .notes-status,
+#upskill-update-app .notes-status {
   margin-top: 0.85rem;
 }
-#upskill-manage-app .notes-status .card-status-msg {
+#upskill-add-app .notes-status .card-status-msg,
+#upskill-update-app .notes-status .card-status-msg {
   padding: 0.55rem 0.75rem;
   border-radius: 6px;
   font-size: 0.88rem;
@@ -136,11 +148,13 @@
     color: var(--secondary);
   }
 }
-:root[saved-theme="dark"] #upskill-manage-app .notes-status .card-status-msg.success {
+:root[saved-theme="dark"] #upskill-add-app .notes-status .card-status-msg.success,
+:root[saved-theme="dark"] #upskill-update-app .notes-status .card-status-msg.success {
   background: color-mix(in srgb, #3A7D53 25%, var(--light));
   color: #C8E6D2;
 }
-:root[saved-theme="dark"] #upskill-manage-app .notes-status .card-status-msg.error {
+:root[saved-theme="dark"] #upskill-add-app .notes-status .card-status-msg.error,
+:root[saved-theme="dark"] #upskill-update-app .notes-status .card-status-msg.error {
   background: color-mix(in srgb, #C46B6B 20%, var(--light));
   color: #F3CFCF;
 }
