@@ -575,23 +575,20 @@ Tags.css = `
   padding-bottom: 2rem;
 }
 
-/* The actual canvas — matches .graph-outer / .graph-container shape. */
+/* The actual canvas — matches .graph-outer / .graph-container shape.
+   Background uses the previous dark-mode value; the light-mode rule
+   and the dark-mode override that used to live below were both
+   removed because saved-theme is never set (see custom.scss header). */
 #tags-app > .tags-container {
   border-radius: 8px;
   border: 1px solid var(--lightgray);
-  background-color: var(--light);
+  background: rgba(27, 63, 41, 0.3);
   box-sizing: border-box;
   height: 70vh;
   width: 100%;
   overflow: hidden;
   touch-action: none;
   position: relative;
-}
-:root:not([saved-theme="dark"]) #tags-app > .tags-container {
-  background: rgba(193, 223, 204, 0.2);
-}
-:root[saved-theme="dark"] #tags-app > .tags-container {
-  background: rgba(27, 63, 41, 0.3);
 }
 
 #tags-app > .tags-container > svg {
