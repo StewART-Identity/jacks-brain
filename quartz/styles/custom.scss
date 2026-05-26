@@ -259,9 +259,17 @@ article {
 }
 
 :root[saved-theme="dark"] article {
+  /* All three headings use brass/cream tones for strong contrast against
+     the dark hunter-green background. An earlier version used $green-300
+     for h4 (mint green) and $stone-50 for h3 — but $green-300 disappears
+     against the green canvas, and on some pages (e.g. /application/help)
+     the h3s were rendering in a dim green that matched the background
+     instead of the intended warm cream. Switching both to clearly
+     contrasted colors (brass-100 and stone-50) eliminates the
+     hard-to-read state at every heading level. */
   h2 { color: $brass-100; }
-  h3 { color: $stone-50; }
-  h4 { color: $green-300; }
+  h3 { color: $brass-100; }
+  h4 { color: $stone-50; }
 }
 
 :root:not([saved-theme="dark"]) article {
