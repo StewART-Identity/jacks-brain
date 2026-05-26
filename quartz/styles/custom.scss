@@ -1328,12 +1328,33 @@ article.hide-folder-listing ~ .page-listing,
    /journal/entries so each entry reads as a discrete card, matching
    the visual language of the .upskill-row cards on /upskill/update.
 
+   IMPORTANT — the slug suffix issue:
+
+   Quartz's renderPage.tsx sets `<body data-slug={slug}>` using the
+   page's FullSlug. For folder index pages (content/X/Y/index.md),
+   the FullSlug carries a trailing "/index" segment — e.g. the
+   /notes/entries/ page renders as
+       <body data-slug="notes/entries/index">
+   NOT
+       <body data-slug="notes/entries">
+
+   This is the same pattern PageList.tsx itself acknowledges with
+   `currentSlug.replace(/\/index$/, "")` in its Reflect-table branch.
+
+   An earlier version of this selector group used
+   body[data-slug="notes/entries"] — which silently matched no
+   elements because the actual attribute value is
+   "notes/entries/index". The page rendered with the default
+   PageList styles unchanged. The fix is to target both forms
+   defensively: the canonical "/index"-suffixed form for folder
+   index pages plus the bare form in case Quartz ever normalizes
+   slugs.
+
    Why this lives here (rather than in PageList.css): the change is
    page-scoped (only Entries pages, not every PageList instance), and
    the rule needs the wiki's design tokens which already live in this
-   file. Scoping via body[data-slug="..."] is the same pattern the
-   Retention page above uses. No frontmatter cssclasses needed —
-   purely a stylesheet change.
+   file. No frontmatter cssclasses needed — purely a stylesheet
+   change.
 
    DOM target: PageList's default-branch output is
      ul.section-ul > li.section-li > div.section
@@ -1353,6 +1374,8 @@ article.hide-folder-listing ~ .page-listing,
        float-right pill cluster the default rendering uses
    ========================================================================== */
 
+body[data-slug="notes/entries/index"] .page-listing ul.section-ul,
+body[data-slug="journal/entries/index"] .page-listing ul.section-ul,
 body[data-slug="notes/entries"] .page-listing ul.section-ul,
 body[data-slug="journal/entries"] .page-listing ul.section-ul {
   list-style: none;
@@ -1363,6 +1386,8 @@ body[data-slug="journal/entries"] .page-listing ul.section-ul {
   gap: 0.65rem;
 }
 
+body[data-slug="notes/entries/index"] .page-listing li.section-li,
+body[data-slug="journal/entries/index"] .page-listing li.section-li,
 body[data-slug="notes/entries"] .page-listing li.section-li,
 body[data-slug="journal/entries"] .page-listing li.section-li {
   margin: 0;
@@ -1373,6 +1398,8 @@ body[data-slug="journal/entries"] .page-listing li.section-li {
    display: flex with .meta floated narrow on one side and .tags
    floated right; override to block flow so date sits above title
    and tags wrap naturally along the bottom. */
+body[data-slug="notes/entries/index"] .page-listing .section,
+body[data-slug="journal/entries/index"] .page-listing .section,
 body[data-slug="notes/entries"] .page-listing .section,
 body[data-slug="journal/entries"] .page-listing .section {
   display: block;
@@ -1382,6 +1409,8 @@ body[data-slug="journal/entries"] .page-listing .section {
   background: var(--light);
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
+:root[saved-theme="dark"] body[data-slug="notes/entries/index"] .page-listing .section,
+:root[saved-theme="dark"] body[data-slug="journal/entries/index"] .page-listing .section,
 :root[saved-theme="dark"] body[data-slug="notes/entries"] .page-listing .section,
 :root[saved-theme="dark"] body[data-slug="journal/entries"] .page-listing .section {
   background: color-mix(in srgb, var(--light) 92%, transparent);
@@ -1391,6 +1420,8 @@ body[data-slug="journal/entries"] .page-listing .section {
    shadow or translateY, matching .upskill-row's restrained hover
    (it has none, just relies on link affordance on the title). We
    add a faint border highlight only, keeping the cards calm. */
+body[data-slug="notes/entries/index"] .page-listing .section:hover,
+body[data-slug="journal/entries/index"] .page-listing .section:hover,
 body[data-slug="notes/entries"] .page-listing .section:hover,
 body[data-slug="journal/entries"] .page-listing .section:hover {
   border-color: var(--secondary);
@@ -1399,6 +1430,8 @@ body[data-slug="journal/entries"] .page-listing .section:hover {
 /* Date — overline metadata. Sits above the title in muted color,
    small. The default .meta styles use a normal-size font; override
    to compact. */
+body[data-slug="notes/entries/index"] .page-listing .section > .meta,
+body[data-slug="journal/entries/index"] .page-listing .section > .meta,
 body[data-slug="notes/entries"] .page-listing .section > .meta,
 body[data-slug="journal/entries"] .page-listing .section > .meta {
   margin: 0 0 0.3rem 0;
@@ -1412,10 +1445,14 @@ body[data-slug="journal/entries"] .page-listing .section > .meta {
    size/weight; underline removed so the card itself reads as the
    click target rather than the link reading as a separate
    element. */
+body[data-slug="notes/entries/index"] .page-listing .section > .desc,
+body[data-slug="journal/entries/index"] .page-listing .section > .desc,
 body[data-slug="notes/entries"] .page-listing .section > .desc,
 body[data-slug="journal/entries"] .page-listing .section > .desc {
   margin: 0;
 }
+body[data-slug="notes/entries/index"] .page-listing .section > .desc h3,
+body[data-slug="journal/entries/index"] .page-listing .section > .desc h3,
 body[data-slug="notes/entries"] .page-listing .section > .desc h3,
 body[data-slug="journal/entries"] .page-listing .section > .desc h3 {
   margin: 0;
@@ -1424,11 +1461,15 @@ body[data-slug="journal/entries"] .page-listing .section > .desc h3 {
   line-height: 1.4;
   color: var(--dark);
 }
+body[data-slug="notes/entries/index"] .page-listing .section > .desc h3 a,
+body[data-slug="journal/entries/index"] .page-listing .section > .desc h3 a,
 body[data-slug="notes/entries"] .page-listing .section > .desc h3 a,
 body[data-slug="journal/entries"] .page-listing .section > .desc h3 a {
   color: inherit;
   text-decoration: none;
 }
+body[data-slug="notes/entries/index"] .page-listing .section > .desc h3 a:hover,
+body[data-slug="journal/entries/index"] .page-listing .section > .desc h3 a:hover,
 body[data-slug="notes/entries"] .page-listing .section > .desc h3 a:hover,
 body[data-slug="journal/entries"] .page-listing .section > .desc h3 a:hover {
   color: var(--secondary);
@@ -1437,6 +1478,8 @@ body[data-slug="journal/entries"] .page-listing .section > .desc h3 a:hover {
 /* Tag pills along the bottom — flex-wrap row with the same gap as
    the rest of the wiki's pill rows (Reflect tag-row, Upskill row
    summaries with tags). */
+body[data-slug="notes/entries/index"] .page-listing .section > ul.tags,
+body[data-slug="journal/entries/index"] .page-listing .section > ul.tags,
 body[data-slug="notes/entries"] .page-listing .section > ul.tags,
 body[data-slug="journal/entries"] .page-listing .section > ul.tags {
   list-style: none;
@@ -1446,6 +1489,8 @@ body[data-slug="journal/entries"] .page-listing .section > ul.tags {
   flex-wrap: wrap;
   gap: 0.4rem;
 }
+body[data-slug="notes/entries/index"] .page-listing .section > ul.tags > li,
+body[data-slug="journal/entries/index"] .page-listing .section > ul.tags > li,
 body[data-slug="notes/entries"] .page-listing .section > ul.tags > li,
 body[data-slug="journal/entries"] .page-listing .section > ul.tags > li {
   margin: 0;
