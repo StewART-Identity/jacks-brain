@@ -4,6 +4,36 @@
 /* ==========================================================================
    Jack's Brain — Full Custom Theme
    Hunter green base, warm stone neutrals, brass/slate/oxblood accents.
+
+   ─── Note on theme handling ────────────────────────────────────────
+   The wiki is dark-only by design. The Darkmode component has been
+   removed from the layout (see quartz.layout.ts — no Component.Darkmode()
+   anywhere), which means the `darkmode.inline.ts` script that sets
+   `saved-theme="dark"` on the <html> element is NEVER loaded. Any CSS
+   rule scoped to `:root[saved-theme="dark"]` therefore never matches.
+
+   Earlier versions of this file kept both a default `:root { }` block
+   (intended for "light mode") and a `:root[saved-theme="dark"] { }`
+   block (intended for "dark mode"), with the dark-mode block holding
+   the actual desired wiki colors (brass, warm cream, hunter green).
+   Since saved-theme is never set, the default `:root` block was the
+   one always in effect — and its `--dark: $green-900` value meant
+   `var(--dark)` resolved to exactly the same hunter-green as the
+   canvas background. base.scss's `h1-h6 { color: var(--dark); }` then
+   made every heading on the page invisible against the canvas.
+
+   This file now hoists the dark-mode values up into the default
+   `:root` block and removes every `[saved-theme="dark"]` qualifier
+   throughout. The wiki renders identically — same colors, same
+   contrast — but without the dead theme-switching scaffolding that
+   was silently breaking the cascade.
+
+   If a future feature wants to bring back a light/dark toggle, the
+   right move is: (1) add Darkmode back to the layout so the script
+   actually runs, (2) introduce a `:root[saved-theme="light"]` block
+   with the light-mode overrides, and (3) keep `:root` as the
+   dark-mode default. Don't reintroduce `:root[saved-theme="dark"]`
+   qualifiers — they were the trap.
    ========================================================================== */
 
 /* ---------- Hunter green ---------- */
@@ -47,7 +77,10 @@ $oxblood-800: #6B2020;
 
 
 /* ==========================================================================
-   Light mode — soft green canvas, dark green + stone text
+   Theme variables — dark-only
+
+   Single :root block. Holds the actual wiki colors. The values that
+   used to live in `:root[saved-theme="dark"]` are now the defaults.
    ========================================================================== */
 
 body {
@@ -57,28 +90,6 @@ body {
 }
 
 :root {
-  --light:            #{$green-50};
-  --lightgray:        #{$green-100};
-  --gray:             #{$green-500};
-  --darkgray:         #{$stone-800};
-  --dark:             #{$green-900};
-  --secondary:        #{$green-600};
-  --tertiary:         #{$brass-500};
-  --highlight:        rgba(193, 223, 204, 0.4);
-  --textHighlight:    #{$brass-100};
-
-  --graph-node:       #{$green-600};
-  --graph-node-active:#{$brass-300};
-  --graph-link:       #{$green-300};
-  --graph-link-active:#{$green-500};
-}
-
-
-/* ==========================================================================
-   Dark mode — deep forest green, warm cream + brass text
-   ========================================================================== */
-
-:root[saved-theme="dark"] {
   --light:            #{$green-900};
   --lightgray:        #{$green-800};
   --gray:             #{$green-300};
@@ -115,45 +126,21 @@ body {
       use the right sidebar, so that 320px was dead space that
       pushed the center column narrow. Override the desktop grid to
       "320px 1fr" so the center column can fill all the space between
-      the left sidebar's divider and the page edge. The
-      grid-sidebar-right area is folded into grid-center; the empty
-      right-sidebar element doesn't render anything, so this is safe.
+      the left sidebar's divider and the page edge.
 
    3. CONTENT GUTTERS — give the .center column proportional 5%
-      gutters on each side, leaving 90% for content. This replaces
-      an earlier scheme that capped only the article at 64rem and
-      centered it. The percentage approach gives consistent visual
-      proportions at any viewport width — tables, prose, forms, and
-      the page header all share the same gutters, so the page reads
-      as one band of content with breathing room on each side,
-      whether the viewport is 1024px or 2560px.
-
-      The percentages are applied as horizontal padding on .center,
-      which makes every child (page-header, article, page-footer)
-      inherit the same content width. No single component needs to
-      know about the gutters — they're a property of the column.
-
-   All three rules apply at tablet+ widths (800px and up). Mobile
-   keeps its single-column stack untouched.
+      gutters on each side, leaving 90% for content. This gives
+      consistent visual proportions at any viewport width — tables,
+      prose, forms, and the page header all share the same gutters,
+      so the page reads as one band of content with breathing room.
    ========================================================================== */
 
-/* (1) Lift the page cap on tablet-sized viewports. */
 @media all and (max-width: 1499px) {
   .page {
     max-width: 100%;
   }
 }
 
-/* (2) Override the desktop grid to use only two columns: sidebar +
-       center. The right-sidebar grid area is folded into grid-center
-       so any component nominally registered to the right slot stacks
-       below the article (we don't currently use the right slot, but
-       this is the safe fallback if anything is ever added).
-
-       !important is needed because base.scss's grid-template-columns
-       lives inside an @media query, which beats a non-media-query
-       rule on source order. Same pattern as the sidebar-collapsed
-       override below. */
 @media all and ($desktop) {
   .page > #quartz-body {
     grid-template-columns: #{$sidePanelWidth} 1fr !important;
@@ -165,25 +152,6 @@ body {
   }
 }
 
-/* (3) Give the .center column proportional gutters via horizontal
-       padding. Box-sizing must include the padding so the column
-       still fits within its grid area without overflowing. With
-       box-sizing: border-box, the 100% width from base.scss now
-       counts the padding inward, leaving 90% (5% per side) for
-       content at most viewport widths.
-
-       The max(5%, 4rem) lower bound guarantees a minimum 4rem
-       (64px) gutter on each side regardless of viewport. Without
-       this floor, a narrow viewport (say 800px collapsed) would
-       give only 40px gutters, which is less than the floating
-       expand button's footprint (button is 40px wide at 16px from
-       the left edge, occupying the first 56px of the viewport).
-       The 4rem floor keeps content clear of the button at every
-       size.
-
-       Applies whenever the sidebar is open OR collapsed — the
-       collapsed-state grid override below uses 1fr for .center too,
-       so the same percentage gutters work in both states. */
 @media all and (min-width: 800px) {
   .page > #quartz-body > .center {
     box-sizing: border-box;
@@ -194,74 +162,34 @@ body {
 
 
 /* ==========================================================================
-   Page title
-
-   The title sits in the left sidebar above the zone labels (DOING,
-   SEEING, STUDYING, META). The sidebar has horizontal padding of
-   2rem on each side (from base.scss's .sidebar rule:
-   `padding: $topSpacing 2rem 2rem 2rem`). Without intervention,
-   `text-align: center` on the title would center it within the
-   sidebar's *padded content area* — which is the same x-range as
-   the zone labels — making the title visually flush-left with them
-   when the text is wide enough to fill that area.
-
-   Jack wants the title centered between the sidebar's *outer*
-   edges (the page edge on the left, the green divider on the
-   right). Achieved by giving the .page-title negative horizontal
-   margins of -2rem to cancel out the sidebar's padding, so the
-   title's effective box spans the full sidebar width. The
-   text-align: center declaration in PageTitle.tsx then centers
-   the title within that full width.
-
-   The negative margin only fights padding that the sidebar
-   contributes. The collapse button (absolutely positioned at top:
-   1rem, right: 1rem inside the sidebar's bounding box) is
-   unaffected — it sits in its own positioning context and the
-   title's margins don't touch it.
+   Page title — centered between the sidebar's outer edges
    ========================================================================== */
 
 .page-title {
   font-weight: 700;
   letter-spacing: -0.02em;
-
-  /* Span the sidebar's full width by cancelling its 2rem horizontal
-     padding. The PageTitle component sets text-align: center, so
-     once the title's box is the full sidebar width, the text
-     centers between the left edge and the right edge. */
   margin-left: -2rem;
   margin-right: -2rem;
+  color: $brass-100;
+  text-shadow: 0 0 40px rgba($brass-300, 0.15);
 
   a, a:visited, a:hover {
     color: inherit;
   }
-}
-:root[saved-theme="dark"] .page-title {
-  color: $brass-100;
-  text-shadow: 0 0 40px rgba($brass-300, 0.15);
-}
-:root:not([saved-theme="dark"]) .page-title {
-  color: $brass-500;
 }
 
 
 /* ==========================================================================
    Article titles & headings
 
-   Heading colors in dark mode have been the site of a cascade fight.
-   The straightforward `:root[saved-theme="dark"] article h3 { color: X }`
-   has specificity (0,1,2) — one attribute selector + two tag selectors.
-   Some other rule somewhere in the build was tying or beating that on
-   source order and tinting the headings a dim mid-green that almost
-   disappears against the dark hunter-green canvas.
+   With the theme scaffolding removed, headings now correctly inherit
+   `color: var(--dark)` from base.scss, which resolves to $brass-100
+   (warm cream) — readable on the dark hunter-green canvas.
 
-   Rather than trace the conflict surgically (which would take a live
-   DevTools inspection we don't have), pin the heading colors with
-   !important. !important is a code smell in general — it makes future
-   overrides harder — but here it's earned: the text MUST be readable,
-   and there are no legitimate consumers that should be re-coloring an
-   article heading after we set it. If anything else ever needs to
-   override these, the right move is to remove the !important and fix
-   the underlying cascade conflict, not stack more !important on top.
+   The explicit per-tag rule below is kept as a belt-and-braces
+   safeguard (visible and intentional), without !important. If a
+   future change to base.scss ever drops the `var(--dark)` rule, this
+   block still pins heading colors.
    ========================================================================== */
 
 .article-title {
@@ -274,22 +202,13 @@ article {
   }
 }
 
-:root[saved-theme="dark"] article h1,
-:root[saved-theme="dark"] article h2,
-:root[saved-theme="dark"] article h3,
-:root[saved-theme="dark"] article h4,
-:root[saved-theme="dark"] article h5,
-:root[saved-theme="dark"] article h6 {
-  color: $brass-100 !important;
-}
-
-:root:not([saved-theme="dark"]) article h1,
-:root:not([saved-theme="dark"]) article h2,
-:root:not([saved-theme="dark"]) article h3,
-:root:not([saved-theme="dark"]) article h4,
-:root:not([saved-theme="dark"]) article h5,
-:root:not([saved-theme="dark"]) article h6 {
-  color: $green-900 !important;
+article h1,
+article h2,
+article h3,
+article h4,
+article h5,
+article h6 {
+  color: $brass-100;
 }
 
 
@@ -297,33 +216,8 @@ article {
    Canonical button — .jb-btn
 
    ONE button style for the whole wiki: brass background, dark-green
-   text, rounded corners. This is the look the wiki has actually been
-   using on Search, Research, Notes/Write, Journal/Write, and
-   Upskill/Manage (where it was defined four separate times under
-   .search-page-btn / .research-btn in each component's stylesheet
-   before consolidation). Everything that wants to read as a
-   primary action — Generate quiz, Create topic, Save note, Search,
-   Edit/Hide/Delete on Upskill — now uses this single class.
-
-   Apply .jb-btn to any <button> or <a> that should look like an
-   action. The only modifier kept is .jb-btn-sm for tighter contexts
-   (inline row actions, toolbars). The old .jb-btn-primary and
-   .jb-btn-secondary modifiers are gone — they were redundant tiers
-   in a hierarchy nothing actually used.
-
-   Visual contract intentionally matches the previous
-   .search-page-btn definitions:
-     - background: var(--secondary)    (brass in dark mode)
-     - color:      var(--light)        (dark green in dark mode)
-     - border-radius: 8px              (gentle pill, not capsule)
-     - hover: 85% opacity              (subtle dim)
-     - disabled: 50% opacity, no-cursor
-
-   The semantic CSS vars (--secondary, --light) mean the button
-   inverts gracefully in light mode without a separate light-mode
-   rule — light mode --secondary is green-600, --light is green-50,
-   producing green-on-cream which reads as the same "press this"
-   affordance.
+   text, rounded corners. Apply .jb-btn to any <button> or <a> that
+   should look like an action.
    ========================================================================== */
 
 .jb-btn {
@@ -359,8 +253,6 @@ article {
   }
 }
 
-/* Compact size for inline row actions (Edit / Hide / Delete on
-   Upskill Manage's topic rows, future toolbar buttons). */
 .jb-btn-sm {
   padding: 0.35rem 0.75rem;
   font-size: 0.85rem;
@@ -376,25 +268,13 @@ a.internal {
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
   transition: color 0.15s ease, text-decoration-color 0.15s ease;
-}
-a.internal:hover {
-  text-decoration-thickness: 2px;
-}
-
-:root[saved-theme="dark"] a.internal {
   color: $green-300;
   text-decoration-color: rgba($green-300, 0.3);
+
   &:hover {
     color: $green-100;
     text-decoration-color: $green-100;
-  }
-}
-:root:not([saved-theme="dark"]) a.internal {
-  color: $brass-500;
-  text-decoration-color: rgba($brass-500, 0.3);
-  &:hover {
-    color: $brass-800;
-    text-decoration-color: $brass-800;
+    text-decoration-thickness: 2px;
   }
 }
 
@@ -402,14 +282,8 @@ a.external {
   text-decoration-style: dashed;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
-}
-:root[saved-theme="dark"] a.external {
   color: $slate-300;
   &:hover { color: $slate-100; }
-}
-:root:not([saved-theme="dark"]) a.external {
-  color: $slate-500;
-  &:hover { color: $slate-800; }
 }
 
 
@@ -425,13 +299,6 @@ a.tag-link {
   font-weight: 500;
   letter-spacing: 0.01em;
   transition: background 0.15s ease, color 0.15s ease;
-}
-:root:not([saved-theme="dark"]) a.tag-link {
-  background: $green-100;
-  color: $green-800;
-  &:hover { background: $green-300; color: $green-900; }
-}
-:root[saved-theme="dark"] a.tag-link {
   background: $green-800;
   color: $brass-100;
   &:hover { background: $green-600; color: $brass-50; }
@@ -445,8 +312,6 @@ a.tag-link {
 .content-meta {
   font-size: 0.85rem;
   opacity: 0.8;
-}
-:root[saved-theme="dark"] .content-meta {
   color: $green-300;
 }
 
@@ -461,7 +326,7 @@ a.tag-link {
   transition: opacity 0.15s ease;
   &:hover { opacity: 1; }
 }
-:root[saved-theme="dark"] .breadcrumb-element a {
+.breadcrumb-element a {
   color: $green-300;
 }
 
@@ -473,13 +338,6 @@ a.tag-link {
 blockquote {
   border-radius: 0 6px 6px 0;
   padding: 0.6rem 1rem;
-}
-:root:not([saved-theme="dark"]) blockquote {
-  border-left: 3px solid $green-500;
-  background: rgba($green-100, 0.4);
-  color: $stone-800;
-}
-:root[saved-theme="dark"] blockquote {
   border-left: 3px solid $brass-300;
   background: rgba($green-800, 0.6);
   color: $stone-100;
@@ -494,25 +352,13 @@ code {
   font-size: 0.88em;
   border-radius: 4px;
   padding: 0.15em 0.35em;
-}
-:root:not([saved-theme="dark"]) code {
-  background: rgba($green-100, 0.6);
-  color: $green-800;
-}
-:root[saved-theme="dark"] code {
   background: rgba($green-800, 0.8);
   color: $green-100;
 }
 
 pre {
   border-radius: 8px !important;
-  border: 1px solid transparent;
-}
-:root:not([saved-theme="dark"]) pre {
-  border-color: $green-100;
-}
-:root[saved-theme="dark"] pre {
-  border-color: $green-800;
+  border: 1px solid $green-800;
 }
 
 figure[data-rehype-pretty-code-figure] {
@@ -521,15 +367,9 @@ figure[data-rehype-pretty-code-figure] {
     font-weight: 600;
     padding: 0.4rem 0.8rem;
     border-radius: 8px 8px 0 0;
+    background: $green-800;
+    color: $brass-100;
   }
-}
-:root:not([saved-theme="dark"]) [data-rehype-pretty-code-title] {
-  background: $green-100;
-  color: $green-800;
-}
-:root[saved-theme="dark"] [data-rehype-pretty-code-title] {
-  background: $green-800;
-  color: $brass-100;
 }
 
 
@@ -539,27 +379,12 @@ figure[data-rehype-pretty-code-figure] {
    This block intentionally excludes `.table-container.jb-table` so the
    six wiki data tables (Acquisition, Retention, Sources, Entities,
    Concepts, Synthesis) own their styling entirely via _jbtable.scss.
-   Without `:not(.jb-table)` here, the dark-theme `tr:nth-child(even) td`
-   rule below sets a 40%-alpha green that beats jbtable's opaque colors
-   in the cascade — both selectors apply, but `:root[saved-theme="dark"]`
-   wins. Excluding jb-table at this level keeps the boundary clean.
    ========================================================================== */
 
 .table-container:not(.jb-table) > table {
   border-radius: 8px;
   overflow: hidden;
-}
-:root:not([saved-theme="dark"]) .table-container:not(.jb-table) > table {
-  th {
-    background: $green-600;
-    color: $stone-50;
-    font-weight: 600;
-  }
-  tr:nth-child(even) td {
-    background: rgba($green-100, 0.3);
-  }
-}
-:root[saved-theme="dark"] .table-container:not(.jb-table) > table {
+
   th {
     background: $green-800;
     color: $brass-100;
@@ -579,11 +404,6 @@ hr {
   border: none;
   height: 1px;
   margin: 2rem 0;
-}
-:root:not([saved-theme="dark"]) hr {
-  background: linear-gradient(to right, transparent, $green-300, transparent);
-}
-:root[saved-theme="dark"] hr {
   background: linear-gradient(to right, transparent, $green-600, transparent);
 }
 
@@ -611,13 +431,6 @@ hr {
 .search-button {
   border-radius: 8px;
   transition: background 0.15s ease;
-}
-:root:not([saved-theme="dark"]) .search-button {
-  background: $green-100;
-  border: 1px solid $green-300;
-  &:hover { background: $green-300; }
-}
-:root[saved-theme="dark"] .search-button {
   background: $green-800;
   border: 1px solid $green-600;
   &:hover { background: $green-600; }
@@ -625,13 +438,6 @@ hr {
 
 input.search-bar {
   border-radius: 8px !important;
-}
-:root:not([saved-theme="dark"]) input.search-bar {
-  background: $green-50;
-  border: 1px solid $green-300;
-  color: $green-900;
-}
-:root[saved-theme="dark"] input.search-bar {
   background: $green-800;
   border: 1px solid $green-600;
   color: $stone-100;
@@ -640,8 +446,7 @@ input.search-bar {
 .result-card {
   border-radius: 6px;
   transition: background 0.15s ease;
-}
-:root[saved-theme="dark"] .result-card {
+
   &:hover, &:focus, &.focus {
     background: $green-800;
   }
@@ -662,83 +467,38 @@ input.search-bar {
   ul.explorer-ul li > a {
     transition: color 0.15s ease;
     border-radius: 4px;
+
+    &:hover { color: $brass-100; }
+    &.active { color: $brass-300; font-weight: 600; }
   }
-}
-:root:not([saved-theme="dark"]) .explorer-content {
-  ul.explorer-ul li > a:hover { color: $green-800; }
-  ul.explorer-ul li > a.active { color: $green-600; font-weight: 600; }
-  .folder-outer ul { border-left-color: $green-100; }
-}
-:root[saved-theme="dark"] .explorer-content {
-  ul.explorer-ul li > a:hover { color: $brass-100; }
-  ul.explorer-ul li > a.active { color: $brass-300; font-weight: 600; }
+
   .folder-outer ul { border-left-color: $green-800; }
 }
 
 .folder-container {
   border-radius: 4px;
   transition: background 0.15s ease;
-}
-:root[saved-theme="dark"] .folder-container:hover {
-  background: rgba($green-800, 0.5);
+
+  &:hover {
+    background: rgba($green-800, 0.5);
+  }
 }
 
 
 /* ==========================================================================
    Left sidebar — divider, scrollbar suppression
-
-   The sidebar lives in the left grid column at $sidePanelWidth (320px)
-   on tablet and desktop. Sidebar position is `sticky` from base.scss.
-   The .sidebar.left itself gets `position: relative` so its
-   in-sidebar toggle button can position absolutely against the
-   sidebar's bounding box.
-
-   DIVIDER: The sidebar's right edge gets a 1px solid mint-green
-   border (the canonical $green-300). The border lives on the
-   sidebar element itself, not on a wrapping container — Quartz
-   renders the sidebar as <div class="left sidebar"> with no
-   wrapping element, so .sidebar.left is the correct target. (An
-   earlier rule targeted .left-sidebar — which doesn't exist in
-   the rendered DOM — and quietly drew nothing for months.)
-
-   SCROLLBAR SUPPRESSION: When the sidebar's content is taller than
-   the viewport, base.scss's `overflow-y: auto` + `height: 100vh`
-   makes it scroll internally. The native scrollbar then renders
-   on the sidebar's right edge — adjacent to (or covering) our
-   divider, and visually ugly on a dark theme. We hide it on
-   both Firefox (scrollbar-width: none) and WebKit (a custom
-   ::-webkit-scrollbar pseudo-element with display: none).
-   Scrolling still works via wheel/touch/keyboard — only the
-   visible scrollbar is suppressed. This is standard practice for
-   navigation sidebars (Claude.ai does it too).
-
-   PADDING: Extra top padding leaves room for the absolute-positioned
-   collapse button at the sidebar's top-right.
    ========================================================================== */
 
 .sidebar.left {
   overflow-y: auto;
   justify-content: flex-start;
   position: relative;
-  padding-top: 4.5rem;  /* room for the in-sidebar collapse button */
+  padding-top: 4.5rem;
 
-  /* Divider — runs the sidebar's full height. Sidebar is
-     position: sticky with height: 100vh (from base.scss), so the
-     border tracks the viewport top-to-bottom while the sidebar
-     is in view. Uses $green-500 (the muted mid-tone) rather than
-     the brighter $green-300 — at 1px the bright mint reads as
-     strident; the mid-tone reads as intentional but quiet. */
   border-right: 1px solid $green-500;
 
-  /* Scrollbar suppression — Firefox. The "none" value is well
-     supported in modern Firefox and is a no-op everywhere else. */
   scrollbar-width: none;
 
-  /* Scrollbar suppression — WebKit/Blink (Safari, Chrome, Edge,
-     iOS browsers). The pseudo-element has no native style by
-     default, but setting display: none guarantees it doesn't
-     render even if a UA or extension tries to override the
-     scrollbar-width hint. */
   &::-webkit-scrollbar {
     display: none;
   }
@@ -747,26 +507,6 @@ input.search-bar {
 
 /* ==========================================================================
    Sidebar collapse toggle (Claude.ai-style)
-
-   Two separate components: SidebarToggle renders the in-sidebar
-   collapse button (at the sidebar's top-right corner), SidebarExpand
-   renders the floating expand button (fixed at the viewport's
-   top-left). They MUST be in separate places in the DOM because
-   collapsing hides the entire sidebar (display:none), which would
-   also hide a floating button placed inside it — display:none
-   cascades to all descendants regardless of position:fixed.
-
-   State communicated via html.jb-sidebar-collapsed. Pre-paint state
-   restoration in Head.tsx applies the class before first paint.
-
-   Visual style: bare icon, no chrome — no background fill at rest,
-   no border. Full opacity so the button stays clearly visible.
-   Hover adds a subtle background tint as a click-target affordance.
-
-   Button size: 3.5rem × 3.5rem (56×56px) with a 36px SVG icon.
-   Doubled from the earlier 1.75rem / 18px so the icon reads
-   clearly at a glance instead of looking like fine chrome —
-   still no fill or border at rest, just a larger glyph.
    ========================================================================== */
 
 .jb-sidebar-toggle {
@@ -782,6 +522,7 @@ input.search-bar {
   cursor: pointer;
   font-family: inherit;
   line-height: 1;
+  color: $brass-100;
   transition:
     background 0.12s ease,
     color 0.12s ease,
@@ -792,11 +533,15 @@ input.search-bar {
     box-shadow: 0 0 0 2px rgba($brass-300, 0.55);
   }
 
+  &:hover {
+    background: rgba($green-800, 0.5);
+    color: $brass-50;
+  }
+
   &:active {
     transform: scale(0.92);
   }
 
-  /* The icon — fixed size, vertically centered. */
   & > svg {
     display: block;
     width: 36px;
@@ -804,30 +549,6 @@ input.search-bar {
   }
 }
 
-/* Theme-specific colors. No backgrounds, no borders at rest —
-   just the glyph color at full opacity. Hover adds a faint
-   background tint to confirm the click target. */
-:root:not([saved-theme="dark"]) .jb-sidebar-toggle {
-  color: $green-600;
-
-  &:hover {
-    background: rgba($green-100, 0.5);
-    color: $green-800;
-  }
-}
-
-:root[saved-theme="dark"] .jb-sidebar-toggle {
-  color: $brass-100;
-
-  &:hover {
-    background: rgba($green-800, 0.5);
-    color: $brass-50;
-  }
-}
-
-/* In-sidebar collapse button — absolutely positioned to the
-   top-right of the sidebar. The .sidebar.left was made
-   position:relative above so this anchors correctly. */
 .jb-sidebar-toggle.in-sidebar {
   position: absolute;
   top: 1rem;
@@ -835,9 +556,6 @@ input.search-bar {
   z-index: 2;
 }
 
-/* Floating expand button — fixed to the viewport, top-left corner.
-   Visible only when html.jb-sidebar-collapsed is set. Default state
-   is `display: none` so it doesn't show during normal expanded use. */
 .jb-sidebar-toggle.floating {
   position: fixed;
   top: 1rem;
@@ -850,20 +568,6 @@ html.jb-sidebar-collapsed .jb-sidebar-toggle.floating {
   display: inline-flex;
 }
 
-/* Hide the sidebar element itself when collapsed. The earlier
-   selector targeted .left-sidebar, which doesn't exist in the
-   rendered DOM — Quartz outputs <div class="left sidebar"> with
-   no wrapping container. Use the real selector .sidebar.left.
-   (The visible collapse behavior was previously coming from the
-   grid-template-areas reshape below not including grid-sidebar-left,
-   leaving the sidebar's grid placement undefined. Hiding it
-   explicitly is cleaner.)
-
-   !important is needed on both this rule and the grid reshape
-   below because base.scss sets grid-template-columns inside an
-   @media query, which beats a non-media-query rule on equal
-   specificity per source-order — !important promotes our rule
-   above the media query's. */
 html.jb-sidebar-collapsed .sidebar.left {
   display: none !important;
 }
@@ -878,15 +582,6 @@ html.jb-sidebar-collapsed #quartz-body {
     "grid-footer" !important;
 }
 
-/* Collapsed-state gutters — the .center column's max(5%, 4rem)
-   horizontal padding (from the "Page width, grid template, and
-   content gutters" block above) applies in both expanded and
-   collapsed states. The 4rem floor on the left padding clears the
-   floating expand button (top-left, 1.75rem wide, 1rem from edge
-   → rightmost extent ~2.75rem) at every viewport width. */
-
-/* Mobile: hide both toggle UI elements entirely. Mobile uses the
-   existing hamburger pattern. */
 @media all and (max-width: 800px) {
   .jb-sidebar-toggle {
     display: none !important;
@@ -899,33 +594,8 @@ html.jb-sidebar-collapsed #quartz-body {
 
 /* ==========================================================================
    Date column centering — text-align on the wrapper, not flex
-
-   The td MUST remain display: table-cell so it participates in the
-   table's column-width algorithm. Setting display: flex on the td
-   (an earlier attempt) breaks the table layout — the cell falls out
-   of the column grid, the row visually fragments, the column width
-   stops being honored.
-
-   What we use INSTEAD: keep the td as a table cell with
-   vertical-align: middle (vertical centering), and let the wrapper
-   div .col-date-inner do horizontal centering via text-align: center
-   (defined in PageList.css alongside its width: 100%). No flex.
-
-   We tried flex on .col-date-inner earlier and it caused a paint
-   artifact: the flex container's height collapsed to one line (the
-   <time> child's height), leaving the rest of the cell visible
-   below. When the column was wide enough (sidebar collapsed) you
-   could see a darker rectangle below the date — the difference
-   between the flex line's height and the cell's full row height.
-   Removing flex lets the inner wrapper fill the cell's vertical
-   space naturally as block-level content, which the td's
-   vertical-align: middle then centers as a single block.
    ========================================================================== */
 
-/* Vertical centering happens on the td itself. Horizontal centering
-   happens on .col-date-inner via text-align: center (in PageList.css).
-   This rule pins the display + vertical-align so neither base.scss
-   nor any future override can quietly change them. */
 .jb-table td.col-date,
 .table-container.jb-table td.col-date {
   display: table-cell;
@@ -943,21 +613,16 @@ html.jb-sidebar-collapsed #quartz-body {
 }
 .graph-outer {
   border-radius: 8px;
-}
-:root:not([saved-theme="dark"]) .graph-outer {
-  border: 1px solid $green-100;
-  background: rgba($green-100, 0.2);
-}
-:root[saved-theme="dark"] .graph-outer {
   border: 1px solid $green-800;
   background: rgba($green-800, 0.3);
 }
 
 .global-graph-outer {
   backdrop-filter: blur(4px);
-}
-:root[saved-theme="dark"] .global-graph-outer.active {
-  background: rgba($green-900, 0.85);
+
+  &.active {
+    background: rgba($green-900, 0.85);
+  }
 }
 
 
@@ -971,24 +636,14 @@ html.jb-sidebar-collapsed #quartz-body {
     text-transform: uppercase;
     letter-spacing: 0.06em;
     font-weight: 600;
+    color: $brass-300;
   }
-}
-:root[saved-theme="dark"] .toc {
-  button.toc-header h3 { color: $brass-300; }
+
   ul.toc-content li > a {
     color: $stone-300;
     transition: color 0.15s ease;
     &:hover { color: $stone-50; }
     &.in-view { color: $green-300; font-weight: 500; }
-  }
-}
-:root:not([saved-theme="dark"]) .toc {
-  button.toc-header h3 { color: $green-600; }
-  ul.toc-content li > a {
-    color: $stone-500;
-    transition: color 0.15s ease;
-    &:hover { color: $green-800; }
-    &.in-view { color: $green-600; font-weight: 500; }
   }
 }
 
@@ -1000,15 +655,9 @@ html.jb-sidebar-collapsed #quartz-body {
 .backlinks {
   border-radius: 8px;
   padding: 1rem;
-}
-:root:not([saved-theme="dark"]) .backlinks {
-  background: rgba($green-100, 0.4);
-  border: 1px solid $green-100;
-  & > h3 { color: $green-600; }
-}
-:root[saved-theme="dark"] .backlinks {
   background: rgba($green-800, 0.4);
   border: 1px solid $green-800;
+
   & > h3 { color: $brass-300; }
 }
 
@@ -1019,17 +668,13 @@ html.jb-sidebar-collapsed #quartz-body {
 
 footer {
   padding-top: 1.5rem;
-  border-top: 1px solid var(--lightgray);
-}
-:root:not([saved-theme="dark"]) footer {
-  border-top-color: $green-100;
-  color: $green-500;
-  a { color: $brass-500; &:hover { color: $brass-800; } }
-}
-:root[saved-theme="dark"] footer {
-  border-top-color: $green-800;
+  border-top: 1px solid $green-800;
   color: $green-300;
-  a { color: $brass-300; &:hover { color: $brass-100; } }
+
+  a {
+    color: $brass-300;
+    &:hover { color: $brass-100; }
+  }
 }
 
 
@@ -1037,40 +682,7 @@ footer {
    Callouts — use the full palette
    ========================================================================== */
 
-:root:not([saved-theme="dark"]) {
-  .callout[data-callout="tip"],
-  .callout[data-callout="success"] {
-    --callout-color: #{$green-600};
-    background: rgba($green-100, 0.5);
-  }
-  .callout[data-callout="info"],
-  .callout[data-callout="abstract"] {
-    --callout-color: #{$slate-500};
-    background: rgba($slate-50, 0.5);
-  }
-  .callout[data-callout="warning"],
-  .callout[data-callout="todo"],
-  .callout[data-callout="question"] {
-    --callout-color: #{$brass-500};
-    background: rgba($brass-50, 0.5);
-  }
-  .callout[data-callout="danger"],
-  .callout[data-callout="failure"],
-  .callout[data-callout="bug"] {
-    --callout-color: #{$oxblood-500};
-    background: rgba($oxblood-50, 0.5);
-  }
-  .callout[data-callout="example"] {
-    --callout-color: #{$slate-500};
-    background: rgba($slate-50, 0.5);
-  }
-  .callout[data-callout="quote"] {
-    --callout-color: #{$stone-500};
-    background: rgba($stone-50, 0.5);
-  }
-}
-
-:root[saved-theme="dark"] {
+:root {
   .callout[data-callout="tip"],
   .callout[data-callout="success"] {
     --callout-color: #{$green-300};
@@ -1119,12 +731,6 @@ a.app-toggle {
 
 .popover .popover-inner {
   border-radius: 8px;
-}
-:root:not([saved-theme="dark"]) .popover .popover-inner {
-  border: 1px solid $green-100;
-  box-shadow: 0 4px 16px rgba($green-900, 0.08);
-}
-:root[saved-theme="dark"] .popover .popover-inner {
   border: 1px solid $green-800;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
@@ -1136,11 +742,6 @@ a.app-toggle {
 
 .navigation-progress {
   transition: width 0.1s ease;
-}
-:root:not([saved-theme="dark"]) .navigation-progress {
-  background: $green-500;
-}
-:root[saved-theme="dark"] .navigation-progress {
   background: $brass-300;
 }
 
@@ -1152,9 +753,10 @@ a.app-toggle {
 .clipboard-button {
   border-radius: 4px;
   transition: background 0.15s ease;
-}
-:root[saved-theme="dark"] .clipboard-button:hover {
-  background: $green-600;
+
+  &:hover {
+    background: $green-600;
+  }
 }
 
 
@@ -1162,17 +764,10 @@ a.app-toggle {
    Confidence badges
    ========================================================================== */
 
-.confidence-high   { background: $green-50;    color: $green-800; }
-.confidence-medium { background: $brass-50;    color: $brass-800; }
-.confidence-low    { background: $slate-50;    color: $slate-800; }
-.confidence-speculative { background: $oxblood-50; color: $oxblood-800; }
-
-:root[saved-theme="dark"] {
-  .confidence-high   { background: $green-800;   color: $green-300; }
-  .confidence-medium { background: $brass-800;   color: $brass-300; }
-  .confidence-low    { background: $slate-800;   color: $slate-300; }
-  .confidence-speculative { background: $oxblood-800; color: $oxblood-300; }
-}
+.confidence-high   { background: $green-800;   color: $green-300; }
+.confidence-medium { background: $brass-800;   color: $brass-300; }
+.confidence-low    { background: $slate-800;   color: $slate-300; }
+.confidence-speculative { background: $oxblood-800; color: $oxblood-300; }
 
 
 /* ==========================================================================
@@ -1187,12 +782,6 @@ body[data-slug="index"] .center > article {
 
 /* ==========================================================================
    Retention page — size table columns for "Date | Action | Details" pattern
-   Without this, equal-width columns cramp the Details column while leaving
-   the short Date and Action columns half-empty.
-
-   Also overrides Quartz base.scss defaults (margin/padding/min-width) that
-   would otherwise force the table wider than its container and trigger a
-   horizontal scrollbar.
    ========================================================================== */
 
 body[data-slug="collect/retention"] .table-container {
@@ -1210,41 +799,27 @@ body[data-slug="collect/retention"] .table-container > table td {
 }
 body[data-slug="collect/retention"] .table-container > table th:nth-child(1),
 body[data-slug="collect/retention"] .table-container > table td:nth-child(1) {
-  /* Date — YYYY-MM-DD */
   width: 7rem;
   white-space: nowrap;
 }
 body[data-slug="collect/retention"] .table-container > table th:nth-child(2),
 body[data-slug="collect/retention"] .table-container > table td:nth-child(2) {
-  /* Action — "Cataloged", "Re-viewed" */
   width: 8rem;
   white-space: nowrap;
 }
 body[data-slug="collect/retention"] .table-container > table td:nth-child(3) {
-  /* Details — filenames, allow wrapping on long names */
   overflow-wrap: anywhere;
 }
 
 
 /* ==========================================================================
    Section landing pages — hide auto-folder listing
-
-   Page-listing block is hidden via the .hide-folder-listing class set
-   in frontmatter (cssclasses). The article body's curated bullets are
-   the authoritative listing on these pages.
-
-   Quartz applies the cssclasses to the inner <article> element (see
-   FolderContent.tsx), so we target ~ .page-listing as a sibling. The
-   sibling lives outside the .article so we walk up to a containing
-   .popover-hint and find .page-listing within.
    ========================================================================== */
 
 article.hide-folder-listing ~ .page-listing,
 .hide-folder-listing ~ .page-listing {
   display: none;
 }
-/* Belt and braces: also catch the page-listing when it's nested next
-   to an article inside a popover-hint wrapper. */
 .popover-hint:has(article.hide-folder-listing) .page-listing {
   display: none;
 }
@@ -1252,45 +827,6 @@ article.hide-folder-listing ~ .page-listing,
 
 /* ==========================================================================
    Form-app width override — let forms fill the article column
-
-   Every form-bearing page in the wiki has a top-level mount element
-   with an ID and an inline `max-width: 720px` from its component
-   SCSS (uploadZone.scss, researchPage.scss, notes.scss,
-   acquisition.scss, QuizTake's inline CSS). That cap was originally
-   tuned for the old narrow-column layout. With the current
-   5% / 90% / 5% gutter scheme on .center, the article column is
-   already a comfortable width — the 720px cap inside it leaves
-   awkward whitespace on the right of every form card.
-
-   Override the cap at the page-shell layer so the forms inherit the
-   article column's width, like tables do. The selector list covers
-   every form/visualization mount point in the wiki:
-
-     #upload-app         — Selection (file/text/URL/YouTube upload)
-     #research-app       — Web search (Ask Claude to find sources)
-     #note-form-app      — Notes write
-     #notes-list-app     — Notes browse (also a form-like list)
-     #journal-form-app   — Journal write
-     #journal-list-app   — Journal browse
-     #acquisition-app    — Acquisition queue
-     #quiz-app           — Quiz take
-     #search-page        — Wiki search
-     #retention-list-app — Retention log
-     #timeline-app       — Visualize / Timeline
-     #subjects-app       — Visualize / Subjects
-     #confidence-app     — Visualize / Confidence
-
-   Notably absent: Graph (FullGraph.tsx) and Tags (Tags.tsx) — those
-   components don't use the standard #xxx-app { max-width: 720px }
-   pattern and already fill the article column without intervention.
-
-   Applied only at tablet+ (800px+) since mobile already uses
-   single-column flow and the inline 720px cap doesn't bite there.
-
-   !important is needed because the inline rules in each component's
-   SCSS have equal specificity (#id) but load AFTER custom.scss in
-   the bundle (Quartz emits component CSS after main CSS). Without
-   !important, source order wins and the 720px caps stand.
    ========================================================================== */
 
 @media all and (min-width: 800px) {
@@ -1316,27 +852,7 @@ article.hide-folder-listing ~ .page-listing,
 
 /* ==========================================================================
    Tag-row indent — align disclosed tag pills with the Title column
-
-   PageList.css (in PageList.tsx) sets padding-left: 7.25rem on the
-   tag-row's full-width td, intending to align tag content with
-   Title-column content. The math was:
-     col-disclose width (6.5rem) + Title cell padding (0.75rem) = 7.25rem
-
-   In practice 7.25rem under-shoots because table-layout: fixed
-   distributes leftover horizontal space across all columns when the
-   table is wider than the sum of declared widths. The disclose
-   column ends up wider than 6.5rem at typical viewport widths, so
-   the Title column starts further right than 6.5rem from the
-   table's left edge.
-
-   This override bumps the padding to a value that empirically aligns
-   tag pills with Title content at the current 5% / 90% / 5% gutter
-   regime. The selector mirrors PageList.css's selector but lives
-   here so the override travels with the rest of the layout
-   decisions in custom.scss. (Alternative: change the disclose
-   column width from 6.5rem to a percentage in PageList.css. That
-   would be the "right" fix but requires editing the 32KB
-   PageList.tsx; this single-line override is cheaper to maintain.) */
+   ========================================================================== */
 
 .table-container.jb-table > table tbody tr.tag-row > td {
   padding-left: 8rem;
@@ -1347,82 +863,11 @@ article.hide-folder-listing ~ .page-listing,
    Notes & Journal Entries — card-styled auto-folder listing
 
    Restyles the default PageList output on /notes/entries and
-   /journal/entries so each entry reads as a discrete card, matching
-   the visual language of the .upskill-row cards on /upskill/update.
+   /journal/entries so each entry reads as a discrete card.
 
-   IMPORTANT — the slug suffix issue:
-
-   Quartz's renderPage.tsx sets `<body data-slug={slug}>` using the
-   page's FullSlug. For folder index pages (content/X/Y/index.md),
-   the FullSlug carries a trailing "/index" segment — e.g. the
-   /notes/entries/ page renders as
-       <body data-slug="notes/entries/index">
-   NOT
-       <body data-slug="notes/entries">
-
-   This is the same pattern PageList.tsx itself acknowledges with
-   `currentSlug.replace(/\/index$/, "")` in its Reflect-table branch.
-
-   An earlier version of this selector group used
-   body[data-slug="notes/entries"] — which silently matched no
-   elements because the actual attribute value is
-   "notes/entries/index". The page rendered with the default
-   PageList styles unchanged. The fix is to target both forms
-   defensively: the canonical "/index"-suffixed form for folder
-   index pages plus the bare form in case Quartz ever normalizes
-   slugs.
-
-   Why this lives here (rather than in PageList.css): the change is
-   page-scoped (only Entries pages, not every PageList instance), and
-   the rule needs the wiki's design tokens which already live in this
-   file. No frontmatter cssclasses needed — purely a stylesheet
-   change.
-
-   DOM target: PageList's default-branch output is
-     ul.section-ul > li.section-li > div.section
-   with .meta (date), .desc > h3 > a (title link), and ul.tags (pill
-   row) inside .section. We treat each .section as the card root.
-
-   Visual contract (mirrors .upskill-row):
-     - 0.65rem gap between cards (matches .upskill-list)
-     - 0.85rem 1.1rem padding (matches .upskill-row)
-     - 8px border radius, 1px var(--lightgray) border
-     - var(--light) background (color-mix in dark mode for slight lift)
-     - Subtle hover lift via border-color shift to var(--secondary)
-     - Title prominent (0.98rem, weight 600, var(--dark)) — Upskill
-       row title size and weight
-     - Date small + muted, sits above title as overline metadata
-     - Tag pills along the bottom, wrapped, gap 0.4rem — replaces the
-       float-right pill cluster the default rendering uses
-
-   FLEX ALIGNMENT NOTE — the .section's default Quartz styling sets
-   `display: flex` with the tag row sitting on the right side of the
-   flex line. Our override sets `display: block` on the section
-   itself so children stack vertically, but the ul.tags inside is
-   STILL a flex container (we set it to display: flex for the pill
-   row). Without an explicit `justify-content: flex-start`, the
-   pills inherit Quartz's right-alignment from the cascade — the
-   default rule wins because it has the same specificity but
-   appears later in the bundle (component CSS loads after main
-   CSS). Pinning justify-content: flex-start on our rule overrides
-   that cascade quirk and keeps the pills flush-left under the
-   divider.
-
-   DIVIDER LINE NOTE — the horizontal line between the title and
-   the tag pills is NOT a separate <hr> element or a border on the
-   title. It's a `border-top: 1px solid var(--lightgray)` on the
-   ul.tags itself, declared in listPage.scss (Quartz's default
-   styling for PageList's default-branch output). The line moves
-   WITH the tag list because it IS part of the tag list.
-
-   Consequence: bumping `margin-top` on ul.tags pushes both the
-   border and the pills together as a unit — it doesn't widen the
-   gap between the border and the first pill. To put air between
-   the divider line and the pills, we need `padding-top` on
-   ul.tags (the gap is INSIDE the element, between its top border
-   and its first child). The default in listPage.scss is
-   `padding: 0.5em 0 0 0`; we bump that to 1rem for a comfortable
-   gap, while keeping the same top border style.
+   The body[data-slug=...] selector targets both the "/index"-suffixed
+   form Quartz emits for folder index pages AND the bare form, as a
+   defensive measure.
    ========================================================================== */
 
 body[data-slug="notes/entries/index"] .page-listing ul.section-ul,
@@ -1445,10 +890,6 @@ body[data-slug="journal/entries"] .page-listing li.section-li {
   padding: 0;
 }
 
-/* The card itself. The default rendering sets .section to
-   display: flex with .meta floated narrow on one side and .tags
-   floated right; override to block flow so date sits above title
-   and tags wrap naturally along the bottom. */
 body[data-slug="notes/entries/index"] .page-listing .section,
 body[data-slug="journal/entries/index"] .page-listing .section,
 body[data-slug="notes/entries"] .page-listing .section,
@@ -1457,20 +898,10 @@ body[data-slug="journal/entries"] .page-listing .section {
   padding: 0.85rem 1.1rem;
   border: 1px solid var(--lightgray);
   border-radius: 8px;
-  background: var(--light);
+  background: color-mix(in srgb, var(--light) 92%, transparent);
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
-:root[saved-theme="dark"] body[data-slug="notes/entries/index"] .page-listing .section,
-:root[saved-theme="dark"] body[data-slug="journal/entries/index"] .page-listing .section,
-:root[saved-theme="dark"] body[data-slug="notes/entries"] .page-listing .section,
-:root[saved-theme="dark"] body[data-slug="journal/entries"] .page-listing .section {
-  background: color-mix(in srgb, var(--light) 92%, transparent);
-}
 
-/* Hover lift — subtle border shift to the brass/green accent. No
-   shadow or translateY, matching .upskill-row's restrained hover
-   (it has none, just relies on link affordance on the title). We
-   add a faint border highlight only, keeping the cards calm. */
 body[data-slug="notes/entries/index"] .page-listing .section:hover,
 body[data-slug="journal/entries/index"] .page-listing .section:hover,
 body[data-slug="notes/entries"] .page-listing .section:hover,
@@ -1478,9 +909,6 @@ body[data-slug="journal/entries"] .page-listing .section:hover {
   border-color: var(--secondary);
 }
 
-/* Date — overline metadata. Sits above the title in muted color,
-   small. The default .meta styles use a normal-size font; override
-   to compact. */
 body[data-slug="notes/entries/index"] .page-listing .section > .meta,
 body[data-slug="journal/entries/index"] .page-listing .section > .meta,
 body[data-slug="notes/entries"] .page-listing .section > .meta,
@@ -1492,10 +920,6 @@ body[data-slug="journal/entries"] .page-listing .section > .meta {
   font-variant-numeric: tabular-nums;
 }
 
-/* Title — prominent linked text. Matches .upskill-row-title's
-   size/weight; underline removed so the card itself reads as the
-   click target rather than the link reading as a separate
-   element. */
 body[data-slug="notes/entries/index"] .page-listing .section > .desc,
 body[data-slug="journal/entries/index"] .page-listing .section > .desc,
 body[data-slug="notes/entries"] .page-listing .section > .desc,
@@ -1526,23 +950,6 @@ body[data-slug="journal/entries"] .page-listing .section > .desc h3 a:hover {
   color: var(--secondary);
 }
 
-/* Tag pills along the bottom — flex-wrap row with the same gap as
-   the rest of the wiki's pill rows (Reflect tag-row, Upskill row
-   summaries with tags).
-
-   justify-content: flex-start is REQUIRED — see the FLEX ALIGNMENT
-   NOTE in the block comment above.
-
-   padding-top: 1rem is the gap between the border-top (the
-   horizontal divider) and the first pill. See the DIVIDER LINE
-   NOTE in the block comment above — the divider IS the ul.tags's
-   own top border, so padding-top is the only way to put space
-   between the line and the pills below it.
-
-   margin-top: 1.1rem is the gap between the card title above and
-   the divider line. That's a separate measurement, between the
-   bottom of the title's box and the top edge of ul.tags (where
-   the border lives). */
 body[data-slug="notes/entries/index"] .page-listing .section > ul.tags,
 body[data-slug="journal/entries/index"] .page-listing .section > ul.tags,
 body[data-slug="notes/entries"] .page-listing .section > ul.tags,
@@ -1569,8 +976,5 @@ body[data-slug="journal/entries"] .page-listing .section > ul.tags > li {
    ========================================================================== */
 
 ::selection {
-  background: rgba($brass-300, 0.3);
-}
-:root[saved-theme="dark"] ::selection {
   background: rgba($brass-300, 0.25);
 }
