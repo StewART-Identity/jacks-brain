@@ -250,9 +250,9 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       slug: "reflect",
       defaultState: sectionDefaultState(pageSlug, "reflect"),
       links: [
-        { title: "Sources", slug: "reflect/sources" },
-        { title: "Entities", slug: "reflect/entities" },
         { title: "Concepts", slug: "reflect/concepts" },
+        { title: "Entities", slug: "reflect/entities" },
+        { title: "Sources", slug: "reflect/sources" },
         { title: "Synthesis", slug: "reflect/synthesis" },
       ],
     }),
