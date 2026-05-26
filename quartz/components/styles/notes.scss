@@ -1,7 +1,7 @@
 /**
  * Notes page styles.
  *
- * Both Notes pages (/notes/write and /notes/browse) render inside a
+ * Both Notes pages (/notes/add and /notes/update) render inside a
  * .search-page-card — the same card vocabulary used by the two Search
  * pages (/search/wiki and /search/web). The rules below scope that
  * vocabulary under the Notes mount IDs (#note-form-app and
@@ -12,6 +12,15 @@
  * researchPage.scss being loaded. (Each component's .css is only
  * shipped when that component is on the page, so duplication is the
  * right tradeoff against an implicit cross-component dependency.)
+ *
+ * Theme note: this file previously had a sprinkling of
+ * `:root[saved-theme="dark"] .X` rules that overrode lighter
+ * defaults. Since the wiki is dark-only and saved-theme is never set
+ * on <html>, those rules never matched, and the unwanted lighter
+ * defaults were the ones actually applying. The dark-mode values
+ * have now been promoted to the defaults, and the theme-qualified
+ * blocks deleted. See custom.scss's header note for the full
+ * rationale.
  */
 
 #note-form-app,
@@ -227,26 +236,21 @@
   background: var(--lightgray);
   color: var(--darkgray);
 
+  /* Success and error colors are the previous dark-mode values —
+     stronger backgrounds and lighter foregrounds, tuned for the dark
+     canvas. Pending stays on the brass/secondary accent. */
   &.success {
-    background: color-mix(in srgb, #3A7D53 15%, var(--light));
-    color: #2A5A3D;
+    background: color-mix(in srgb, #3A7D53 25%, var(--light));
+    color: #C8E6D2;
   }
   &.error {
-    background: color-mix(in srgb, #8B3232 12%, var(--light));
-    color: #8B3232;
+    background: color-mix(in srgb, #C46B6B 20%, var(--light));
+    color: #F3CFCF;
   }
   &.pending {
     background: color-mix(in srgb, var(--secondary) 12%, var(--light));
     color: var(--secondary);
   }
-}
-:root[saved-theme="dark"] .notes-status .card-status-msg.success {
-  background: color-mix(in srgb, #3A7D53 25%, var(--light));
-  color: #C8E6D2;
-}
-:root[saved-theme="dark"] .notes-status .card-status-msg.error {
-  background: color-mix(in srgb, #C46B6B 20%, var(--light));
-  color: #F3CFCF;
 }
 
 /* ───── Buttons ─────────────────────────────────────────────────── */
@@ -283,11 +287,14 @@
   cursor: not-allowed;
 }
 
+/* Danger button — using the previous dark-mode oxblood values
+   (#C46B6B), which sit better on the dark canvas than the deeper
+   #8B3232. */
 .notes-danger-btn {
   padding: 0.45rem 0.9rem;
   background: transparent;
-  color: #8B3232;
-  border: 1px solid color-mix(in srgb, #8B3232 30%, transparent);
+  color: #C46B6B;
+  border: 1px solid color-mix(in srgb, #C46B6B 30%, transparent);
   border-radius: 6px;
   font-family: inherit;
   font-weight: 500;
@@ -299,8 +306,8 @@
     color 0.15s ease;
 }
 .notes-danger-btn:hover {
-  background: rgba(139, 50, 50, 0.08);
-  border-color: #8B3232;
+  background: rgba(196, 107, 107, 0.12);
+  border-color: #C46B6B;
 }
 .notes-danger-btn:disabled {
   opacity: 0.5;
@@ -313,28 +320,18 @@
   font-size: 0.8rem;
 }
 
-:root[saved-theme="dark"] .notes-danger-btn {
-  color: #C46B6B;
-  border-color: color-mix(in srgb, #C46B6B 30%, transparent);
-}
-:root[saved-theme="dark"] .notes-danger-btn:hover {
-  background: rgba(196, 107, 107, 0.12);
-  border-color: #C46B6B;
-}
-
 /* ───── Notes list (rows inside the Browse card) ────────────────── */
 .notes-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
+/* Row background uses color-mix on var(--light) for a slight visual
+   lift (the previous dark-mode value). */
 .notes-list-item {
   padding: 0.75rem 0.9rem;
   border: 1px solid var(--lightgray);
   border-radius: 8px;
-  background: var(--light);
-}
-:root[saved-theme="dark"] .notes-list-item {
   background: color-mix(in srgb, var(--light) 92%, transparent);
 }
 .notes-list-item[data-editing="true"] {
@@ -474,13 +471,15 @@
   background: var(--lightgray);
   color: var(--darkgray);
 
+  /* Same dark-canvas-tuned success/error backgrounds as the form's
+     status row above. */
   &.success {
-    background: color-mix(in srgb, #3A7D53 15%, var(--light));
-    color: #2A5A3D;
+    background: color-mix(in srgb, #3A7D53 25%, var(--light));
+    color: #C8E6D2;
   }
   &.error {
-    background: color-mix(in srgb, #8B3232 12%, var(--light));
-    color: #8B3232;
+    background: color-mix(in srgb, #C46B6B 20%, var(--light));
+    color: #F3CFCF;
   }
   &.pending {
     background: color-mix(in srgb, var(--secondary) 12%, var(--light));
@@ -508,8 +507,10 @@ body.notes-modal-open {
 .notes-modal-backdrop[hidden] {
   display: none;
 }
+/* Modal panel uses var(--lightgray) so it sits slightly above the
+   dark canvas — the previous dark-mode override value. */
 .notes-modal {
-  background: var(--light);
+  background: var(--lightgray);
   color: var(--darkgray);
   border-radius: 12px;
   padding: 1.4rem 1.5rem 1.2rem;
@@ -532,8 +533,4 @@ body.notes-modal-open {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
-}
-
-:root[saved-theme="dark"] .notes-modal {
-  background: var(--lightgray);
 }
