@@ -6,14 +6,21 @@ import * as Plugin from "./quartz/plugins"
  *
  * See https://quartz.jzhao.xyz/configuration for more information.
  *
- * Note on theming: this site is dark-only. The Quartz theme system still
- * emits two CSS color blocks (one for default `:root`, one for
- * `:root[saved-theme="dark"]`), so we keep both keys here and set them to
- * identical values. The Light/Dark Mode toggle component, sidebar link,
- * and content page have been removed, but the underlying darkmode.inline
- * script (imported via ApplicationMenu) may still set `saved-theme` based
- * on the user's OS preference on first visit. Identical color blocks
- * guarantee that has no visible effect.
+ * Note on theming: this site is dark-only. The Darkmode component
+ * (and its inline script that set `saved-theme="dark"` on <html>)
+ * has been removed from the layout, so the `saved-theme` attribute
+ * is never set at runtime. Any CSS rule scoped to
+ * `:root[saved-theme="dark"]` would therefore never match.
+ *
+ * Quartz's theme system still emits two CSS color blocks here (one
+ * for default `:root`, one for `:root[saved-theme="dark"]`), so we
+ * keep both palette keys below and set them to identical values.
+ * That way the default `:root` block — the only one that actually
+ * applies — already holds the dark-mode colors. quartz/styles
+ * custom.scss does the same in its own `:root` block. No CSS
+ * inside this repo should add new `[saved-theme="dark"]`
+ * qualifiers; they'd be silently dead. See custom.scss's header
+ * note for the full rationale.
  */
 
 const palette = {
