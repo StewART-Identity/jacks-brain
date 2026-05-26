@@ -217,7 +217,7 @@ QuizSuggest.css = `
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  align-items: flex-start;
+  align-items: flex-end;
 }
 
 .quiz-suggest-meta {
