@@ -1,5 +1,5 @@
 /**
- * Notes browse-and-edit list — client behavior for /notes/browse.
+ * Notes browse-and-edit list — client behavior for /notes/update.
  *
  * Renders the list of all notes returned by GET /api/notes, with each
  * note as an expandable card. Default state is collapsed (title + meta
@@ -7,7 +7,7 @@
  * (title/tags inputs, Edit/Preview tabs, body textarea, Save/Cancel).
  *
  * Mounts under the "nav" event so SPA navigation re-binds handlers when
- * the user lands on /notes/browse from elsewhere on the site.
+ * the user lands on /notes/update from elsewhere on the site.
  *
  * Per-card state is held inside the card's own DOM (a `data-editing`
  * attribute on the card element) plus the editor's input values. The
@@ -281,7 +281,7 @@ document.addEventListener("nav", () => {
       const notes: NoteSummary[] = data.notes || []
       if (notes.length === 0) {
         list!.innerHTML =
-          '<p class="muted notes-empty-state">No notes yet. Capture your first one in <a href="/notes/write">Write</a>.</p>'
+          '<p class="muted notes-empty-state">No notes yet. Capture your first one in <a href="/notes/add">Add</a>.</p>'
         return
       }
       list!.innerHTML = ""
@@ -587,7 +587,7 @@ document.addEventListener("nav", () => {
       if (card) card.remove()
       if (list!.children.length === 0) {
         list!.innerHTML =
-          '<p class="muted notes-empty-state">No notes yet. Capture your first one in <a href="/notes/write">Write</a>.</p>'
+          '<p class="muted notes-empty-state">No notes yet. Capture your first one in <a href="/notes/add">Add</a>.</p>'
       }
       modalConfirm!.disabled = false
       modalConfirm!.textContent = "Delete note"
