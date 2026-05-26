@@ -1385,6 +1385,22 @@ article.hide-folder-listing ~ .page-listing,
    CSS). Pinning justify-content: flex-start on our rule overrides
    that cascade quirk and keeps the pills flush-left under the
    divider.
+
+   DIVIDER LINE NOTE — the horizontal line between the title and
+   the tag pills is NOT a separate <hr> element or a border on the
+   title. It's a `border-top: 1px solid var(--lightgray)` on the
+   ul.tags itself, declared in listPage.scss (Quartz's default
+   styling for PageList's default-branch output). The line moves
+   WITH the tag list because it IS part of the tag list.
+
+   Consequence: bumping `margin-top` on ul.tags pushes both the
+   border and the pills together as a unit — it doesn't widen the
+   gap between the border and the first pill. To put air between
+   the divider line and the pills, we need `padding-top` on
+   ul.tags (the gap is INSIDE the element, between its top border
+   and its first child). The default in listPage.scss is
+   `padding: 0.5em 0 0 0`; we bump that to 1rem for a comfortable
+   gap, while keeping the same top border style.
    ========================================================================== */
 
 body[data-slug="notes/entries/index"] .page-listing ul.section-ul,
@@ -1492,22 +1508,26 @@ body[data-slug="journal/entries"] .page-listing .section > .desc h3 a:hover {
    the rest of the wiki's pill rows (Reflect tag-row, Upskill row
    summaries with tags).
 
-   justify-content: flex-start is REQUIRED — Quartz's default
-   .section > .tags rule in PageList.css uses flex with right-side
-   alignment, and without an explicit left-justification here the
-   pills inherit the right-side push from the cascade. See the
-   FLEX ALIGNMENT NOTE in the block comment above.
+   justify-content: flex-start is REQUIRED — see the FLEX ALIGNMENT
+   NOTE in the block comment above.
 
-   margin-top: 1.1rem provides clear daylight between the divider
-   under the title and the first row of pills. The earlier 0.6rem
-   was too tight — the pills visually bumped into the divider line. */
+   padding-top: 1rem is the gap between the border-top (the
+   horizontal divider) and the first pill. See the DIVIDER LINE
+   NOTE in the block comment above — the divider IS the ul.tags's
+   own top border, so padding-top is the only way to put space
+   between the line and the pills below it.
+
+   margin-top: 1.1rem is the gap between the card title above and
+   the divider line. That's a separate measurement, between the
+   bottom of the title's box and the top edge of ul.tags (where
+   the border lives). */
 body[data-slug="notes/entries/index"] .page-listing .section > ul.tags,
 body[data-slug="journal/entries/index"] .page-listing .section > ul.tags,
 body[data-slug="notes/entries"] .page-listing .section > ul.tags,
 body[data-slug="journal/entries"] .page-listing .section > ul.tags {
   list-style: none;
   margin: 1.1rem 0 0 0;
-  padding: 0;
+  padding: 1rem 0 0 0;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
