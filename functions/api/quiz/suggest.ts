@@ -32,7 +32,7 @@ const WORKFLOW_FILE = "quiz-suggest.yml"
 
 // Slug prefixes we'll allow to be dispatched. Any page outside these
 // directories is rejected — quiz questions only make sense on actual
-// content pages, not on UI shells like /notes/write or /quiz/take.
+// content pages, not on UI shells like /notes/add or /quiz/take.
 const ALLOWED_SLUG_PREFIXES = [
   "reflect/concepts/",
   "reflect/entities/",
@@ -47,7 +47,8 @@ const ALLOWED_SLUG_PREFIXES = [
 // content (kept in sync with quartz.layout.ts's QUIZ_SHELL_EXCLUSIONS
 // and functions/api/quiz/status.ts's identical list).
 const SHELL_EXCLUSIONS = new Set<string>([
-  "upskill/manage",
+  "upskill/add",
+  "upskill/update",
   "upskill/topics",
 ])
 
@@ -56,11 +57,22 @@ function isAllowedSlug(slug: string): boolean {
   if (slug.includes("..") || slug.startsWith("/") || slug.includes("\\")) {
     return false
   }
+  // Reject known UI shells (upskill/add, upskill/update, upskill/topics).
+  if (SHELL_EXCLUSIONS.has(slug)) return false
+  // Reject upskill topic landings (upskill/<single-segment>). Quiz
+  // questions on the upskill side live on individual concept pages
+  // (e.g. upskill/git/object-model), aggregated into the Quiz Take
+  // dropdown by subject. Landings are curated intros and don't
+  // carry their own quiz arrays.
+  if (slug.startsWith("upskill/")) {
+    const rest = slug.slice("upskill/".length)
+    if (rest.length > 0 && !rest.includes("/")) {
+      return false
+    }
+  }
   // Reject index pages — we don't want to add quiz questions to
   // section landing pages.
   if (slug.endsWith("/index") || slug.endsWith("/")) return false
-  // Reject known UI shells inside otherwise-allowed prefixes.
-  if (SHELL_EXCLUSIONS.has(slug)) return false
 
   for (const prefix of ALLOWED_SLUG_PREFIXES) {
     if (slug.startsWith(prefix) && slug.length > prefix.length) {
