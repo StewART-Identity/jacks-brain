@@ -1,3 +1,12 @@
+/*
+ * UploadZone — catalog cards on /collect/selection.
+ *
+ * Theme note: this file previously had `:root[saved-theme="dark"]`
+ * overrides that never matched (saved-theme is never set on <html>;
+ * see custom.scss's header). Dark-mode values have been promoted to
+ * the defaults.
+ */
+
 #upload-app {
   max-width: 720px;
   padding-bottom: 2rem;
@@ -12,20 +21,18 @@
   font-size: 1.1rem;
 }
 
-/* Catalog card — wraps each input modality (file, text, URL) */
+/* Catalog card — wraps each input modality (file, text, URL).
+   Background uses color-mix on var(--light) for a slight visual
+   lift against the body canvas (the previous dark-mode value). */
 .catalog-card {
   padding: 1.25rem 1.25rem 1.5rem;
   border: 1px solid var(--lightgray);
   border-radius: 12px;
-  background: var(--light);
+  background: color-mix(in srgb, var(--light) 92%, transparent);
 
   & + .catalog-card {
     margin-top: 1rem;
   }
-}
-
-:root[saved-theme="dark"] .catalog-card {
-  background: color-mix(in srgb, var(--light) 92%, transparent);
 }
 
 /* Drop zone */
@@ -221,19 +228,14 @@
   background: var(--highlight);
   color: var(--darkgray);
 }
+/* Success/error use the previous dark-mode values — brighter
+   foregrounds and higher-alpha backgrounds, tuned for the dark
+   canvas. */
 .card-status-msg.success {
-  color: #3a7d53;
-  background: rgba(59, 125, 83, 0.08);
-}
-.card-status-msg.error {
-  color: #8b3232;
-  background: rgba(139, 50, 50, 0.08);
-}
-:root[saved-theme="dark"] .card-status-msg.success {
   color: #7bbf95;
   background: rgba(59, 125, 83, 0.15);
 }
-:root[saved-theme="dark"] .card-status-msg.error {
+.card-status-msg.error {
   color: #c46b6b;
   background: rgba(139, 50, 50, 0.15);
 }
