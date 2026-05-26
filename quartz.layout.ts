@@ -261,10 +261,10 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       slug: "visualize",
       defaultState: sectionDefaultState(pageSlug, "visualize"),
       links: [
-        { title: "Graph", slug: "visualize/graph" },
-        { title: "Tags", slug: "visualize/tags" },
         { title: "Confidence", slug: "visualize/confidence" },
+        { title: "Graph", slug: "visualize/graph" },
         { title: "Subjects", slug: "visualize/subjects" },
+        { title: "Tags", slug: "visualize/tags" },
         { title: "Timeline", slug: "visualize/timeline" },
       ],
     }),
