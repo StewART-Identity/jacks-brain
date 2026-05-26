@@ -1372,6 +1372,19 @@ article.hide-folder-listing ~ .page-listing,
      - Date small + muted, sits above title as overline metadata
      - Tag pills along the bottom, wrapped, gap 0.4rem — replaces the
        float-right pill cluster the default rendering uses
+
+   FLEX ALIGNMENT NOTE — the .section's default Quartz styling sets
+   `display: flex` with the tag row sitting on the right side of the
+   flex line. Our override sets `display: block` on the section
+   itself so children stack vertically, but the ul.tags inside is
+   STILL a flex container (we set it to display: flex for the pill
+   row). Without an explicit `justify-content: flex-start`, the
+   pills inherit Quartz's right-alignment from the cascade — the
+   default rule wins because it has the same specificity but
+   appears later in the bundle (component CSS loads after main
+   CSS). Pinning justify-content: flex-start on our rule overrides
+   that cascade quirk and keeps the pills flush-left under the
+   divider.
    ========================================================================== */
 
 body[data-slug="notes/entries/index"] .page-listing ul.section-ul,
@@ -1477,16 +1490,27 @@ body[data-slug="journal/entries"] .page-listing .section > .desc h3 a:hover {
 
 /* Tag pills along the bottom — flex-wrap row with the same gap as
    the rest of the wiki's pill rows (Reflect tag-row, Upskill row
-   summaries with tags). */
+   summaries with tags).
+
+   justify-content: flex-start is REQUIRED — Quartz's default
+   .section > .tags rule in PageList.css uses flex with right-side
+   alignment, and without an explicit left-justification here the
+   pills inherit the right-side push from the cascade. See the
+   FLEX ALIGNMENT NOTE in the block comment above.
+
+   margin-top: 1.1rem provides clear daylight between the divider
+   under the title and the first row of pills. The earlier 0.6rem
+   was too tight — the pills visually bumped into the divider line. */
 body[data-slug="notes/entries/index"] .page-listing .section > ul.tags,
 body[data-slug="journal/entries/index"] .page-listing .section > ul.tags,
 body[data-slug="notes/entries"] .page-listing .section > ul.tags,
 body[data-slug="journal/entries"] .page-listing .section > ul.tags {
   list-style: none;
-  margin: 0.6rem 0 0 0;
+  margin: 1.1rem 0 0 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-start;
   gap: 0.4rem;
 }
 body[data-slug="notes/entries/index"] .page-listing .section > ul.tags > li,
