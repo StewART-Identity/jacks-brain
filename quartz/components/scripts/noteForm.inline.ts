@@ -1,12 +1,12 @@
 /**
- * Notes capture form — client behavior for /notes/write.
+ * Notes capture form — client behavior for /notes/add.
  *
  * Split half of the original notes.inline.ts. Handles only the form:
  * markdown preview, Edit/Preview tabs, and the POST /api/notes save
  * path. The list-and-edit side lives in notesList.inline.ts.
  *
  * Mounts under the "nav" event so SPA navigation re-binds handlers
- * when the user lands on /notes/write from elsewhere on the site.
+ * when the user lands on /notes/add from elsewhere on the site.
  */
 document.addEventListener("nav", () => {
   const root = document.getElementById("note-form-app")
@@ -291,7 +291,7 @@ document.addEventListener("nav", () => {
 
       showStatus(
         saveStatus!,
-        'Note saved. Visit /notes/browse to see it once the page rebuilds (~30s).',
+        'Note saved. Visit /notes/update to see it once the page rebuilds (~30s).',
         "success",
       )
 
