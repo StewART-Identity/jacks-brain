@@ -4,6 +4,15 @@ import * as Component from "./quartz/components"
 // Predicate: this page can host quiz questions. Used both by
 // QuizSuggest (renders the "Generate questions" button) and matches
 // the slug-allowlist that /api/quiz/suggest enforces server-side.
+//
+// Quiz questions are stored in each individual content page's
+// `quiz:` frontmatter, then aggregated at runtime by QuizTake from
+// /static/corpus.json. Subjects come from each page's `subjects:`
+// frontmatter, so the dropdown on /quiz/take groups by subject
+// across the whole wiki. Topic landings (e.g. upskill/git) don't
+// need their own quiz buttons — they're curated intros, and the
+// concept pages they link to are the ones that contribute to the
+// subject's quiz pool.
 const QUIZZABLE_PREFIXES = [
   "reflect/concepts/",
   "reflect/entities/",
@@ -15,53 +24,49 @@ const QUIZZABLE_PREFIXES = [
 ]
 // UI-shell pages that match a quizzable prefix but aren't actual
 // content. The upskill/ tree mixes content pages (e.g. upskill/git/
-// object-model) with management/navigation shells (upskill/manage,
+// object-model) with UI shells (upskill/add, upskill/update,
 // upskill/topics) — the prefix alone can't tell them apart, so we
-// list the shells here explicitly.
+// list the shells here explicitly. Kept in sync with the
+// SHELL_EXCLUSIONS Sets in functions/api/quiz/suggest.ts and
+// functions/api/quiz/status.ts.
 const QUIZ_SHELL_EXCLUSIONS = new Set([
-  "upskill/manage",
+  "upskill/add",
+  "upskill/update",
   "upskill/topics",
 ])
+// Topic landings (upskill/git, upskill/web-styling) — single-segment
+// slugs under upskill/ that act as curated intros pointing at the
+// concept pages within. They don't carry their own quiz questions;
+// the concept pages do, and Quiz Take aggregates them by subject.
+function isUpskillTopicLanding(slug: string): boolean {
+  if (!slug.startsWith("upskill/")) return false
+  const rest = slug.slice("upskill/".length)
+  return rest.length > 0 && !rest.includes("/") && !QUIZ_SHELL_EXCLUSIONS.has(slug)
+}
 function isQuizzablePage(slug: string | undefined): boolean {
   if (!slug) return false
   if (slug.endsWith("/index")) return false
   if (QUIZ_SHELL_EXCLUSIONS.has(slug)) return false
+  if (isUpskillTopicLanding(slug)) return false
   for (const prefix of QUIZZABLE_PREFIXES) {
     if (slug.startsWith(prefix) && slug.length > prefix.length) return true
   }
   return false
 }
 
-// Upskill sidebar: the per-topic listing was removed in favor of a
-// single "Topics" link pointing at /upskill/topics, where
-// UpskillTopics renders a card grid that scans data/upskill/ at
-// build time. quartz/util/upskill.ts (scanTopics) is now consumed
-// only by that component, not here.
-
 /**
  * Compute the default open/closed state for a sidebar section based
  * on the current page's slug. A section is open iff the current page
- * belongs to it — e.g. on /notes/write, Notes is open and everything
+ * belongs to it — e.g. on /notes/add, Notes is open and everything
  * else is collapsed.
  *
  * Implemented as a factory because Component.SidebarLink() is called
  * at module load, before any specific page is being rendered. The
  * actual defaultState resolution happens lazily when SidebarLink
- * itself renders — but since SidebarLink's Options.defaultState is
- * read once at constructor time (not per-render), we can't actually
- * close over `fileData.slug` here.
- *
- * Solution: SidebarLink now accepts defaultState="open" or
- * "collapsed" at constructor time, but its render function reads the
- * current page's slug from QuartzComponentProps and overrides at
- * render time. See SidebarLink.tsx — the actual per-page logic lives
- * there. This file just lists each section's slug prefix and lets
- * SidebarLink figure out openness from the prop.
- *
- * Wait — that's not actually how SidebarLink is structured. Let me
- * keep it simple: pass defaultState: "collapsed" as a baseline, and
- * SidebarLink's render function picks up the per-page override
- * itself by checking whether fileData.slug starts with opts.slug.
+ * itself renders — see SidebarLink.tsx. The defaultState passed in
+ * here is just the baseline ("collapsed" for almost all sections);
+ * SidebarLink's render function picks up the per-page override by
+ * checking whether fileData.slug starts with opts.slug.
  */
 
 // components shared across all pages
@@ -107,19 +112,19 @@ export const sharedPageComponents: SharedLayout = {
     }),
     Component.ConditionalRender({
       component: Component.NoteForm(),
-      condition: (page) => page.fileData.slug === "notes/write",
+      condition: (page) => page.fileData.slug === "notes/add",
     }),
     Component.ConditionalRender({
       component: Component.NotesList(),
-      condition: (page) => page.fileData.slug === "notes/browse",
+      condition: (page) => page.fileData.slug === "notes/update",
     }),
     Component.ConditionalRender({
       component: Component.JournalForm(),
-      condition: (page) => page.fileData.slug === "journal/write",
+      condition: (page) => page.fileData.slug === "journal/add",
     }),
     Component.ConditionalRender({
       component: Component.JournalList(),
-      condition: (page) => page.fileData.slug === "journal/browse",
+      condition: (page) => page.fileData.slug === "journal/update",
     }),
     Component.ConditionalRender({
       component: Component.QuizTake(),
@@ -130,8 +135,12 @@ export const sharedPageComponents: SharedLayout = {
       condition: (page) => isQuizzablePage(page.fileData.slug),
     }),
     Component.ConditionalRender({
-      component: Component.UpskillManage(),
-      condition: (page) => page.fileData.slug === "upskill/manage",
+      component: Component.UpskillAdd(),
+      condition: (page) => page.fileData.slug === "upskill/add",
+    }),
+    Component.ConditionalRender({
+      component: Component.UpskillUpdate(),
+      condition: (page) => page.fileData.slug === "upskill/update",
     }),
     Component.ConditionalRender({
       component: Component.UpskillTopics(),
@@ -169,12 +178,7 @@ export const sharedPageComponents: SharedLayout = {
 // SidebarLink's `defaultState` is set to "open" only for the section
 // whose slug prefix matches the current page's slug; everything else
 // is "collapsed". The match uses startsWith on the section slug so
-// e.g. "notes/write" opens the "notes" section.
-//
-// This is the per-page state computation we promised: it runs every
-// time the layout is materialized for a specific page. The user sees
-// a quiet sidebar with only the section containing their current
-// page expanded by default.
+// e.g. "notes/add" opens the "notes" section.
 function sectionDefaultState(
   pageSlug: string | undefined,
   sectionSlug: string,
@@ -213,8 +217,8 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       slug: "notes",
       defaultState: sectionDefaultState(pageSlug, "notes"),
       links: [
-        { title: "Browse", slug: "notes/browse" },
-        { title: "Write", slug: "notes/write" },
+        { title: "Add", slug: "notes/add" },
+        { title: "Update", slug: "notes/update" },
       ],
     }),
     Component.SidebarLink({
@@ -222,8 +226,8 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       slug: "journal",
       defaultState: sectionDefaultState(pageSlug, "journal"),
       links: [
-        { title: "Browse", slug: "journal/browse" },
-        { title: "Write", slug: "journal/write" },
+        { title: "Add", slug: "journal/add" },
+        { title: "Update", slug: "journal/update" },
       ],
     }),
     Component.SidebarLink({
@@ -270,7 +274,8 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       slug: "upskill",
       defaultState: sectionDefaultState(pageSlug, "upskill"),
       links: [
-        { title: "Manage", slug: "upskill/manage" },
+        { title: "Add", slug: "upskill/add" },
+        { title: "Update", slug: "upskill/update" },
         { title: "Topics", slug: "upskill/topics" },
       ],
     }),
