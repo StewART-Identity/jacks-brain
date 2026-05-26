@@ -1,16 +1,23 @@
+/*
+ * Research page styles — /search/web.
+ *
+ * Theme note: previously this file had `:root[saved-theme="dark"]`
+ * overrides on card backgrounds, result rows, and row status colors.
+ * Those never matched (saved-theme is never set; see custom.scss
+ * header). Dark-mode values are now the defaults.
+ */
+
 #research-app {
   max-width: 720px;
   padding-bottom: 2rem;
 }
 
+/* Card uses color-mix on var(--light) for a slight visual lift
+   against the body canvas. */
 .research-card {
   padding: 1.25rem 1.25rem 1.5rem;
   border: 1px solid var(--lightgray);
   border-radius: 12px;
-  background: var(--light);
-}
-
-:root[saved-theme="dark"] .research-card {
   background: color-mix(in srgb, var(--light) 92%, transparent);
 }
 
@@ -128,6 +135,8 @@
   cursor: not-allowed;
 }
 
+/* Result row — color-mix on var(--light) for the slight lift, same
+   as the parent card. */
 .research-result {
   display: flex;
   gap: 0.75rem;
@@ -135,9 +144,6 @@
   border: 1px solid var(--lightgray);
   border-radius: 10px;
   margin-bottom: 0.6rem;
-  background: var(--light);
-}
-:root[saved-theme="dark"] .research-result {
   background: color-mix(in srgb, var(--light) 92%, transparent);
 }
 .research-result-check {
@@ -195,16 +201,12 @@
 .research-row-status {
   color: var(--gray);
 }
+/* Status colors use the previous dark-mode values — brighter than
+   the deeper #3a7d53/#8b3232 they overrode. */
 .research-row-status.ok {
-  color: #3a7d53;
-}
-.research-row-status.err {
-  color: #8b3232;
-}
-:root[saved-theme="dark"] .research-row-status.ok {
   color: #7bbf95;
 }
-:root[saved-theme="dark"] .research-row-status.err {
+.research-row-status.err {
   color: #c46b6b;
 }
 
