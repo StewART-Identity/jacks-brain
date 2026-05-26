@@ -57,6 +57,11 @@ document.addEventListener("nav", () => {
 `
 
 NukeButton.css = `
+/* Status pending/success/error use the previous dark-mode values —
+   darker backgrounds, brighter foregrounds — tuned for the dark
+   canvas. The light-mode defaults and dark-mode overrides that
+   used to live below were both removed because saved-theme is never
+   set (see custom.scss header). */
 #nuke-app {
   margin-top: 1.5rem;
   text-align: center;
@@ -92,26 +97,14 @@ NukeButton.css = `
   font-size: 0.9rem;
 }
 .nuke-status.pending {
-  background: #FBF4E4;
-  color: #6B4D1A;
-}
-.nuke-status.success {
-  background: #EBF5EE;
-  color: #2B5E3E;
-}
-.nuke-status.error {
-  background: #F9EDED;
-  color: #6B2020;
-}
-:root[saved-theme="dark"] .nuke-status.pending {
   background: #6B4D1A;
   color: #D4AD5A;
 }
-:root[saved-theme="dark"] .nuke-status.success {
+.nuke-status.success {
   background: #1B3F29;
   color: #7BBF95;
 }
-:root[saved-theme="dark"] .nuke-status.error {
+.nuke-status.error {
   background: #6B2020;
   color: #C46B6B;
 }
