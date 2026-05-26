@@ -1,11 +1,11 @@
 /**
- * Journal browse-and-edit list — client behavior for /journal/browse.
+ * Journal browse-and-edit list — client behavior for /journal/update.
  *
  * Mirror of notesList.inline.ts. Renders the list of all entries from
  * GET /api/journal, with each entry as an expandable card.
  *
  * Mounts under the "nav" event so SPA navigation re-binds handlers when
- * the user lands on /journal/browse from elsewhere on the site.
+ * the user lands on /journal/update from elsewhere on the site.
  */
 document.addEventListener("nav", () => {
   const root = document.getElementById("journal-list-app")
@@ -274,7 +274,7 @@ document.addEventListener("nav", () => {
       const entries: JournalSummary[] = data.entries || []
       if (entries.length === 0) {
         list!.innerHTML =
-          '<p class="muted notes-empty-state">No entries yet. Capture your first one in <a href="/journal/write">Write</a>.</p>'
+          '<p class="muted notes-empty-state">No entries yet. Capture your first one in <a href="/journal/add">Add</a>.</p>'
         return
       }
       list!.innerHTML = ""
@@ -570,7 +570,7 @@ document.addEventListener("nav", () => {
       if (card) card.remove()
       if (list!.children.length === 0) {
         list!.innerHTML =
-          '<p class="muted notes-empty-state">No entries yet. Capture your first one in <a href="/journal/write">Write</a>.</p>'
+          '<p class="muted notes-empty-state">No entries yet. Capture your first one in <a href="/journal/add">Add</a>.</p>'
       }
       modalConfirm!.disabled = false
       modalConfirm!.textContent = "Delete entry"
