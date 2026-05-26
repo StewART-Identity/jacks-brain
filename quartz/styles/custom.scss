@@ -741,18 +741,18 @@ input.search-bar {
    no border. Full opacity so the button stays clearly visible.
    Hover adds a subtle background tint as a click-target affordance.
 
-   Button size: 1.75rem × 1.75rem (28×28px) with an 18px SVG icon.
-   Slightly larger than the previous 1.5rem (24px), small enough
-   to read as chrome rather than a CTA but big enough to be
-   comfortably clickable.
+   Button size: 3.5rem × 3.5rem (56×56px) with a 36px SVG icon.
+   Doubled from the earlier 1.75rem / 18px so the icon reads
+   clearly at a glance instead of looking like fine chrome —
+   still no fill or border at rest, just a larger glyph.
    ========================================================================== */
 
 .jb-sidebar-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 3.5rem;
+  height: 3.5rem;
   padding: 0;
   border: none;
   background: transparent;
@@ -777,8 +777,8 @@ input.search-bar {
   /* The icon — fixed size, vertically centered. */
   & > svg {
     display: block;
-    width: 18px;
-    height: 18px;
+    width: 36px;
+    height: 36px;
   }
 }
 
