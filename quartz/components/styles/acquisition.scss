@@ -109,42 +109,10 @@ input.queue-row-checkbox {
   height: 1.05rem;
 }
 
-/* Run badges — colors below are the previous dark-mode values
-   (darker backgrounds, brighter foregrounds) which read correctly
-   on the dark hunter-green canvas. */
-.run-badge {
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.run-badge.cataloged {
-  background: #1b3f29;
-  color: #7bbf95;
-}
-.run-badge.success {
-  background: #1b3f29;
-  color: #7bbf95;
-}
-.run-badge.failed {
-  background: #6b2020;
-  color: #c46b6b;
-}
-.run-badge.failure {
-  background: #6b2020;
-  color: #c46b6b;
-}
-.run-badge.in_progress {
-  background: #6b4d1a;
-  color: #d4ad5a;
-}
-.run-badge.pending,
-.run-badge.queued {
-  background: #2e3d55;
-  color: #7b8fad;
-}
+/* Run badges (the Status column pills) are defined globally in
+   quartz/styles/custom.scss under "Status badges", so the Acquisition
+   queue and the Retention log share one pill vocabulary and read
+   identically. Nothing to define here. */
 
 #acquisition-app .muted {
   color: var(--gray);
