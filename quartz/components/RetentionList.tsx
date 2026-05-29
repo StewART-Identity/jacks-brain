@@ -44,6 +44,18 @@ document.addEventListener("nav", () => {
     return sortAsc ? " \\u25B2" : " \\u25BC"
   }
 
+  // Normalize a retention action ("Cataloged", "Re-viewed", ...) into a
+  // run-badge variant class. Mirrors the lowercase/underscore mapping the
+  // shared .run-badge.{state} rules in custom.scss expect, so "Re-viewed"
+  // -> "re_viewed" lands on the brass variant and "Cataloged" -> "cataloged"
+  // on the green one. Unmapped actions fall through to the neutral base pill.
+  function statusClass(action) {
+    return String(action == null ? "" : action)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+  }
+
   function renderTable() {
     if (allRows.length === 0) {
       container.innerHTML = '<p class="muted">No documents retained yet.</p>'
@@ -84,7 +96,7 @@ document.addEventListener("nav", () => {
           : '<span class="title-missing" title="Source page no longer exists \\u2014 read-only">\\u2014</span>'
         return '<tr>' +
           '<td class="col-date">' + escapeHtml(r.date) + '</td>' +
-          '<td class="col-status">' + escapeHtml(r.action) + '</td>' +
+          '<td class="col-status"><span class="run-badge ' + statusClass(r.action) + '">' + escapeHtml(r.action) + '</span></td>' +
           '<td><code>' + escapeHtml(r.filename) + '</code></td>' +
           '<td>' + titleCell + '</td>' +
           '</tr>'
