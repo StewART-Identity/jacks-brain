@@ -958,12 +958,14 @@ article.hide-folder-listing ~ .page-listing,
 
 
 /* ==========================================================================
-   Tag-row indent — align disclosed tag pills with the Title column
-   ========================================================================== */
+   Tag-row indent
 
-.table-container.jb-table > table tbody tr.tag-row > td {
-  padding-left: 8rem;
-}
+   The disclosed tag-pill row's indent (alignment with the Title column)
+   and vertical padding are owned by PageList.css's
+   `.jb-table > table tbody tr.tag-row > td` rule. A second override
+   used to live here at a different value, which fought that rule via
+   higher specificity and pushed the pills out of alignment — removed.
+   ========================================================================== */
 
 
 /* ==========================================================================
