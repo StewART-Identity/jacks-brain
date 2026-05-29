@@ -3,7 +3,7 @@ title: "Brain Anatomy Through Two Lenses: Clinical Reference vs. Circuit-Level E
 summary: "Comparing the Johns Hopkins and Neuroscientifically Challenged brain anatomy sources — what each covers, where they diverge, and what they reveal together."
 type: synthesis
 created: 2026-05-18
-updated: 2026-05-18
+updated: 2026-05-28
 subjects:
   - neuroscience
 tags:
@@ -21,6 +21,7 @@ confidence: high
 sources:
   - "[[reflect/sources/2026-05-18-brain-anatomy-and-how-the-brain-works-johns-hopkins-medicine]]"
   - "[[reflect/sources/2026-05-18-major-brain-structures-and-their-functions]]"
+  - "[[reflect/sources/2026-05-28-pasted-image-1780023156669]]"
 ---
 
 Two sources now cover brain anatomy in this wiki. They complement each other in ways that make the pair more instructive than either alone. This page maps the overlap, the divergence, and what each contributes.
@@ -57,7 +58,7 @@ Both sources describe the same major structural divisions — cerebral cortex, f
 
 **Cranial nerves**: The Hopkins source lists all twelve cranial nerves with origins and functions. The video mentions cranial nerve nuclei in the pons only in passing.
 
-**Brain composition**: Hopkins provides context on weight (~3 lbs), fat content (~60%), and the cell types involved (neurons, glial cells, blood vessels). This is useful clinical background absent from the educational video.
+**Brain composition**: Hopkins provides context on weight (~3 lbs), fat content (~60%), and the cell types involved (neurons, glial cells, blood vessels). This is useful clinical background absent from the educational video. Note that Hopkins names glial cells but does not characterize them further; the [[reflect/sources/2026-05-28-pasted-image-1780023156669|Biology Corner neuroglial chart]] (added 2026-05-28) fills this gap by detailing all six neuroglial cell types across the CNS and PNS — see [[reflect/concepts/neuroglial-cells]].
 
 ## Synthesis: what the pair provides
 

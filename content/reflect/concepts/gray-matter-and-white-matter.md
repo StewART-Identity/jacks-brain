@@ -3,7 +3,7 @@ title: "Gray Matter and White Matter"
 summary: "The two tissue types of the CNS — gray matter processes information via neuron cell bodies; white matter transmits it via myelinated axons."
 type: concept
 created: 2026-05-18
-updated: 2026-05-18
+updated: 2026-05-28
 subjects:
   - neuroscience
 tags:
@@ -18,6 +18,7 @@ tags:
 confidence: high
 sources:
   - "[[reflect/sources/2026-05-18-brain-anatomy-and-how-the-brain-works-johns-hopkins-medicine]]"
+  - "[[reflect/sources/2026-05-28-pasted-image-1780023156669]]"
 ---
 
 Gray matter and white matter are the two primary tissue types of the [[reflect/concepts/central-nervous-system]]. Their distinct compositions give them different functional roles and different appearances on imaging scans.
@@ -39,7 +40,7 @@ A **neuron** has two key parts relevant here:
 
 ### Myelin
 
-**Myelin** is a fatty protective sheath produced by glial cells (Schwann cells in the periphery; oligodendrocytes in the CNS) that wraps around axons. Myelin dramatically speeds up signal transmission by enabling **saltatory conduction** — the electrical impulse jumps between gaps in the myelin (nodes of Ranvier) rather than traveling continuously along the entire axon surface. Demyelinating diseases (such as multiple sclerosis) degrade this speed advantage.
+**Myelin** is a fatty protective sheath produced by [[reflect/concepts/neuroglial-cells|glial cells]] (Schwann cells in the periphery; oligodendrocytes in the CNS) that wraps around axons. Myelin dramatically speeds up signal transmission by enabling **saltatory conduction** — the electrical impulse jumps between gaps in the myelin (nodes of Ranvier) rather than traveling continuously along the entire axon surface. Demyelinating diseases (such as multiple sclerosis) degrade this speed advantage.
 
 ## Spatial arrangement
 

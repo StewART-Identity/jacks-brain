@@ -3,7 +3,7 @@ title: "Central Nervous System"
 summary: "The brain and spinal cord together — the CNS integrates sensory input, coordinates responses, and carries signals between the brain and the rest of the body."
 type: concept
 created: 2026-05-18
-updated: 2026-05-18
+updated: 2026-05-28
 subjects:
   - neuroscience
 tags:
@@ -14,9 +14,11 @@ tags:
   - cerebrospinal-fluid
   - meninges
   - signal-transmission
+  - neuroglial-cells
 confidence: high
 sources:
   - "[[reflect/sources/2026-05-18-brain-anatomy-and-how-the-brain-works-johns-hopkins-medicine]]"
+  - "[[reflect/sources/2026-05-28-pasted-image-1780023156669]]"
 ---
 
 The **central nervous system (CNS)** consists of the brain and the spinal cord that extends from it. Together they receive chemical and electrical signals from throughout the body, interpret those signals, and coordinate responses — controlling everything from voluntary movement to autonomic processes like breathing and heart rate.
@@ -34,6 +36,10 @@ The spinal cord extends downward from the base of the medulla (the lowest part o
 ## Neural signaling
 
 The CNS relies on billions of **neurons** (nerve cells) to transmit information. Signals travel as both electrical impulses along axons and chemical signals across synapses. Some signals stay within the brain; others travel down the spinal cord and out through peripheral nerves to distant body parts.
+
+## Neuroglial cells
+
+Neurons are not the only cells in the CNS. **[[reflect/concepts/neuroglial-cells|Neuroglial cells]]** (glia) provide structural, metabolic, and immune support. The four CNS glial types are astrocytes (blood-brain barrier and metabolic support), ependymal cells (CSF production and circulation), oligodendrocytes (axon myelination), and microglia (immune surveillance and phagocytosis). Their PNS counterparts — satellite cells and Schwann cells — perform analogous functions outside the brain and spinal cord.
 
 ## Protective structures
 
