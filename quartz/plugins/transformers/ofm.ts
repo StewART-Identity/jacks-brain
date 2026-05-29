@@ -19,9 +19,12 @@ import { JSResource, CSSResource } from "../../util/resources"
 import calloutScript from "../../components/scripts/callout.inline"
 // @ts-ignore
 import checkboxScript from "../../components/scripts/checkbox.inline"
-// @ts-ignore
-import mermaidScript from "../../components/scripts/mermaid.inline"
-import mermaidStyle from "../../components/styles/mermaid.inline.scss"
+// Mermaid support is intentionally disabled: the `mermaid` package and the
+// mermaid.inline.{ts,scss} files were removed from this repo, so the imports
+// that used to live here are gone, the `mermaid` option defaults to false,
+// and the resource-injection block below has been dropped. ```mermaid fences
+// render as plain code blocks. Re-enabling means re-adding the dependency and
+// both inline files, then restoring the import + externalResources push.
 import { FilePath, pathToRoot, slugTag, slugifyFilePath } from "../../util/path"
 import { toHast } from "mdast-util-to-hast"
 import { toHtml } from "hast-util-to-html"
@@ -49,7 +52,7 @@ const defaultOptions: Options = {
   highlight: true,
   wikilinks: true,
   callouts: true,
-  mermaid: true,
+  mermaid: false,
   parseTags: true,
   parseArrows: true,
   parseBlockReferences: true,
@@ -762,20 +765,6 @@ export const ObsidianFlavoredMarkdown: QuartzTransformerPlugin<Partial<Options>>
           script: calloutScript,
           loadTime: "afterDOMReady",
           contentType: "inline",
-        })
-      }
-
-      if (opts.mermaid) {
-        js.push({
-          script: mermaidScript,
-          loadTime: "afterDOMReady",
-          contentType: "inline",
-          moduleType: "module",
-        })
-
-        css.push({
-          content: mermaidStyle,
-          inline: true,
         })
       }
 
