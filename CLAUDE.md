@@ -62,6 +62,7 @@ data/                   # Machine-managed data outside the wiki
 static/originals/       # Immutable source documents — never modify these
 docs/                   # Developer documentation (not served as wiki content)
   ui-conventions.md     # UI patterns, button family, table system — read before modifying components
+  upskill-authoring.md  # How to author Upskill study pages — read before writing topic content
 CLAUDE.md               # This file — read-only during operations
 ```
 
@@ -201,6 +202,16 @@ Once a topic exists, drop study pages at `content/upskill/<topic>/<slug>.md`
 as normal wiki pages with full frontmatter. They go through the
 standard Quartz pipeline and auto-list on the topic's landing page via
 `FolderContent`. No API call needed.
+
+**Authoring the study pages themselves** — page structure, the
+concept-page frontmatter shape, the landing-page link pattern, and how
+to embed drawn inline-SVG examples in the site's dark-only palette —
+follows a separate playbook documented in
+**[docs/upskill-authoring.md](docs/upskill-authoring.md)**. Read it
+before writing a topic's study pages; it exists specifically so that
+authoring a topic from scratch is fast instead of a from-first-
+principles rediscovery. This section covers WHERE study pages live and
+how topics are managed; the playbook covers HOW to write good ones.
 
 **When to write to the data files directly:**
 
@@ -385,6 +396,13 @@ the wiki's domain.
    existing umbrella, with `provisioning` as a tag to capture the
    specificity. Subjects describe categorical position; tags describe
    surface detail.
+
+**Upskill exception.** Study pages under `content/upskill/<topic>/` use
+the **topic slug** as their single subject (`web-styling`,
+`ui-elements`). For self-study material the useful grouping axis is the
+topic itself, so this intentionally departs from the
+bias-toward-broad-vocabulary rule above. See
+[docs/upskill-authoring.md](docs/upskill-authoring.md).
 
 ### `tags:` — descriptive keywords (folksonomy)
 
@@ -611,7 +629,10 @@ update both files in a single multi-file commit so they stay paired.
 Adding study material to an existing topic does NOT go through
 `/api/upskill/topics`. Write the study page directly at
 `content/upskill/<topic>/<slug>.md` with full wiki frontmatter; it
-appears on the topic's landing page automatically.
+appears on the topic's landing page automatically. Before writing those
+pages, read **[docs/upskill-authoring.md](docs/upskill-authoring.md)** —
+the canonical playbook for study-page structure, frontmatter, the
+landing-page link pattern, and how to embed drawn inline-SVG examples.
 
 ### Query
 
@@ -719,6 +740,11 @@ layouts — follows a separate set of conventions documented in
 **[docs/ui-conventions.md](docs/ui-conventions.md)**. Read that file
 before changing anything under `quartz/components/` or
 `quartz/styles/`.
+
+Authoring Upskill study-page *content* (not components) follows its own
+playbook in **[docs/upskill-authoring.md](docs/upskill-authoring.md)** —
+study-page structure, frontmatter, cross-linking, and the inline-SVG
+example pattern in the dark-only palette.
 
 The most-important invariants, stated inline so you can't miss them:
 
