@@ -100,8 +100,12 @@ body.menu-open #hamburger-toggle {
     // Stack above content but below the hamburger button
     z-index: 999;
 
-    // Solid background so content underneath doesn't bleed through
-    background: var(--light);
+    // Elevated-surface background so the menu reads as a distinct panel
+    // sitting above the dimmed content — not just more dark page. Uses
+    // --lightgray (the same elevated tone as cards/modals) rather than
+    // --light (the darkest green), which as an isolated overlay panel
+    // looked like a dark void on small screens.
+    background: var(--lightgray);
     background-image: url("/static/neuron-texture.png");
     background-repeat: repeat;
     background-size: 768px 512px;
