@@ -315,7 +315,12 @@ export const PageList: QuartzComponent = ({ cfg, fileData, allFiles, limit, sort
                       reference, which keeps the sort script's
                       pair-move logic simple. */}
                   <tr class="tag-row" data-pair-slug={pageSlug} hidden>
-                    <td colspan={colspanCount} class="col-tags-full">
+                    {/* Empty leading cell occupies the disclose column so
+                        the tags cell below begins exactly at the Title
+                        column's left edge — alignment is structural, not a
+                        hardcoded indent. */}
+                    <td class="col-tags-spacer" aria-hidden="true"></td>
+                    <td colspan={colspanCount - 1} class="col-tags-full">
                       {hasTags ? (
                         <ul class="tags">
                           {tags.map((tag) => (
@@ -408,9 +413,26 @@ PageList.css = `
 /* Tags-disclose column — fits "▸ N tags" comfortably. ~6.5rem accommodates
    "▸ 99 tags" with breathing room. Centered so the cluster reads as a
    single control element. */
+/* All Reflect-table cells use border-box so a column's declared width
+   is its REAL rendered width (padding included). Without this the
+   disclose column's 6.5rem was a content width and its cell padding
+   pushed the real column to ~8rem, sliding the Title column — and the
+   title text — well right of the disclosed tag pills below it. */
+.jb-table > table th,
+.jb-table > table td {
+  box-sizing: border-box;
+}
+
 .jb-table th.col-disclose,
 .jb-table td.col-disclose {
   width: 6.5rem;
+  /* Trim horizontal padding so "▸ NN tags" keeps room inside the
+     border-box 6.5rem column. With border-box the column's outer width
+     (and thus where the Title column starts) is fixed regardless of
+     padding, so less padding just buys content room without moving the
+     Title. */
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
   text-align: center;
   white-space: nowrap;
 }
@@ -504,13 +526,14 @@ PageList.css = `
    sitting in their own anonymous strip. */
 .jb-table > table tbody tr.tag-row > td {
   border-top: none;
-  /* Left padding = disclose column width (6.5rem, now pinned exact by
-     the auto Summary column) + the cell's own 0.75rem left padding, so
-     the pills start flush with the Title text above them. Top and
-     bottom are equal so the pills sit centered in the band between the
-     primary row's divider above and this row's divider below — fixing
-     the previous top-heavy 0.2rem/0.75rem split. */
-  padding: 0.6rem 0.75rem 0.6rem 7.25rem;
+  /* Only the vertical padding is set here (balanced so the pills sit
+     centered in the band between the dividers above and below). The
+     horizontal padding stays at the standard 0.75rem cell value, and
+     because the tags now live in their own cell that begins at the
+     Title column (see the two-cell tag row in the render), that 0.75rem
+     lines the pills up with the Title text above — no magic indent. */
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
 }
 
 /* Tags list inside the tag row — horizontal wrapping pill row.
