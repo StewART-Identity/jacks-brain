@@ -291,17 +291,30 @@ a.external {
    Tag pills
    ========================================================================== */
 
+/* Tag pills read against several different backgrounds — the dark
+   canvas on tag pages, and (critically) the striped green rows of the
+   Reflect collection tables, where the old solid $green-800 fill was
+   the SAME colour as the row beneath it and the pill vanished. A faint
+   brass wash inside a brass hairline keeps the pill legible on every
+   one of those backgrounds and reads unambiguously as the site's
+   accent-coloured, tappable tag. Subjects (see the Reflect-table
+   override below) get a green outline instead, so the two pill kinds
+   stay visually distinct. */
 a.tag-link {
-  border: none;
-  border-radius: 12px;
+  border: 1px solid rgba($brass-300, 0.45);
+  border-radius: 999px;
   padding: 2px 10px;
   font-size: 0.82rem;
   font-weight: 500;
   letter-spacing: 0.01em;
-  transition: background 0.15s ease, color 0.15s ease;
-  background: $green-800;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  background: rgba($brass-300, 0.13);
   color: $brass-100;
-  &:hover { background: $green-600; color: $brass-50; }
+  &:hover {
+    background: rgba($brass-300, 0.26);
+    border-color: rgba($brass-300, 0.75);
+    color: $brass-50;
+  }
 }
 
 
@@ -768,6 +781,100 @@ a.app-toggle {
 .confidence-medium { background: $brass-800;   color: $brass-300; }
 .confidence-low    { background: $slate-800;   color: $slate-300; }
 .confidence-speculative { background: $oxblood-800; color: $oxblood-300; }
+
+
+/* ==========================================================================
+   Status badges — .run-badge
+
+   ONE pill vocabulary for every table status column on the wiki: the
+   Acquisition queue ("Status": CATALOGED / IN_PROGRESS / PENDING /
+   FAILED) and the Retention log ("Status": Cataloged / Re-viewed).
+   Both render <span class="run-badge {state}">, so this block is the
+   single source of truth and the two tables read identically.
+
+   These pills sit either on transparent rows over the hunter-green
+   canvas + neuron texture (Acquisition, Retention) or — for the green
+   variant especially — close to green row fills. Each variant pairs a
+   saturated same-hue fill with a LIGHTER hairline border; the border
+   is what guarantees the pill stays distinct even when its fill is
+   near the row colour. The old flat dark fills are exactly why the
+   green CATALOGED pill blended into the table and the others read as
+   washed-out. Hue → meaning: green = done, brass = in flight /
+   revisited, slate = waiting, oxblood = failed / removed. */
+.run-badge {
+  display: inline-block;
+  padding: 2px 11px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.55;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  /* Neutral fallback for any unmapped action — still a visible pill. */
+  background: #2C4A39;
+  color: $green-50;
+  border: 1px solid #4B7860;
+}
+
+/* Green — terminal-good (cataloged / success / done). */
+.run-badge.cataloged,
+.run-badge.success,
+.run-badge.done {
+  background: #2F6A44;
+  border-color: #57A476;
+  color: #E4F4EA;
+}
+
+/* Brass — active or revisited (in progress / re-viewed / updated). */
+.run-badge.in_progress,
+.run-badge.re_viewed,
+.run-badge.reviewed,
+.run-badge.updated,
+.run-badge.re_cataloged,
+.run-badge.recataloged {
+  background: #6E5018;
+  border-color: #CC9F42;
+  color: #F6E7C2;
+}
+
+/* Slate — waiting (pending / queued). */
+.run-badge.pending,
+.run-badge.queued {
+  background: #36496A;
+  border-color: #7488A6;
+  color: #DCE5F0;
+}
+
+/* Oxblood — terminal-bad or removed (failed / deleted / error). */
+.run-badge.failed,
+.run-badge.failure,
+.run-badge.deleted,
+.run-badge.error {
+  background: #7C2E2E;
+  border-color: #BE6363;
+  color: #F4D6D6;
+}
+
+
+/* ==========================================================================
+   Reflect-table Subjects chips — override
+
+   The subjects pills live in PageList.css as `.jb-table .subjects > li`
+   with a `var(--lightgray)` (== $green-800) fill — the same blend-into-
+   the-row problem the tags had. This override (anchored on the compound
+   `.table-container.jb-table` so it out-specifies PageList's
+   `.jb-table` rule regardless of stylesheet order) gives them a green
+   outline instead: clearly a pill, clearly distinct from the brass tag
+   pills sharing the table.
+   ========================================================================== */
+.table-container.jb-table .subjects > li {
+  padding: 0.1rem 0.55rem;
+  background: rgba($green-300, 0.14);
+  border: 1px solid rgba($green-300, 0.42);
+  border-radius: 999px;
+  color: $green-50;
+}
 
 
 /* ==========================================================================
