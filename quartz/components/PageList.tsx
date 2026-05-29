@@ -428,7 +428,11 @@ PageList.css = `
 }
 .jb-table th.col-summary,
 .jb-table td.col-summary {
-  width: 32%;
+  /* auto so this column absorbs all leftover table width; that keeps
+     the fixed/percentage columns (notably the 6.5rem disclose column)
+     at EXACTLY their specified widths under table-layout: fixed, which
+     is what lets the disclosed tag row align to the Title column. */
+  width: auto;
 }
 .jb-table th.col-subjects,
 .jb-table td.col-subjects {
@@ -455,7 +459,7 @@ PageList.css = `
 }
 .jb-table > table:not(:has(.col-date)) th.col-summary,
 .jb-table > table:not(:has(.col-date)) td.col-summary {
-  width: 38%;
+  width: auto;
 }
 .jb-table > table:not(:has(.col-date)) th.col-subjects,
 .jb-table > table:not(:has(.col-date)) td.col-subjects {
@@ -500,7 +504,13 @@ PageList.css = `
    sitting in their own anonymous strip. */
 .jb-table > table tbody tr.tag-row > td {
   border-top: none;
-  padding: 0.2rem 0.75rem 0.75rem 7.25rem;
+  /* Left padding = disclose column width (6.5rem, now pinned exact by
+     the auto Summary column) + the cell's own 0.75rem left padding, so
+     the pills start flush with the Title text above them. Top and
+     bottom are equal so the pills sit centered in the band between the
+     primary row's divider above and this row's divider below — fixing
+     the previous top-heavy 0.2rem/0.75rem split. */
+  padding: 0.6rem 0.75rem 0.6rem 7.25rem;
 }
 
 /* Tags list inside the tag row — horizontal wrapping pill row.
