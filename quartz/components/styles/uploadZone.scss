@@ -16,7 +16,8 @@
 .section-label,
 .paste-section h3,
 .url-section h3,
-.youtube-section h3 {
+.youtube-section h3,
+.wiki-section h3 {
   margin: 0 0 0.75rem 0;
   font-size: 1.1rem;
 }
@@ -208,6 +209,96 @@
   opacity: 0.85;
 }
 .youtube-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Wikipedia section — search row reuses the URL/YouTube row pattern */
+.wiki-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.wiki-row input {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-size: 0.95rem;
+}
+.wiki-row input:focus {
+  outline: none;
+  border-color: var(--secondary);
+}
+.wiki-row button {
+  padding: 0.6rem 1.2rem;
+  background: var(--secondary);
+  color: var(--light);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+.wiki-row button:hover {
+  opacity: 0.85;
+}
+.wiki-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Wikipedia search results — one row per candidate article, each with
+   its own Import button on the right. */
+.wiki-results {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.wiki-result {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: var(--light);
+}
+.wiki-result-main {
+  /* Allow the snippet to wrap instead of forcing the row wider. */
+  min-width: 0;
+}
+.wiki-result-title {
+  font-weight: 600;
+  color: var(--dark);
+}
+.wiki-result-snippet {
+  font-size: 0.85rem;
+  color: var(--gray);
+  margin-top: 0.2rem;
+}
+.wiki-import-btn {
+  flex: none;
+  padding: 0.4rem 0.9rem;
+  background: var(--secondary);
+  color: var(--light);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+.wiki-import-btn:hover {
+  opacity: 0.85;
+}
+.wiki-import-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
