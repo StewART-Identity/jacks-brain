@@ -7,7 +7,7 @@ import script from "./scripts/sidebarLink.inline"
 interface Options {
   title: string
   slug: string
-  links: { title: string; slug: string }[]
+  links: { title: string; slug: string; icon?: "help" }[]
   /**
    * Explicit-override initial state. SidebarLink also auto-opens the
    * section if the current page's slug belongs to it (see
@@ -102,7 +102,30 @@ export default ((opts: Options) => {
         <ul class="sidebar-nav-list" id={listId} hidden={!initiallyOpen}>
           {opts.links.map((link) => (
             <li>
-              <a href={resolveRelative(fileData.slug!, link.slug as any)}>{link.title}</a>
+              <a
+                href={resolveRelative(fileData.slug!, link.slug as any)}
+                class={link.icon ? "sidebar-nav-link-has-icon" : undefined}
+              >
+                {link.icon === "help" && (
+                  <svg
+                    class="sidebar-nav-link-icon"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                  </svg>
+                )}
+                {link.title}
+              </a>
             </li>
           ))}
         </ul>
@@ -196,6 +219,17 @@ ul.sidebar-nav-list a {
 ul.sidebar-nav-list a:hover {
   color: var(--secondary);
   opacity: 1;
+}
+ul.sidebar-nav-list a.sidebar-nav-link-has-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.sidebar-nav-link-icon {
+  flex-shrink: 0;
+  /* Inherits currentColor from the link, so it tracks the link's
+     color and hover state. Slightly smaller than the text for a
+     quiet, secondary feel. */
 }
 `
 
