@@ -266,7 +266,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
         { title: "Subjects", slug: "visualize/subjects" },
         { title: "Tags", slug: "visualize/tags" },
         { title: "Timeline", slug: "visualize/timeline" },
-        { title: "Help", slug: "visualize/help" },
+        { title: "Help", slug: "visualize/help", icon: "help" },
       ],
     }),
 
