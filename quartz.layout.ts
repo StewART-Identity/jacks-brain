@@ -266,6 +266,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
         { title: "Subjects", slug: "visualize/subjects" },
         { title: "Tags", slug: "visualize/tags" },
         { title: "Timeline", slug: "visualize/timeline" },
+        { title: "Help", slug: "visualize/help" },
       ],
     }),
 
@@ -297,7 +298,6 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       slug: "application",
       defaultState: sectionDefaultState(pageSlug, "application"),
       links: [
-        { title: "Help", slug: "application/help" },
         { title: "Nuke It From Orbit", slug: "application/nuke" },
       ],
     }),
