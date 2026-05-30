@@ -403,13 +403,28 @@ document.addEventListener("nav", () => {
     })
   }
 
-  // ─── Wikipedia search + import ────────────────────────────────────────────
-  // Two-step flow against /api/wikipedia:
-  //   1. search → render candidate articles, each with its own Import button
-  //   2. import → server fetches a clean plaintext extract, trims the
-  //               reference apparatus, and commits it to the catalog queue
+  // ─── Wikipedia search + preview + import ──────────────────────────────────
+  // Three-step flow against /api/wikipedia:
+  //   1. search  → render candidate articles, each with Preview + Import
+  //   2. preview → server cleans the article (no commit) and returns a report;
+  //                we show it inline under the row so the user can confirm the
+  //                cleanup looks sane before committing
+  //   3. import  → server cleans AND commits to the catalog queue
   // Function declarations (hoisted) so the listener bindings at the bottom can
   // reference them regardless of source order.
+
+  interface WikiPreview {
+    title: string
+    url: string
+    disambiguation: boolean
+    tooShort: boolean
+    charCount: number
+    wordCount: number
+    cutHeader: string | null
+    sections: string[]
+    taste: string
+    markdown: string
+  }
 
   function renderWikiResults(results: { title: string; snippet: string }[]) {
     if (!wikiResults) return
@@ -422,6 +437,11 @@ document.addEventListener("nav", () => {
       return
     }
     for (const r of results) {
+      // Each candidate is an item containing a row (title/snippet + actions)
+      // and a preview panel that fills in below the row on demand.
+      const item = document.createElement("div")
+      item.className = "wiki-result-item"
+
       const row = document.createElement("div")
       row.className = "wiki-result"
 
@@ -440,15 +460,164 @@ document.addEventListener("nav", () => {
       main.appendChild(title)
       main.appendChild(snippet)
 
+      const actions = document.createElement("div")
+      actions.className = "wiki-result-actions"
+
+      const previewBtn = document.createElement("button")
+      previewBtn.className = "wiki-preview-btn"
+      previewBtn.textContent = "Preview"
+
       const importBtn = document.createElement("button")
       importBtn.className = "wiki-import-btn"
       importBtn.textContent = "Import"
-      importBtn.addEventListener("click", () => importWikiArticle(r.title, importBtn))
+
+      actions.appendChild(previewBtn)
+      actions.appendChild(importBtn)
 
       row.appendChild(main)
-      row.appendChild(importBtn)
-      wikiResults.appendChild(row)
+      row.appendChild(actions)
+
+      const panel = document.createElement("div")
+      panel.className = "wiki-preview-panel"
+      panel.hidden = true
+
+      previewBtn.addEventListener("click", () =>
+        previewWikiArticle(r.title, previewBtn, importBtn, panel),
+      )
+      importBtn.addEventListener("click", () => importWikiArticle(r.title, importBtn))
+
+      item.appendChild(row)
+      item.appendChild(panel)
+      wikiResults.appendChild(item)
     }
+  }
+
+  // Small flagged line (warnings) inside a preview panel.
+  function appendPreviewFlag(panel: HTMLElement, msg: string) {
+    const f = document.createElement("div")
+    f.className = "wiki-preview-flag"
+    f.textContent = msg
+    panel.appendChild(f)
+  }
+
+  // Render the cleanup report into a result's panel. Built with DOM APIs +
+  // textContent throughout — the taste and markdown are remote-derived.
+  function renderPreviewPanel(panel: HTMLElement, data: WikiPreview, importBtn: HTMLButtonElement) {
+    panel.innerHTML = ""
+
+    // Disambiguation: there's no article body to preview, and import will
+    // refuse — so say so and disable the row's Import button.
+    if (data.disambiguation) {
+      appendPreviewFlag(
+        panel,
+        "This is a disambiguation page, not an article. Import will be refused — search a more specific title.",
+      )
+      importBtn.disabled = true
+      importBtn.textContent = "Can't import"
+      return
+    }
+
+    const stats = document.createElement("div")
+    stats.className = "wiki-preview-stats"
+    stats.textContent =
+      (data.wordCount || 0).toLocaleString() +
+      " words \u00b7 " +
+      (data.charCount || 0).toLocaleString() +
+      " characters"
+    panel.appendChild(stats)
+
+    const trim = document.createElement("div")
+    trim.className = "wiki-preview-line"
+    trim.textContent = data.cutHeader
+      ? 'Trimmed reference apparatus at "' + data.cutHeader + '".'
+      : "No tail sections trimmed."
+    panel.appendChild(trim)
+
+    // The thin-content warning is the whole reason the preview exists: a low
+    // char count usually means the article was mostly tables/infoboxes, which
+    // the plaintext extract drops.
+    if (data.tooShort) {
+      appendPreviewFlag(
+        panel,
+        "Very short (" +
+          (data.charCount || 0) +
+          " chars) — likely a stub, or an article whose content lived in tables the plaintext extract drops.",
+      )
+    }
+
+    const sec = document.createElement("div")
+    sec.className = "wiki-preview-line"
+    sec.textContent =
+      data.sections && data.sections.length
+        ? "Sections: " + data.sections.join(" \u00b7 ")
+        : "Sections: none detected — single block, or content was mostly tabular."
+    panel.appendChild(sec)
+
+    if (data.taste) {
+      const taste = document.createElement("p")
+      taste.className = "wiki-preview-taste"
+      taste.textContent = data.taste + "\u2026"
+      panel.appendChild(taste)
+    }
+
+    // Full committed markdown, behind a toggle — most of the time the summary
+    // above is enough and you never expand this.
+    if (data.markdown) {
+      const toggle = document.createElement("button")
+      toggle.className = "wiki-preview-toggle"
+      toggle.textContent = "Show full markdown"
+      const pre = document.createElement("pre")
+      pre.className = "wiki-preview-full"
+      pre.hidden = true
+      pre.textContent = data.markdown
+      toggle.addEventListener("click", () => {
+        pre.hidden = !pre.hidden
+        toggle.textContent = pre.hidden ? "Show full markdown" : "Hide full markdown"
+      })
+      panel.appendChild(toggle)
+      panel.appendChild(pre)
+    }
+  }
+
+  async function previewWikiArticle(
+    title: string,
+    previewBtn: HTMLButtonElement,
+    importBtn: HTMLButtonElement,
+    panel: HTMLElement,
+  ) {
+    // Already fetched once → just toggle visibility, no re-fetch.
+    if (panel.dataset.loaded === "true") {
+      panel.hidden = !panel.hidden
+      previewBtn.textContent = panel.hidden ? "Preview" : "Hide"
+      return
+    }
+    previewBtn.disabled = true
+    previewBtn.textContent = "Previewing..."
+    try {
+      const res = await fetch("/api/wikipedia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "preview", title }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        renderPreviewPanel(panel, data as WikiPreview, importBtn)
+        panel.dataset.loaded = "true"
+        panel.hidden = false
+        previewBtn.textContent = "Hide"
+      } else {
+        panel.innerHTML = ""
+        appendPreviewFlag(panel, "Preview failed: " + (data.error || "Unknown error"))
+        panel.hidden = false
+        previewBtn.textContent = "Preview"
+      }
+    } catch (err: any) {
+      panel.innerHTML = ""
+      appendPreviewFlag(panel, "Preview failed: " + err.message)
+      panel.hidden = false
+      previewBtn.textContent = "Preview"
+    }
+    previewBtn.disabled = false
   }
 
   async function searchWiki() {
