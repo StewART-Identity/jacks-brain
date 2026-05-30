@@ -177,16 +177,72 @@ async function handleSearch(query: string): Promise<Response> {
 
 // ─── import ───────────────────────────────────────────────────────────────
 
-// Drop the trailing reference apparatus and return the trimmed article body.
-function trimTail(extract: string): string {
+function canonicalUrlFor(title: string): string {
+  return "https://en.wikipedia.org/wiki/" + encodeURIComponent(title.replace(/ /g, "_"))
+}
+
+// Resolve a title to a concrete article via the MediaWiki API. Shared by the
+// preview and import paths so they can never disagree about what an article
+// resolves to. Three outcomes: missing, disambiguation page, or a real article
+// with its plaintext extract.
+type Resolved =
+  | { status: "missing" }
+  | { status: "disambiguation"; canonicalTitle: string; canonicalUrl: string }
+  | { status: "ok"; canonicalTitle: string; canonicalUrl: string; extract: string }
+
+async function resolveArticle(title: string): Promise<Resolved> {
+  const url =
+    `${WIKI_API}?action=query&format=json&redirects=1` +
+    `&prop=extracts|pageprops&ppprop=disambiguation&explaintext=1` +
+    `&titles=${encodeURIComponent(title)}`
+  const data = await wikiFetchJson(url)
+  const pages = data?.query?.pages ?? {}
+  const page: any = Object.values(pages)[0]
+
+  if (!page || page.missing !== undefined) {
+    return { status: "missing" }
+  }
+  const canonicalTitle: string = page.title || title
+  const canonicalUrl = canonicalUrlFor(canonicalTitle)
+  if (page.pageprops && page.pageprops.disambiguation !== undefined) {
+    return { status: "disambiguation", canonicalTitle, canonicalUrl }
+  }
+  return { status: "ok", canonicalTitle, canonicalUrl, extract: page.extract || "" }
+}
+
+// Drop the trailing reference apparatus, reporting WHICH header triggered the
+// cut (or null if nothing was trimmed). The header name is the key diagnostic
+// the preview surfaces: a cut at a real bibliography is expected, but a cut at
+// a header that's actually a mid-body section means the trim ate real content.
+function trimTail(extract: string): { body: string; cutHeader: string | null } {
   let cut = extract.length
+  let cutHeader: string | null = null
   for (const h of TAIL_SECTIONS) {
     // Match "== Header ==" at any heading depth, on its own line.
     const re = new RegExp(`\\n=+\\s*${h}\\s*=+`, "i")
     const m = re.exec(extract)
-    if (m && m.index < cut) cut = m.index
+    if (m && m.index < cut) {
+      cut = m.index
+      cutHeader = h
+    }
   }
-  return extract.slice(0, cut).trim()
+  return { body: extract.slice(0, cut).trim(), cutHeader }
+}
+
+// Pull the surviving section headers ("== Foo ==", any depth) out of the
+// trimmed body. Lets the preview show the article's structure at a glance —
+// the strongest signal that the content came through intact rather than as a
+// thin husk (a mostly-tabular article loses its tables to the plaintext
+// extract and shows up here as headers with little between them).
+function extractSections(body: string): string[] {
+  const out: string[] = []
+  const re = /^=+\s*(.+?)\s*=+\s*$/gm
+  let m: RegExpExecArray | null
+  while ((m = re.exec(body)) !== null) {
+    out.push(m[1].trim())
+    if (out.length >= 40) break
+  }
+  return out
 }
 
 function buildMarkdown(title: string, canonicalUrl: string, body: string, today: string): string {
@@ -205,46 +261,116 @@ function buildMarkdown(title: string, canonicalUrl: string, body: string, today:
   )
 }
 
-async function handleImport(env: Env, title: string): Promise<Response> {
-  const today = todayInUserTimezone(env)
-  const url =
-    `${WIKI_API}?action=query&format=json&redirects=1` +
-    `&prop=extracts|pageprops&ppprop=disambiguation&explaintext=1` +
-    `&titles=${encodeURIComponent(title)}`
-  const data = await wikiFetchJson(url)
-  const pages = data?.query?.pages ?? {}
-  const page: any = Object.values(pages)[0]
+// The single clean-once code path. Takes a resolved article and produces both
+// the committable markdown AND the diagnostic report the preview shows — so
+// what you preview is byte-for-byte what import would commit.
+interface Cleaned {
+  body: string
+  markdown: string
+  cutHeader: string | null
+  charCount: number
+  wordCount: number
+  sections: string[]
+  taste: string
+  tooShort: boolean
+}
 
-  if (!page || page.missing !== undefined) {
+function cleanArticle(
+  canonicalTitle: string,
+  canonicalUrl: string,
+  extract: string,
+  today: string,
+): Cleaned {
+  const { body, cutHeader } = trimTail(extract)
+  const markdown = buildMarkdown(canonicalTitle, canonicalUrl, body, today)
+  const wordCount = body ? body.split(/\s+/).filter(Boolean).length : 0
+  // First ~300 chars, snapped back to a word boundary so the taste doesn't end
+  // mid-word.
+  const taste = body.slice(0, 300).replace(/\s+\S*$/, "").trim()
+  return {
+    body,
+    markdown,
+    cutHeader,
+    charCount: body.length,
+    wordCount,
+    sections: extractSections(body),
+    taste,
+    tooShort: body.length < MIN_CONTENT_CHARS,
+  }
+}
+
+// Preview: resolve + clean, but DO NOT commit. Returns the diagnostic report
+// (length, where the trim cut, surviving sections, flags, a taste, and the
+// full markdown for optional expansion). Disambiguation and stub conditions
+// come back as flags rather than errors — the point of a preview is to let the
+// user see the problem, not to refuse outright.
+async function handlePreview(env: Env, title: string): Promise<Response> {
+  const today = todayInUserTimezone(env)
+  const resolved = await resolveArticle(title)
+
+  if (resolved.status === "missing") {
     return Response.json({ error: `No Wikipedia article found for "${title}".` }, { status: 404 })
   }
-  if (page.pageprops && page.pageprops.disambiguation !== undefined) {
+  if (resolved.status === "disambiguation") {
+    return Response.json({
+      success: true,
+      title: resolved.canonicalTitle,
+      url: resolved.canonicalUrl,
+      disambiguation: true,
+      tooShort: false,
+      charCount: 0,
+      wordCount: 0,
+      cutHeader: null,
+      sections: [],
+      taste: "",
+      markdown: "",
+    })
+  }
+
+  const c = cleanArticle(resolved.canonicalTitle, resolved.canonicalUrl, resolved.extract, today)
+  return Response.json({
+    success: true,
+    title: resolved.canonicalTitle,
+    url: resolved.canonicalUrl,
+    disambiguation: false,
+    tooShort: c.tooShort,
+    charCount: c.charCount,
+    wordCount: c.wordCount,
+    cutHeader: c.cutHeader,
+    sections: c.sections,
+    taste: c.taste,
+    markdown: c.markdown,
+  })
+}
+
+async function handleImport(env: Env, title: string): Promise<Response> {
+  const today = todayInUserTimezone(env)
+  const resolved = await resolveArticle(title)
+
+  if (resolved.status === "missing") {
+    return Response.json({ error: `No Wikipedia article found for "${title}".` }, { status: 404 })
+  }
+  if (resolved.status === "disambiguation") {
     return Response.json(
       {
         error:
-          `"${page.title}" is a disambiguation page, not an article. ` +
+          `"${resolved.canonicalTitle}" is a disambiguation page, not an article. ` +
           `Search again and pick a more specific title.`,
       },
       { status: 422 },
     )
   }
 
-  const canonicalTitle: string = page.title || title
-  const body = trimTail(page.extract || "")
-
-  if (body.length < MIN_CONTENT_CHARS) {
+  const c = cleanArticle(resolved.canonicalTitle, resolved.canonicalUrl, resolved.extract, today)
+  if (c.tooShort) {
     return Response.json(
-      { error: `Article "${canonicalTitle}" was too short to catalog.` },
+      { error: `Article "${resolved.canonicalTitle}" was too short to catalog.` },
       { status: 422 },
     )
   }
 
-  const canonicalUrl =
-    "https://en.wikipedia.org/wiki/" + encodeURIComponent(canonicalTitle.replace(/ /g, "_"))
-  const markdown = buildMarkdown(canonicalTitle, canonicalUrl, body, today)
-  const filename = `${today}-${slugify(canonicalTitle)}.md`
-
-  const commit = await commitToQueue(env, filename, markdown, `upload: ${filename}`)
+  const filename = `${today}-${slugify(resolved.canonicalTitle)}.md`
+  const commit = await commitToQueue(env, filename, c.markdown, `upload: ${filename}`)
   if (!commit.ok) {
     return Response.json({ error: "GitHub commit failed", details: commit.error }, { status: 502 })
   }
@@ -252,8 +378,8 @@ async function handleImport(env: Env, title: string): Promise<Response> {
   return Response.json({
     success: true,
     filename,
-    title: canonicalTitle,
-    url: canonicalUrl,
+    title: resolved.canonicalTitle,
+    url: resolved.canonicalUrl,
     source_type: "wikipedia-article",
     message: `Article queued at ${commit.path}. Catalog workflow triggered.`,
   })
@@ -288,6 +414,19 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     } catch (err) {
       const m = err instanceof Error ? err.message : "Unknown error"
       return Response.json({ error: `Search failed: ${m}` }, { status: 502 })
+    }
+  }
+
+  if (action === "preview") {
+    const title = (body.title ?? "").trim()
+    if (!title) {
+      return Response.json({ error: "No title provided" }, { status: 400 })
+    }
+    try {
+      return await handlePreview(context.env, title)
+    } catch (err) {
+      const m = err instanceof Error ? err.message : "Unknown error"
+      return Response.json({ error: `Preview failed: ${m}` }, { status: 502 })
     }
   }
 
