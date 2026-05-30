@@ -13,6 +13,10 @@ document.addEventListener("nav", () => {
   const urlInput = document.getElementById("url-input") as HTMLInputElement | null
   const urlBtn = document.getElementById("url-btn") as HTMLButtonElement | null
   const urlStatus = document.getElementById("url-status") as HTMLElement | null
+  const wikiInput = document.getElementById("wiki-input") as HTMLInputElement | null
+  const wikiBtn = document.getElementById("wiki-btn") as HTMLButtonElement | null
+  const wikiResults = document.getElementById("wiki-results") as HTMLElement | null
+  const wikiStatus = document.getElementById("wiki-status") as HTMLElement | null
 
   if (!dropZone || !fileInput) return
 
@@ -70,6 +74,14 @@ document.addEventListener("nav", () => {
       clearCardStatus(youtubeStatus)
       youtubeInput.value = ""
     })
+  }
+
+  // Clear Wikipedia status when the user refocuses the search box. We do NOT
+  // clear the input or the rendered results here — the user often wants to
+  // import several articles from one search, so the results persist until the
+  // next explicit search.
+  if (wikiInput) {
+    wikiInput.addEventListener("focus", () => clearCardStatus(wikiStatus))
   }
 
   // Drag and drop. Multi-file drag is supported — pass the entire
@@ -388,6 +400,126 @@ document.addEventListener("nav", () => {
       }
       youtubeBtn.disabled = false
       youtubeBtn.textContent = "Upload Content"
+    })
+  }
+
+  // ─── Wikipedia search + import ────────────────────────────────────────────
+  // Two-step flow against /api/wikipedia:
+  //   1. search → render candidate articles, each with its own Import button
+  //   2. import → server fetches a clean plaintext extract, trims the
+  //               reference apparatus, and commits it to the catalog queue
+  // Function declarations (hoisted) so the listener bindings at the bottom can
+  // reference them regardless of source order.
+
+  function renderWikiResults(results: { title: string; snippet: string }[]) {
+    if (!wikiResults) return
+    wikiResults.innerHTML = ""
+    if (results.length === 0) {
+      const empty = document.createElement("div")
+      empty.className = "muted"
+      empty.textContent = "No articles found. Try a different search term."
+      wikiResults.appendChild(empty)
+      return
+    }
+    for (const r of results) {
+      const row = document.createElement("div")
+      row.className = "wiki-result"
+
+      const main = document.createElement("div")
+      main.className = "wiki-result-main"
+
+      const title = document.createElement("div")
+      title.className = "wiki-result-title"
+      // textContent, never innerHTML — result strings are remote data.
+      title.textContent = r.title
+
+      const snippet = document.createElement("div")
+      snippet.className = "wiki-result-snippet"
+      snippet.textContent = r.snippet
+
+      main.appendChild(title)
+      main.appendChild(snippet)
+
+      const importBtn = document.createElement("button")
+      importBtn.className = "wiki-import-btn"
+      importBtn.textContent = "Import"
+      importBtn.addEventListener("click", () => importWikiArticle(r.title, importBtn))
+
+      row.appendChild(main)
+      row.appendChild(importBtn)
+      wikiResults.appendChild(row)
+    }
+  }
+
+  async function searchWiki() {
+    if (!wikiInput || !wikiBtn) return
+    const query = wikiInput.value.trim()
+    if (!query) return
+    wikiBtn.disabled = true
+    wikiBtn.textContent = "Searching..."
+    clearCardStatus(wikiStatus)
+    if (wikiResults) wikiResults.innerHTML = ""
+    try {
+      const res = await fetch("/api/wikipedia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "search", query }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        renderWikiResults(data.results || [])
+      } else {
+        showCardStatus(wikiStatus, "Search failed: " + (data.error || "Unknown error"), "error")
+      }
+    } catch (err: any) {
+      showCardStatus(wikiStatus, "Search failed: " + err.message, "error")
+    }
+    wikiBtn.disabled = false
+    wikiBtn.textContent = "Search"
+  }
+
+  async function importWikiArticle(title: string, btn: HTMLButtonElement) {
+    btn.disabled = true
+    btn.textContent = "Importing..."
+    clearCardStatus(wikiStatus)
+    showCardStatus(wikiStatus, 'Importing "' + title + '"...', "pending")
+    try {
+      const res = await fetch("/api/wikipedia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "import", title }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        showCardStatus(
+          wikiStatus,
+          '"' + (data.title || title) + '" imported. ' + ACQUISITION_HINT,
+          "success",
+        )
+        // Leave the button disabled — the article is already queued. Relabel
+        // so the row reads as done rather than clickable.
+        btn.textContent = "Imported \u2713"
+      } else {
+        showCardStatus(wikiStatus, "Import failed: " + (data.error || "Unknown error"), "error")
+        btn.disabled = false
+        btn.textContent = "Import"
+      }
+    } catch (err: any) {
+      showCardStatus(wikiStatus, "Import failed: " + err.message, "error")
+      btn.disabled = false
+      btn.textContent = "Import"
+    }
+  }
+
+  if (wikiBtn) {
+    wikiBtn.addEventListener("click", searchWiki)
+  }
+  if (wikiInput) {
+    wikiInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault()
+        searchWiki()
+      }
     })
   }
 })
