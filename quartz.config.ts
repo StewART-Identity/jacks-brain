@@ -38,7 +38,7 @@ const palette = {
 const config: QuartzConfig = {
   configuration: {
     pageTitle: "Jack's Brain",
-    pageTitleSuffix: "",
+    pageTitleSuffix: " - Jack's Brain",
     enableSPA: true,
     enablePopovers: true,
     analytics: {
