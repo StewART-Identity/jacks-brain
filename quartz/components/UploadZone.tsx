@@ -60,6 +60,16 @@ const UploadZone: QuartzComponent = ({ displayClass }: QuartzComponentProps) => 
         </div>
         <div id="youtube-status" class="card-status" style="display:none"></div>
       </div>
+
+      <div class="catalog-card wiki-section">
+        <h3>Find on Wikipedia</h3>
+        <div class="wiki-row">
+          <input type="text" id="wiki-input" placeholder="Search a subject, e.g. authoritarianism" />
+          <button id="wiki-btn">Search</button>
+        </div>
+        <div id="wiki-results" class="wiki-results"></div>
+        <div id="wiki-status" class="card-status" style="display:none"></div>
+      </div>
     </div>
   )
 }
