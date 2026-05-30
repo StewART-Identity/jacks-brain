@@ -47,6 +47,7 @@ import QuizSuggest from "./QuizSuggest"
 import UpskillAdd from "./UpskillAdd"
 import UpskillUpdate from "./UpskillUpdate"
 import UpskillTopics from "./UpskillTopics"
+import LinksManager from "./LinksManager"
 
 export {
   ArticleTitle,
@@ -98,4 +99,5 @@ export {
   UpskillAdd,
   UpskillUpdate,
   UpskillTopics,
+  LinksManager,
 }
