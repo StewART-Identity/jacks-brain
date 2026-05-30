@@ -73,7 +73,7 @@ document.addEventListener("nav", () => {
     data.sections.splice(ni, 0, s); setDirty(true); render()
   }
   function addLink(si) {
-    data.sections[si].links.push({ id: uid("lnk"), label: "", url: "", description: "" })
+    data.sections[si].links.push({ id: uid("lnk"), label: "", url: "", description: "", public: false })
     setDirty(true); render()
   }
   function deleteLink(si, li) {
@@ -159,6 +159,30 @@ document.addEventListener("nav", () => {
         fields.appendChild(field("Label", link.label, function (v) { link.label = v; setDirty(true) }, { placeholder: "Resume (PDF)" }))
         fields.appendChild(field("URL", link.url, function (v) { link.url = v; setDirty(true) }, { placeholder: "https://files.stewart-identity.com/..." }))
         fields.appendChild(field("Description", link.description, function (v) { link.description = v; setDirty(true) }, { textarea: true, placeholder: "Optional context shown under the label" }))
+
+        // Public/private toggle. Defaults to private; only links the user
+        // explicitly marks public will appear on the build-time-rendered
+        // public page. The label text tracks the state so the current
+        // setting is readable at a glance.
+        const toggleWrap = document.createElement("label")
+        toggleWrap.className = "links-toggle"
+        const cb = document.createElement("input")
+        cb.type = "checkbox"
+        cb.checked = !!link.public
+        const toggleText = document.createElement("span")
+        toggleText.className = "links-toggle-text"
+        function syncToggleText() {
+          toggleText.textContent = cb.checked
+            ? "Public — shown on the public page"
+            : "Private — hidden from the public page"
+          toggleWrap.classList.toggle("is-public", cb.checked)
+        }
+        cb.addEventListener("change", function () { link.public = cb.checked; syncToggleText(); setDirty(true) })
+        syncToggleText()
+        toggleWrap.appendChild(cb)
+        toggleWrap.appendChild(toggleText)
+        fields.appendChild(toggleWrap)
+
         linkEl.appendChild(fields)
 
         const ctrls = document.createElement("div")
@@ -244,7 +268,7 @@ document.addEventListener("nav", () => {
 
 LinksManager.css = `
 #links-app {
-  max-width: 720px;
+  max-width: 100%;
   padding-bottom: 2rem;
 }
 .links-loading, .links-empty {
@@ -297,6 +321,28 @@ LinksManager.css = `
 .links-field textarea {
   resize: vertical;
   min-height: 2.4rem;
+}
+.links-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.1rem;
+  cursor: pointer;
+  user-select: none;
+}
+.links-toggle input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.links-toggle-text {
+  font-size: 0.82rem;
+  color: var(--gray);
+}
+.links-toggle.is-public .links-toggle-text {
+  color: var(--secondary);
 }
 .links-field input:focus, .links-field textarea:focus {
   outline: none;
