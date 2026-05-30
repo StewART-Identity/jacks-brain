@@ -1,0 +1,16 @@
+{
+  "sections": [
+    {
+      "id": "sec-example",
+      "title": "Documents",
+      "links": [
+        {
+          "id": "lnk-example",
+          "label": "Example link",
+          "url": "https://example.com",
+          "description": "Edit or delete this from the Links manager page."
+        }
+      ]
+    }
+  ]
+}
