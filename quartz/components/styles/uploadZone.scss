@@ -303,6 +303,96 @@
   cursor: not-allowed;
 }
 
+/* Per-result container: the row, plus the preview panel that drops in below. */
+.wiki-result-item {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Preview + Import stacked at the right of the row, equal width. */
+.wiki-result-actions {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Preview is the secondary action — ghost styling against the solid Import. */
+.wiki-preview-btn {
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  color: var(--dark);
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition:
+    opacity 0.15s ease,
+    border-color 0.15s ease;
+  white-space: nowrap;
+}
+.wiki-preview-btn:hover {
+  border-color: var(--secondary);
+}
+.wiki-preview-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Inline cleanup-report panel under a result row. */
+.wiki-preview-panel {
+  margin-top: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--light) 96%, transparent);
+  font-size: 0.85rem;
+}
+.wiki-preview-stats {
+  font-weight: 600;
+  color: var(--dark);
+}
+.wiki-preview-line {
+  color: var(--gray);
+  margin-top: 0.25rem;
+}
+.wiki-preview-flag {
+  margin-top: 0.4rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  color: #c46b6b;
+  background: rgba(139, 50, 50, 0.12);
+}
+.wiki-preview-taste {
+  margin: 0.5rem 0 0 0;
+  color: var(--darkgray);
+  font-style: italic;
+}
+.wiki-preview-toggle {
+  margin-top: 0.5rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--secondary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-decoration: underline;
+}
+.wiki-preview-full {
+  margin-top: 0.5rem;
+  max-height: 300px;
+  overflow: auto;
+  padding: 0.6rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 6px;
+  background: var(--light);
+  color: var(--darkgray);
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* In-card upload status */
 .card-status {
   margin-top: 0.75rem;
