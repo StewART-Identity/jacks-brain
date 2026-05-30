@@ -35,6 +35,7 @@ interface LinkItem {
   label: string
   url: string
   description: string
+  public: boolean
 }
 interface LinkSection {
   id: string
@@ -97,6 +98,7 @@ function sanitize(raw: any): LinksData {
               label: String(l?.label ?? ""),
               url: String(l?.url ?? ""),
               description: String(l?.description ?? ""),
+              public: l?.public === true,
             }))
           : [],
       }))
