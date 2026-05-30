@@ -1,8 +1,38 @@
 ---
 title: "Help"
+aliases:
+  - "application/help"
 ---
 
-Reference for the two interactive visualizations that aren't self-explanatory: the [[visualize/graph|Graph]] view and the [[visualize/tags|Tags]] view. Both let you click nodes to navigate; the conventions and controls below are everything else worth knowing.
+Reference for the interactive visualizations in the Visualize section — the color conventions, controls, and encodings that aren't obvious at a glance. Most of them let you click through to the underlying pages; the notes below cover everything else worth knowing. The sections run in the same order as the pages under Visualize.
+
+## Confidence view
+
+The [[visualize/confidence|Confidence]] view is a read-only dashboard of how well-grounded the collection is. Where the Graph and Tags views are networks you explore, this one is a set of stacked bars you *read* — there's nothing to click.
+
+### Reading the dashboard
+
+Every bar is a **100%-width stacked bar**: the share of pages at each confidence level, drawn left to right from most to least certain.
+
+**The five levels** (legend at the top):
+
+- **High** (mint green), **Medium** (cream), **Low** (brown), and **Speculative** (deep green) — the value from each page's `confidence:` frontmatter.
+- **Missing** (gray) — pages that don't set a `confidence:` value at all.
+
+The bars are grouped into three stacked blocks:
+
+- **Overall** — one bar for the entire corpus.
+- **By subject** — one bar per subject, largest subjects first.
+- **By type** — one bar each for Sources, Entities, Concepts, Synthesis, and Notes.
+
+### Interactions
+
+- **Hover** a segment — a tooltip names the row and level and gives the exact figure (e.g. *12 of 40, 30%*). Hovering also dims the other segments so the one you're reading stands out.
+- Nothing is clickable here; the view is purely diagnostic.
+
+### What to look for
+
+A subject or type bar dominated by **Low**, **Speculative**, or **Missing** is the signal worth acting on — that slice of the collection wants sourcing or review. A solid wall of gray under a subject usually just means you haven't been recording confidence there yet, rather than that the material is weak.
 
 ## Graph view
 
@@ -45,6 +75,31 @@ A small exception: if a node has only one neighbor, group-drag falls back to sin
 
 Tables and folders are good for *finding a thing you know exists*. Graphs are good for *seeing what surrounds the thing*. The same concept page might appear in a Sources table and an Entities table, but only the graph shows you that the concept connects to four other pages, three of which you haven't visited yet — surfacing related material you'd otherwise miss.
 
+## Subjects view
+
+The [[visualize/subjects|Subjects]] view is a treemap of the controlled vocabulary: every subject drawn as a rectangle sized by how much of the collection sits under it. Click a cell to open that subject's listing page.
+
+### Reading the treemap
+
+**Cell size** is the number of pages carrying that subject — the big rectangles are your centers of gravity, the slivers are subjects with only a page or two.
+
+**The colored strips inside each cell** break that subject down by page type, using the legend at the bottom:
+
+- **Sources** (gold), **Entities** (mint green), **Concepts** (cream), **Synthesis** (rose), and **Notes** (violet).
+
+Strip heights are proportional, so a cell that's almost all gold is almost all raw sources, while one carrying a visible rose band has synthesis built on top of its material.
+
+A page tagged with more than one subject is counted in *each* of its subjects' cells, so the treemap's totals add up to more than the page count — by design.
+
+### Interactions
+
+- **Click** a cell (or focus it and press Enter) — go to `/subjects/<subject>`, the listing of every page under that subject.
+- **Hover** a cell — dims the rest and shows a tooltip with the subject, its total page count, the per-type breakdown, and how many of those pages span multiple subjects.
+
+### What to look for
+
+The type mix inside a cell is the real read. A large subject that's all Sources and Entities with no Synthesis is unprocessed — raw material you've gathered but haven't woven together yet. The multi-subject figure in the tooltip flags the cross-cutting subjects that stitch different parts of the collection together.
+
 ## Tags view
 
 A different kind of network: the [[visualize/tags|Tags]] view shows tag co-occurrence rather than wiki-link structure. Each node is one tag; edges connect tags that appear together on the same page.
@@ -73,3 +128,25 @@ The distinction matters because a tag is *promotable* to a subject if it cluster
 ### What to look for
 
 The gold-vs-gray-green coloring is the most useful reading frame. Cluster a tag-only node deep inside the dense gold center? That's a promotion candidate — it's already acting like an organizing principle, just without the controlled-vocabulary status. A gray-green node way out on the periphery is the opposite signal: a once-used descriptor that hasn't formed any organizing role and probably isn't worth promoting.
+
+## Timeline view
+
+The [[visualize/timeline|Timeline]] view plots catalog activity over time — when each page entered the collection — so you can see your working rhythm and where attention has been going. Click any dot to open its page.
+
+### Reading the timeline
+
+**Five horizontal lanes**, one per page type, top to bottom: Sources, Entities, Concepts, Synthesis, Notes. Lane colors match the legend, and a lane with no pages in view is dimmed.
+
+**Each dot** is a page, placed by its `created` date along the time axis and on its type's lane.
+
+**Hollow dots joined by a dashed line** are source re-views. When a source records more than one view date in its `views:` history, the first sits as a solid dot and each later re-view is a hollow dot, with a dashed line running from first to last — a quick read of which sources you keep coming back to.
+
+### Interactions
+
+- **Last 90 days / All time** (the buttons up top) — switch the window. *90 days* shows your recent cadence against weekly gridlines; *All time* stretches from your earliest page to now, with monthly or quarterly ticks.
+- **Hover** a dot — a tooltip gives the page title and date, tagged *re-view* for the hollow ones.
+- **Click** a dot (or focus it and press Enter) — open that page.
+
+### What to look for
+
+Clusters and gaps show the rhythm of the work — bursts of cataloging against quiet stretches. The balance across lanes is the other read: a long row of Source dots with little beneath them in Concepts and Synthesis means raw material is arriving faster than you're processing it. The dashed re-view lines mark the sources earning repeat attention.
