@@ -1,24 +1,38 @@
 /**
- * /api/links — read/write backing store for the Links Manager.
+ * /api/links — read/write backing store for the Links pipeline.
  *
  *   GET  → returns the current links structure plus the file's blob SHA.
- *          The SHA is required to commit an update (GitHub Contents API
- *          rejects an update that doesn't cite the prior blob SHA), so
- *          the manager fetches it on load and echoes it back on save.
- *
  *   POST → commits an edited structure back to content/application/
- *          links-data.json. Body: { sha, data } where `data` is the
- *          full { sections: [...] } object and `sha` is the blob SHA
- *          from the GET (or from a prior POST's response).
+ *          links-data.json. Body: { sha, data }.
  *
- * Unlike /api/upload (append-only: every call writes a NEW file to the
- * queue), this endpoint read-modify-writes ONE evolving file. That's why
- * it needs the SHA dance: GitHub uses it for optimistic concurrency, so
- * a stale SHA (someone/another tab saved in between) fails loudly with a
- * 409 rather than silently clobbering. The manager surfaces that as a
- * "reload and retry" message.
+ * This endpoint is the single source of truth for link metadata. Both
+ * the Manage editor and the Preview approval queue read and write through
+ * it. It does NOT touch R2 — publishing the approved+public set to the
+ * public bucket is a separate concern handled by /api/links-publish, so
+ * that the GitHub write (the source of truth) can never be held hostage
+ * to an R2 failure or a missing bucket binding.
  *
- * Requires env vars (Cloudflare Pages dashboard), same as upload.ts:
+ * Data model (the publishing pipeline):
+ *   Each link carries a lifecycle:
+ *     status:      "pending" | "approved"
+ *     destination: "public"  | "private"
+ *   New links start pending/private (the safe default — nothing reaches a
+ *   landing page until it's both approved AND has a destination). The
+ *   Manage page sets the destination; the Preview page flips pending ->
+ *   approved (or sends an item back to pending for revision).
+ *
+ *   Landing-page membership:
+ *     Preview         = every PENDING item (the staging queue)
+ *     Public Content  = APPROVED + destination "public"
+ *     Private Content = APPROVED + destination "private"
+ *
+ * Migration: the prior model had a single `public: boolean`. sanitize()
+ * maps any legacy item forward — public:true -> destination "public",
+ * else "private" — and defaults status to "pending" so every legacy item
+ * passes through the approval gate once (there is no production public
+ * data to preserve; the only seeded item is the private example link).
+ *
+ * Requires env vars (Cloudflare Pages dashboard):
  *   GITHUB_TOKEN — fine-grained PAT with contents:write
  *   GITHUB_REPO  — e.g. "StewART-Identity/jacks-brain"
  */
@@ -30,12 +44,16 @@ interface Env {
 
 const FILE_PATH = "content/application/links-data.json"
 
+type LinkStatus = "pending" | "approved"
+type LinkDestination = "public" | "private"
+
 interface LinkItem {
   id: string
   label: string
   url: string
   description: string
-  public: boolean
+  status: LinkStatus
+  destination: LinkDestination
 }
 interface LinkSection {
   id: string
@@ -46,9 +64,6 @@ interface LinksData {
   sections: LinkSection[]
 }
 
-// GitHub's contents API caps inline base64 reads at ~1MB; a links file is
-// far smaller, so the simple contents endpoint is fine for both read and
-// write.
 function contentsUrl(env: Env): string {
   return `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${FILE_PATH}`
 }
@@ -62,8 +77,6 @@ function ghHeaders(env: Env): Record<string, string> {
   }
 }
 
-// UTF-8 safe base64 encode (handles any characters in labels/descriptions —
-// em-dashes, accents, etc. — that a naive btoa(string) would mangle).
 function toBase64(s: string): string {
   const bytes = new TextEncoder().encode(s)
   let binary = ""
@@ -74,7 +87,6 @@ function toBase64(s: string): string {
   return btoa(binary)
 }
 
-// UTF-8 safe base64 decode (the contents API returns base64 with newlines).
 function fromBase64(b64: string): string {
   const clean = b64.replace(/\n/g, "")
   const binary = atob(clean)
@@ -83,10 +95,19 @@ function fromBase64(b64: string): string {
   return new TextDecoder().decode(bytes)
 }
 
-// Coerce arbitrary parsed JSON into a well-formed LinksData, dropping
-// anything malformed. Defense against a hand-edited or partially-written
-// file: the manager should always receive a usable shape rather than
-// throwing on a missing field.
+// Coerce arbitrary parsed JSON into a well-formed LinksData, applying the
+// lifecycle defaults and migrating any legacy `public` boolean forward.
+function coerceStatus(raw: any): LinkStatus {
+  return raw === "approved" ? "approved" : "pending"
+}
+function coerceDestination(item: any): LinkDestination {
+  if (item?.destination === "public") return "public"
+  if (item?.destination === "private") return "private"
+  // legacy migration: old single boolean
+  if (item?.public === true) return "public"
+  return "private"
+}
+
 function sanitize(raw: any): LinksData {
   const sections: LinkSection[] = Array.isArray(raw?.sections)
     ? raw.sections.map((s: any) => ({
@@ -98,7 +119,8 @@ function sanitize(raw: any): LinksData {
               label: String(l?.label ?? ""),
               url: String(l?.url ?? ""),
               description: String(l?.description ?? ""),
-              public: l?.public === true,
+              status: coerceStatus(l?.status),
+              destination: coerceDestination(l),
             }))
           : [],
       }))
@@ -118,8 +140,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   try {
     const res = await fetch(contentsUrl(context.env), { headers: ghHeaders(context.env) })
 
-    // File doesn't exist yet → return an empty structure with a null SHA.
-    // A subsequent POST with sha:null creates it.
     if (res.status === 404) {
       return Response.json({ success: true, sha: null, data: { sections: [] } })
     }
@@ -134,8 +154,6 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     try {
       parsed = JSON.parse(decoded)
     } catch {
-      // Corrupt file — hand back an empty structure but keep the real SHA
-      // so a save can overwrite the bad content.
       return Response.json({ success: true, sha: json.sha, data: { sections: [] }, warning: "stored file was not valid JSON" })
     }
 
@@ -170,8 +188,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     content: toBase64(serialized),
     branch: "main",
   }
-  // Include sha for an update; omit it to create. GitHub requires the prior
-  // sha on update and forbids it on create, so only set it when non-null.
   if (body.sha) payload.sha = body.sha
 
   try {
@@ -193,8 +209,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     const json: any = await res.json()
-    // Hand back the new blob SHA so the manager can keep saving without a
-    // reload (each save updates its in-memory SHA from this response).
     return Response.json({ success: true, sha: json.content?.sha ?? null })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error"
