@@ -1,7 +1,7 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 
 /**
- * LinksPreview — the approval queue, mounted at application/preview.
+ * LinksPreview — the approval queue, mounted at links/preview.
  *
  * This is the staging area in the publishing pipeline. It shows ONLY
  * pending items (status === "pending") — the things you've created or
