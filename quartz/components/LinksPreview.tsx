@@ -8,15 +8,19 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
  * manager (application/links) and saving, this page shows exactly how the
  * links render — grouped by section, in order — and crucially marks the
  * PRIVATE ones so you can see at a glance what will and won't reach the
- * public page. It reads links-data.json at runtime (same-origin, served
- * as a static asset from content/application/), so it always reflects the
- * latest save without a code change.
+ * public page.
  *
- * This is distinct from the eventual PUBLIC page (served from R2 at
+ * Data path: reads through the SAME /api/links GET endpoint the manager
+ * uses (returns { success, sha, data: { sections } }). This is deliberate
+ * — it's a proven, Access-gated route, and it avoids depending on
+ * links-data.json being emitted as a static asset (Quartz does not
+ * necessarily serve a bare .json from content/, and nothing else relies
+ * on it being served, so we don't assume it is).
+ *
+ * Distinct from the eventual PUBLIC page (served from R2 at
  * files.stewart-identity.com), which renders ONLY public links on a clean
  * light theme. This preview lives inside the wiki, uses the dark house
- * style, and shows EVERYTHING with provenance — it's for the author, not
- * the audience.
+ * style, and shows EVERYTHING with provenance — it's for the author.
  */
 const LinksPreview: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
@@ -51,7 +55,6 @@ document.addEventListener("nav", () => {
       return
     }
 
-    // Summary line: how many public vs private across everything.
     let pubCount = 0, privCount = 0
     sections.forEach(function (s) {
       (s.links || []).forEach(function (l) {
@@ -86,8 +89,6 @@ document.addEventListener("nav", () => {
         head.className = "lp-item-head"
 
         const url = safeUrl(link.url)
-        // Label as a link when the URL is usable; plain text otherwise so a
-        // malformed entry is still visible (and flagged) rather than dropped.
         let labelEl
         if (url) {
           labelEl = document.createElement("a")
@@ -129,14 +130,21 @@ document.addEventListener("nav", () => {
     })
   }
 
-  fetch("/application/links-data.json", { cache: "no-cache" })
+  // Read through the manager's GET endpoint: { success, sha, data:{sections} }
+  fetch("/api/links", { cache: "no-cache" })
     .then(function (r) { if (!r.ok) throw new Error("status " + r.status); return r.json() })
-    .then(render)
+    .then(function (j) {
+      if (j && j.success) {
+        render(j.data || { sections: [] })
+      } else {
+        throw new Error((j && j.error) || "unknown error")
+      }
+    })
     .catch(function () {
       root.innerHTML = ""
       const p = document.createElement("p")
       p.className = "lp-state"
-      p.textContent = "Couldn't load links-data.json. If you just saved, give the deploy a minute."
+      p.textContent = "Couldn't load the links. If you just saved, give it a moment and reload."
       root.appendChild(p)
     })
 })
@@ -175,7 +183,6 @@ LinksPreview.css = `
   border-radius: 10px;
   background: color-mix(in srgb, var(--light) 92%, transparent);
   margin-bottom: 0.6rem;
-  /* left edge cues public vs private at a glance */
   border-left-width: 3px;
 }
 .lp-item.is-public {
