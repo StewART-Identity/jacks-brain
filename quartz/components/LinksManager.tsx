@@ -73,7 +73,7 @@ document.addEventListener("nav", () => {
     data.sections.splice(ni, 0, s); setDirty(true); render()
   }
   function addLink(si) {
-    data.sections[si].links.push({ id: uid("lnk"), label: "", url: "", description: "", public: false })
+    data.sections[si].links.push({ id: uid("lnk"), label: "", url: "", description: "", status: "pending", destination: "private" })
     setDirty(true); render()
   }
   function deleteLink(si, li) {
@@ -160,28 +160,50 @@ document.addEventListener("nav", () => {
         fields.appendChild(field("URL", link.url, function (v) { link.url = v; setDirty(true) }, { placeholder: "https://files.stewart-identity.com/..." }))
         fields.appendChild(field("Description", link.description, function (v) { link.description = v; setDirty(true) }, { textarea: true, placeholder: "Optional context shown under the label" }))
 
-        // Public/private toggle. Defaults to private; only links the user
-        // explicitly marks public will appear on the build-time-rendered
-        // public page. The label text tracks the state so the current
-        // setting is readable at a glance.
-        const toggleWrap = document.createElement("label")
-        toggleWrap.className = "links-toggle"
-        const cb = document.createElement("input")
-        cb.type = "checkbox"
-        cb.checked = !!link.public
-        const toggleText = document.createElement("span")
-        toggleText.className = "links-toggle-text"
-        function syncToggleText() {
-          toggleText.textContent = cb.checked
-            ? "Public — shown on the public page"
-            : "Private — hidden from the public page"
-          toggleWrap.classList.toggle("is-public", cb.checked)
-        }
-        cb.addEventListener("change", function () { link.public = cb.checked; syncToggleText(); setDirty(true) })
-        syncToggleText()
-        toggleWrap.appendChild(cb)
-        toggleWrap.appendChild(toggleText)
-        fields.appendChild(toggleWrap)
+        // Destination chooser (Public/Private) + status badge.
+        // Destination is set here on Manage and carried through the
+        // pipeline; status is read-only here (it's the Preview page that
+        // flips pending -> approved). Approved items show an "approved"
+        // badge as a reminder they're already live on a landing page.
+        // Defaults (from addLink): status "pending", destination "private".
+        if (!link.status) link.status = "pending"
+        if (!link.destination) link.destination = "private"
+
+        const meta = document.createElement("div")
+        meta.className = "links-meta"
+
+        // status badge
+        const statusBadge = document.createElement("span")
+        statusBadge.className = "links-status-badge links-status-" + link.status
+        statusBadge.textContent = link.status === "approved" ? "Approved" : "Pending"
+        meta.appendChild(statusBadge)
+
+        // destination radio pair
+        const destWrap = document.createElement("div")
+        destWrap.className = "links-dest"
+        const destName = "dest-" + link.id
+        ;[["private", "Private"], ["public", "Public"]].forEach(function (pair) {
+          const val = pair[0], lbl = pair[1]
+          const rLabel = document.createElement("label")
+          rLabel.className = "links-dest-opt"
+          const radio = document.createElement("input")
+          radio.type = "radio"
+          radio.name = destName
+          radio.value = val
+          radio.checked = link.destination === val
+          radio.addEventListener("change", function () {
+            if (radio.checked) { link.destination = val; destWrap.classList.toggle("is-public", val === "public"); setDirty(true) }
+          })
+          const span = document.createElement("span")
+          span.textContent = lbl
+          rLabel.appendChild(radio)
+          rLabel.appendChild(span)
+          destWrap.appendChild(rLabel)
+        })
+        destWrap.classList.toggle("is-public", link.destination === "public")
+        meta.appendChild(destWrap)
+
+        fields.appendChild(meta)
 
         linkEl.appendChild(fields)
 
@@ -322,27 +344,47 @@ LinksManager.css = `
   resize: vertical;
   min-height: 2.4rem;
 }
-.links-toggle {
+.links-meta {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  margin-top: 0.1rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+.links-status-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+.links-status-pending {
+  background: color-mix(in srgb, var(--secondary) 14%, transparent);
+  color: var(--secondary);
+  border: 1px solid color-mix(in srgb, var(--secondary) 40%, transparent);
+}
+.links-status-approved {
+  background: color-mix(in srgb, #3A7D53 28%, var(--light));
+  color: #7BBF95;
+  border: 1px solid color-mix(in srgb, #3A7D53 45%, transparent);
+}
+.links-dest {
+  display: inline-flex;
+  gap: 0.6rem;
+}
+.links-dest-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--gray);
   cursor: pointer;
   user-select: none;
 }
-.links-toggle input {
-  width: 1rem;
-  height: 1rem;
+.links-dest-opt input {
   accent-color: var(--secondary);
   cursor: pointer;
-  flex-shrink: 0;
-}
-.links-toggle-text {
-  font-size: 0.82rem;
-  color: var(--gray);
-}
-.links-toggle.is-public .links-toggle-text {
-  color: var(--secondary);
 }
 .links-field input:focus, .links-field textarea:focus {
   outline: none;
