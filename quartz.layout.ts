@@ -225,7 +225,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       ],
     }),
     Component.SidebarLink({
-      title: "Notes",
+      title: "Note",
       slug: "notes",
       defaultState: sectionDefaultState(pageSlug, "notes"),
       links: [
@@ -255,7 +255,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       ],
     }),
     Component.SidebarLink({
-      title: "Links",
+      title: "Link",
       slug: "links",
       defaultState: sectionDefaultState(pageSlug, "links"),
       links: [
