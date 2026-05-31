@@ -1,30 +1,34 @@
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 
 /**
- * LinksPreview — the rendered, read-only view of the links collection,
- * mounted at application/preview inside the gated wiki.
+ * LinksPreview — the approval queue, mounted at application/preview.
  *
- * Purpose: a "review your changes" surface. After editing in the Links
- * manager (application/links) and saving, this page shows exactly how the
- * links render — grouped by section, in order — and crucially marks the
- * PRIVATE ones so you can see at a glance what will and won't reach the
- * public page.
+ * This is the staging area in the publishing pipeline. It shows ONLY
+ * pending items (status === "pending") — the things you've created or
+ * edited in Manage that haven't yet been approved onto a landing page.
+ * Each pending item carries two actions:
  *
- * Data path: reads through the SAME /api/links GET endpoint the manager
- * uses (returns { success, sha, data: { sections } }). This is deliberate
- * — it's a proven, Access-gated route, and it avoids depending on
- * links-data.json being emitted as a static asset (Quartz does not
- * necessarily serve a bare .json from content/, and nothing else relies
- * on it being served, so we don't assume it is).
+ *   Approve   → flips status pending -> approved and saves. The item
+ *               leaves this queue and joins its destination landing page
+ *               (Public Content or Private Content). If its destination
+ *               is "public", an auto-publish to the public R2 bucket is
+ *               triggered (best-effort: if it fails, the approval still
+ *               stuck locally and the page says so).
+ *   Send back → returns you to Manage to revise the item. The item stays
+ *               pending (Manage is where pending items are edited), so
+ *               "send back" is the triage gesture: approve the ready ones,
+ *               send the rest back for work.
  *
- * Distinct from the eventual PUBLIC page (served from R2 at
- * files.stewart-identity.com), which renders ONLY public links on a clean
- * light theme. This preview lives inside the wiki, uses the dark house
- * style, and shows EVERYTHING with provenance — it's for the author.
+ * Data path: reads and writes through /api/links (the same Access-gated
+ * endpoint Manage uses), so approval is a real persisted state change,
+ * not a view-only toggle. The blob SHA from the GET is held and echoed on
+ * each approve-save; the POST hands back the new SHA so sequential
+ * approvals work without a reload.
  */
 const LinksPreview: QuartzComponent = ({ displayClass }: QuartzComponentProps) => {
   return (
     <div class={displayClass} id="links-preview-app">
+      <div id="lp-status" class="lp-status" style="display:none"></div>
       <div id="links-preview-root">
         <p class="lp-state">Loading…</p>
       </div>
@@ -35,7 +39,12 @@ const LinksPreview: QuartzComponent = ({ displayClass }: QuartzComponentProps) =
 LinksPreview.afterDOMLoaded = `
 document.addEventListener("nav", () => {
   const root = document.getElementById("links-preview-root")
+  const statusEl = document.getElementById("lp-status")
   if (!root) return
+
+  // Full structure + SHA held in memory; approve mutates and re-saves it.
+  let data = { sections: [] }
+  let sha = null
 
   function safeUrl(u) {
     const s = String(u == null ? "" : u).trim()
@@ -43,47 +52,130 @@ document.addEventListener("nav", () => {
     return null
   }
 
-  function render(data) {
+  function showStatus(msg, kind) {
+    if (!statusEl) return
+    statusEl.style.display = "block"
+    statusEl.className = "lp-status " + kind
+    statusEl.textContent = msg
+  }
+  function clearStatus() {
+    if (!statusEl) return
+    statusEl.style.display = "none"
+    statusEl.textContent = ""
+  }
+
+  function findLink(id) {
+    for (const s of data.sections) {
+      for (const l of (s.links || [])) {
+        if (l.id === id) return l
+      }
+    }
+    return null
+  }
+
+  // Save the whole structure (with whatever mutation we just made) back
+  // through /api/links. Returns the parsed response or throws.
+  async function save() {
+    const res = await fetch("/api/links", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sha: sha, data: data }),
+    })
+    const j = await res.json()
+    if (res.status === 409) throw new Error(j.error || "Conflict — reload and retry.")
+    if (!j || !j.success) throw new Error((j && j.error) || "save failed")
+    sha = j.sha
+    return j
+  }
+
+  // Best-effort publish of the approved+public set to the R2 bucket.
+  // Never throws to the caller — approval already persisted; this is the
+  // downstream step and is allowed to fail with a retry hint.
+  async function publishPublic() {
+    try {
+      const res = await fetch("/api/links-publish", { method: "POST" })
+      if (!res.ok) return false
+      const j = await res.json().catch(function () { return null })
+      return !!(j && j.success)
+    } catch (e) {
+      return false
+    }
+  }
+
+  async function approve(id) {
+    clearStatus()
+    const link = findLink(id)
+    if (!link) return
+    link.status = "approved"
+    try {
+      await save()
+      if (link.destination === "public") {
+        const ok = await publishPublic()
+        showStatus(
+          ok
+            ? "Approved and published to the public page."
+            : "Approved. Public page publish didn't complete — it'll retry on the next approval, or you can republish later.",
+          ok ? "success" : "pending",
+        )
+      } else {
+        showStatus("Approved — now on the Private Content page.", "success")
+      }
+      render()
+    } catch (e) {
+      // roll back the local flip so the queue still shows it as pending
+      link.status = "pending"
+      showStatus("Couldn't approve: " + e.message, "error")
+      render()
+    }
+  }
+
+  function sendBack(id) {
+    // The item stays pending; we just take the user to Manage to edit it.
+    // Manage is the editing surface for pending items, so this is the
+    // "needs work" path that complements Approve.
+    window.location.href = "/application/links"
+  }
+
+  function render() {
     root.innerHTML = ""
     const sections = (data && Array.isArray(data.sections)) ? data.sections : []
 
-    if (sections.length === 0) {
+    // collect pending items per section, in order
+    let pendingTotal = 0
+    const blocks = []
+    sections.forEach(function (section) {
+      const pending = (section.links || []).filter(function (l) { return l && l.status === "pending" })
+      pendingTotal += pending.length
+      if (pending.length > 0) blocks.push({ section: section, items: pending })
+    })
+
+    if (pendingTotal === 0) {
       const p = document.createElement("p")
       p.className = "lp-state"
-      p.textContent = "No links yet. Add some on the Links page."
+      p.textContent = "Nothing pending — you're all caught up. New or edited links show up here for approval."
       root.appendChild(p)
       return
     }
 
-    let pubCount = 0, privCount = 0
-    sections.forEach(function (s) {
-      (s.links || []).forEach(function (l) {
-        if (l && l.public === true) pubCount++; else privCount++
-      })
-    })
-    const summary = document.createElement("p")
-    summary.className = "lp-summary"
-    summary.textContent = pubCount + " public · " + privCount + " private — only public links reach the public page."
-    root.appendChild(summary)
+    const intro = document.createElement("p")
+    intro.className = "lp-intro"
+    intro.textContent = pendingTotal + (pendingTotal === 1 ? " item" : " items") + " awaiting approval. Approve to publish to the chosen destination, or send back to revise."
+    root.appendChild(intro)
 
-    sections.forEach(function (section) {
-      const links = Array.isArray(section.links) ? section.links : []
-      if (links.length === 0) return
-
+    blocks.forEach(function (block) {
       const secEl = document.createElement("section")
       secEl.className = "lp-section"
 
-      if (section.title) {
+      if (block.section.title) {
         const h2 = document.createElement("h2")
         h2.className = "lp-section-title"
-        h2.textContent = section.title
+        h2.textContent = block.section.title
         secEl.appendChild(h2)
       }
 
-      links.forEach(function (link) {
-        const isPublic = link && link.public === true
+      block.items.forEach(function (link) {
         const row = document.createElement("div")
-        row.className = "lp-item" + (isPublic ? " is-public" : " is-private")
+        row.className = "lp-item"
 
         const head = document.createElement("div")
         head.className = "lp-item-head"
@@ -102,10 +194,11 @@ document.addEventListener("nav", () => {
         labelEl.textContent = link.label || url || "(no label)"
         head.appendChild(labelEl)
 
-        const badge = document.createElement("span")
-        badge.className = "lp-badge " + (isPublic ? "lp-badge-public" : "lp-badge-private")
-        badge.textContent = isPublic ? "Public" : "Private"
-        head.appendChild(badge)
+        const dest = document.createElement("span")
+        const isPub = link.destination === "public"
+        dest.className = "lp-dest " + (isPub ? "lp-dest-public" : "lp-dest-private")
+        dest.textContent = isPub ? "→ Public" : "→ Private"
+        head.appendChild(dest)
 
         row.appendChild(head)
 
@@ -119,10 +212,33 @@ document.addEventListener("nav", () => {
         if (!url && link.url) {
           const warn = document.createElement("div")
           warn.className = "lp-item-warn"
-          warn.textContent = "⚠ Unusable URL — won't render on the public page: " + link.url
+          warn.textContent = "⚠ Unusable URL — fix it before approving: " + link.url
           row.appendChild(warn)
         }
 
+        const actions = document.createElement("div")
+        actions.className = "lp-actions"
+
+        const approveBtn = document.createElement("button")
+        approveBtn.type = "button"
+        approveBtn.className = "lp-btn lp-btn-approve"
+        approveBtn.textContent = "Approve"
+        approveBtn.addEventListener("click", function () {
+          approveBtn.disabled = true
+          approveBtn.textContent = "Approving…"
+          approve(link.id)
+        })
+        actions.appendChild(approveBtn)
+
+        const backBtn = document.createElement("button")
+        backBtn.type = "button"
+        backBtn.className = "lp-btn lp-btn-back"
+        backBtn.textContent = "Send back"
+        backBtn.title = "Return to Manage to revise this item"
+        backBtn.addEventListener("click", function () { sendBack(link.id) })
+        actions.appendChild(backBtn)
+
+        row.appendChild(actions)
         secEl.appendChild(row)
       })
 
@@ -130,12 +246,13 @@ document.addEventListener("nav", () => {
     })
   }
 
-  // Read through the manager's GET endpoint: { success, sha, data:{sections} }
   fetch("/api/links", { cache: "no-cache" })
     .then(function (r) { if (!r.ok) throw new Error("status " + r.status); return r.json() })
     .then(function (j) {
       if (j && j.success) {
-        render(j.data || { sections: [] })
+        data = j.data && Array.isArray(j.data.sections) ? j.data : { sections: [] }
+        sha = j.sha
+        render()
       } else {
         throw new Error((j && j.error) || "unknown error")
       }
@@ -144,7 +261,7 @@ document.addEventListener("nav", () => {
       root.innerHTML = ""
       const p = document.createElement("p")
       p.className = "lp-state"
-      p.textContent = "Couldn't load the links. If you just saved, give it a moment and reload."
+      p.textContent = "Couldn't load the approval queue. If you just saved, give it a moment and reload."
       root.appendChild(p)
     })
 })
@@ -159,13 +276,22 @@ LinksPreview.css = `
   color: var(--gray);
   font-style: italic;
 }
-.lp-summary {
+.lp-intro {
   color: var(--gray);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   margin: 0 0 1.25rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--lightgray);
 }
+.lp-status {
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+.lp-status.pending { background: #6B4D1A; color: #D4AD5A; }
+.lp-status.success { background: #1B3F29; color: #7BBF95; }
+.lp-status.error { background: #6B2020; color: #C46B6B; }
 .lp-section {
   margin-bottom: 1.75rem;
 }
@@ -178,19 +304,11 @@ LinksPreview.css = `
   font-weight: 700;
 }
 .lp-item {
-  padding: 0.8rem 1rem;
+  padding: 0.85rem 1rem;
   border: 1px solid var(--lightgray);
   border-radius: 10px;
   background: color-mix(in srgb, var(--light) 92%, transparent);
-  margin-bottom: 0.6rem;
-  border-left-width: 3px;
-}
-.lp-item.is-public {
-  border-left-color: var(--secondary);
-}
-.lp-item.is-private {
-  border-left-color: var(--gray);
-  opacity: 0.85;
+  margin-bottom: 0.7rem;
 }
 .lp-item-head {
   display: flex;
@@ -210,21 +328,21 @@ a.lp-item-label:hover {
   color: var(--secondary);
   text-decoration: underline;
 }
-.lp-badge {
+.lp-dest {
   flex-shrink: 0;
-  font-size: 0.7rem;
+  font-size: 0.74rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.15rem 0.55rem;
+  letter-spacing: 0.04em;
+  padding: 0.12rem 0.5rem;
   border-radius: 999px;
 }
-.lp-badge-public {
-  background: color-mix(in srgb, var(--secondary) 18%, transparent);
+.lp-dest-public {
+  background: color-mix(in srgb, var(--secondary) 16%, transparent);
   color: var(--secondary);
-  border: 1px solid color-mix(in srgb, var(--secondary) 45%, transparent);
+  border: 1px solid color-mix(in srgb, var(--secondary) 42%, transparent);
 }
-.lp-badge-private {
+.lp-dest-private {
   background: transparent;
   color: var(--gray);
   border: 1px solid var(--lightgray);
@@ -239,6 +357,32 @@ a.lp-item-label:hover {
   font-size: 0.82rem;
   margin-top: 0.35rem;
 }
+.lp-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.lp-btn {
+  padding: 0.45rem 1rem;
+  border-radius: 7px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.lp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.lp-btn-approve {
+  background: var(--secondary);
+  color: var(--light);
+}
+.lp-btn-approve:hover { opacity: 0.85; }
+.lp-btn-back {
+  background: transparent;
+  color: var(--dark);
+  border-color: var(--lightgray);
+}
+.lp-btn-back:hover { border-color: var(--gray); }
 `
 
 export default (() => LinksPreview) satisfies QuartzComponentConstructor
