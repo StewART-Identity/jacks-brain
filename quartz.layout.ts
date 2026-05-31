@@ -322,7 +322,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       defaultState: sectionDefaultState(pageSlug, "application"),
       links: [
         { title: "About", slug: "application/about" },
-        { title: "Nuke It From Orbit", slug: "application/nuke" },
+        { title: "☠ Nuke It From Orbit", slug: "application/nuke" },
       ],
     }),
 
