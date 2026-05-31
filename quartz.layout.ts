@@ -152,15 +152,15 @@ export const sharedPageComponents: SharedLayout = {
     }),
     Component.ConditionalRender({
       component: Component.LinksManager(),
-      condition: (page) => page.fileData.slug === "application/links",
+      condition: (page) => page.fileData.slug === "links",
     }),
     Component.ConditionalRender({
       component: Component.LinksPreview(),
-      condition: (page) => page.fileData.slug === "application/preview",
+      condition: (page) => page.fileData.slug === "links/preview",
     }),
     Component.ConditionalRender({
       component: Component.PrivateContent(),
-      condition: (page) => page.fileData.slug === "application/private",
+      condition: (page) => page.fileData.slug === "links/private",
     }),
     Component.ConditionalRender({
       component: Component.SearchPage(),
@@ -316,13 +316,13 @@ function buildSidebarLeft(pageSlug: string | undefined) {
     }),
     Component.SidebarLink({
       title: "Links",
-      slug: "application/links",
-      defaultState: sectionDefaultState(pageSlug, "application/links"),
+      slug: "links",
+      defaultState: sectionDefaultState(pageSlug, "links"),
       links: [
-        { title: "Manage", slug: "application/links" },
-        { title: "Preview", slug: "application/preview" },
-        { title: "Private Content", slug: "application/private" },
-        { title: "Public Content", slug: "application/public-content" },
+        { title: "Manage", slug: "links" },
+        { title: "Preview", slug: "links/preview" },
+        { title: "Private Content", slug: "links/private" },
+        { title: "Public Content", slug: "links/public" },
       ],
     }),
 
