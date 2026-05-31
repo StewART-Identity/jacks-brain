@@ -155,6 +155,10 @@ export const sharedPageComponents: SharedLayout = {
       condition: (page) => page.fileData.slug === "application/links",
     }),
     Component.ConditionalRender({
+      component: Component.LinksPreview(),
+      condition: (page) => page.fileData.slug === "application/preview",
+    }),
+    Component.ConditionalRender({
       component: Component.SearchPage(),
       condition: (page) => page.fileData.slug === "search/wiki",
     }),
@@ -304,6 +308,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       links: [
         { title: "About", slug: "application/about" },
         { title: "Links", slug: "application/links" },
+        { title: "Preview", slug: "application/preview" },
         { title: "Nuke It From Orbit", slug: "application/nuke" },
       ],
     }),
