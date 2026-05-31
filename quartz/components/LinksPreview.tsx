@@ -133,7 +133,7 @@ document.addEventListener("nav", () => {
     // The item stays pending; we just take the user to Manage to edit it.
     // Manage is the editing surface for pending items, so this is the
     // "needs work" path that complements Approve.
-    window.location.href = "/links"
+    window.location.href = "/links/manage"
   }
 
   function render() {
