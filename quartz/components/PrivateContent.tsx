@@ -2,7 +2,7 @@ import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } fro
 
 /**
  * PrivateContent — the private landing page, mounted at
- * application/private inside the gated wiki.
+ * links/private inside the gated wiki.
  *
  * The private counterpart to the public R2 page: it renders the
  * APPROVED + PRIVATE set — links you've approved but chosen to keep off
