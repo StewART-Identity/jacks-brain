@@ -152,7 +152,7 @@ export const sharedPageComponents: SharedLayout = {
     }),
     Component.ConditionalRender({
       component: Component.LinksManager(),
-      condition: (page) => page.fileData.slug === "links",
+      condition: (page) => page.fileData.slug === "links/manage",
     }),
     Component.ConditionalRender({
       component: Component.LinksPreview(),
@@ -254,6 +254,17 @@ function buildSidebarLeft(pageSlug: string | undefined) {
         { title: "Retention", slug: "collect/retention" },
       ],
     }),
+    Component.SidebarLink({
+      title: "Links",
+      slug: "links",
+      defaultState: sectionDefaultState(pageSlug, "links"),
+      links: [
+        { title: "Manage", slug: "links/manage" },
+        { title: "Preview", slug: "links/preview" },
+        { title: "Private Content", slug: "links/private" },
+        { title: "Public Content", slug: "links/public" },
+      ],
+    }),
 
     // ─── SEEING — survey what's accumulated ─────────────────────
     Component.SidebarZoneHeader({ label: "Seeing" }),
@@ -312,17 +323,6 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       links: [
         { title: "About", slug: "application/about" },
         { title: "Nuke It From Orbit", slug: "application/nuke" },
-      ],
-    }),
-    Component.SidebarLink({
-      title: "Links",
-      slug: "links",
-      defaultState: sectionDefaultState(pageSlug, "links"),
-      links: [
-        { title: "Manage", slug: "links" },
-        { title: "Preview", slug: "links/preview" },
-        { title: "Private Content", slug: "links/private" },
-        { title: "Public Content", slug: "links/public" },
       ],
     }),
 
