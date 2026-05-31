@@ -1,5 +1,5 @@
 ---
-title: "Links"
+title: "Link"
 ---
 
 The links publishing pipeline. Create links, review them, and send them to a public or private landing page.

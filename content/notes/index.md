@@ -1,5 +1,5 @@
 ---
-title: "Notes"
+title: "Note"
 cssclasses: [hide-folder-listing]
 ---
 
