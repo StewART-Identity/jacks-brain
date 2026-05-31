@@ -159,6 +159,10 @@ export const sharedPageComponents: SharedLayout = {
       condition: (page) => page.fileData.slug === "application/preview",
     }),
     Component.ConditionalRender({
+      component: Component.PrivateContent(),
+      condition: (page) => page.fileData.slug === "application/private",
+    }),
+    Component.ConditionalRender({
       component: Component.SearchPage(),
       condition: (page) => page.fileData.slug === "search/wiki",
     }),
@@ -209,7 +213,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
     Component.PageTitle(),
     Component.MobileOnly(Component.Spacer()),
 
-    // ─── DOING — capture and curate raw inputs ─────────────────────
+    // ─── DOING — capture and curate raw inputs ────────────────────
     Component.SidebarZoneHeader({ label: "Doing", first: true }),
     Component.SidebarLink({
       title: "Search",
@@ -251,7 +255,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       ],
     }),
 
-    // ─── SEEING — survey what's accumulated ────────────────────────
+    // ─── SEEING — survey what's accumulated ─────────────────────
     Component.SidebarZoneHeader({ label: "Seeing" }),
     Component.SidebarLink({
       title: "Reflect",
@@ -299,7 +303,7 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       ],
     }),
 
-    // ─── META — the workshop itself ───────────────────────────────
+    // ─── META — the workshop itself ────────────────────────
     Component.SidebarZoneHeader({ label: "Meta" }),
     Component.SidebarLink({
       title: "Application",
@@ -307,9 +311,18 @@ function buildSidebarLeft(pageSlug: string | undefined) {
       defaultState: sectionDefaultState(pageSlug, "application"),
       links: [
         { title: "About", slug: "application/about" },
-        { title: "Links", slug: "application/links" },
-        { title: "Preview", slug: "application/preview" },
         { title: "Nuke It From Orbit", slug: "application/nuke" },
+      ],
+    }),
+    Component.SidebarLink({
+      title: "Links",
+      slug: "application/links",
+      defaultState: sectionDefaultState(pageSlug, "application/links"),
+      links: [
+        { title: "Manage", slug: "application/links" },
+        { title: "Preview", slug: "application/preview" },
+        { title: "Private Content", slug: "application/private" },
+        { title: "Public Content", slug: "application/public-content" },
       ],
     }),
 

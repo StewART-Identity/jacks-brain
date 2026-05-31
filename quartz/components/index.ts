@@ -49,6 +49,7 @@ import UpskillUpdate from "./UpskillUpdate"
 import UpskillTopics from "./UpskillTopics"
 import LinksManager from "./LinksManager"
 import LinksPreview from "./LinksPreview"
+import PrivateContent from "./PrivateContent"
 
 export {
   ArticleTitle,
@@ -102,4 +103,5 @@ export {
   UpskillTopics,
   LinksManager,
   LinksPreview,
+  PrivateContent,
 }
